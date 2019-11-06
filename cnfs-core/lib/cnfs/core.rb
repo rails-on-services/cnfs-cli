@@ -6,6 +6,14 @@ require 'zeitwerk'
 require 'config'
 require_relative '../config/options'
 
+# Config.setup do |config|
+#   config.use_env = true
+#   config.env_prefix = 'CNFS'
+#   config.env_separator = '__'
+#   config.merge_nil_values = false
+# end
+# require 'yaml_vault'
+
 module Cnfs
   class << self
     attr_accessor :platform, :settings
