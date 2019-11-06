@@ -1,0 +1,72 @@
+# config/backend/application/rails.yml
+---
+config:
+  commands:
+    test:
+      - bundle exec rubocop .
+      - bundle exec rails app:db:test:prepare
+      - bundle exec rspec spec
+environment:
+  rails_database_host: postgres
+  # NOTE: TF can be configured to create a CNAME for RDS
+  # this CNAME would come from the infra level
+  # The deployment code could use that to set this value
+  # Same with redis url
+  # This is for production; for staging it is the values here
+  redis_url: redis://redis-master:6379
+  platform:
+    infra:
+      # TODO: Write out the Provider.providers[:aws].credenitials.to_env
+      provider: aws
+    metrics:
+      enabled: no
+      process_stats_enabled: no
+    partition_name: ros
+    request_logging:
+      enabled: yes
+      config:
+        host: fluentd
+        port: 24224
+    event_logging:
+      enabled: yes
+      config:
+        name: events-log
+        host: fluentd
+        port: 24224
+        schema_registry_url: http://kafkastack:8081
+units:
+  # account:
+  #   config:
+  #     enabled: no
+  #     mount: yes
+  #     profiles: ['server', 'worker']
+  #     ros: yes
+  # billing:
+  #   config:
+  #     enabled: no
+  #     mount: yes
+  #     profiles: ['server', 'worker']
+  #     ros: yes
+  cognito:
+    disabled: yes
+    mount: yes
+    profiles: ['server', 'worker']
+    ros: yes
+    environment:
+      test: 1
+  comm:
+    mount: yes
+    profiles: ['server', 'worker']
+    ros: yes
+  iam:
+    mount: yes
+    profiles: ['server', 'worker']
+    ros: yes
+  organization:
+    mount: yes
+    profiles: ['server', 'worker']
+    ros: yes
+  storage:
+    mount: yes
+    profiles: ['server', 'worker', 'sqs_worker']
+    ros: yes

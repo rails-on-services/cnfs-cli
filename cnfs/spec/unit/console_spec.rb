@@ -1,0 +1,13 @@
+require 'cnfs/commands/console'
+
+RSpec.describe Cnfs::Commands::Console do
+  it "executes `console` command successfully" do
+    output = StringIO.new
+    options = {}
+    command = Cnfs::Commands::Console.new(options)
+
+    command.execute(output: output)
+
+    expect(output.string).to eq("OK\n")
+  end
+end
