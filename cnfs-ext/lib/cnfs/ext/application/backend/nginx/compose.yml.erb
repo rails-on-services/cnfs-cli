@@ -1,0 +1,12 @@
+---
+version: '<%= compose_version %>'
+services:
+  nginx:
+    labels:
+      <%= compose_labels %>
+    image: nginx
+    ports:
+      # expose host port 3000 and fwd to port 80 of the nginx container
+      - "${NGINX_HOST_PORT:-3000}:80"
+    volumes:
+      - "../nginx/nginx.conf:/etc/nginx/conf.d/default.conf"

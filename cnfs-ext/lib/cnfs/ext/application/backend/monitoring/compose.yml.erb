@@ -1,0 +1,25 @@
+---
+version: '<%= @service.compose_version %>'
+# TODO: setup the directories for data; See how PG does it
+# TODO: Add grafana dashboards
+services:
+  prometheus:
+    image: prom/prometheus
+    # restart: on-failure
+    ports:
+      - <%= @service.expose_ports(9090) %>
+    volumes:
+      - "./containers/prometheus/data:/prometheus"
+      - "./containers/prometheus.yml:/etc/prometheus/prometheus.yml"
+
+  grafana:
+    image: grafana/grafana
+    # restart: on-failure
+    ports:
+      - <%= @service.expose_ports(4000) %>
+    volumes:
+      - "./containers/grafana/data:/var/lib/grafana"
+      - "./containers/grafana/provisioning:/etc/grafana/provisioning"
+      - "./containers/grafana/dashboards:/etc/grafana/dashboards"
+    user: "${GRAFANA_ID}"
+

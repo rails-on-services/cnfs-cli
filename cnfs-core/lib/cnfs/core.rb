@@ -3,8 +3,13 @@
 require 'cnfs/core/version'
 
 require 'zeitwerk'
+require 'active_support/inflector'
+require 'active_support/string_inquirer'
+
 require 'config'
+# add instance method #to_env to Config::Options class
 require_relative '../config/options'
+
 
 # Config.setup do |config|
 #   config.use_env = true

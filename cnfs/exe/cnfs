@@ -5,9 +5,10 @@ lib_path = File.expand_path('../lib', __dir__)
 $:.unshift(lib_path) if !$:.include?(lib_path)
 
 require 'cnfs'
-require 'cnfs/cli'
 
 Cnfs::Cli.setup
+
+require 'cnfs/cli'
 
 Signal.trap('INT') do
   warn("\n#{caller.join("\n")}: interrupted")

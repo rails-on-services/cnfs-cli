@@ -1,0 +1,34 @@
+---
+apiVersion: <%= @service.skaffold_version %>
+kind: Config
+deploy:
+  helm:
+    releases:
+      - name: kafka
+        chartPath: incubator/kafka
+        remote: true
+        overrides:
+          imageTag: 5.3.1
+          replicas: 1
+          fullnameOverride: kafka
+          podLabels:
+            app.kubernetes.io/name: kafka
+            app.kubernetes.io/part-of: application-services
+          resources:
+            limits:
+              cpu: 200m
+              memory: 1536Mi
+            requests:
+              cpu: 100m
+              memory: 1024Mi
+          prometheus:
+            jmx:
+              enabled: false
+            kafka:
+              enabled: false
+          persistence:
+            enabled: true
+            size: 50Gi
+          zookeeper:
+            enabled: false
+            url: "kafka-zookeeper"

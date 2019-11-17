@@ -3,10 +3,59 @@
 module Cnfs
   module Commands
     module Application
+      # The backend router that routes command requests to the appropriate controller (command class)
       class Backend < Thor
+        attr_accessor :platform
         # namespace 'application backend' #:backend
-        class_option 'verbose', type: :boolean, default: false, aliases: '-v'
-        class_option 'debug', type: :numeric, default: 0, aliases: '-d'
+        class_option :verbose, type: :boolean, default: false, aliases: '-v'
+        class_option :debug, type: :numeric, default: 0, aliases: '-d'
+        class_option :environment, type: :string, default: nil, aliases: '-e', desc: 'Environment'
+        class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'
+        class_option :feature_set, type: :string, default: nil, aliases: '--fs', desc: 'feature set'
+
+        desc 'attach SERVICE', 'attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
+        def attach(name, target = nil)
+          # TODO: if target is nil then target is default (first) deployment target
+          # TODO: one interface for run, rather than run and run_all. some way to create an array of
+          # one if the target is default
+          run(target, :attach, name: name)
+          # execute_all(:attach, name: name)
+        end
+
+        no_commands do
+          def run_all(command, params = {})
+            platform.infra.deployments.keys.each do |target|
+              run(target, command, params)
+            end
+            nil
+          end
+
+          def run(target = [], command = '', params = {})
+            command_string = command.to_s.camelize
+            command = "#{self.class.name}::#{command_string}".safe_constantize
+            # TODO: merge config hash with the target's config (or as a separate sub-key in the config)
+            config = { target: target, command: command_string, platform: platform, orchestrator: :compose }
+            command.new(params, options, config).execute
+          end
+        end
+
+        desc 'build IMAGE', 'build one or all images'
+        option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
+        def build(*services)
+          run_all(:build, services: services)
+        end
+
+        desc 'cmd', 'Run arbitrary command in context'
+        def cmd(*services) #, target = nil)
+        end
+
+        desc 'copy', 'Copy file to service'
+        def copy(service, src, dest = nil)
+        end
+
+        desc 'credentials', 'show iam credentials'
+        def credentials
+        end
 
         desc 'deploy', 'Deploy backend application to target infrastructure'
         method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
@@ -19,9 +68,7 @@ module Cnfs
           if options[:help]
             invoke :help, ['deploy']
           else
-            # binding.pry
-            require_relative 'backend/deploy'
-            Cnfs::Commands::Application::Backend::Deploy.new(services, options).execute
+            Deploy.new(services, options).execute
           end
         end
 
@@ -32,22 +79,19 @@ module Cnfs
             invoke :help, ['destroy']
           else
             # TODO: are you sure?
-            # binding.pry
-            require_relative 'backend/destroy'
-            Cnfs::Commands::Application::Backend::Destroy.new(options).execute
+            Destroy.new(options).execute
           end
         end
 
-        # desc 'generate TYPE', 'Generate a new asset of type TYPE (short-cut alias: "g")'
-        # map %w(g) => :generate
-        # option :force, type: :boolean, default: false, aliases: '-f'
-        # subcommand 'generate', Ros::Be::Application::GenerateCli
+        desc 'exec SERVICE COMMAND', 'execute an interactive command on a service (short-cut alias: "e")'
+        def exec(service, cmd)
+        end
 
-        # # TODO: refactor setting action to :destroy
-        # desc 'destroy TYPE', 'Destroy an asset (environment or service)'
-        # option :behavior, type: :string, default: 'revoke'
-        # map %w(d) => :destroy
-        # subcommand 'destroy', Ros::Be::Application::GenerateCli
+        desc 'generate', 'Generate manifests for deployment'
+        # option :force, type: :boolean, default: false, aliases: '-f'
+        def generate
+          run(nil, :generate)
+        end
 
         # desc 'init', 'Initialize a project environment'
         # def init
@@ -55,71 +99,53 @@ module Cnfs
         #   preflight_check
         # end
 
-        desc 'status', 'Show platform services status'
-        def status
-          require_relative 'backend/ps'
-          require_relative 'backend/status'
-          # TODO: Use a method that returns a Cnfs::Core::Platform class rather than direct access to Cnfs.platform
-          # so that any instance of that class can be returned
-          Cnfs.platform.infra.deployments.each do |orchestrator|
-            Cnfs::Commands::Application::Backend::Status.new(options.merge(orchestrator: orchestrator)).execute
+        desc 'list', 'List backend application configuration objects'
+        option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
+        map %w(ls) => :list
+        def list(what = nil)
+          STDOUT.puts 'Options: infra, services, platform' if what.nil?
+          STDOUT.puts "#{Settings.components.be.components.application.components[what].components.keys.join("\n")}" unless what.nil? or options.show_enabled
+          if options.show_enabled
+            case what
+            when 'platform'
+              STDOUT.puts enabled_services
+            when 'services'
+              STDOUT.puts enabled_application_services
+            end
           end
         end
 
-        desc 'build IMAGE', 'build one or all images'
-        option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
-        def build(*services)
-          require_relative 'backend/ps'
-          require_relative 'backend/build'
-          Cnfs.platform.infra.deployments.each do |orchestrator|
-            Cnfs::Commands::Application::Backend::Build.new(services, options).execute(orchestrator: orchestrator)
+        desc 'logs', 'Tail logs of a running service'
+        option :tail, type: :boolean, aliases: '-f'
+        def logs(service)
+          run(nil, :logs, service: service)
+        end
+
+        desc 'ps', 'List running services'
+        option :status, type: :string, default: 'running', aliases: '-s'
+        def ps(*)
+          if options[:help]
+            invoke :help, ['ps']
+          else
+            run_all(:ps)
           end
         end
 
-        desc 'test IMAGE', 'test one or all images'
-        option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'
-        option :fail_all, type: :boolean, aliases: '-a', desc: 'Skip any remaining services after a test fails'
-        option :fail_fast, type: :boolean, aliases: '-f', desc: 'Skip any remaining tests for a service after a test fails'
-        option :push, type: :boolean, aliases: '-p', desc: 'Push image after successful testing'
-        def test(*services)
-          require_relative 'backend/test'
-          Cnfs.platform.infra.deployments.each do |orchestrator|
-            Cnfs::Commands::Application::Backend::Test.new(services, options).execute(orchestrator: orchestrator)
-          end
-        end
-
-
-        desc 'push IMAGE', 'push one or all images'
-        def push(*services)
-          command = context(options)
-          command.push(services)
-          command.exit
+        desc 'publish', 'Publish API documentation to Postman'
+        option :force, type: :boolean, aliases: '-f', desc: 'Force generation of new documentation'
+        def publish(type, *services)
+          raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w(postman erd).include?(type)
         end
 
         desc 'pull IMAGE', 'push one or all images'
         def pull(*services)
-          command = context(options)
-          command.pull(services)
-          command.exit
         end
 
-        desc 'attach SERVICE', 'attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service (short-cut alias: "at")'
-        map %w(at) => :attach
-        def attach(service)
-          command = context(options)
-          command.attach(service)
-          command.exit
+        desc 'push IMAGE', 'push one or all images'
+        def push(*services)
         end
 
-        desc 'copy', 'Copy file to service'
-        option :environment, type: :string, aliases: '-e', desc: 'Environment'
-        option :profile, type: :string, aliases: '-p', desc: 'profile'
-        def copy(service, src, dest = nil)
-          command = context(options)
-          command.copy(service, src, dest)
-          command.exit
-        end
-
+=begin
         desc 'xdeploy API', 'deploy to UAT at an endpoint'
         def xdeploy(tag_name)
           # prefix = Settings.components.be.components.application.config.deploy_tag
@@ -169,76 +195,16 @@ module Cnfs
           command.up(services)
           command.exit
         end
-
-        desc 'cmd', 'Run arbitrary command in context'
-        def cmd(*services)
-          command = context(options)
-          command.cmd(services)
-          command.exit
-        end
-
-        desc 'ps', 'List running services'
-        def ps(*)
-          if options[:help]
-            invoke :help, ['ps']
-          else
-            require_relative 'backend/ps'
-            Cnfs.platform.infra.deployments.each do |orchestrator|
-              Cnfs::Commands::Application::Backend::Ps.new(options.merge(orchestrator: orchestrator)).execute
-            end
-          end
-        end
-
-        desc 'show', 'show service config'
-        def show(service)
-          command = context(options)
-          command.show(service)
-          command.exit
-        end
-
-        desc 'credentials', 'show iam credentials'
-        def credentials
-          command = context(options)
-          command.credentials
-          command.exit
-        end
-
-        desc 'console', 'Start the Ros console (short-cut alias: "con")'
-        def console(service)
-          binding.pry
-          command = context(options)
-          command.console(service)
-          command.exit
-        end
-
-        desc 'exec SERVICE COMMAND', 'execute an interactive command on a service (short-cut alias: "e")'
-        map %w(e) => :exec
-        def exec(service, cmd)
-          command = context(options)
-          command.exec(service, cmd)
-          command.exit
-        end
+=end
 
         # TODO: refactor to a rails specifc set of commands in a dedicated file
-        desc 'rails SERVICE COMMAND', 'execute a rails command on a service (short-cut alias: "r")'
-        map %w(r) => :rails
+        desc 'rails SERVICE COMMAND', 'execute a rails command on a service'
         def rails(service, cmd)
           exec(service, "rails #{cmd}")
         end
 
-        desc 'sh SERVICE', 'execute an interactive shell on a service'
-        # NOTE: shell is a reserved word in Thor so it can't be used
-        option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
-        def sh(service)
-          exec(service, 'bash')
-        end
-
-        desc 'logs', 'Tail logs of a running service'
-        option :tail, type: :boolean, aliases: '-f'
-        def logs(service)
-          command = context(options)
-          command.logs(service)
-          command.exit
+        desc 'redeploy', 'Create and Start'
+        def redeploy
         end
 
         desc 'restart SERVICE', 'Start and stop one or more services'
@@ -248,51 +214,68 @@ module Cnfs
         option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
         option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
         def restart(*services)
-          command = context(options)
-          command.restart(services)
-          command.exit
+        end
+
+        desc 'sh SERVICE', 'execute an interactive shell on a service'
+        # NOTE: shell is a reserved word in Thor so it can't be used
+        option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
+        def sh(service)
+          Sh.new(options, { service: service }, platform, :noop, { orchestrator: :compose }).execute
+        end
+
+        desc 'show', 'show service config'
+        def show(service)
+          execute_on_each_deployment(Show, service: service) {}
+        end
+
+        desc 'start', 'Start a layer, profile or service'
+        def start
+        end
+
+        desc 'status', 'Show platform services status'
+        def status
+          run(nil, :status)
         end
 
         desc 'stop SERVICE', 'Stop a service'
         def stop(*services)
-          command = context(options)
-          command.stop(services)
-          command.exit
         end
 
-        desc 'down', 'bring down platform'
-        def down(*services)
-          command = context(options)
-          command.down(services)
-          command.exit
+        desc 'test IMAGE', 'Run tests on image(s)'
+        option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'
+        option :fail_all, type: :boolean, aliases: '-a', desc: 'Skip any remaining services after a test fails'
+        option :fail_fast, type: :boolean, aliases: '-f', desc: 'Skip any remaining tests for a service after a test fails'
+        option :push, type: :boolean, desc: 'Push image after successful testing'
+        def test(*services)
+          run(nil, :test, services: services)
         end
 
-        desc 'list', 'List backend application configuration objects'
-        option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
-        map %w(ls) => :list
-        def list(what = nil)
-          STDOUT.puts 'Options: infra, services, platform' if what.nil?
-          STDOUT.puts "#{Settings.components.be.components.application.components[what].components.keys.join("\n")}" unless what.nil? or options.show_enabled
-          if options.show_enabled
-            case what
-            when 'platform'
-              STDOUT.puts enabled_services
-            when 'services'
-              STDOUT.puts enabled_application_services
-            end
+        no_commands do
+          # NOTE: To invoke a command from the CNFS console with a custom platform config:
+          # platform = Cnfs::Core::Platform.new(env: :production)
+          # router = Cnfs::Commands::Application::Backend.new([], platform: platform)
+          # router.ps, router.status, etc
+          def platform
+            # TODO: move to run command once it is a single command
+            ENV['CNFS_ENV'] = options.environment if options.environment
+            ENV['CNFS_PROFILE'] = options.profile if options.profile
+            ENV['CNFS_FS'] = options.feature_set if options.feature_set
+            @platform ||= (options.platform || Cnfs.platform)
           end
         end
 
-        desc 'publish', 'Publish API documentation to Postman'
-        option :force, type: :boolean, aliases: '-f', desc: 'Force generation of new documentation'
-        def publish(type, *services)
-          raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w(postman erd).include?(type)
-          command = context(options)
-          command.publish(type, services)
-          command.exit
-        end
-
         private
+
+        # def execute_on_each_deployment(klass, args = {})
+        #   # Cnfs.platform.infra.deployments.each_pair do |deployment, config|
+        #   #  klass.new(options.merge(orchestrator: config[:orchestrator]), args).execute
+        #   platform.infra.deployments.each_pair do |name, deployment|
+        #     klass.new(options, args, platform, name, deployment).execute
+        #     yield
+        #   end
+        #   nil
+        # end
+
 =begin
         def preflight_check(fix: false)
           options = {}

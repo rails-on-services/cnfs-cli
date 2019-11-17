@@ -1,0 +1,13 @@
+---
+version: '<%= compose_version %>'
+services:
+  postgres:
+    labels:
+      <%= compose_labels %>
+    image: mdillon/postgis:9.6
+    ports:
+      - <%= expose_ports(5432) %>
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres

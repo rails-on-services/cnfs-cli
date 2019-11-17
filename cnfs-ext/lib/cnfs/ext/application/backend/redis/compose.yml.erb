@@ -1,0 +1,9 @@
+---
+version: '<%= compose_version %>'
+services:
+  redis:
+    labels:
+      <%= compose_labels %>
+    image: redis:5-alpine
+    ports:
+      - <%= expose_ports(6379) %>

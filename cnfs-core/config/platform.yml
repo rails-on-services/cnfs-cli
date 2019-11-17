@@ -5,7 +5,7 @@ config:
   image_registry: railsonservices
   base_path: tmp
   skaffold:
-    version: skaffold/v1beta11
+    version: skaffold/v1
   compose:
     version: 3.2
   terraform:

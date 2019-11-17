@@ -1,0 +1,25 @@
+---
+apiVersion: <%= @service.skaffold_version %>
+kind: Config
+deploy:
+  helm:
+    releases:
+      - name: ingress
+        chartPath: ros/ingress
+        remote: true
+        overrides:
+          labels:
+            # app.kubernetes.io/name: <%= @service.name %>
+            app.kubernetes.io/component: routing
+            app.kubernetes.io/part-of: cluster-services
+            # stack.name: <%= @service.stack_name %>
+            # stack.component: be
+            # be.component: application
+            # application.component: services
+            # platform.feature_set: <%= @service.current_feature_set %>
+          hosts:
+            - <%= @service.api_hostname %>
+          services:<% platform_service_names.each do |service| %>
+            - name: <%= service.to_s.gsub('_', '-') %>
+              port: 80
+              prefix: /<%= service %><% end %>

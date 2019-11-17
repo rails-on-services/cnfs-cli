@@ -2,22 +2,12 @@
 
 module Cnfs::Commands::Application
   class Backend::Build < Cnfs::Command
-    attr_accessor :options, :services, :platform
 
+    before_execute :generate_manifests
     after_execute :publish_results
 
-    # TODO: Use a method that returns a Cnfs::Core::Platform class rather than direct access to Cnfs.platform
-    # so that any instance of that class can be returned
-    def initialize(services, options) #, platform = Cnfs.platform)
-      @services = services
-      @options = options
-      # @platform = platform
-      type = :compose
-      self.class.include(self.class.registrations[type]) if self.class.registrations[type]
-    end
- 
-    # def echo; output.puts 'hello from cli gem' end
     def publish_results
+      # binding.pry
       return unless errors.size.positive?
       # output.puts(errors.messages.map{ |(k, v)| "#{v}\n" }) if errors.size.positive?
       # binding.pry

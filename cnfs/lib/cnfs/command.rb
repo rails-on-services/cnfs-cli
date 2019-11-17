@@ -3,37 +3,15 @@
 require 'forwardable'
 
 module Cnfs
-  class Errors
-    attr_reader :messages, :details
-
-    def initialize
-      @messages = {}
-      @details = {}
-    end
-
-    def add(attribute, message = :invalid, options = {})
-      @messages[attribute] = message
-      @details[attribute] = options
-    end
-
-    def size; @messages.size end
-  end
-
   class Command
     extend Forwardable
 
     def_delegators :command, :run
 
     class << self
-      attr_accessor :registrations, :callbacks
-
-      def registrations; @registration ||= {} end
+      attr_accessor :callbacks
 
       def callbacks; @callbacks ||= {} end
-
-      def register(klass, name)
-        registrations[name] = klass
-      end
 
       # define callback methods, e.g. :before_validate, :after_execute
       %i[before on after].each do |lifecycle|
@@ -60,23 +38,48 @@ module Cnfs
       end
     end
 
+    attr_accessor :params, :options, :config
     attr_accessor :input, :output, :errors
+    attr_accessor :result, :display
 
-    def errors; @errors ||= Cnfs::Errors.new end
+    def initialize(params = {}, options = Thor::CoreExt::HashWithIndifferentAccess.new, config = {})
+      @params = params
+      @options = options
+      @config = OpenStruct.new(config)
+      @input = $stdin
+      @output = $stdout
+      @errors = Cnfs::Errors.new
+      configure
+    end
+
+    def configure
+      # type = deployment[:orchestrator]
+      # Include a module named Cnfs::Compose::Commands::Application::Backend::Generate
+      # mod = self.class.name.gsub('Cnfs', "cnfs/#{type}".classify)
+      # self.class.include(mod.constantize) if Object.const_defined?(mod)
+      # Include a module named Cnfs::Compose::Common
+      # mod = "cnfs/#{type}/common".classify
+      # self.class.include(mod.constantize) if Object.const_defined?(mod)
+      self.class.constants.each do |mod|
+        self.class.include("#{self.class.name}::#{mod}".constantize)
+      end
+      # binding.pry
+    end
 
     # Execute this command
     #
     # @api public
-    def execute(args = {}) # input: $stdin, output: $stdout)
-      type = options[:orchestrator]
-      self.class.include(self.class.registrations[type]) if type and self.class.registrations[type]
-      with_callbacks(args) {}
+    def execute(command = nil)
+      # Don't pass a command from the router; This is for command chaining
+      if command
+        cmd = self.class.name.gsub(config.command.to_s, command.to_s.camelize).safe_constantize
+        return cmd.new(params, options, config.to_h.merge(command: command.to_s.camelize)).execute
+      end
+      with_callbacks {}
       self
     end
 
-    def with_callbacks(args)
-      @input = $stdin
-      @output = $stdout
+    def with_callbacks
       self.class.run_callbacks(:before_validate, self)
       self.class.run_callbacks(:on_validate, self)
       self.class.run_callbacks(:aftere_validate, self)
@@ -86,8 +89,30 @@ module Cnfs
       self.class.run_callbacks(:after_execute, self)
       self.class.run_callbacks(:before_finalize, self)
       self.class.run_callbacks(:on_finalize, self)
-      self.class.run_callbacks(:aftere_finalize, self)
+      self.class.run_callbacks(:after_finalize, self)
     end
+
+    def generate_manifests
+      execute(:generate) if stale_config
+    end
+
+    def stale_config
+      manifest_files.empty? || (last_config_file_updated > first_manifest_file_created)
+      # Check template files
+      # Dir["#{Ros.gem_root.join('lib/ros/be')}/**/{templates,files}/**/*"].each do |f|
+      #   return true if mtime < File.mtime(f)
+      # end
+      # # Check custom templates
+      # Dir["#{Ros.root.join('lib/generators')}/be/**/{templates,files}/**/*"].each do |f|
+      #   return true if mtime < File.mtime(f)
+      # end
+    end
+
+    def last_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
+    def config_files; config.platform.config_files.values.flatten end
+
+    def first_manifest_file_created; manifest_files.map { |f| File.mtime(f) }.min end
+    def manifest_files; Dir[config.platform.path_for.join('**/*')] end
 
     # TODO: Move these to a concern or the Cnfs::Command class
     def generator_class; generator_name.constantize end
@@ -123,6 +148,10 @@ module Cnfs
       hash = {}
       hash.merge!(only_output_on_error: true) unless options.verbose
       hash
+    end
+
+    def generator_namespace(command, generate)
+      self.class.name.gsub('::Commands::', "::#{command}::").gsub('::Generate', "::#{generate}")
     end
 
     # The cursor movement
@@ -170,7 +199,7 @@ module Cnfs
     # @see http://www.rubydoc.info/gems/tty-pager
     #
     # @api public
-    def platform
+    def host
       require 'tty-platform'
       TTY::Platform.new
     end

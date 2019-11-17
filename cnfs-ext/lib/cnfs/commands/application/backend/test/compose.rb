@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Cnfs::Commands::Application
-  class Backend::Test < Cnfs::Command
-    module Compose
+  module Backend::Test::Compose
 
       def self.included(base)
+        base.include Cnfs::Commands::Compose
         base.on_execute :run_compose
       end
 
@@ -19,14 +19,14 @@ module Cnfs::Commands::Application
         # TODO: Each service has a type
         # TODO: Services need to be accessible from the backend object
         services.each do |service|
-          service_config = Cnfs.platform.application.backend.rails.settings.units.dig(service)
-          test_commands = Cnfs.platform.application.backend.rails.config.dig(:commands, :test)
+          service_config = config.platform.application.backend.rails.settings.units.dig(service)
+          test_commands = config.platform.application.backend.rails.config.dig(:commands, :test)
           cmd = ['docker-compose']
           cmd << (running_services.include?(service) ? 'exec' : 'run --rm')
           cmd << service
           test_commands.each do |command|
-            run_cmd = cmd.dup.append(command)
-            result = command(command_options).run!(run_cmd.join(' '), cmd_options)
+            run_cmd = cmd.dup.append(command).join(' ')
+            result = command(command_options).run!(run_cmd, cmd_options)
             # result = command(command_options).run!("docker-compose #{run_string} #{service} #{command}", cmd_options)
             # result = command(command_options).run!({'RAILS_ENV' => 'test'}, "docker-compose #{run_string} #{service} #{command}", cmd_options)
             next unless result.failure?
@@ -52,4 +52,4 @@ module Cnfs::Commands::Application
       end
     end
   end
-end
+# end

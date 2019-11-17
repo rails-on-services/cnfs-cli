@@ -1,0 +1,15 @@
+---
+version: '<%= compose_version %>'
+services:
+  localstack:
+    labels:
+      <%= compose_labels %>
+    image: localstack/localstack<% if env_files.size.positive? %>
+    env_file:<% env_files.each do |file| %>
+      - <%= file %><% end %><% end %>
+    ports:
+      - <%= expose_ports(4572) %>
+      - <%= expose_ports(4574) %>
+      - <%= expose_ports(4575) %>
+      - <%= expose_ports(4576) %>
+      - <%= expose_ports(8080) %>

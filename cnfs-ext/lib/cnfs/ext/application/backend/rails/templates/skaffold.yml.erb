@@ -1,0 +1,105 @@
+---
+apiVersion: <%= skaffold_version %>
+kind: Config
+build:
+  artifacts:
+  - image: <%= @service %>
+    context: <%= context_path %>
+    docker:
+      dockerfile: <%= dockerfile_path %><% if build_args %>
+      buildArgs:<% build_args.each_pair do |name, value| %>
+        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end; end %>
+        project: <%= @service %>
+  tagPolicy:
+    envTemplate:
+      template: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+  local:
+    useDockerCLI: true
+    push: true
+profiles:
+  <%- @config.profiles.each do |profile| -%>
+  <%- xname = profile.eql?('server') ? '' : "_#{profile}" -%>
+  - name: <%= profile %>
+    deploy:
+      helm:
+        releases:
+        - name: <%= @service.to_s.gsub('_', '-') %><%= xname.gsub('_', '-') %>
+          chartPath: ros/service
+          remote: true
+          # values:
+            # image: <%= @service %>
+          # imageStrategy:
+          #   helm: {}
+          wait: true
+          recreatePods: true
+          setValueTemplates:
+            replicaCount: "{{.REPLICA_COUNT}}"
+            image.tag: "{{.IMAGE_TAG}}"
+            image.repository: "{{.SKAFFOLD_DEFAULT_REPO}}/<%= @service %>"
+          overrides:
+            labels:
+              cnfs.io/platform.name: <%= platform.name %>
+              cnfs.io/platform.env: <%= platform.env %>
+              cnfs.io/platform.profile: <%= platform.profile %>
+              cnfs.io/platform.feature-set: <%= platform.feature_set %>
+              cnfs.io/platform.partition: <%= platform.partition %>
+              cnfs.io/platform.component: <%= platform.component %>
+              cnfs.io/platform.resource:  <%= platform.resource %>
+              cnfs.io/service.name: <%= @service %>
+              cnfs.io/service.profile: <%= profile %>
+              cnfs.io/service.type: <%= is_cnfs_service ? 'ros' : 'prop' %>
+            nameOverride: <%= @service.to_s.gsub('_', '-') %><%= xname.gsub('_', '-') %>
+            image:
+              pullPolicy: <%= pull_policy %>
+            imagePullSecrets:
+              - name: <%= pull_secret %>
+            app:
+              <%- if profile.eql?('server') -%>
+              command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]
+              <%- elsif profile.eql?('worker') and is_cnfs_service -%>
+              command: ["bundle", "exec", "sidekiq", "-r", "spec/dummy", "-C", "config/sidekiq.yml"]
+              <%- elsif profile.eql?('worker') and not is_cnfs_service -%>
+              command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+              <%- elsif profile.eql?('sqs_worker') -%>
+              command: ["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]
+              <%- end -%>
+              envFromSecrets:
+                <%- secrets_files.each do |name| -%>
+                - <%= name %>
+                <%- end -%>
+            <%- if profile.eql?('server') -%>
+            bootstrap:
+              enabled: true
+              command: ["bundle", "exec", "rails", "<% if is_cnfs_service %>app:<% end %>ros:db:reset", "<% if is_cnfs_service %>app:ros:<%= @service %>:<% end %>db:seed"<% if kafka_schema_registry_enabled %>, "<% if is_cnfs_service %>app:<% end %>ros:avro:register"<% end %>]
+            hook:
+              upgradeMigration:
+                enabled: true
+                command: ["bundle", "exec", "rails", "<% if is_cnfs_service %>app:<% end %>db:migrate"]
+            <%- elsif profile.eql?('worker') -%>
+            service:
+              enabled: false
+            containerPort:
+            httpProbePath:
+            bootstrap:
+              enabled: false
+            hook:
+              upgradeMigration:
+                enabled: false
+            <%- end -%>
+            metrics:
+              <%- if metrics_enabled -%>
+              enabled: true
+              <%- if profile.eql?('server') -%>
+              command: ["bundle", "exec", "prometheus_exporter", "-a", "/home/rails/<% unless is_cnfs_service %>ros/<% end %>lib/core/lib/ros/prometheus_exporter/web_collector.rb"]
+              <%- end -%>
+              <%- else -%>
+              enabled: false
+              <%- end -%>
+            resources:
+              limits:
+                cpu: 1
+                memory: 2.5Gi
+              requests:
+                cpu: 0.5
+                memory: 2Gi
+<%- end -%>
