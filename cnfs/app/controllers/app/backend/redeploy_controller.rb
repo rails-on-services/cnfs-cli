@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Cnfs::Commands::Application
-  class Backend::Redeploy < Cnfs::Command
+module App::Backend
+  class RedeployController < Cnfs::Command
 
     on_execute :execute_command
 

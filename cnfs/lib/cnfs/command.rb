@@ -8,95 +8,83 @@ module Cnfs
 
     def_delegators :command, :run
 
-    class << self
-      attr_accessor :callbacks
-
-      def callbacks; @callbacks ||= {} end
-
-      # define callback methods, e.g. :before_validate, :after_execute
-      %i[before on after].each do |lifecycle|
-        %i[validate execute finalize].each do |event|
-          lifecycle_event = [lifecycle, event].join('_').to_sym
-          define_method(lifecycle_event) do |callback_method|
-            callbacks[lifecycle_event] ||= []
-            if callbacks[lifecycle_event].include?(callback_method)
-              STDOUT.puts "WARN: '#{callback_method}' #{lifecycle_event} callback already defined"
-              return
-            end
-            callbacks[lifecycle_event].append(callback_method)
-          end
-        end
-      end
-
-      def run_callbacks(lifecycle_event, instance)
-        return unless (methods = callbacks[lifecycle_event])
-
-        methods.each do |callback_method|
-          instance.output.puts "-> [#{lifecycle_event}] Running '#{callback_method}'" if instance.options.debug > 1
-          instance.send(callback_method)
-        end
-      end
-    end
-
-    attr_accessor :params, :options, :config
+    attr_accessor :deployment, :application, :target, :runtime
+    attr_accessor :args, :options
     attr_accessor :input, :output, :errors
     attr_accessor :result, :display
 
-    def initialize(params = {}, options = Thor::CoreExt::HashWithIndifferentAccess.new, config = {})
-      @params = params
+    def initialize(deployment, args = [], options = Thor::CoreExt::HashWithIndifferentAccess.new)
+      @deployment = deployment
+      @application = deployment.application
+      @args = args
       @options = options
-      @config = OpenStruct.new(config)
       @input = $stdin
       @output = $stdout
       @errors = Cnfs::Errors.new
-      configure
     end
 
-    def configure
-      # type = deployment[:orchestrator]
-      # Include a module named Cnfs::Compose::Commands::Application::Backend::Generate
-      # mod = self.class.name.gsub('Cnfs', "cnfs/#{type}".classify)
-      # self.class.include(mod.constantize) if Object.const_defined?(mod)
-      # Include a module named Cnfs::Compose::Common
-      # mod = "cnfs/#{type}/common".classify
-      # self.class.include(mod.constantize) if Object.const_defined?(mod)
-      self.class.constants.each do |mod|
-        self.class.include("#{self.class.name}::#{mod}".constantize)
+    def each_layer
+      deployment.application.layers.each do |layer|
+        yield layer
       end
-      # binding.pry
+    end
+
+    def each_target
+      deployment.targets.each do |target|
+        configure_target(target)
+        yield target
+        configure_target
+      end
+    end
+
+    def configure_target(target = nil)
+      if target.nil?
+        @target = nil
+        @runtime = nil
+        return
+      end
+
+      @target = target
+      # Set runtime object to an instance of compose or skaffold
+      @runtime = target.runtime
+
+      # Set the runtime's cmd virtual attribute to this command
+      @runtime.cmd = self
+      # Set the runtime's virtual attributes
+      @runtime.deployment = deployment
+      @runtime.application = application
+      @runtime.target = target
+    end
+
+    def call(command = nil)
+      if command.nil?
+        execute
+        return self
+      end
+
+      binding.pry
+      # Don't pass a command from the router; This is for command chaining
+      replace_this = self.class.name.demodulize
+      with_that = "#{command.to_s.camelize}Controller"
+      cmd = self.class.name.gsub(replace_this, with_that).safe_constantize
+      cmd.new(deployment, args, options).call
     end
 
     # Execute this command
     #
     # @api public
-    def execute(command = nil)
-      # Don't pass a command from the router; This is for command chaining
-      if command
-        cmd = self.class.name.gsub(config.command.to_s, command.to_s.camelize).safe_constantize
-        return cmd.new(params, options, config.to_h.merge(command: command.to_s.camelize)).execute
-      end
-      with_callbacks {}
-      self
-    end
-
-    def with_callbacks
-      self.class.run_callbacks(:before_validate, self)
-      self.class.run_callbacks(:on_validate, self)
-      self.class.run_callbacks(:aftere_validate, self)
-      self.class.run_callbacks(:before_execute, self)
-      self.class.run_callbacks(:on_execute, self)
-      yield
-      self.class.run_callbacks(:after_execute, self)
-      self.class.run_callbacks(:before_finalize, self)
-      self.class.run_callbacks(:on_finalize, self)
-      self.class.run_callbacks(:after_finalize, self)
+    def execute
+      raise NotImplementedError
     end
 
     def generate_manifests
-      execute(:generate) if stale_config
+      # binding.pry
+      # options.merge!(target: target)
+      call(:generate) if stale_config
     end
 
     def stale_config
+      return false if config_files.empty?
       manifest_files.empty? || (last_config_file_updated > first_manifest_file_created)
       # Check template files
       # Dir["#{Ros.gem_root.join('lib/ros/be')}/**/{templates,files}/**/*"].each do |f|
@@ -109,15 +97,10 @@ module Cnfs
     end
 
     def last_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
-    def config_files; config.platform.config_files.values.flatten end
+    def config_files; Dir[Cnfs::Core.project_config_dir.join('**/*.yml')] end
 
     def first_manifest_file_created; manifest_files.map { |f| File.mtime(f) }.min end
-    def manifest_files; Dir[config.platform.path_for.join('**/*')] end
-
-    # TODO: Move these to a concern or the Cnfs::Command class
-    def generator_class; generator_name.constantize end
-
-    def generator_name; self.class.name.gsub('Cnfs::Commands', 'Cnfs::Core::Generators') end
+    def manifest_files; Dir[deployment.deploy_path.join('**/*')] end
 
     # The external commands runner
     #
@@ -150,9 +133,9 @@ module Cnfs
       hash
     end
 
-    def generator_namespace(command, generate)
-      self.class.name.gsub('::Commands::', "::#{command}::").gsub('::Generate', "::#{generate}")
-    end
+    # def generator_namespace(command, generate)
+    #   self.class.name.gsub('::Commands::', "::#{command}::").gsub('::Generate', "::#{generate}")
+    # end
 
     # The cursor movement
     #
@@ -243,5 +226,48 @@ module Cnfs
       require 'tty-which'
       TTY::Which.exist?(*args)
     end
+
+    # class << self
+    #   attr_accessor :callbacks
+
+    #   def callbacks; @callbacks ||= {} end
+
+    #   # define callback methods, e.g. :before_validate, :after_execute
+    #   %i[before on after].each do |lifecycle|
+    #     %i[validate execute finalize].each do |event|
+    #       lifecycle_event = [lifecycle, event].join('_').to_sym
+    #       define_method(lifecycle_event) do |callback_method|
+    #         callbacks[lifecycle_event] ||= []
+    #         if callbacks[lifecycle_event].include?(callback_method)
+    #           STDOUT.puts "WARN: '#{callback_method}' #{lifecycle_event} callback already defined"
+    #           return
+    #         end
+    #         callbacks[lifecycle_event].append(callback_method)
+    #       end
+    #     end
+    #   end
+
+    #   def run_callbacks(lifecycle_event, instance)
+    #     return unless (methods = callbacks[lifecycle_event])
+
+    #     methods.each do |callback_method|
+    #       instance.output.puts "-> [#{lifecycle_event}] Running '#{callback_method}'" if instance.options.debug > 1
+    #       instance.send(callback_method)
+    #     end
+    #   end
+    # end
+
+    # def with_callbacks
+    #   self.class.run_callbacks(:before_validate, self)
+    #   self.class.run_callbacks(:on_validate, self)
+    #   self.class.run_callbacks(:aftere_validate, self)
+    #   self.class.run_callbacks(:before_execute, self)
+    #   self.class.run_callbacks(:on_execute, self)
+    #   yield
+    #   self.class.run_callbacks(:after_execute, self)
+    #   self.class.run_callbacks(:before_finalize, self)
+    #   self.class.run_callbacks(:on_finalize, self)
+    #   self.class.run_callbacks(:after_finalize, self)
+    # end
   end
 end

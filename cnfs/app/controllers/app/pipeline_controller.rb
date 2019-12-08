@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
-module Cnfs
-  module Commands
-    module Application
-      class Pipeline < Thor
-      end
-    end
+module App
+  class PipelineController < Thor
   end
 end

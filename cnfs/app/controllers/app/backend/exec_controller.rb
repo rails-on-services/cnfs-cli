@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Cnfs::Commands::Application
-  class Backend::Exec < Cnfs::Command
+module App::Backend
+  class ExecController < Cnfs::Command
 
     on_execute :execute_command
 

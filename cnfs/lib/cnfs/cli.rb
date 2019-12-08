@@ -38,12 +38,14 @@ module Cnfs
       if options[:help]
         invoke :help, ['console']
       else
-        Cnfs::Commands::Console.new(options).execute
+        ConsoleController.new(options).execute
       end
     end
 
     # Load sub-commnds
-    register Cnfs::Commands::ApplicationCommand, 'application', 'application [SUBCOMMAND]', 'Run application commands'
-    register Cnfs::Commands::InfraCommand, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
+    # register Cnfs::Commands::ApplicationCommand, 'application', 'application [SUBCOMMAND]', 'Run application commands'
+    # register Cnfs::Commands::InfraCommand, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
+    register AppController, 'application', 'application [SUBCOMMAND]', 'Run application commands'
+    register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
   end
 end

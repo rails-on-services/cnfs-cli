@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Cnfs::Commands::Application
-  class Backend::Show < Cnfs::Command
+module App::Backend
+  class ShowController < Cnfs::Command
     on_execute :show_results
 
     def show_results
