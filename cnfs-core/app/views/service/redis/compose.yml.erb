@@ -1,0 +1,10 @@
+# redis/compose.yml.erb
+---
+version: '<%= version %>'
+services:
+  redis:
+    labels:
+      <%= labels %>
+    image: redis:5-alpine
+    ports:
+      - <%= expose_ports(6379) %>

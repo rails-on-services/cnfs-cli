@@ -1,0 +1,13 @@
+# config/providers.yml
+---
+localstack:
+  credentials:
+    aws_access_key_id: username
+    aws_secret_access_key: password
+  resources:
+    storage:
+      endpoint: http://localstack:4576
+      region: localstack
+    mq:
+      endpoint: http://localstack:4572
+      region: localstack

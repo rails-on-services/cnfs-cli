@@ -1,0 +1,44 @@
+# environments.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+core: &gem_core
+  <<: *DEFAULTS
+  # NOTE: values for db host, redis_url should be exposed by target
+  # NOTE: should then the target provide services like nginx/postgres/etc
+  values:
+    rails_database_host: postgres
+    # NOTE: TF can be configured to create a CNAME for RDS
+    # this CNAME would come from the infra level
+    # The deployment code could use that to set this value
+    # Same with redis url
+    # This is for production; for staging it is the values here
+    redis_url: redis://redis-master:6379
+    # NOTE: platform.infra.provider comes from target
+    platform:
+      infra:
+        # TODO: Write out the Provider.providers[:aws].credenitials.to_env
+        provider: aws
+
+production_app:
+  values:
+    platform:
+      metrics:
+        enabled: no
+        process_stats_enabled: no
+      partition_name: ros
+      request_logging:
+        enabled: yes
+        config:
+          host: fluentd
+          port: 24224
+      event_logging:
+        enabled: yes
+        config:
+          name: events-log
+          host: fluentd
+          port: 24224
+          schema_registry_url: http://kafkastack:8081
+
+<%= Cnfs::Core.project_fixture_content(__FILE__) %>

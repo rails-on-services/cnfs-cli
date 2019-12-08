@@ -1,0 +1,27 @@
+# redis/skaffold.yml.erb
+---
+apiVersion: <%= version %>
+kind: Config
+deploy:
+  helm:
+    releases:
+      - name: redis
+        chartPath: stable/redis
+        version: 8.0.18
+        remote: true
+        overrides:
+          master:
+            podLabels:
+              <%= labels(14) %>
+          usePassword: false
+          metrics:
+            enabled: true
+          cluster:
+            enabled: false
+          resources:
+            limits:
+              cpu: 1
+              memory: 1Gi
+            requests:
+              cpu: 0.2
+              memory: 0.8Gi

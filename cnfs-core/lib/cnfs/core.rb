@@ -2,14 +2,18 @@
 
 require 'cnfs/core/version'
 
-require 'zeitwerk'
+require 'active_record'
+require 'active_record/fixtures'
 require 'active_support/inflector'
 require 'active_support/string_inquirer'
-
 require 'config'
-# add instance method #to_env to Config::Options class
-require_relative '../config/options'
+require 'json_schemer'
+require 'sqlite3'
+require 'thor'
+require 'zeitwerk'
 
+# adds instance method #to_env to Config::Options class
+require_relative '../config/options'
 
 # Config.setup do |config|
 #   config.use_env = true
@@ -19,42 +23,83 @@ require_relative '../config/options'
 # end
 # require 'yaml_vault'
 
-module Cnfs
-  class << self
-    attr_accessor :platform, :settings
 
-    def platform; @platform ||= Cnfs::Core::Platform.new end
-    def settings; @settings ||= {} end
-  end
+module Cnfs
+  # class << self
+  #   attr_accessor :platform, :settings
+
+  #   def platform; @platform ||= Cnfs::Core::Platform.new end
+  #   def settings; @settings ||= {} end
+  # end
 
   module Core
     class Error < StandardError; end
 
     class << self
-      attr_accessor :autoload_dirs
+      attr_accessor :plugins, :autoload_dirs
 
-      def config_dirs
-        [gem_root.join('config'), Pathname.new(File.expand_path('config', Dir.pwd))]
+      def project_fixture_content(file)
+        ERB.new(IO.read(project_fixture(file))).result.gsub("---\n", '') if File.exist?(project_fixture(file))
       end
 
+      def project_fixture(file)
+        file.gsub(config_dir.to_s, project_config_dir.to_s)
+      end
+
+      def config_dir; gem_root.join('config') end
+      # TODO: rather than Dir.pwd should take from the Platform method that calculates project dir
+      def project_config_dir; Pathname.new(File.expand_path('cnfs_config', Dir.pwd)) end
+
+      def cnfs_project?; Dir.exist?(project_config_dir) end
+      # def config_dirs
+      #   [gem_root.join('config'), Pathname.new(File.expand_path('cnfs_config', Dir.pwd))].uniq
+      # end
+
       def gem_root; Pathname.new(File.expand_path('../../..', __FILE__)) end
+
+      def load_plugin(plugin_name)
+        lib_path = File.expand_path("../../../#{plugin_name}/lib", __dir__)
+        $:.unshift(lib_path) if !$:.include?(lib_path)
+        plugin_module = plugin_name.gsub('-', '/')
+        require plugin_module
+        plugin_class = plugin_module.camelize.constantize
+        self.autoload_dirs += plugin_class.send(:autoload_dirs) if plugin_class.respond_to?(:autoload_dirs)
+      end
+
+      def plugin_after_initialize(plugin_name)
+        plugin_class = plugin_name.gsub('-', '/').camelize.constantize
+        plugin_class.send(:after_initialize) if plugin_class.respond_to?(:after_initialize)
+      end
 
       def loader; @loader ||= Zeitwerk::Loader.new end
 
       # use Zeitwerk loader for class reloading
       def setup
+        plugins.each { |plugin| load_plugin(plugin) }
+        # Zeitwerk::Loader.default_logger = method(:puts)
         autoload_dirs.each { |dir| loader.push_dir(dir) }
+
         loader.enable_reloading
         loader.setup
+        plugins.each { |plugin| plugin_after_initialize(plugin) }
+        # Set up in-memory database
+        ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+        Cnfs::Core::Schema.create_schema
       end
 
       def reload
-        Cnfs.platform = nil
-        Cnfs.settings = nil
+        # Enable fixtures to be re-seeded on code reload
+        ActiveRecord::FixtureSet.reset_cache
+        Cnfs::Core::Schema.create_schema
         loader.reload
       end
 
-      def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib"] end # , "#{Cnfs.gem_root}/concerns", Cnfs.gem_root] end
+      # TODO: remove lib; only load app dirs; core/schema.rb should still be reloaded
+      def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
+
+      def add_plugins(list); self.plugins += list end
+
+      def plugins; @plugins ||= [] end
     end
   end
 end

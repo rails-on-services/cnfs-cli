@@ -1,0 +1,18 @@
+# runtimes.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+skaffold:
+  <<: *DEFAULTS
+  type: Runtime::Skaffold
+  config:
+    version: skaffold/v1
+
+compose:
+  <<: *DEFAULTS
+  type: Runtime::Compose
+  config:
+    version: 3.2
+
+<%= Cnfs::Core.project_fixture_content(__FILE__) %>

@@ -30,9 +30,14 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'config'
   spec.add_dependency 'pry'
   spec.add_dependency 'activesupport'
+  spec.add_dependency 'activerecord'
   spec.add_dependency 'zeitwerk'
+  spec.add_dependency 'sqlite3'
+  spec.add_dependency 'thor'
+  spec.add_dependency 'json_schemer'
 
   spec.add_development_dependency "bundler", "~> 2.0"
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  # spec.add_development_dependency "awesome_print"
 end

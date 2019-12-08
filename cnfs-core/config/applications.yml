@@ -1,0 +1,34 @@
+# applications.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+  resources:
+    buckets:
+      app:
+        services: ['documents', 'sftp']
+      cdn:
+        services: ['images']
+    cdns:
+      cdn:
+        bucket: cdn
+    endpoints:
+      grafana:
+        scheme: https
+        host: grafana
+      api:
+        scheme: https
+        host: api
+      sftp:
+        host: sftp
+
+default:
+  <<: *DEFAULTS
+  environment: production_app
+  layers: business, core, aaa, storage, support
+
+storage_app:
+  <<: *DEFAULTS
+  environment: production_app
+  layers: storage, aaa # , database
+
+<%= Cnfs::Core.project_fixture_content(__FILE__) %>

@@ -1,0 +1,61 @@
+# config/backend/services.yml
+# If type isn't specified then the type is taken from the name
+---
+rails_ros_serivce: &rails_ros_service
+  image: rails
+  # disabled: yes
+  # mount: yes
+  profiles: ['scheduler', 'server', 'worker']
+  ros: yes
+
+localstack: &localstack
+  environment:
+    services: s3:4572,lambda:4574,sns:4575,sqs:4576
+    port_web_ui: 8080
+    debug: s3
+    hostname: localstack
+    hostname_external: localstack
+
+postgres: &postgres
+  environment:
+    username: user
+    password: password
+
+development:
+  support:
+    localstack:
+      <<: *localstack
+    postgres:
+      <<: *postgres
+    nginx:
+    redis:
+    wait:
+      depends_on: ['localstack', 'postgres', 'redis']
+  core: &core
+    # account:
+    #   <<: *rails_ros_service
+    # billing:
+    #   <<: *rails_ros_service
+    cognito:
+      <<: *rails_ros_service
+    comm:
+      <<: *rails_ros_service
+    iam:
+      <<: *rails_ros_service
+    organization:
+      <<: *rails_ros_service
+    storage:
+      <<: *rails_ros_service
+      profiles: ['scheduler', 'server', 'sqs_worker', 'worker']
+
+test:
+  support:
+    localstack:
+      <<: *localstack
+    postgres:
+      <<: *postgres
+    redis:
+    wait: &wait
+      depends_on: ['localstack', 'postgres', 'redis']
+  core:
+    <<: *core

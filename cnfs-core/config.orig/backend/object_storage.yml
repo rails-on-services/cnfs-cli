@@ -1,0 +1,8 @@
+# config/backend/object_storage.yml
+---
+development:
+  buckets:
+    app:
+      services: ['documents', 'reports', 'sftp']
+    cdn:
+      services: ['images']

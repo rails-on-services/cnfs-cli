@@ -1,5 +1,0 @@
-# config/backend.yml
----
-# config:
-#   test: 1
-#   and_then: config/backend.yml

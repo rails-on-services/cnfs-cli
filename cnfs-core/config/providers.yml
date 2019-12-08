@@ -1,12 +1,41 @@
+# providers.yml
 ---
+DEFAULTS: &DEFAULTS
+  amazon: &AMAZON_DEFAULTS
+    type: Provider::Aws
+    kubernetes:
+      aws_profile: 'perx-whistler'
+      worker_groups_launch_template:
+        - name: spot_pool
+          override_instance_types: ["r5.2xlarge", "m5.2xlarge", "r5.xlarge", "m5.xlarge"]
+          spot_instance_pools: 4
+          asg_max_size: 15
+          asg_min_size: 5
+          asg_desired_capacity: 5
+          kubelet_extra_args: "--node-labels=kubernetes.io/lifecycle=spot --register-with-taints=spotInstance=true:NoSchedule"
+  alicloud: &ALICLOUD_DEFAULTS
+    name: $LABEL
+    type: Provider::Alicloud
+  azure: &AZURE_DEFAULTS
+    name: $LABEL
+    type: Provider::Azure
+  gcp: &GCP_DEFAULTS
+    name: $LABEL
+    type: Provider::Gcp
+
 localstack:
-  credentials:
-    aws_access_key_id: username
-    aws_secret_access_key: password
-  resources:
-    storage:
-      endpoint: http://localstack:4576
-      region: localstack
-    mq:
-      endpoint: http://localstack:4572
-      region: localstack
+  name: $LABEL
+  type: Provider::Aws
+  # credentials:
+  #   aws_access_key_id: username
+  #   aws_secret_access_key: password
+  environment:
+    aws_account_id: 251316246111
+  storage:
+    endpoint: http://localstack:4576
+    region: localstack
+  mq:
+    endpoint: http://localstack:4572
+    region: localstack
+
+<%= Cnfs::Core.project_fixture_content(__FILE__) %>

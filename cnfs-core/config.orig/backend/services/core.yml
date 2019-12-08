@@ -1,0 +1,21 @@
+# config/backend/services/core.yml
+---
+# account:
+#   <<: *ros_service
+# billing:
+#   <<: *ros_service
+cognito: &ros_service
+  image: rails
+  # disabled: yes
+  # mount: yes
+  profiles: ['scheduler', 'server', 'worker']
+  ros: yes
+comm:
+  <<: *ros_service
+iam:
+  <<: *ros_service
+organization:
+  <<: *ros_service
+storage:
+  <<: *ros_service
+  profiles: ['scheduler', 'server', 'sqs_worker', 'worker']

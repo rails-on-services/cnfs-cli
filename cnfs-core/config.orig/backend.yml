@@ -1,0 +1,18 @@
+# config/backend.yml
+---
+config: &config
+  image_registry: railsonservices
+
+environment: &environment
+  this: from-application
+
+rails:
+  config:
+    <<: *config
+  environment:
+    <<: *environment
+
+sftp:
+  environment:
+    <<: *environment
+fluentd: # request logging and cloud events

@@ -1,0 +1,6 @@
+# config/platform.yml
+---
+# plugins:
+#   - cnfs-ext
+config:
+  name: cnfs

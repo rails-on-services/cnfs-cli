@@ -1,0 +1,36 @@
+# config/application.yml
+---
+config:
+  image_registry: railsonservices
+  base_path: tmp
+  skaffold:
+    version: skaffold/v1
+  compose:
+    version: 3.2
+
+  # When feature_from_branch is 'yes' the deployment's endpoint is mapped to api-branch.subdomain.domain
+  # A deployment from the branch with the same name as feature_set will mapped to api.subdomain.domain
+  feature_set: master
+  # Multiple deployments can be configured by setting feature_from_branch or feature_from_tag to 'yes'
+  # When 'yes' deployments are made into the namespace taken from the branch name
+  # feature_from_branch: yes
+  # branch_regex or tag_regex should contain one and only one capture group, and the group captured will be set as feature_set
+  # branch_regex: feature\/([a-z\dA-Z-]{,19}[a-zA-Z\d])
+  feature_from_tag: yes
+  tag_regex: enable-api\.([a-z\dA-Z-]{,19}[a-zA-Z\d])
+
+  cicd:
+    circleci:
+      push_on_new_tag: true
+
+backend:
+  config:
+    partition_name: part-from-platform.yml
+
+# frontend:
+#   config:
+#     partition_name: ros
+# 
+# pipeline:
+#   config:
+#     partition_name: ros
