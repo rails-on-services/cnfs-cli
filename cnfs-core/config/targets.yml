@@ -5,63 +5,28 @@ DEFAULTS: &DEFAULTS
 
 production: &production
   <<: *DEFAULTS 
+  layers: cluster, networking
   runtime: skaffold
-  globalaccelerator:
-    hostname: "*.staging.whistler.perxtech.io"
-
-  kubernetes:
-    name: whistler-staging
-    tags:
-      environment: staging
-    services:
-      grafana:
-        configuration_overrides:
-          grafana.ini:
-            server:
-              root_url: 'https://grafana.staging.whistler.perxtech.io'
-      istio:
-        configuration_overrides:
-          gateways:
-            istio-ingressgateway:
-              serviceAnnotations:
-                external-dns.alpha.kubernetes.io/hostname: ingressgateway.staging.whistler.perxtech.io
-
-  postgres:
-    clusters:
-      default:
-        name: whistler-staging-main
-        instance_type: db.r5.large
-        replica_count: 1
-
-  redis:
-    clusters:
-      default:
-        name: whistler-staging
-        node_type: cache.r5.large
-        number_cache_clusters: 1
-
-  vpc:
-    cidr: 10.6.0.0/16
-    create_database_subnets: true
-    create_elasticache_subnets: true
-
 
 test: &test
   name: $LABEL
   runtime: compose
   provider: localstack
-  dns:
-    root_domain: localhost
 
 development_image:
   <<: *test
 
 development:
   <<: *test
+  layers: dev_cloud, dev_database
   config:
     mount: yes
+    # dns_root_domain: localhost
+    dns_root_domain: demo.cnfs.io
+    dns_sub_domain: development
   environment:
-    hello: yes
-  layers: dev_cloud, database
+    application:
+      rails_env: development
+
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

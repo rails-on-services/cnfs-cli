@@ -3,37 +3,25 @@
 module App::Backend
   class BuildController < Cnfs::Command
     def execute
-      binding.pry
-      # generate_manifests
-      with_spinner('Building...') do
-        command(command_options).run!(target.runtime.build(services), cmd_options)
+      with_selected_target do
+        before_execute_on_target
+        execute_on_target
       end
       if errors.size.positive?
         publish_results
         Kernel.exit(errors.size)
+        # TODO: process after is a method on the base controller
       elsif options.shell and args.any?
         # call(:shell, :bash)
         # target.runtime.exec(args.last, :bash)
       end
     end
 
-    # TODO: move these to the base class or a shared concern
-    def services
-      @services ||= args.any? ? args : (deployment.application.services.pluck(:name) +
-        target.services.pluck(:name)) 
+    def execute_on_target
+      with_spinner('Building...') do
+       command(command_options).run!(runtime.build(request), cmd_options)
+      end
     end
-
-    def target
-      @target ||= deployment.targets.find_by(name: options.target) || deployment.targets.first
-    end
-
-    # def layer
-    #   @layer ||= deployment.targets.find_by(name: options.layer) || layers.first
-    # end
-
-    # def layers
-    #   @layers ||= (deployment.application.layers.pluck(:name) + target.layers.pluck(:name))
-    # end
 
     def publish_results
       require 'tty-table'

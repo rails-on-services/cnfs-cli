@@ -5,40 +5,43 @@ DEFAULTS: &DEFAULTS
 
 core: &gem_core
   <<: *DEFAULTS
-  environment:
-    rails_database_host: postgres
-    # NOTE: TF can be configured to create a CNAME for RDS
-    # this CNAME would come from the infra level
-    # The deployment code could use that to set this value
-    # Same with redis url
-    # This is for production; for staging it is the values here
-    redis_url: redis://redis-master:6379
-    platform:
-      infra:
-        # TODO: Write out the Provider.providers[:aws].credenitials.to_env
-        provider: aws
-      metrics:
-        enabled: no
-        process_stats_enabled: no
-      partition_name: ros
-      request_logging:
-        enabled: yes
-        config:
-          host: fluentd
-          port: 24224
-      event_logging:
-        enabled: yes
-        config:
-          name: events-log
-          host: fluentd
-          port: 24224
-          schema_registry_url: http://kafkastack:8081
+  # environment:
+  #   rails_database_host: postgres
+  #   # NOTE: TF can be configured to create a CNAME for RDS
+  #   # this CNAME would come from the infra level
+  #   # The deployment code could use that to set this value
+  #   # Same with redis url
+  #   # This is for production; for staging it is the values here
+  #   redis_url: redis://redis-master:6379
+  #   platform:
+  #     infra:
+  #       # TODO: Write out the Provider.providers[:aws].credenitials.to_env
+  #       provider: aws
+  #     metrics:
+  #       enabled: no
+  #       process_stats_enabled: no
+  #     partition_name: ros
+  #     request_logging:
+  #       enabled: yes
+  #       config:
+  #         host: fluentd
+  #         port: 24224
+  #     event_logging:
+  #       enabled: yes
+  #       config:
+  #         name: events-log
+  #         host: fluentd
+  #         port: 24224
+  #         schema_registry_url: http://kafkastack:8081
 
 # This provides a default; Expect to override in project config
 business:
   <<: *gem_core
 
-database:
+dev_database:
+  <<: *DEFAULTS
+
+cluster_database:
   <<: *DEFAULTS
 
 aaa:
@@ -48,6 +51,18 @@ storage:
   <<: *DEFAULTS
 
 dev_cloud:
+  <<: *DEFAULTS
+
+cluster:
+  <<: *DEFAULTS
+
+networking:
+  <<: *DEFAULTS
+
+cdns:
+  <<: *DEFAULTS
+
+dns:
   <<: *DEFAULTS
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

@@ -8,15 +8,32 @@ class Target < ApplicationRecord
   has_many :target_layers
   has_many :layers, through: :target_layers
   has_many :services, through: :layers
+  has_many :resources, through: :layers
 
-  # store :environment, accessors: %i[dns], coder: YAML
+  # Used by controllers to set the deployment when running a command
+  # Set by controler#configure_target
+  attr_accessor :deployment, :application
 
-  def dns; options_hash(:dns) end
-  def globalaccelerator; options_hash(:globalaccelerator) end
-  def kubernetes; options_hash(:kubernetes) end
-  def postgres; options_hash(:postgres) end
-  def redis; options_hash(:redis) end
-  def vpc; options_hash(:vpc) end
+  store :config, accessors: %i[dns_root_domain dns_sub_domain mount], coder: YAML
+
+  delegate :version, to: :runtime
+
+  def orchestrator; runtime.name end
+
+  def provider_type_to_s
+    provider.type.underscore.split('/').last
+  end
+
+  def write_path(type = :deployment)
+    Pathname.new([deployment.base_path, type, name, deployment.name].join('/'))
+  end
+
+  # def dns; options_hash(:dns) end
+  # def globalaccelerator; options_hash(:globalaccelerator) end
+  # def kubernetes; options_hash(:kubernetes) end
+  # def postgres; options_hash(:postgres) end
+  # def redis; options_hash(:redis) end
+  # def vpc; options_hash(:vpc) end
 
   # def dns; @dns ||= Config::Options.new(YAML.load(self[:dns] || '')) end
   # def dns; @dns ||= defaults.dns.merge!(YAML.load(self[:dns] || '')) end
@@ -58,10 +75,10 @@ class Target < ApplicationRecord
   # end
 
   def domain_slug
-    @domain_slug ||= domain.gsub('.', '-')
+    @domain_slug ||= domain_name.gsub('.', '-')
   end
 
-  def domain
-    @domain ||= [dns.sub_domain, dns.root_domain].compact.join('.')
+  def domain_name
+    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
   end
 end

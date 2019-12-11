@@ -13,14 +13,13 @@ class ApplicationRecord < ActiveRecord::Base
   def validator(schema = self.class.schema); JSONSchemer.schema(schema) end
 
   def environment; options_hash(:environment) end
-  def config; options_hash(:config) end
 
   def options_hash(attr)
     @options_hash ||= {}
-    @options_hash[attr] ||= options(attr)
+    @options_hash[attr] ||= hash_options(attr)
   end
 
-  def options(attr)
+  def hash_options(attr)
     return Config::Options.new unless yaml = self[attr.to_sym]
     Config::Options.new.merge!(YAML.load(yaml))
   end

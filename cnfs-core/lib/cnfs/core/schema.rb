@@ -11,122 +11,117 @@ module Cnfs::Core
 
     # Set up database tables and columns
     def self.create_schema
-			ActiveSupport::Inflector.inflections do |inflect|
-				inflect.uncountable %w(dns kubernetes postgres redis)
-			end
+      ActiveSupport::Inflector.inflections do |inflect|
+        inflect.uncountable %w[dns kubernetes postgres redis rails]
+      end
       # old_logger = ActiveRecord::Base.logger
       # ActiveRecord::Base.logger = nil
       silence_output do
-				ActiveRecord::Schema.define do
-					create_table :deployments, force: true do |t|
-						t.references :application
-						t.string :name
-						t.string :environment
-						t.string :platform_name
-						t.string :base_path
-					end
-					Deployment.reset_column_information
+        ActiveRecord::Schema.define do
+          create_table :deployments, force: true do |t|
+            t.references :application
+            t.string :name
+            t.string :config
+            t.string :environment
+            t.text :platform_name
+          end
+          Deployment.reset_column_information
 
-					create_table :applications, force: true do |t|
-						t.string :name
-						t.string :config
-						t.references :environment
-						t.string :endpoints
-						t.string :resources
-						t.string :buckets
-						t.string :cdns
-					end
-					Application.reset_column_information
+          create_table :applications, force: true do |t|
+            t.string :name
+            t.string :config
+            t.string :environment
+            # t.references :environment
+          end
+          Application.reset_column_information
 
-					create_table :targets, force: true do |t|
-						t.references :runtime
-						t.references :provider
-						t.string :config
-						t.string :environment
-						t.string :name
+          create_table :targets, force: true do |t|
+            t.references :runtime
+            t.references :provider
+            t.string :name
+            t.string :config
+            t.string :environment
             t.boolean :sub_deploy
 
-            t.string :dns
-						t.string :globalaccelerator
-						t.string :kubernetes
-						t.string :postgres
-						t.string :redis
-						t.string :vpc
-					end
-					Target.reset_column_information
+            # t.string :dns
+            # t.string :globalaccelerator
+            # t.string :kubernetes
+            # t.string :postgres
+            # t.string :redis
+            # t.string :vpc
+          end
+          Target.reset_column_information
 
-					create_table :deployment_targets, force: true do |t|
-						t.references :deployment
-						t.references :target
-					end
-					DeploymentTarget.reset_column_information
+          create_table :deployment_targets, force: true do |t|
+            t.references :deployment
+            t.references :target
+          end
+          DeploymentTarget.reset_column_information
 
-					create_table :layers, force: true do |t|
-						t.string :config
-						t.string :environment
-						t.string :name
-					end
-					Layer.reset_column_information
+          create_table :layers, force: true do |t|
+            t.string :name
+            t.string :config
+            t.string :environment
+          end
+          Layer.reset_column_information
 
-					create_table :application_layers, force: true do |t|
-						t.references :application
-						t.references :layer
-					end
-					ApplicationLayer.reset_column_information
+          create_table :application_layers, force: true do |t|
+            t.references :application
+            t.references :layer
+          end
+          ApplicationLayer.reset_column_information
 
-					create_table :target_layers, force: true do |t|
-						t.references :target
-						t.references :layer
-					end
-					ApplicationLayer.reset_column_information
+          create_table :target_layers, force: true do |t|
+            t.references :target
+            t.references :layer
+          end
+          ApplicationLayer.reset_column_information
 
-					create_table :providers, force: true do |t|
-						t.string :type
-						t.string :config
-						t.string :environment
-						t.string :name
-						t.string :credentials
+          create_table :providers, force: true do |t|
+            t.string :name
+            t.string :config
+            t.string :environment
+            t.string :type
             t.string :kubernetes
-						t.string :storage
-						t.string :mq
-					end
-					Provider.reset_column_information
+          end
+          Provider.reset_column_information
 
-					create_table :runtimes, force: true do |t|
-						t.string :type
-						t.string :config
-						t.string :environment
-						t.string :name
-					end
-					Runtime.reset_column_information
+          create_table :runtimes, force: true do |t|
+            t.string :name
+            t.string :config
+            t.string :environment
+            t.string :type
+          end
+          Runtime.reset_column_information
 
-					create_table :environments, force: true do |t|
-						t.string :name
-						t.string :values
+          create_table :environments, force: true do |t|
+            t.string :name
+            t.string :values
             # t.references :owner, polymorphic: true
-					end
-					Environment.reset_column_information
+          end
+          Environment.reset_column_information
 
-					# create_table :application_resources, force: true do |t|
-					# 	t.references :application
-					# 	t.references :resource
-					# end
-					# ApplicationResource.reset_column_information
+          create_table :resources, force: true do |t|
+            t.references :layer
+            t.string :name
+            t.string :config
+            t.string :environment
+            t.string :type
+          end
+          Resource.reset_column_information
 
-					# Application::Service.joins(:layer).select(:name, 'application_layers.name as layer_name')'
-					create_table :services, force: true do |t|
-						t.references :layer
-						t.string :type
-						t.string :config
-						t.string :environment
-						t.string :name
-						t.string :profiles
-						t.boolean :ros
-					end
-					Service.reset_column_information
-				end
+          # Application::Service.joins(:layer).select(:name, 'application_layers.name as layer_name')'
+          create_table :services, force: true do |t|
+            t.references :layer
+            t.string :name
+            t.string :config
+            t.string :environment
+            t.string :type
+          end
+          Service.reset_column_information
+        end
 
-				load_data
+        load_data
         # ActiveRecord::Base.logger = old_logger
       end
     end

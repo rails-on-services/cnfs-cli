@@ -3,12 +3,19 @@
 class DeploymentGenerator < GeneratorBase
   attr_accessor :force
 
-  def generate
+  def env
+    template('env.erb', "#{target.write_path}/deployment.env") unless environment.empty?
+  end
+
+  def manifests
     @force = false
-    deployment.targets.each do |target|
-      write_path = [deployment.base_path, target.name, deployment.name].join('/')
-      call('TargetGenerator', "#{write_path}/infra", target)
-      call('ApplicationGenerator', "#{write_path}/app", target)
-    end
+    call(:application, "#{target.write_path}/application", target)
+    call(:target, "#{target.write_path}/target", target)
+  end
+
+  private
+
+  def environment
+    deployment.environment.self || {}
   end
 end

@@ -9,7 +9,7 @@ module Cnfs
     def_delegators :command, :run
 
     attr_accessor :deployment, :application, :target, :runtime
-    attr_accessor :args, :options
+    attr_accessor :args, :options, :request
     attr_accessor :input, :output, :errors
     attr_accessor :result, :display
 
@@ -29,8 +29,16 @@ module Cnfs
       end
     end
 
+    def with_selected_target
+      target = deployment.targets.find_by(name: options.target) || deployment.targets.first
+      configure_target(target)
+      yield
+      configure_target
+    end
+
     def each_target
-      deployment.targets.each do |target|
+      targets = options.target ? deployment.targets.where(name: options.target) : deployment.targets
+      targets.each do |target|
         configure_target(target)
         yield target
         configure_target
@@ -40,19 +48,24 @@ module Cnfs
     def configure_target(target = nil)
       if target.nil?
         @target = nil
+        @request = nil
         @runtime = nil
         return
       end
 
       @target = target
+      @target.deployment = deployment
+      @target.application = application
+
+      @request = Request.new(deployment, target, args, options)
+
       # Set runtime object to an instance of compose or skaffold
       @runtime = target.runtime
-
-      # Set the runtime's cmd virtual attribute to this command
-      @runtime.cmd = self
-      # Set the runtime's virtual attributes
-      @runtime.deployment = deployment
-      @runtime.application = application
+      # Set the runtime's controller virtual attribute to this command
+      # so the runtime can access the command method, options, etc
+      @runtime.controller = self
+      # Set the runtime's target virtual attribute to the current target
+      # Runtime methods are called directly and some values are dependent upon the current target
       @runtime.target = target
     end
 
@@ -62,12 +75,14 @@ module Cnfs
         return self
       end
 
-      binding.pry
+      # binding.pry
       # Don't pass a command from the router; This is for command chaining
       replace_this = self.class.name.demodulize
       with_that = "#{command.to_s.camelize}Controller"
-      cmd = self.class.name.gsub(replace_this, with_that).safe_constantize
-      cmd.new(deployment, args, options).call
+      controller_class = self.class.name.gsub(replace_this, with_that).safe_constantize
+      controller = controller_class.new(deployment, args, options)
+      controller.configure_target(target)
+      controller.execute_on_target
     end
 
     # Execute this command
@@ -77,13 +92,22 @@ module Cnfs
       raise NotImplementedError
     end
 
-    def generate_manifests
-      # binding.pry
-      # options.merge!(target: target)
-      call(:generate) if stale_config
+    def post_start_options
+      if options.attach
+        call(:attach)
+      elsif options.shell
+        call(:shell)
+      elsif options.console
+        call(:console)
+      end
     end
 
-    def stale_config
+    def before_execute_on_target
+      runtime.before_execute_on_target
+      call(:generate) if stale_config?
+    end
+
+    def stale_config?
       return false if config_files.empty?
       manifest_files.empty? || (last_config_file_updated > first_manifest_file_created)
       # Check template files
@@ -100,7 +124,7 @@ module Cnfs
     def config_files; Dir[Cnfs::Core.project_config_dir.join('**/*.yml')] end
 
     def first_manifest_file_created; manifest_files.map { |f| File.mtime(f) }.min end
-    def manifest_files; Dir[deployment.deploy_path.join('**/*')] end
+    def manifest_files; Dir[target.write_path.join('**/*')] end
 
     # The external commands runner
     #

@@ -8,6 +8,7 @@ require 'active_support/inflector'
 require 'active_support/string_inquirer'
 require 'config'
 require 'json_schemer'
+require 'lockbox'
 require 'sqlite3'
 require 'thor'
 require 'zeitwerk'
@@ -56,6 +57,16 @@ module Cnfs
       # end
 
       def gem_root; Pathname.new(File.expand_path('../../..', __FILE__)) end
+
+      def encrypt(value); box.encrypt(value).to_yaml.gsub("--- !binary |-\n  ", '').chomp end
+
+      def decrypt(value)
+        box.decrypt(YAML.load("--- !binary |-\n  #{value}\n"))
+      rescue Lockbox::DecryptionError
+        nil
+      end
+
+      def box; @box ||= Lockbox.new(key: ENV['CNFS_MASTER_KEY']) end
 
       def load_plugin(plugin_name)
         lib_path = File.expand_path("../../../#{plugin_name}/lib", __dir__)

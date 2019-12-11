@@ -8,8 +8,8 @@ services:
     image: railsonservices/sftp<% if depends_on.size.positive? %>
     depends_on:<% depends_on.each do |dependency| %>
       - <%= dependency %><% end %><% end %><% if env_files.size.positive? %>
-    env_file:<% env_files.each do |file| %>
-      - <%= file %><% end %><% end %>
+    env_file:
+      - <%= env_files %><% end %>
     privileged: true
     ports:
       - '2222:22'

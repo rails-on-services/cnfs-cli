@@ -2,45 +2,34 @@
 
 module App
   class BackendController < ApplicationController
-    # attr_accessor :platform
     # namespace 'application backend' #:backend
     class_option :verbose, type: :boolean, default: false, aliases: '-v'
     class_option :debug, type: :numeric, default: 0, aliases: '--debug'
     class_option :deployment, type: :string, aliases: '-d'
     class_option :target, type: :string, aliases: '-t'
     class_option :layer, type: :string, aliases: '-l'
+    class_option :noop, type: :boolean, aliases: '-n'
 
     # class_option :environment, type: :string, default: nil, aliases: '-e', desc: 'Environment'
     # class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'
     # class_option :feature_set, type: :string, default: nil, aliases: '--fs', desc: 'feature set'
 
     desc 'attach SERVICE', 'attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
-    # attach(name, target = nil)
-    def attach(*args)
-      run(:attach, args)
-    end
+    def attach(*args); run(:attach, args) end
 
     desc 'build IMAGE', 'build one or all images'
     option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
-    def build(*args)
-      run(:build, args)
-    end
+    def build(*args); run(:build, args) end
 
     desc 'cmd', 'Run arbitrary command in context'
-    def cmd(*args) #, target = nil)
-      run(:cmd, args)
-    end
+    def cmd(*args); run(:cmd, args) end
 
     desc 'copy', 'Copy file to service'
-    # copy(service, src, dest = nil)
-    def copy(*args)
-      run(:copy, args)
-    end
+    def copy(*args); run(:copy, args) end
 
     desc 'credentials', 'show iam credentials'
-    def credentials
-      run(:credentials, args)
-    end
+    option :format, type: :string, aliases: '-f'
+    def credentials; run(:credentials, args) end
 
     desc 'deploy', 'Deploy backend application to infrastructure targets'
     method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
@@ -49,35 +38,25 @@ module App
     option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
     option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background'
     option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-    def deploy(*args)
-      run(:deploy, args)
-      # if options[:help]
-      #   invoke :help, ['deploy']
-      # else
-      # Deploy.new(services, options).execute
-      # end
-    end
+    def deploy(*args); run(:deploy, args) end
 
     desc 'destroy', 'Remove backend application from target infrastructure'
     method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
-    def destroy # (name)
+    def destroy(*args)
       if options[:help]
         invoke :help, ['destroy']
       else
         # TODO: are you sure?
-        Destroy.new(options).execute
+        run(:destroy, args)
       end
     end
 
-    desc 'exec SERVICE COMMAND', 'execute an interactive command on a service (short-cut alias: "e")'
-    def exec(service, cmd)
-    end
+    desc 'exec SERVICE COMMAND', 'execute a command on a service'
+    def exec(*args); run(:exec, args) end
 
     desc 'generate', 'Generate manifests for deployment'
     # option :force, type: :boolean, default: false, aliases: '-f'
-    def generate(*args)
-      run(:generate, args)
-    end
+    def generate(*args); run(:generate, args) end
 
     # desc 'init', 'Initialize a project environment'
     # def init
@@ -89,34 +68,17 @@ module App
     option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
     map %w(ls) => :list
     def list(what = 'deployments')
-      what = "infra/#{what}" if %w[targets runtimes].include? what
-      what = "app/#{what}" if %w[layers services].include? what
-      if what.eql?('deployments')
-        require 'tty-tree'
-        data = Deployment.all.each_with_object({}) do |d, hash|
-          hash[d.name] = [ { targets: [ d.targets.pluck(:name) ], application: [ { layers: d.application.layers.pluck(:name) }] } ]
-        end
-        STDOUT.puts(TTY::Tree.new(data).render)
-      else
-        STDOUT.puts what.classify.safe_constantize.all.pluck(:name).sort
-      end
+      run(:list, what)
     end
 
     desc 'logs', 'Tail logs of a running service'
     option :tail, type: :boolean, aliases: '-f'
-    def logs(*args)
-      run(:logs, args)
-    end
+    def logs(*args); run(:logs, args) end
 
     desc 'ps', 'List running services'
-    option :status, type: :string, default: 'running', aliases: '-s'
-    def ps(*args)
-      if options[:help]
-        invoke :help, ['ps']
-      else
-        run(:ps, args)
-      end
-    end
+    option :format, type: :string, aliases: '-f'
+    option :status, type: :string, aliases: '-s'
+    def ps(*args); run(:ps, args) end
 
     desc 'publish', 'Publish API documentation to Postman'
     option :force, type: :boolean, aliases: '-f', desc: 'Force generation of new documentation'
@@ -125,12 +87,10 @@ module App
     end
 
     desc 'pull IMAGE', 'push one or all images'
-    def pull(*services)
-    end
+    def pull(*args); run(:pull, args) end
 
     desc 'push IMAGE', 'push one or all images'
-    def push(*services)
-    end
+    def push(*args); run(:push, args) end
 
 =begin
     desc 'xdeploy API', 'deploy to UAT at an endpoint'
@@ -196,59 +156,53 @@ module App
     end
 
     desc 'restart SERVICE', 'Start and stop one or more services'
-    option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
-    option :console, type: :boolean, aliases: '-c', desc: 'Connect to service console after starting'
-    option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background (default, does noting)'
-    option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-    option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-    def restart(*services)
+    option :attach, type: :boolean, aliases: '-a', desc: 'Attach to service after executing command'
+    option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing command'
+    option :console, type: :boolean, aliases: '-c', desc: 'Connect to service console after executing command'
+    option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
+    option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before executing command'
+    option :shell, type: :boolean, aliases: '-s', desc: 'Connect to service shell after executing command'
+    def restart(*args)
+      run(:restart, args)
     end
 
     desc 'sh SERVICE', 'execute an interactive shell on a service'
     # NOTE: shell is a reserved word in Thor so it can't be used
     option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
     def sh(*args)
+      validate_one_service(args)
       run(:shell, args)
-      # Sh.new(options, { service: service }, platform, :noop, { orchestrator: :compose }).execute
     end
 
     desc 'show', 'show service config'
+    class_option :modifier, type: :string, aliases: '-m'
     def show(*args)
+      validate_one_service(args)
       run(:show, args)
-      # execute_on_each_deployment(Show, service: service) {}
     end
 
     desc 'start', 'Start a layer or service'
-    def start(*args)
-      run(:start, args)
-    end
+    option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
+    def start(*args); run(:start, args) end
 
     desc 'status', 'Show platform services status'
-    # status(deployment_name = nil)
-    def status(*args)
-      run(:status, args)
-    end
+    def status(*args) run(:status, args) end
 
     desc 'stop SERVICE', 'Stop a service'
-    def stop(*args)
-      run(:stop, args)
-    end
+    def stop(*args); run(:stop, args) end
 
     desc 'test IMAGE', 'Run tests on image(s)'
     option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'
     option :fail_all, type: :boolean, aliases: '-a', desc: 'Skip any remaining services after a test fails'
     option :fail_fast, type: :boolean, aliases: '-f', desc: 'Skip any remaining tests for a service after a test fails'
     option :push, type: :boolean, desc: 'Push image after successful testing'
-    # test(*services)
-    def test(*args)
-      # run(nil, :test, services: services)
-      run(:test, args)
-    end
+    def test(*args); run(:test, args) end
 
-    # desc 'zed IMAGE', 'Run tests on image(s)'
-    # def zed(*args)
-    #   run(:zed, args)
-    # end
+    private
+
+    def validate_one_service(args)
+      raise Error, set_color('one service name is required', :red) unless args.size.eql?(1)
+    end
 
 =begin
     def preflight_check(fix: false)

@@ -1,7 +1,6 @@
 # rails/compose.yml.erb
 ---
 version: '<%= version %>'
-<%# binding.pry %>
 services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server') ? '' : "_#{profile}" %>
   <%= service.name %><%= xname %>:
     labels:
@@ -10,9 +9,9 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
     image: "${IMAGE_REPOSITORY}/<%= service.name %>:${IMAGE_TAG}"<% if profile.eql?('server') %>
     command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]<% elsif profile.eql?('worker') %>
     command: ["bundle", "exec", "sidekiq",<% if is_cnfs_service %> "-r", "spec/dummy",<% end %> "-C", "config/sidekiq.yml"]<% elsif profile.eql?('sqs_worker') %>
-    command: ["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]<% end %>
-    env_file:<% env_files.each do |env_file| %>
-      - <%= env_file %><% end %>
+    command: ["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]<% end %><% if env_files.size.positive? %>
+    env_file:
+      - <%= env_files %><% end %>
     depends_on:
       - wait
     tty: true
@@ -37,7 +36,7 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
       - type: bind
         source: "${ROS_CONTEXT_DIR}/lib"
         target: "/home/rails/ros/lib"
-        consistency: consistent<% end %><% end %>
+        consistency: consistent<% end %><% end %><% if profile.eql?('server') %>
     build:
       context: "${<%= context_dir %>}"
       args:<% build_args.each_pair do |name, value| %>
@@ -45,5 +44,5 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
         project: <%= service.name %>
         GEM_SERVER: "${GEM_SERVER:-https://rubygems.org}"
         PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"
+        PGID: "${PGID:-1000}"<% end %>
 <% end %>

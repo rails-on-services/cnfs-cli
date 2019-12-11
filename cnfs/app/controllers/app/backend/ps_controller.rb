@@ -2,27 +2,29 @@
 
 module App::Backend
   class PsController < Cnfs::Command
-
     def execute
-      # TODO: get target code into base class
-      output.puts target.runtime.services
-      execute(:status) if options.verbose
+      with_selected_target do
+        before_execute_on_target
+        execute_on_target
+      end
     end
 
-    def get_services
-      # created, restarting, running, removing, paused, exited, or dead
-      @display = target.runtime.services(status: options.status || :running) # status: :exited)
+    def execute_on_target
+      output.puts runtime.services(format: format, status: status)
     end
 
-    def show_results
-      # output.puts runtime.services(status: :running)
-      # output.puts runtime.services(format: "table {{.ID}}\t{{.Mounts}}", status: :running)
-      # output.puts runtime.services(format: nil, status: :exited)
-      output.puts runtime.services # (format: nil, status: :exited)
-      # output.puts(display)
+    # TODO: format and status are specific to the runtime so refactor when implementing skaffold
+    def format
+      return nil unless options.format
 
-      # next_command(:status).new(params, options, config.to_h.merge(command: 'Status')).execute if options.status
-      execute(:status) if options.verbose
+      if options.format.eql?('mounts')
+        "table {{.ID}}\t{{.Mounts}}"
+      end
+    end
+
+    # created, restarting, running, removing, paused, exited, or dead
+    def status
+      options.status || :running
     end
   end
 end

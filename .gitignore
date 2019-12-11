@@ -10,7 +10,7 @@
 # rspec failure tracking
 **.rspec_status
 
-a.rb
-app
-cnfs-core-orig/
+cnfs-core.orig/
 cnfs-orig/
+# cnfs-core/config.orig
+./app/

@@ -26,16 +26,22 @@ DEFAULTS: &DEFAULTS
 localstack:
   name: $LABEL
   type: Provider::Aws
-  # credentials:
-  #   aws_access_key_id: username
-  #   aws_secret_access_key: password
+  config:
+    credentials:
+      aws_access_key_id: 1LCDE/udAJWIsU/3No34RCcQvCvJ0pQ0qorJbbtQqaDnaXQKVC5TTdJdzxZCgG90
+      aws_secret_access_key: BzGkgBy5tpHDlDduhiU8FKgAXe9hZwwHcm2AUuL1v1rSM082pj7yg3Mt7MJPHM0D5bWgLze8g9UctNUDSn+Iax+KEWM=
+      aws_account_id: BdTq5YFpK9oOTFp7aLo35L0XGQCJaMrvN2rE0PxHLIjWkbcsDjRN5Q==
+      aws_default_region: saMpsXvaiVL9jxWMjaSKMtG3gUeUdb0MwcnJ4hffV7+ePgBvlrgHoo3+
+    # credentials:
+    #   aws_access_key_id: username
+    #   aws_secret_access_key: password
+    storage:
+      endpoint: http://localstack:4576
+      region: localstack
+    mq:
+      endpoint: http://localstack:4572
+      region: localstack
   environment:
     aws_account_id: 251316246111
-  storage:
-    endpoint: http://localstack:4576
-    region: localstack
-  mq:
-    endpoint: http://localstack:4572
-    region: localstack
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

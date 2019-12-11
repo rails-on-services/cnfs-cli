@@ -3,22 +3,22 @@
 class TargetGenerator < GeneratorBase
   def env
     empty_directory(write_path)
-    template('env.erb', "#{write_path}/infra.env")
-    # @environment = deployment.environment.merge!(deployment.application.environment.values.to_hash).merge!(
-    #   target.environment.to_hash) # .merge!(target.runtime.to_hash)
-    # template('env.erb', "#{write_path}/application.env") if environment and not environment.to_env.empty?
+    template('env.erb', "#{write_path}/infra.env") unless environment.empty?
   end
 
-  def targets
+  def layers
     target.layers.each do |layer|
-      call('LayerGenerator', "#{write_path}/#{layer.name}", target, layer)
+      call(:layer, "#{write_path}/#{layer.name}", target, layer, :target)
     end
+  end
+
+  def runtime
+    call(target.runtime.type.underscore, write_path.to_s.gsub('deployments', 'runtime'), target)
   end
 
   private
 
-  def environment; target.environment; end
-
-  # def name; object.name; end
-  # def class_name; object.class.name.underscore.gsub('/', '-'); end
+  def environment
+    target.environment.self || {}
+  end
 end

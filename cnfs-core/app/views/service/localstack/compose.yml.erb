@@ -6,8 +6,8 @@ services:
     labels:
       <%= labels %>
     image: localstack/localstack<% if env_files.size.positive? %>
-    env_file:<% env_files.each do |file| %>
-      - <%= file %><% end %><% end %>
+    env_file:
+      - <%= env_files %><% end %>
     ports:
       - <%= expose_ports(4572) %>
       - <%= expose_ports(4574) %>

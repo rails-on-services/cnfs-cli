@@ -6,4 +6,5 @@ class Layer < ApplicationRecord
   has_many :target_layers
   has_many :targets, through: :target_layers
   has_many :services
+  has_many :resources
 end

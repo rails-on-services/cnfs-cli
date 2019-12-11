@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Application has_many :layers
 # Layer has_many :services
 # The cluster uat app will have the support layer (pg, redis, etc)
@@ -10,11 +11,14 @@ class Deployment < ApplicationRecord
   has_many :deployment_targets
   has_many :targets, through: :deployment_targets
 
+  store :config, accessors: %i[base_path image_environment], coder: YAML
+
   validates :base_path, presence: true
   validates :name, presence: true
 
-  def root; Pathname.new(Dir.pwd) end
   def deploy_path; root.join(base_path) end
+
+  def root; Pathname.new(Dir.pwd) end
 
 =begin
   def registry_secret_name; "registry-#{config.image_registry}" end

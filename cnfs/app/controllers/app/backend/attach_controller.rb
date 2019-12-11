@@ -2,11 +2,16 @@
 
 module App::Backend
   class AttachController < Cnfs::Command
+    def execute
+      with_selected_target do
+        before_execute_on_target
+        call(:build) if options.build
+        exectue_on_target
+      end
+    end
 
-    on_execute :execute_command
-
-    def execute_command
-      binding.pry
+    def execute_on_target
+      runtime.attach(request)
     end
   end
 end

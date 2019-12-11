@@ -2,22 +2,23 @@
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
-  base_path: cnfs_tmp
-  platform_name: whistler
 
-default:
+default: &default
   <<: *DEFAULTS 
   application: default
   targets: development
+  # targets: development, test
+  config:
+    base_path: cnfs_tmp
+    image_environment: development
 
 local_storage:
-  <<: *DEFAULTS 
+  <<: *default
   application: storage_app
   targets: development
 
 cicd:
-  <<: *DEFAULTS 
-  application: default
+  <<: *default
   targets: test
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>
