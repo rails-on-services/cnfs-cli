@@ -55,7 +55,7 @@ module Infra
     end
 
     def resource_to_template(res = resource)
-      return res.name unless (type = res.type)
+      return res.template || res.name unless (type = res.type)
       key = type.demodulize.underscore.to_sym 
       {
         bucket: :s3,

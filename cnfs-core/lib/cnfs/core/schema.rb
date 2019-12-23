@@ -107,7 +107,7 @@ module Cnfs::Core
             t.string :config
             t.string :environment
             t.string :type
-            t.string :col1
+            t.string :template
           end
           Resource.reset_column_information
 
