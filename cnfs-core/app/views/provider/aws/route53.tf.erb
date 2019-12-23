@@ -3,18 +3,17 @@
 @module_name = :route53
 def defaults
   {
-    source: 'rails-on-services/route53/aws'
+    source: 'rails-on-services/route53/aws',
+    root_domain: target.domain_name
+    # sub_domain: target.sub_domain
   }
 end
 -%>
-module "route53" {
-<%= render_attributes(defaults(resource.config) ).join("\n") %>
 
-  root_domain                    = "<%= dns.root_domain %>"
-  sub_domain                     = "<%= dns.sub_domain %>"
-  root_domain_managed_in_route53 = <%= dns.root_domain_managed_in_route53 %>
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
 }
 
-output "route53" {
+output "<%= title %>" {
   value = module.route53.<%= output_type %>
 }

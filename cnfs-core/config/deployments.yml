@@ -6,7 +6,8 @@ DEFAULTS: &DEFAULTS
 default: &default
   <<: *DEFAULTS 
   application: default
-  targets: development
+  # targets: development
+  targets: infra-testing
   # targets: development, test
   config:
     base_path: cnfs_tmp

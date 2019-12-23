@@ -20,6 +20,11 @@ cdn_bucket:
   environment:
     services: ['images']
 
+dns:
+  <<: *DEFAULTS
+  template: route53
+  layer: cloud_networking
+
 image_cdn:
   # <<: *DEFAULTS 
   # layer: cdns

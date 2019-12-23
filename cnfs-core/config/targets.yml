@@ -34,5 +34,22 @@ development:
     application:
       rails_env: development
 
+infra-testing:
+  <<: *test
+  layers: cloud_networking, dev_cluster
+  provider: localstack
+  tf_config:
+    tags:
+      environment: staging
+  config:
+    # mount: yes
+    # dns_root_domain: localhost
+    dns_root_domain: infra-testing.perxtech.io
+    dns_sub_domain: development
+    root_domain_managed_in_route53: yes
+    lb_dns_hostnames: ['api']
+  environment:
+    application:
+      rails_env: development
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

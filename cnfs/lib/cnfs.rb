@@ -43,7 +43,7 @@ module Cnfs
           STDOUT.puts('WARN: not a cnfs project')
           return
         end
-        Cnfs::Core.add_plugins(%w[cnfs cnfs-ext])
+        Cnfs::Core.add_plugins(%w[cnfs])
         Cnfs::Core.setup
       end
 
