@@ -4,7 +4,8 @@
 def defaults
   {
     source: 'rails-on-services/route53/aws',
-    root_domain: target.domain_name
+    root_domain: target.domain_name,
+    root_domain_managed_in_route53: target.root_domain_managed_in_route53
     # sub_domain: target.sub_domain
   }
 end
