@@ -18,6 +18,12 @@ DEFAULTS: &DEFAULTS
 aws_sg:
   <<: *AMAZON_DEFAULTS
 
+biq_query:
+  name: $LABEL
+  type: Provider::Gcp
+  config:
+    service_account_key: PgUbh6xSff/wsLUkd6Yp0FFGZn630K1BxNL6eLJ4g+eURAyqvJgZKR+0Lf9G
+
 localstack:
   name: $LABEL
   type: Provider::Aws

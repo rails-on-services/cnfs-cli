@@ -1,22 +1,22 @@
-# Cloudfront S3
+# Cloudfront
 <%-
-def defaults(config)
+@module_name = :cloudfront
+def defaults
   {
     source: 'rails-on-services/cloudfront-s3/aws',
+    bucket: resource.name,
+    postfix: target.domain_slug,
+    hostname: resource.name,
+    domain_name: target.domain_name,
     create_acm_certificate: true,
     add_route53_record: true,
     aws_profile: target.provider.profile
-  }.merge(config)
+  }
 end
 -%>
 
-module "cloudfront-s3" {
-<%= render_attributes(defaults(config)).join("\n") %>
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
 
-<% if false %>
-  s3_bucket_name         = "${replace(replace("<%= infra.components.cdn.components.cdn.url %>", "https://", ""), ".", "-")}"
-  cloudfront_cname       = "${replace("<%= infra.components.cdn.components.cdn.url %>", "https://", "")}"
-<% end -%>
   route53_zone_id        = module.route53.this.zone_id
-  tags                   = var.tags
 }

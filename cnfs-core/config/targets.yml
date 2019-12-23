@@ -20,6 +20,9 @@ development:
   <<: *test
   layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
   # provider: aws_sg
+  tf_config:
+    tags:
+      environment: staging
   config:
     mount: yes
     # dns_root_domain: localhost

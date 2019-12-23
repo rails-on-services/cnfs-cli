@@ -40,6 +40,7 @@ module Cnfs::Core
             t.references :provider
             t.string :name
             t.string :config
+            t.string :tf_config
             t.string :environment
             t.boolean :namespaces
 

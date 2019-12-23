@@ -1,6 +1,7 @@
 # RDS Aurora
 <%-
-def defaults(config)
+@module_name = :rds
+def defaults
   {
     source: 'terraform-aws-modules/rds-aurora/aws',
     version: '~> 2.9.0',
@@ -15,21 +16,20 @@ def defaults(config)
     monitoring_interval: 10,
     db_cluster_parameter_group_name: 'default.aurora-postgresql10',
     db_parameter_group_name: 'default.aurora-postgresql10'
-  }.merge(config)
+  }
 end
 -%>
 <%- resource.clusters.each do |key, config| -%>
 
-module "rds-<%= key %>" {
-<%= render_attributes(defaults(config)).join("\n") %>
+module "<%= title key %>" {
+<%= render_config(defaults, resource_config: config).join("\n") %>
 
   allowed_security_groups         = [module.vpc.default_security_group_id]
   subnets                         = module.vpc.database_subnets
-  tags                            = var.tags
   vpc_id                          = module.vpc.vpc_id
 }
 
-output "rds-<%= key %>" {
-  value = module.rds-<%= key %>
+output "<%= title key %>" {
+  value = module.<%= title key %>.this
 }
 <% end -%>

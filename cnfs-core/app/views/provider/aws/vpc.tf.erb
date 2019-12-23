@@ -3,6 +3,7 @@
 def defaults(config)
   basic = {
     source: 'terraform-aws-modules/vpc/aws',
+    tags: target.tags,
     version: '~> 2.18.0'
   }.merge(config)
   k8s = {

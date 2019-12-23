@@ -1,15 +1,17 @@
 # AWS SES
 <%-
-def defaults(config)
+@module_name = :ses
+def defaults
   {
     source: 'rails-on-services/ses/aws',
     domain_name: target.domain_name,
     aws_profile: target.provider.profile
-  }.merge(config)
+  }
 end
 -%>
-module "ses" {
-<%= render_attributes(defaults(config)).join("\n") %>
+
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
 
   route53_zone_id = module.route53.this.zone_id
 }

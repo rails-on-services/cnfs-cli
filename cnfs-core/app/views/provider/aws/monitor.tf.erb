@@ -1,14 +1,18 @@
 # Cluster monitoring
 <%-
-def defaults(config)
+@module_name = 'monitor'
+def defaults
   {
     source: 'rails-on-services/monitor/k8s',
-    version: '>= 0.0.4'
-  }.merge(config)
+    version: '>= 0.0.4',
+    grafana_host: 'grafana',
+    grafana_endpoint: target.domain_name
+  }
 end
 -%>
-module "monitor" {
-<%= render_attributes(defaults(resource.config)).join("\n") %>
+
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
 
 <%- if false %>
   namespace                    = "<%= infra.components.kubernetes.components.services.components.grafana.config.namespace %>"
@@ -16,7 +20,6 @@ module "monitor" {
   grafana_endpoint             = "<%= infra.components.dns.config.endpoints&.grafana.nil? ? "grafana" : infra.components.dns.config.endpoints.grafana %>.${local.domain_name}"
   grafana_user                 = "<%= infra.components.kubernetes.components.services.components.grafana&.config&.username.nil? ? "" : infra.components.kubernetes.components.services.components.grafana.config.username %>"
   grafana_password             = "<%= infra.components.kubernetes.components.services.components.grafana&.config&.password.nil? ? "" : infra.components.kubernetes.components.services.components.grafana.config.password %>"
-  helm_configuration_overrides = var.helm_configuration_overrides
-  monitor_depends_on           = module.eks-resources
 <%- end %>
+  monitor_depends_on           = module.eks-resources
 }

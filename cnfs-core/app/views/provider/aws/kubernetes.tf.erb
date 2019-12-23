@@ -55,18 +55,6 @@ provider "k8sraw" {
 }
 
 # Variables
-variable "tags" {
-  default = {}
-}
-
-variable "eks_worker_groups" {
-  default = []
-}
-
-variable "eks_worker_groups_launch_template" {
-  default = []
-}
-
 variable "fluentd_gcp_logging_service_account_json_key" {
   default = ""
 }
@@ -75,20 +63,6 @@ variable "helm_configuration_overrides" {
   default = {}
 }
 
-<%- if false -%>
-# Locals
-locals {
-  iam_name         = "<%= infra.components.iam&.config&.name.nil? ? infra.config.cluster.name : infra.components.iam.config.name %>"
-  tags             = var.tags
-  s3_buckets       = [
-    <%- unless infra.components.object_storage&.components.nil? -%>
-     <%- infra.components.object_storage.components.each do |bucket, config| -%>
-    "<%= bucket %>-${replace(local.domain_name, ".", "-")}",
-    <%- end -%>
-    <%- end -%>
-  ]
-}
-<% end %>
 
 # VPC
 data "aws_availability_zones" "available" {
@@ -98,16 +72,17 @@ data "aws_availability_zones" "available" {
 
 # EKS cluster
 <%-
-def defaults(config)
+@module_name = 'eks-cluster'
+def defaults
   {
-    source: 'rails-on-services/eks-cluster/aws'
-  }.merge(config)
+    source: 'rails-on-services/eks-cluster/aws',
+    cluster_name: resource.name
+  }
 end
 -%>
-module "eks-cluster" {
-<%= render_attributes(defaults(resource.config)).join("\n") %>
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
 
-  cluster_name              = local.cluster_name
   vpc_id                    = module.vpc.vpc_id
   public_subnets            = module.vpc.public_subnets
   private_subnets           = module.vpc.private_subnets
@@ -128,10 +103,9 @@ module "eks-cluster" {
     data.template_file.aws_iam_policy_document_s3[*].rendered,
     data.template_file.aws_iam_policy_document_cloudwatch[*].rendered
   )
-  tags               = var.tags
 }
 
-output "eks" {
+output "<%= title %>" {
   value = module.eks-cluster.this
 }
 
@@ -139,12 +113,13 @@ output "eks" {
 # Temporary comment both `depends_on` if weird cycle error raised during `apply`
 data "aws_eks_cluster" "cluster" {
   # depends_on = [module.eks-cluster]
-  name = local.cluster_name
+  name = "<%= resource.name %>"
 }
 
 data "aws_eks_cluster_auth" "cluster-auth" {
   # depends_on = [module.eks-cluster]
-  name       = local.cluster_name
+  # name       = local.cluster_name
+  name = "<%= resource.name %>"
 }
 
 

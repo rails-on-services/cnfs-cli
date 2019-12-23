@@ -5,10 +5,11 @@ module Infra
     attr_accessor :resource
 
     def manifest
-        # binding.pry
       resources.each  do |resource|
         @resource = resource
-        template("#{resource_to_template}.tf.erb", "#{target.write_path(:infra)}/#{resource_to_template}.tf")
+        # binding.pry if resource.type.eql?('Resource::Bucket')
+        template("#{resource_to_template}.tf.erb",
+                 "#{target.write_path(:infra)}/#{[resource_to_template.to_s, resource.name].uniq.join('-')}.tf")
       end
     rescue Thor::Error => e
       puts e
@@ -16,6 +17,22 @@ module Infra
     end
 
     private
+
+    def title(name = nil)
+      [@module_name, resource.name.gsub('_', '-'), name].compact.join('-')
+    end
+
+    def resource_to_template(res = resource)
+      return res.template || res.name unless (type = res.type)
+      key = type.demodulize.underscore.to_sym
+      {
+        bucket: :s3,
+        cdn: :cloudfront,
+        cert: :acm,
+        dns: :route53,
+        redis: 'elasticache-redis'
+      }[key] || key
+    end
 
     def views_path; super.join('provider/aws') end
 
@@ -30,6 +47,10 @@ module Infra
       elsif deploy_type.eql?(:kubernetes)
         '*'
       end
+    end
+
+    def render_config(defaults, resource_config: resource.config, tf_config: target.tf_config)
+      render_attributes(defaults.merge(tf_config.merge(resource_config)))
     end
 
     def render_attributes(hash, spacer = 2, ary = [])
@@ -52,18 +73,6 @@ module Infra
       else
         "\"#{value}\""
       end
-    end
-
-    def resource_to_template(res = resource)
-      return res.template || res.name unless (type = res.type)
-      key = type.demodulize.underscore.to_sym 
-      {
-        bucket: :s3,
-        cdn: :cloudfront,
-        cert: :acm,
-        dns: :route53,
-        redis: 'elasticache-redis'
-      }[key] || key
     end
   end
 end

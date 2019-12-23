@@ -1,17 +1,20 @@
 # IAM
 <%-
-def defaults(config)
+@module_name = :iam
+def defaults
   {
     source: 'rails-on-services/eks-iam/aws'
-  }.merge(config)
+  }
 end
 -%>
-module "iam" {
-<%= render_attributes(defaults(resource.config)).join("\n") %>
 
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
+
+  # TODO: fix
   name   = local.iam_name
 }
 
-output "iam" {
+output "<%= title %>" {
   value = module.iam.*
 }

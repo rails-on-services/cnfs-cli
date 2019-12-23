@@ -1,9 +1,10 @@
 # Route53
 <%-
-def defaults(config)
+@module_name = :route53
+def defaults
   {
     source: 'rails-on-services/route53/aws'
-  }.merge(config)
+  }
 end
 -%>
 module "route53" {

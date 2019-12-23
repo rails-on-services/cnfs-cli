@@ -1,15 +1,18 @@
 # Cert-manager
 <%-
-def defaults(config)
+@module_name = 'cert-manager'
+def defaults
   {
     source: 'rails-on-services/cert-manager/k8s',
     version: '>= 0.0.2'
-  }.merge(config)
+    # TODO: fix
+    # namespace: infra.components.kubernetes.components.services.components.cert_manager&.config&.namespace
+  }
 end
 -%>
-module "cert-manager" {
-<%= render_attributes(defaults(resource.config)).join("\n") %>
 
-  namespace     = "<%# infra.components.kubernetes.components.services.components.cert_manager&.config&.namespace %>"
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
+
   cm_depends_on = module.eks-resources
 }

@@ -1,38 +1,28 @@
 # EKS Resources
 <%-
-def defaults(config)
+@module_name = 'eks-resources'
+def defaults
   {
     source: 'rails-on-services/eks-resources/k8s',
+    aws_profile: target.provider.profile,
+    cluster_name: resource.name,
     version: '>= 0.0.3'
-  }.merge(config)
+  }
 end
 -%>
-module "eks-resources" {
-<%= render_attributes(defaults(resource.config)).join("\n") %>
 
-  aws_profile                = local.aws_profile
-  cluster_name               = local.cluster_name
+module "<%= title %>" {
+<%= render_config(defaults).join("\n") %>
+
   clusterrolebindings        = module.iam.kubernetes_clusterrolebindings
-  enable_external_dns        = <%# resource.services.try(:[], 'external_dns').try(:[], 'disabled') ? false : infra.components.kubernetes.components.services.components.external_dns.config.enabled %>
   external_dns_domainFilters = [module.acm.this.domain_name]
   external_dns_zoneIdFilters = [module.route53.this.zone_id]
-  istio_version              = "<%# infra.components.kubernetes.components.services.components.istio&.config&.version.nil? ? '1.3.5' : infra.components.kubernetes.components.services.components.istio.config.version %>"
-  extra_namespaces           = [
-    <%# infra.components.kubernetes.components.infra.config.extra_namespaces&.each do |v| -%>
-    "<%# v %>",
-    <%# end -%>
-   ]
 
   istio_ingressgateway_alb_cert_arn = module.acm.this.arn
   kubeconfig                        = module.eks-cluster.this.kubeconfig
   vpc_id                            = module.vpc.vpc_id
-  # tags                              = var.tags
-
-  enable_fluentd_gcp_logging                   = <%# infra.components.kubernetes.components.services.components.cluster_logging.config.provider == 'gcp' ? true : false %>
-  fluentd_gcp_logging_service_account_json_key = var.fluentd_gcp_logging_service_account_json_key
-  helm_configuration_overrides                 = var.helm_configuration_overrides
 }
 
-output "istio_ingressgateway_alb_arn" {
+output "<%= title :istio_ingressgateway_alb_arn %>" {
   value = module.eks-resources.istio_ingressgateway_alb_arn
 }
