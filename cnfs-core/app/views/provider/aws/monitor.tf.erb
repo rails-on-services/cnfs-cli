@@ -14,12 +14,5 @@ end
 module "<%= title %>" {
 <%= render_config(defaults).join("\n") %>
 
-<%- if false %>
-  namespace                    = "<%= infra.components.kubernetes.components.services.components.grafana.config.namespace %>"
-  grafana_host                 = "<%= infra.components.dns.config.endpoints&.grafana.nil? ? "grafana" : infra.components.dns.config.endpoints.grafana %>"
-  grafana_endpoint             = "<%= infra.components.dns.config.endpoints&.grafana.nil? ? "grafana" : infra.components.dns.config.endpoints.grafana %>.${local.domain_name}"
-  grafana_user                 = "<%= infra.components.kubernetes.components.services.components.grafana&.config&.username.nil? ? "" : infra.components.kubernetes.components.services.components.grafana.config.username %>"
-  grafana_password             = "<%= infra.components.kubernetes.components.services.components.grafana&.config&.password.nil? ? "" : infra.components.kubernetes.components.services.components.grafana.config.password %>"
-<%- end %>
   monitor_depends_on           = module.eks-resources
 }

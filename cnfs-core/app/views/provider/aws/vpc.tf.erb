@@ -24,12 +24,11 @@ module "vpc" {
 <% if deploy_type.eql?(:kubernetes) %>
 
   azs                             = slice(data.aws_availability_zones.available.names, 0, 3)
-  public_subnets                  = [for i in range(0, 3) : cidrsubnet(<%= @config.cidr %>, 4, i)]
-  private_subnets                 = [for i in range(3, 6) : cidrsubnet(<%= @config.cidr %>, 4, i)]
-  database_subnets                = <%= @config['create_database_subnet_group'] ? "[for i in range(6, 9) : cidrsubnet(#{@config.cidr}, 4, i)]" : [] %>
-  elasticache_subnets             = <%= @config['create_elasticache_subnet_group'] ? "[for i in range(9, 12) : cidrsubnet(#{@config.cidr}, 4, i)]" : [] %>
+  public_subnets                  = [for i in range(0, 3) : cidrsubnet("<%= @config.cidr %>", 4, i)]
+  private_subnets                 = [for i in range(3, 6) : cidrsubnet("<%= @config.cidr %>", 4, i)]
+  database_subnets                = <%= @config['create_database_subnet_group'] ? "[for i in range(6, 9) : cidrsubnet(\"#{@config.cidr}\", 4, i)]" : [] %>
+  elasticache_subnets             = <%= @config['create_elasticache_subnet_group'] ? "[for i in range(9, 12) : cidrsubnet(\"#{@config.cidr}\", 4, i)]" : [] %>
 
-  tags                            = var.tags
   vpc_tags                        = { "kubernetes.io/cluster/<%= @config.name %>" = "shared" }
 
   public_subnet_tags  = {
