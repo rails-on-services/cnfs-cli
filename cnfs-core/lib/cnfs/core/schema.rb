@@ -41,7 +41,7 @@ module Cnfs::Core
             t.string :name
             t.string :config
             t.string :environment
-            t.boolean :sub_deploy
+            t.boolean :namespaces
 
             # t.string :dns
             # t.string :globalaccelerator
@@ -107,6 +107,7 @@ module Cnfs::Core
             t.string :config
             t.string :environment
             t.string :type
+            t.string :col1
           end
           Resource.reset_column_information
 

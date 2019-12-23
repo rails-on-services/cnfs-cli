@@ -3,16 +3,8 @@
 DEFAULTS: &DEFAULTS
   amazon: &AMAZON_DEFAULTS
     type: Provider::Aws
-    kubernetes:
-      aws_profile: 'perx-whistler'
-      worker_groups_launch_template:
-        - name: spot_pool
-          override_instance_types: ["r5.2xlarge", "m5.2xlarge", "r5.xlarge", "m5.xlarge"]
-          spot_instance_pools: 4
-          asg_max_size: 15
-          asg_min_size: 5
-          asg_desired_capacity: 5
-          kubelet_extra_args: "--node-labels=kubernetes.io/lifecycle=spot --register-with-taints=spotInstance=true:NoSchedule"
+    config:
+      tf_version: '>= 2.38.0'
   alicloud: &ALICLOUD_DEFAULTS
     name: $LABEL
     type: Provider::Alicloud
@@ -23,25 +15,22 @@ DEFAULTS: &DEFAULTS
     name: $LABEL
     type: Provider::Gcp
 
+aws_sg:
+  <<: *AMAZON_DEFAULTS
+
 localstack:
   name: $LABEL
   type: Provider::Aws
   config:
-    credentials:
-      aws_access_key_id: 1LCDE/udAJWIsU/3No34RCcQvCvJ0pQ0qorJbbtQqaDnaXQKVC5TTdJdzxZCgG90
-      aws_secret_access_key: BzGkgBy5tpHDlDduhiU8FKgAXe9hZwwHcm2AUuL1v1rSM082pj7yg3Mt7MJPHM0D5bWgLze8g9UctNUDSn+Iax+KEWM=
-      aws_account_id: BdTq5YFpK9oOTFp7aLo35L0XGQCJaMrvN2rE0PxHLIjWkbcsDjRN5Q==
-      aws_default_region: saMpsXvaiVL9jxWMjaSKMtG3gUeUdb0MwcnJ4hffV7+ePgBvlrgHoo3+
-    # credentials:
-    #   aws_access_key_id: username
-    #   aws_secret_access_key: password
+    account_id: 251316246111
+    access_key_id: 1LCDE/udAJWIsU/3No34RCcQvCvJ0pQ0qorJbbtQqaDnaXQKVC5TTdJdzxZCgG90
+    secret_access_key: BzGkgBy5tpHDlDduhiU8FKgAXe9hZwwHcm2AUuL1v1rSM082pj7yg3Mt7MJPHM0D5bWgLze8g9UctNUDSn+Iax+KEWM=
+    region: ap-southeast-1
     storage:
       endpoint: http://localstack:4576
       region: localstack
     mq:
       endpoint: http://localstack:4572
       region: localstack
-  environment:
-    aws_account_id: 251316246111
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

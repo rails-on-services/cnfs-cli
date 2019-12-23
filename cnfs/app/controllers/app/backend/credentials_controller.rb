@@ -28,11 +28,14 @@ module App::Backend
       end
     end
 
-    def remote_file; "/home/rails/services/app/tmp/#{'mounted'}/credentials.json" end
+    def remote_file; runtime.credentials[:remote_file] end
+    def local_file; runtime.credentials[:local_file] end
+    def local_path; runtime.credentials[:local_path] end
+    # def remote_file; "/home/rails/services/app/tmp/#{'mounted'}/credentials.json" end
 
-    def local_file; "#{local_path}/credentials.json" end
+    # def local_file; "#{local_path}/credentials.json" end
 
-    def local_path; "#{target.write_path(:runtime)}/target" end
+    # def local_path; "#{target.write_path(:runtime)}/target" end
 
     def json; File.exist?(local_file) ? JSON.parse(File.read(local_file)) : [] end
   end

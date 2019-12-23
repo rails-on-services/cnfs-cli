@@ -1,0 +1,33 @@
+# EC2 Instance
+<%-
+def defaults(config)
+  {
+    source: 'rails-on-services/ec2/aws',
+    lb_dns_hostnames: target.lb_dns_hostnames.map { |m| "#{m}.#{target.domain_name}" }
+  }.merge(config)
+end
+-%>
+module "ec2" {
+<%= render_attributes(defaults(resource.config)).join("\n") %>
+
+  aws_cert_arn     = module.acm.this.arn
+  route53_zone_id  = module.route53.this.zone_id
+  subnet_ids       = module.vpc.this.public_subnets
+  vpc_id           = module.vpc.this.vpc_id
+}
+
+output "ec2" {
+  value = module.ec2.this
+}
+
+output "ec2-eip" {
+  value = module.ec2.eip
+}
+
+output "ec2-lb" {
+  value = module.ec2.lb
+}
+
+output "lb_route53_record" {
+  value = module.ec2.lb_route53_record
+}

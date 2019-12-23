@@ -5,10 +5,12 @@ module App
     # namespace 'application backend' #:backend
     class_option :verbose, type: :boolean, default: false, aliases: '-v'
     class_option :debug, type: :numeric, default: 0, aliases: '--debug'
+    class_option :noop, type: :boolean, aliases: '-n'
+    class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
+
     class_option :deployment, type: :string, aliases: '-d'
     class_option :target, type: :string, aliases: '-t'
     class_option :layer, type: :string, aliases: '-l'
-    class_option :noop, type: :boolean, aliases: '-n'
 
     # class_option :environment, type: :string, default: nil, aliases: '-e', desc: 'Environment'
     # class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'
@@ -26,6 +28,9 @@ module App
 
     desc 'copy', 'Copy file to service'
     def copy(*args); run(:copy, args) end
+
+    desc 'create SERVICE', 'Create a namespace'
+    def create(*args); run(:create, args) end
 
     desc 'credentials', 'show iam credentials'
     option :format, type: :string, aliases: '-f'
@@ -95,23 +100,6 @@ module App
 =begin
     desc 'xdeploy API', 'deploy to UAT at an endpoint'
     def xdeploy(tag_name)
-      # prefix = Settings.components.be.components.application.config.deploy_tag
-      prefix = 'enable-api.'
-      api_tag_name = "#{prefix}#{tag_name}"
-      existing_local_tags = %x(git tag).split
-      existing_remote_tags = %x(git ls-remote --tags).split("\n").map { |tag_string| tag_string.split("\t").last.gsub('refs/tags/', '') }
-      versions = []
-      (existing_local_tags + existing_remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) }.each do |tag|
-        # push numeric version suffix into versions array
-        versions.push(tag[/\d+$/].to_i)
-      end
-      versions.sort!.reverse!
-      # bump version
-      version = "v#{versions[0].to_i + 1}"
-      # retag local
-      %x(git tag -a -m #{api_tag_name}.#{version} #{api_tag_name}.#{version})
-      # push tag
-      %x(git push origin #{api_tag_name}.#{version})
     end
 
     desc 'up SERVICE', 'bring up service(s)'
@@ -158,9 +146,9 @@ module App
     desc 'restart SERVICE', 'Start and stop one or more services'
     option :attach, type: :boolean, aliases: '-a', desc: 'Attach to service after executing command'
     option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing command'
+    option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
     option :console, type: :boolean, aliases: '-c', desc: 'Connect to service console after executing command'
     option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
-    option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before executing command'
     option :shell, type: :boolean, aliases: '-s', desc: 'Connect to service shell after executing command'
     def restart(*args)
       run(:restart, args)
@@ -175,13 +163,14 @@ module App
     end
 
     desc 'show', 'show service config'
-    class_option :modifier, type: :string, aliases: '-m'
+    option :modifier, type: :string, aliases: '-m'
     def show(*args)
       validate_one_service(args)
       run(:show, args)
     end
 
     desc 'start', 'Start a layer or service'
+    option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
     option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
     def start(*args); run(:start, args) end
 
@@ -190,6 +179,9 @@ module App
 
     desc 'stop SERVICE', 'Stop a service'
     def stop(*args); run(:stop, args) end
+
+    desc 'terminate SERVICE', 'Terminate a service'
+    def terminate(*args); run(:terminate, args) end
 
     desc 'test IMAGE', 'Run tests on image(s)'
     option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'

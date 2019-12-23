@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+require 'tty-table'
 
 module App::Backend
   class StatusController < Cnfs::Command
     def execute
-      require 'tty-table'
       each_target do |target|
         before_execute_on_target
         execute_on_target

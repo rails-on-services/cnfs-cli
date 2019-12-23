@@ -7,13 +7,13 @@ class GeneratorBase < Thor::Group
 
   private
 
-  def source_paths; [views_path] end
-  def views_path; Pathname.new(internal_path).join('../views') end
-  def internal_path; __dir__ end
+  def source_paths; [user_views_path, views_path] end
 
-  # def source_paths; [user_path, a_path, internal_path] end
-  # def user_path; options.project_dir.join(a_path.to_s.gsub("#{gem_root}/", '')).join('templates').to_s end
-  # internal_path.gsub("#{Cnfs::Core.gem_root}/", '').gsub('generators', 'views').gsub('_generator.rb', '')
+  def user_views_path; Cnfs::Core.root.join(views_path.to_s.gsub("#{Cnfs::Core.gem_root}/app", 'lib/generators')) end
+
+  def views_path; Pathname.new(internal_path).join('../views') end
+
+  def internal_path; __dir__ end
 
   def generator_options
     { force: @force }
@@ -22,6 +22,7 @@ class GeneratorBase < Thor::Group
   def call(klass, write_path, target = nil, layer = nil, layer_type = nil, service = nil)
     g = "#{klass}_generator".camelize.safe_constantize.new(args, options.merge(generator_options))
     g.write_path = Pathname.new(write_path)
+    # g.destination_root = Pathname.new(write_path)
     g.deployment = deployment
     g.application = deployment.application
     g.target = target if target

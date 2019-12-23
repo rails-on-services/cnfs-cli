@@ -1,0 +1,26 @@
+# Elasticache Redis
+<%-
+def defaults(config)
+  {
+    node_type: 'cache.r5.large',
+    number_cache_clusters: 1,
+    source: 'rails-on-services/elasticache-redis/aws'
+  }.merge(config)
+end
+-%>
+<%- resource.clusters.each do |key, config| -%>
+
+module "elasticache-redis-<%= key %>" {
+<%= render_attributes(defaults(config)).join("\n") %>
+
+  allowed_security_groups       = [module.vpc.default_security_group_id]
+  allowed_security_groups_count = 1
+  elasticache_subnet_group_name = module.vpc.elasticache_subnet_group_name
+  tags                          = var.tags
+  vpc_id                        = module.vpc.vpc_id
+}
+
+output "elasticache-redis-<%= key %>" {
+  value = module.elasticache-redis-<%= key %>.this
+}
+<% end -%>

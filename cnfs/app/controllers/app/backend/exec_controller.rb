@@ -6,7 +6,7 @@ module App::Backend
       command = args.pop
       with_selected_target do
         before_execute_on_target
-        exectue_on_target(command)
+        execute_on_target(command)
       end
     end
 

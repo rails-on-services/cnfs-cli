@@ -1,0 +1,26 @@
+# S3
+<%-
+def defaults(config)
+  {
+    source: 'rails-on-services/s3/aws'
+  }.merge(config)
+end
+-%>
+module "s3" {
+<%= render_attributes(defaults(config)).join("\n") %>
+
+<% if false %>
+  s3_bucket_names = [
+    <%- infra.components.object_storage.components.each do |bucket, config| -%>
+      <%- unless bucket.to_s == "cdn" -%>
+      "<%= bucket %>-${replace(local.domain_name, ".", "-")}",
+      <%- end -%>
+    <%- end -%>
+  ]
+<% end -%>
+  tags            = var.tags
+}
+
+output "s3" {
+  value = module.s3.this
+}

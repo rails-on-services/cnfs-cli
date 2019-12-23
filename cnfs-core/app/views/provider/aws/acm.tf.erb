@@ -1,0 +1,22 @@
+# TODO: route53_domain_name can be written out rather than using TF functions
+# NOTE: Would it make sense for the route53_dns_record_count to be calculated instead of hard coded?
+<%-
+def defaults(config)
+  {
+    source: 'rails-on-services/acm/aws',
+    domain_name: target.domain_name,
+    subject_alternative_names: resource.subject_alternative_names << "*.#{target.domain_name}"
+  }.merge(config)
+end
+-%>
+module "acm" {
+<%= render_attributes(defaults(resource.config) ).join("\n") %>
+
+  route53_domain_name       = substr(module.route53.this.name, 0, length(module.route53.this.name)-1)
+  route53_dns_record_count  = 1
+  validate_certificate      = <%= target.root_domain_managed_in_route53 || false%>
+}
+
+output "acm" {
+  value = module.acm.<%= output_type %>
+}

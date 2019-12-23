@@ -5,7 +5,7 @@ DEFAULTS: &DEFAULTS
 
 production: &production
   <<: *DEFAULTS 
-  layers: cluster, networking
+  layers: cluster, cloud_networking
   runtime: skaffold
 
 test: &test
@@ -18,12 +18,15 @@ development_image:
 
 development:
   <<: *test
-  layers: dev_cloud, dev_database
+  layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
+  # provider: aws_sg
   config:
     mount: yes
     # dns_root_domain: localhost
     dns_root_domain: demo.cnfs.io
     dns_sub_domain: development
+    root_domain_managed_in_route53: yes
+    lb_dns_hostnames: ['api']
   environment:
     application:
       rails_env: development

@@ -5,7 +5,7 @@ module App::Backend
     def execute
       with_selected_target do
         before_execute_on_target
-        exectue_on_target
+        execute_on_target
       end
     end
 

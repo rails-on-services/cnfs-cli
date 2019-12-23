@@ -14,7 +14,7 @@ class Target < ApplicationRecord
   # Set by controler#configure_target
   attr_accessor :deployment, :application
 
-  store :config, accessors: %i[dns_root_domain dns_sub_domain mount], coder: YAML
+  store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
 
   delegate :version, to: :runtime
 
@@ -25,7 +25,8 @@ class Target < ApplicationRecord
   end
 
   def write_path(type = :deployment)
-    Pathname.new([deployment.base_path, type, name, deployment.name].join('/'))
+    # Pathname.new([deployment.base_path, type, name, deployment.name].join('/'))
+    Pathname.new([deployment.base_path, name, deployment.name, type].join('/'))
   end
 
   # def dns; options_hash(:dns) end

@@ -30,48 +30,59 @@ class Runtime::Compose < Runtime
     system("docker cp #{src} #{dest}")
   end
 
+  def create(request)
+    # NOTE: For docker this is a noop function as deploy is all that is needed
+  end
+
   def deploy(request); start(request) end
 
   def destroy(request)
-    if reqeust.services.any?
-      compose_cmd("stop #{request.service_names_to_s}")
-      compose_cmd("rm -f #{request.service_names_to_s}")
-      # remove_cache('iam') if services.include?('iam')
+    if request.services.any?
+      terminate(request)
     else
       compose_cmd(:down)
-      # remove_cache
+      clean_cache(request)
     end
   end
 
-  def exec(service, command)
-    compose(service, command, controller.options)
+  def exec(service_name, command)
+    compose(service_name, command, options)
   end
 
   def logs(service_name)
-    compose_options = controller.options.tail ? '-f' : ''
+    compose_options = options.tail ? '-f' : ''
     system("docker logs #{compose_options} #{project_name}_#{service_name}_1") # , {}, true)
   end
 
   def restart(request)
-    # generate_config if stale_config
-    compose_options = controller.options.foreground ? '' : '-d'
-    compose_cmd("stop #{request.service_names_to_s}")
-    compose_cmd("up #{compose_options} #{request.service_names_to_s}")
-    request.services.each { |service| database_check(service) }
+    stop(request)
+    start(request)
   end
 
   def start(request)
-    compose_options = controller.options.foreground ? '' : '-d'
+    # if options.clean
+    #   compose_cmd("rm -f #{request.service_names_to_s}")
+    #   clean_cache(request)
+    # end
+    terminate(request) if options.clean
+    compose_options = options.foreground ? '' : '-d'
     compose_cmd("up #{compose_options} #{request.service_names_to_s}")
     request.services.each { |service| database_check(service) }
   end
 
   def stop(request)
-    # generate_config if stale_config
     compose_cmd("stop #{request.service_names_to_s}")
   end
 
+  def terminate(request)
+    compose_cmd("stop #{request.service_names_to_s}")
+    compose_cmd("rm -f #{request.service_names_to_s}")
+    clean_cache(request)
+  end
+
   #### Support Methods
+  def deploy_type; :instance end
+  def options; controller.options end
 
   # Generate
   def labels(base_labels, space_count)
@@ -98,11 +109,11 @@ class Runtime::Compose < Runtime
     # end
   end
 
-  def project_name; "#{target.application.name}_#{target.name}" end
+  # def project_name; "#{target.application.name}_#{target.name}" end
 
   def compose_file; @compose_file ||= "#{runtime_path}/compose.env" end
 
-  def runtime_path; @runtime_path ||= target.write_path(:runtime) end
+  # def runtime_path; @runtime_path ||= target.write_path(:runtime) end
 
   # taken from deploy command; is it needed/appropriate here?
     def set_compose_options
@@ -125,7 +136,7 @@ class Runtime::Compose < Runtime
     filter.append("--format '#{format}'") if format
 
     command_string = "docker ps #{filter.join(' ')}"
-    controller.output.puts command_string if controller.options.verbose
+    controller.output.puts command_string if options.verbose
     out, err = controller.command(printer: :null).run(command_string)
     # binding.pry
 
@@ -145,13 +156,12 @@ class Runtime::Compose < Runtime
     return true unless service.respond_to?(:database_seed_commands)
 
     migration_file = "#{runtime_path}/#{service.name}-migrated"
-    return true if File.exist?(migration_file) unless controller.options.seed
+    return true if File.exist?(migration_file) unless options.seed
 
     FileUtils.rm(migration_file) if File.exist?(migration_file)
     result = service.database_seed_commands.each do |command|
       if compose_cmd("run --rm #{service.name} #{command}")
         FileUtils.touch(migration_file)
-      #   remove_cache('iam') if name.eql?('iam')
       else
       #   errors.add(:database_check, stderr)
         break
@@ -171,8 +181,8 @@ class Runtime::Compose < Runtime
   end
 
   def system_cmd(cmd, env = {}, options = {})
-    controller.output.puts cmd if controller.options.verbose
-    system(env, cmd) unless controller.options.noop
+    controller.output.puts cmd if options.verbose
+    system(env, cmd) unless options.noop
   end
 
   # TODO: not necessary to pass options since controller is a reference to the command
@@ -181,7 +191,7 @@ class Runtime::Compose < Runtime
     cmd = ['docker-compose']
     cmd << (services.include?(service) ? 'exec' : 'run --rm')
     cmd.append(service).append(command)
-    controller.output.puts(cmd.join(' ')) if controller.options.verbose
+    controller.output.puts(cmd.join(' ')) if options.verbose
     # cmd = TTY::Command.new(pty: true).run(cmd.join(' '))
     system(cmd.join(' '))
   end

@@ -9,6 +9,7 @@ require 'active_support/string_inquirer'
 require 'config'
 require 'json_schemer'
 require 'lockbox'
+# require 'open3'
 require 'sqlite3'
 require 'thor'
 require 'zeitwerk'
@@ -37,7 +38,9 @@ module Cnfs
     class Error < StandardError; end
 
     class << self
-      attr_accessor :plugins, :autoload_dirs
+      attr_accessor :plugins, :autoload_dirs, :obj
+
+      def obj; @obj ||= {} end
 
       def project_fixture_content(file)
         ERB.new(IO.read(project_fixture(file))).result.gsub("---\n", '') if File.exist?(project_fixture(file))
@@ -48,8 +51,12 @@ module Cnfs
       end
 
       def config_dir; gem_root.join('config') end
+
+      # def project_config_dir; Pathname.new(File.expand_path('cnfs_config', Dir.pwd)) end
+      def project_config_dir; root.join('cnfs_config') end
+
       # TODO: rather than Dir.pwd should take from the Platform method that calculates project dir
-      def project_config_dir; Pathname.new(File.expand_path('cnfs_config', Dir.pwd)) end
+      def root; Pathname.new(Dir.pwd) end
 
       def cnfs_project?; Dir.exist?(project_config_dir) end
       # def config_dirs

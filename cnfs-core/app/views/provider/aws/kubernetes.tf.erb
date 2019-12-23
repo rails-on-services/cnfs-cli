@@ -1,0 +1,213 @@
+# Providers
+provider "aws" {
+  region  = "<%= target.provider.region %>"
+  profile = "<%= target.provider.profile %>"
+  version = "<%= target.provider.tf_version || '>= 2.38.0' %>"
+}
+
+provider "kubernetes" {
+  version                = "~> 1.10"
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.cluster-auth.token
+  load_config_file       = true
+}
+
+provider "helm" {
+  version         = "~> 0.10"
+  namespace       = "kube-system"
+  install_tiller  = true
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.15.2"
+  service_account = "tiller"
+
+  kubernetes {
+    host                   = data.aws_eks_cluster.cluster.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.cluster-auth.token
+    load_config_file       = true
+  }
+}
+
+provider "local" {
+  version = "~> 1.3"
+}
+
+provider "null" {
+  version = "~> 2.1"
+}
+
+provider "random" {
+  version = "~> 2.2"
+}
+
+provider "template" {
+  version = "~> 2.1"
+}
+
+provider "external" {
+  version = "~> 1.2"
+}
+
+# This is custom provider to manage Kubernetes CRDs that currently aren't supported by terraform
+# https://github.com/terraform-providers/terraform-provider-kubernetes/issues/215
+provider "k8sraw" {
+  create_retry_count = 15
+}
+
+# Variables
+variable "tags" {
+  default = {}
+}
+
+variable "eks_worker_groups" {
+  default = []
+}
+
+variable "eks_worker_groups_launch_template" {
+  default = []
+}
+
+variable "fluentd_gcp_logging_service_account_json_key" {
+  default = ""
+}
+
+variable "helm_configuration_overrides" {
+  default = {}
+}
+
+<%- if false -%>
+# Locals
+locals {
+  iam_name         = "<%= infra.components.iam&.config&.name.nil? ? infra.config.cluster.name : infra.components.iam.config.name %>"
+  tags             = var.tags
+  s3_buckets       = [
+    <%- unless infra.components.object_storage&.components.nil? -%>
+     <%- infra.components.object_storage.components.each do |bucket, config| -%>
+    "<%= bucket %>-${replace(local.domain_name, ".", "-")}",
+    <%- end -%>
+    <%- end -%>
+  ]
+}
+<% end %>
+
+# VPC
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+
+# EKS cluster
+<%-
+def defaults(config)
+  {
+    source: 'rails-on-services/eks-cluster/aws'
+  }.merge(config)
+end
+-%>
+module "eks-cluster" {
+<%= render_attributes(defaults(resource.config)).join("\n") %>
+
+  cluster_name              = local.cluster_name
+  vpc_id                    = module.vpc.vpc_id
+  public_subnets            = module.vpc.public_subnets
+  private_subnets           = module.vpc.private_subnets
+  default_security_group_id = module.vpc.default_security_group_id
+
+  eks_map_users = [
+    <%- resource.admins.each do |user| -%>
+    {
+      userarn  = "<%= "arn:aws:iam::#{target.provider.account_id}:user/#{user}" %>"
+      username = "<%= user %>"
+      groups   = ["system:masters"]
+    },
+    <%- end -%>
+  ]
+
+  eks_map_roles      = module.iam.eks_map_roles
+  eks_extra_policies = concat(
+    data.template_file.aws_iam_policy_document_s3[*].rendered,
+    data.template_file.aws_iam_policy_document_cloudwatch[*].rendered
+  )
+  tags               = var.tags
+}
+
+output "eks" {
+  value = module.eks-cluster.this
+}
+
+# Below two depends_on `module.eks-cluster`. Both may cause circular dependancy under certain circumstances
+# Temporary comment both `depends_on` if weird cycle error raised during `apply`
+data "aws_eks_cluster" "cluster" {
+  # depends_on = [module.eks-cluster]
+  name = local.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster-auth" {
+  # depends_on = [module.eks-cluster]
+  name       = local.cluster_name
+}
+
+
+# EKS extra policy templates
+
+# S3 Buckets access
+data "aws_iam_policy_document" "s3_buckets" {
+  statement {
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["arn:aws:s3:::$${bucket_name}$${origin_path}*"]
+  }
+
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::$${bucket_name}"]
+  }
+}
+
+data "template_file" "aws_iam_policy_document_s3" {
+  count    = length(local.s3_buckets)
+  template = data.aws_iam_policy_document.s3_buckets.json
+
+  vars = {
+    bucket_name = local.s3_buckets[count.index]
+    origin_path = "/"
+  }
+}
+
+# Cloudwatch access
+data "template_file" "aws_iam_policy_document_cloudwatch" {
+  template = data.aws_iam_policy_document.cloudwatch.json
+}
+
+data "aws_iam_policy_document" "cloudwatch" {
+  statement {
+    sid = "AllowReadingMetricsFromCloudWatch"
+
+    actions = [
+      "cloudwatch:DescribeAlarmsForMetric",
+      "cloudwatch:ListMetrics",
+      "cloudwatch:GetMetricStatistics",
+      "cloudwatch:GetMetricData"
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "AllowReadingTagsInstancesRegionsFromEC2"
+
+    actions = [
+      "ec2:DescribeTags",
+      "ec2:DescribeInstances",
+      "ec2:DescribeRegions"
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "AllowReadingResourcesForTags"
+
+    actions   = ["tag:GetResources"]
+    resources = ["*"]
+  }
+}

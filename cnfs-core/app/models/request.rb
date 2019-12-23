@@ -21,6 +21,7 @@ class Request
       layer = deployment.application.layers.find_by(name: options.layer) || target.layers.find_by(name: options.layer) 
       return layer.services
     end
+    # TODO: this needs an option for profiles
     deployment.application.services.where(name: args) + target.services.where(name: args)
   end
 

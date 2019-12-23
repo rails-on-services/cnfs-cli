@@ -17,9 +17,7 @@ module Cnfs
     def size; @messages.size end
   end
 
-  # Handle the application command line parsing
-  # and the dispatch to various command objects
-  #
+  # Handle the application command line parsing and the dispatch to various command objects
   # @api public
   class CLI < Thor
     # Error raised by this runner
@@ -43,8 +41,6 @@ module Cnfs
     end
 
     # Load sub-commnds
-    # register Cnfs::Commands::ApplicationCommand, 'application', 'application [SUBCOMMAND]', 'Run application commands'
-    # register Cnfs::Commands::InfraCommand, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
     register AppController, 'application', 'application [SUBCOMMAND]', 'Run application commands'
     register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
   end
