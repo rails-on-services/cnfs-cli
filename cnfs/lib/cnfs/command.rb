@@ -60,13 +60,19 @@ module Cnfs
       @request = Request.new(deployment, target, args, options)
 
       # Set runtime object to an instance of compose or skaffold
-      @runtime = target.runtime
+      @runtime = current_runtime
       # Set the runtime's controller virtual attribute to this command
       # so the runtime can access the command method, options, etc
       @runtime.controller = self
       # Set the runtime's target virtual attribute to the current target
       # Runtime methods are called directly and some values are dependent upon the current target
       @runtime.target = target
+    end
+
+    def current_runtime
+      mod = self.class.name.underscore.split('/').first
+      return target.infra_runtime if mod.eql?('infra')
+      target.runtime
     end
 
     def call(command = nil)

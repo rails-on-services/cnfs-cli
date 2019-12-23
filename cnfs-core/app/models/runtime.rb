@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'open3'
 
 class Runtime < ApplicationRecord
   has_many :targets
@@ -29,6 +30,8 @@ class Runtime < ApplicationRecord
       local_path: "#{runtime_path}/target" }
   end
 
+  def options; controller.options end
+
   def runtime_path; @runtime_path ||= target.write_path(:runtime) end
 
   def project_name; "#{target.application.name}_#{target.name}" end
@@ -42,10 +45,10 @@ class Runtime < ApplicationRecord
     @exit_code.zero?
   end
 
-  # run command with output captured unless verbose (options.v) then to terminal
+  # run command with output captured unless options.verbose then to terminal
   # returns boolean true if command successful, false otherwise
   def system_cmd(cmd, envs = {}, never_capture = false)
-    return capture_cmd(cmd, envs) unless (options.v or never_capture)
+    return capture_cmd(cmd, envs) unless (options.verbose or never_capture)
     return if setup_cmd(cmd)
     system(envs, cmd)
     @exit_code = $?.exitstatus
@@ -53,11 +56,11 @@ class Runtime < ApplicationRecord
   end
 
   def setup_cmd(cmd)
-    puts cmd if options.v
+    puts cmd if options.verbose
     @stdout = nil
     @stderr = nil
     @exit_code = 0
-    options.n
+    options.noop
   end
 
   def exit

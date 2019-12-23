@@ -82,7 +82,6 @@ class Runtime::Compose < Runtime
 
   #### Support Methods
   def deploy_type; :instance end
-  def options; controller.options end
 
   # Generate
   def labels(base_labels, space_count)
@@ -109,20 +108,16 @@ class Runtime::Compose < Runtime
     # end
   end
 
-  # def project_name; "#{target.application.name}_#{target.name}" end
-
   def compose_file; @compose_file ||= "#{runtime_path}/compose.env" end
 
-  # def runtime_path; @runtime_path ||= target.write_path(:runtime) end
-
-  # taken from deploy command; is it needed/appropriate here?
-    def set_compose_options
-      @compose_options = ''
-      if options.daemon or options.console or options.shell or options.attach
-        @compose_options = '-d'
-      end
-      output.puts "compose options set to #{compose_options}" if options.verbose
+  # TODO: taken from deploy command; is it needed/appropriate here?
+  def set_compose_options
+    @compose_options = ''
+    if options.daemon or options.console or options.shell or options.attach
+      @compose_options = '-d'
     end
+    output.puts "compose options set to #{compose_options}" if options.verbose
+  end
 
 
   # See: https://docs.docker.com/engine/reference/commandline/ps
@@ -180,10 +175,10 @@ class Runtime::Compose < Runtime
     system_cmd("docker-compose #{cmd}", hash, never_capture)
   end
 
-  def system_cmd(cmd, env = {}, options = {})
-    controller.output.puts cmd if options.verbose
-    system(env, cmd) unless options.noop
-  end
+  # def system_cmd(cmd, env = {}, options = {})
+  #   controller.output.puts cmd if options.verbose
+  #   system(env, cmd) unless options.noop
+  # end
 
   # TODO: not necessary to pass options since controller is a reference to the command
   # which has the options

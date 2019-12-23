@@ -15,4 +15,10 @@ compose:
   config:
     version: 3.2
 
+terraform:
+  <<: *DEFAULTS
+  type: Runtime::Terraform
+  # config:
+  #   version: 3.2
+
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

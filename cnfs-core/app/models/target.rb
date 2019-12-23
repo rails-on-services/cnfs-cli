@@ -3,6 +3,7 @@
 class Target < ApplicationRecord
   belongs_to :provider
   belongs_to :runtime
+  belongs_to :infra_runtime, class_name: 'Runtime'
   has_many :deployment_targets
   has_many :deployments, through: :deployment_targets
   has_many :target_layers

@@ -37,6 +37,7 @@ module Cnfs::Core
 
           create_table :targets, force: true do |t|
             t.references :runtime
+            t.references :infra_runtime
             t.references :provider
             t.string :name
             t.string :config

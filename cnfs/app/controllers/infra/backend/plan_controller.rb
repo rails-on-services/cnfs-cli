@@ -4,27 +4,18 @@ module Infra::Backend
   class PlanController < Cnfs::Command
     def execute
       each_target do |target|
-        # before_execute_on_target
+        before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
+      binding.pry
       # generate_config if stale_config
       Dir.chdir(target.write_path(:infra)) do
-        # fetch_terraform_custom_providers(infra.config.custom_tf_providers, options.cl)
-        system_cmd('rm -rf .terraform/modules/') if options.cl
-        system_cmd('terraform init', cmd_environment)
-        system_cmd('terraform plan', cmd_environment)
+        runtime.init
+        runtime.plan
       end
-    end
-
-    def system_cmd(cmd, env)
-      system(env, cmd)
-    end
-
-    def cmd_environment
-      { 'AWS_DEFAULT_REGION' => 'ap-southeast-1' }
     end
   end
 end
@@ -61,11 +52,6 @@ end
           Dir.chdir(infra.deploy_path) do
             fetch_terraform_custom_providers(infra.config.custom_tf_providers, options.cl)
             system_cmd('rm -rf .terraform/modules/') if options.cl
-            system_cmd('rm -f .terraform/terraform.tfstate')
-            system_cmd('terraform init', cmd_environment)
-            system_cmd('terraform apply', cmd_environment)
-            system_cmd('terraform output -json > output.json', cmd_environment)
-            show_json
           end
         end
 

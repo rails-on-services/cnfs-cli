@@ -38,6 +38,7 @@ infra-testing:
   <<: *test
   layers: cloud_networking, dev_cluster
   provider: localstack
+  infra_runtime: terraform
   tf_config:
     tags:
       environment: staging

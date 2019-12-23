@@ -32,23 +32,12 @@ module Infra
     # end
 
     desc 'plan', 'Show the terraform infrastructure plan'
-    option :cl, type: :boolean, aliases: '--clear', desc: 'Clear local modules cache. Force to download latest modules from TF registry'
+    option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'
     def plan(*args); run(:plan, args) end
 
-    # desc 'apply', 'Apply the terraform infrastructure plan'
-    # option :cl, type: :boolean, aliases: '--clear', desc: 'Clear local modules cache. Force to download latest modules from TF registry'
-    # def apply
-    #   generate_config if stale_config
-    #   Dir.chdir(infra.deploy_path) do
-    #     fetch_terraform_custom_providers(infra.config.custom_tf_providers, options.cl)
-    #     system_cmd('rm -rf .terraform/modules/') if options.cl
-    #     system_cmd('rm -f .terraform/terraform.tfstate')
-    #     system_cmd('terraform init', cmd_environment)
-    #     system_cmd('terraform apply', cmd_environment)
-    #     system_cmd('terraform output -json > output.json', cmd_environment)
-    #     show_json
-    #   end
-    # end
+    desc 'apply', 'Apply the terraform infrastructure plan'
+    option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'
+    def apply(*args); run(:apply, args) end
 
     # desc 'show', 'Show infrastructure details'
     # def show(type = 'json')
