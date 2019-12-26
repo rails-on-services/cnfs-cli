@@ -57,7 +57,10 @@ module Infra
       ResourceRender.new(resource, defaults.merge(target_config.merge(resource_config))).render
     end
 
-    def render_attributes(hash, spacer = 2, ary = []); [] end
+    def render_attributes(hash, spacer = 2, ary = [])
+      rr = ResourceRender.new(nil, nil)
+      rr.render_attributes(hash, spacer, ary)
+    end
 
     class ResourceRender
       attr_accessor :resource, :defaults, :resource_defaults
