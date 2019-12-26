@@ -108,6 +108,7 @@ module Cnfs::Core
             t.string :name
             t.string :config
             t.string :environment
+            t.string :resources
             t.string :type
             t.string :template
           end

@@ -1,9 +1,15 @@
 # frozen_string_literal: true
+require 'open-uri'
 
 class Runtime::Terraform < Runtime
-  # TODO: Maybe custom_providers should be part of the config
+  store :config, accessors: %i[custom_providers], coder: YAML
+
+  def custom_providers
+    super || {}
+  end
+
   def before_execute_on_target
-    fetch_custom_providers # (infra.config.custom_tf_providers)
+    fetch_custom_providers
   end
 
   # TODO: this is specific to AWS
@@ -11,11 +17,11 @@ class Runtime::Terraform < Runtime
     { 'AWS_DEFAULT_REGION' => target.provider.region }
   end
 
-  def init; system_cmd('terraform init', cmd_environment) end
-  def plan; system_cmd('terraform plan', cmd_environment) end
+  def init; system_cmd('terraform init', cmd_environment, true) end
+  def plan; system_cmd('terraform plan', cmd_environment, true) end
 
-  def fetch_custom_providers(providers = {})
-    return if providers.empty?
+  def fetch_custom_providers
+    return if custom_providers.empty?
 
     if platform.nil?
       errors.add(:platform, 'not supported')
@@ -24,15 +30,17 @@ class Runtime::Terraform < Runtime
 
     system_cmd('rm -rf .terraform/modules/') if options.clean
 
-    providers.each do |k, v|
-      url = v.config.url.gsub('{platform}', platform)
-      f = url.split(/\//).last
-      if File.exist?(f) and not options.clean
-        controller.output.puts "Terraform provider #{f} exists locally." \
-          " To overwrite run command with --clean flag."
-        next
+    Dir.chdir(target.write_path(:infra)) do
+      custom_providers.each do |name, url|
+        url = url.gsub('{platform}', platform)
+        f = url.split(/\//).last
+        if File.exist?(f) and not options.clean
+          controller.output.puts "Terraform provider #{f} exists locally." \
+            " To overwrite run command with --clean flag."
+          next
+        end
+        download_provider(f, url)
       end
-      download_provider(f, url)
     end
   end
 

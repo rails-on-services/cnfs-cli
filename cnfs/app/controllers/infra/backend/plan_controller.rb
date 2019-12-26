@@ -10,7 +10,7 @@ module Infra::Backend
     end
 
     def execute_on_target
-      binding.pry
+      # binding.pry
       # generate_config if stale_config
       Dir.chdir(target.write_path(:infra)) do
         runtime.init

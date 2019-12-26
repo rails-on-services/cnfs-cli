@@ -18,7 +18,9 @@ compose:
 terraform:
   <<: *DEFAULTS
   type: Runtime::Terraform
-  # config:
-  #   version: 3.2
+  config:
+    version: 0.12.6
+    custom_providers:
+      restapi: https://github.com/Mastercard/terraform-provider-restapi/releases/download/v1.10.0/terraform-provider-restapi_v1.10.0-{platform}-amd64
 
 <%= Cnfs::Core.project_fixture_content(__FILE__) %>

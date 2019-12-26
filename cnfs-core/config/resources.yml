@@ -3,67 +3,82 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-app_bucket: &app_bucket
-  type: Resource::Bucket
-  name: app
+object_storage:
+  <<: *DEFAULTS
+  # type: Resource::Bucket
   layer: storage
+  template: s3
   config:
-    postfix: kostya-bucket-123abc
+    postfix: 'whistler-whatever-default'
+  resources:
+    buckets:
+      - name: app
+        postfix: kostya-bucket-123abc
+      - name: image
+        logging: true
   environment:
-    services: ['documents', 'reports', 'sftp']
-
-cdn_bucket:
-  <<: *app_bucket
-  name: cdn_plus
-  config:
-    logging: true
-  environment:
-    services: ['images']
+    application:
+      platform:
+        storage:
+          app:
+            services: ['documents', 'reports', 'sftp']
+          image:
+            services: ['images']
 
 dns:
   <<: *DEFAULTS
   template: route53
   layer: cloud_networking
+  # config:
+  #   root_domain: demo.cnfs.io
+  #   sub_domain: testing
+  resources:
+    endpoints:
+      - name: api
+        scheme: https
+      - name: grafana
+        scheme: https
+      - name: sftp
 
 image_cdn:
-  # <<: *DEFAULTS 
+  # <<: *DEFAULTS
   # layer: cdns
   type: Resource::Cdn
   name: cdn
   layer: storage
 
-api_endpoint: &api_endpoint
-  <<: *DEFAULTS 
-  type: Resource::Endpoint
-  layer: dns
-  config:
-    hostname: api
-    scheme: https
-
-grafana_endpoint:
-  <<: *api_endpoint
-  config:
-    hostname: grafana
-    scheme: https
-
-sftp_endpoint:
-  <<: *api_endpoint
-  config:
-    hostname: sftp
+# api_endpoint: &api_endpoint
+#   <<: *DEFAULTS
+#   type: Resource::Endpoint
+#   layer: dns
+#   config:
+#     hostname: api
+#     scheme: https
+# 
+# grafana_endpoint:
+#   <<: *api_endpoint
+#   config:
+#     hostname: grafana
+#     scheme: https
+# 
+# sftp_endpoint:
+#   <<: *api_endpoint
+#   config:
+#     hostname: sftp
 
 ses:
   <<: *DEFAULTS
   layer: cluster
 
 globalaccelerator:
-  <<: *DEFAULTS 
+  <<: *DEFAULTS
   type: Resource::Globalaccelerator
   layer: cluster
   config:
     hostname: '*.staging.whistler.perxtech.io'
 
 kubernetes:
-  <<: *DEFAULTS 
+  <<: *DEFAULTS
   type: Resource::Kubernetes
   layer: cluster
   config:
@@ -163,7 +178,7 @@ kubernetes_staging:
                 external-dns.alpha.kubernetes.io/hostname: ingressgateway.staging.whistler.perxtech.io
 
 postgres:
-  <<: *DEFAULTS 
+  <<: *DEFAULTS
   type: Resource::Postgres
   layer: cluster_database
   config:
@@ -175,7 +190,7 @@ postgres:
         replica_count: 1
 
 redis:
-  <<: *DEFAULTS 
+  <<: *DEFAULTS
   type: Resource::Redis
   layer: cluster_database
   config:
@@ -190,7 +205,7 @@ redis:
       redis_url: redis://redis-master:6379
 
 vpc_with_db:
-  <<: *DEFAULTS 
+  <<: *DEFAULTS
   type: Resource::Vpc
   layer: cloud_networking
   config:

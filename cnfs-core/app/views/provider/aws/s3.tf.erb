@@ -1,15 +1,13 @@
-# S3 bucket
+# S3 buckets
 <%-
 @module_name = :s3
 def defaults
   {
     source: 'rails-on-services/s3/aws',
-    name: resource.name,
     postfix: target.domain_slug
   }
 end
 -%>
-
 module "<%= title %>" {
 <%= render_config(defaults).join("\n") %>
 }
