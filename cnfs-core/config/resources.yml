@@ -12,10 +12,12 @@ object_storage:
     postfix: 'whistler-whatever-default'
   resources:
     buckets:
-      - name: app
+      app:
         postfix: kostya-bucket-123abc
-      - name: image
+      image:
         logging: true
+        cors:
+          this: that
   environment:
     application:
       platform:
@@ -109,7 +111,7 @@ eks-resource-1:
     cert_manager_namespace: cert-manager
     enable_external_dns: yes
     enable_fluentd_gcp_logging: yes
-    cluster_logging_provider: gcp
+    cluster_logging_provider: big_query
     # TODO: this is going to come from provider: fluentd_gcp_logging_service_account_json_key
     # helm_configuration_overrides: {}
     istio:
@@ -230,4 +232,5 @@ cert:
     subject_alternative_names: ['hello', 'there']
     domain_name: duh
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
+<%= Cnfs::Core.fixture_content(:user, __FILE__) %>

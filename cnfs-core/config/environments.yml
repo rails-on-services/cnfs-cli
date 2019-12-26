@@ -41,4 +41,4 @@ production_app:
           port: 24224
           schema_registry_url: http://kafkastack:8081
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>

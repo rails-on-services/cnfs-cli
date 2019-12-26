@@ -4,9 +4,10 @@
 def defaults
   {
     source: 'rails-on-services/eks-resources/k8s',
+    version: '>= 0.0.3',
     aws_profile: target.provider.profile,
     cluster_name: resource.name,
-    version: '>= 0.0.3'
+    logging_credentials: Provider.find_by(name: resource.config['cluster_logging_provider'])&.credentials || {}
   }
 end
 -%>

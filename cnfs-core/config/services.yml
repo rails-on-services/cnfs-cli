@@ -96,4 +96,5 @@ storage:
     images:
       <<: *core_rails_images
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
+<%= Cnfs::Core.fixture_content(:user, __FILE__) %>

@@ -6,9 +6,7 @@ DEFAULTS: &DEFAULTS
 default: &default
   <<: *DEFAULTS 
   application: default
-  # targets: development
-  targets: infra-testing
-  # targets: development, test
+  targets: development
   config:
     base_path: cnfs_tmp
     image_environment: development
@@ -22,4 +20,5 @@ cicd:
   <<: *default
   targets: test
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
+<%= Cnfs::Core.fixture_content(:user, __FILE__) %>

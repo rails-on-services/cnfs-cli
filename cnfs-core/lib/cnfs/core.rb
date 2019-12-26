@@ -9,9 +9,11 @@ require 'active_support/string_inquirer'
 require 'config'
 require 'json_schemer'
 require 'lockbox'
+require 'open-uri'
 # require 'open3'
 require 'sqlite3'
 require 'thor'
+require 'xdg'
 require 'zeitwerk'
 
 # adds instance method #to_env to Config::Options class
@@ -42,26 +44,25 @@ module Cnfs
 
       def obj; @obj ||= {} end
 
-      def project_fixture_content(file)
-        ERB.new(IO.read(project_fixture(file))).result.gsub("---\n", '') if File.exist?(project_fixture(file))
+      def fixture_content(type, file)
+        ERB.new(IO.read(fixture(type, file))).result.gsub("---\n", '') if File.exist?(fixture(type, file))
       end
 
-      def project_fixture(file)
-        file.gsub(config_dir.to_s, project_config_dir.to_s)
+      def fixture(type, file)
+        replace_path = type.to_sym.eql?(:project) ? project_config_dir : xdg.config_home.join('cnfs')
+        file.gsub(config_dir.to_s, replace_path.to_s)
       end
 
       def config_dir; gem_root.join('config') end
 
-      # def project_config_dir; Pathname.new(File.expand_path('cnfs_config', Dir.pwd)) end
       def project_config_dir; root.join('cnfs_config') end
+
+      def xdg; @xdg ||= XDG::Environment.new end
 
       # TODO: rather than Dir.pwd should take from the Platform method that calculates project dir
       def root; Pathname.new(Dir.pwd) end
 
       def cnfs_project?; Dir.exist?(project_config_dir) end
-      # def config_dirs
-      #   [gem_root.join('config'), Pathname.new(File.expand_path('cnfs_config', Dir.pwd))].uniq
-      # end
 
       def gem_root; Pathname.new(File.expand_path('../../..', __FILE__)) end
 

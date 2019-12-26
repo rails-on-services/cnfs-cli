@@ -23,4 +23,5 @@ terraform:
     custom_providers:
       restapi: https://github.com/Mastercard/terraform-provider-restapi/releases/download/v1.10.0/terraform-provider-restapi_v1.10.0-{platform}-amd64
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
+<%= Cnfs::Core.fixture_content(:user, __FILE__) %>

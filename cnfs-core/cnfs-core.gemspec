@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'pry'
   spec.add_dependency 'sqlite3'
   spec.add_dependency 'thor'
+  spec.add_dependency 'xdg'
   spec.add_dependency 'zeitwerk'
 
   spec.add_development_dependency "bundler", "~> 2.0"

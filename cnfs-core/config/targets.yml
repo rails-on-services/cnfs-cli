@@ -36,7 +36,7 @@ development:
 
 infra-testing:
   <<: *test
-  layers: cloud_networking, dev_cluster
+  layers: cloud_networking, cluster
   provider: localstack
   infra_runtime: terraform
   tf_config:
@@ -53,4 +53,5 @@ infra-testing:
     application:
       rails_env: development
 
-<%= Cnfs::Core.project_fixture_content(__FILE__) %>
+<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
+<%= Cnfs::Core.fixture_content(:user, __FILE__) %>

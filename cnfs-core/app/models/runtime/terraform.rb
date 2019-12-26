@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'open-uri'
 
 class Runtime::Terraform < Runtime
   store :config, accessors: %i[custom_providers], coder: YAML
