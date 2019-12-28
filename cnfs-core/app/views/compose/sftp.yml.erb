@@ -1,4 +1,7 @@
 # sftp/compose.yml.erb
+<%-
+def depends_on; %w[localstack] end
+-%>
 ---
 version: '<%= version %>'
 services:

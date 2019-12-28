@@ -31,15 +31,12 @@ dns:
   <<: *DEFAULTS
   template: route53
   layer: cloud_networking
-  # config:
-  #   root_domain: demo.cnfs.io
-  #   sub_domain: testing
   resources:
     endpoints:
       - name: api
         scheme: https
-      - name: grafana
-        scheme: https
+      # - name: grafana
+      #   scheme: https
       - name: sftp
 
 image_cdn:

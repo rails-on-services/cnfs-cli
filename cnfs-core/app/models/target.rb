@@ -16,20 +16,42 @@ class Target < ApplicationRecord
   attr_accessor :deployment, :application
 
   store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
-  store :tf_config, accessors: %i[tags], coder: YAML
+  store :tf_config, accessors: %i[tags image_environment], coder: YAML
 
-  delegate :version, to: :runtime
+  validates :runtime, presence: true
+  validates :provider, presence: true
 
-  def orchestrator; runtime.name end
+  # delegate :version, to: :runtime
+
+  # def orchestrator; runtime.name end
 
   def provider_type_to_s
     provider.type.underscore.split('/').last
   end
 
   def write_path(type = :deployment)
-    # Pathname.new([deployment.base_path, type, name, deployment.name].join('/'))
-    Pathname.new([deployment.base_path, name, deployment.name, type].join('/'))
+    Pathname.new([deployment.base_path, path_for(type), name, deployment.name].join('/'))
   end
+
+  def path_for(type)
+    case type
+    when :deployment
+      'cache/deployment'
+    when :infra
+      'data/infra'
+    when :runtime
+      'runtime'
+    end
+  end
+
+  def domain_slug
+    @domain_slug ||= domain_name.gsub('.', '-')
+  end
+
+  def domain_name
+    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
+  end
+end
 
   # def dns; options_hash(:dns) end
   # def globalaccelerator; options_hash(:globalaccelerator) end
@@ -76,12 +98,3 @@ class Target < ApplicationRecord
   #                  services: values.services || [],
   #                  path: (sub_deploy and sub) ? "#{ret_name}/#{sub}" : ret_name)
   # end
-
-  def domain_slug
-    @domain_slug ||= domain_name.gsub('.', '-')
-  end
-
-  def domain_name
-    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
-  end
-end

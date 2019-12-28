@@ -32,10 +32,5 @@ default:
             port: 24224
             schema_registry_url: http://kafkastack:8081
 
-storage_app:
-  <<: *DEFAULTS
-  layers: storage, aaa # , database
-  # environment: production_app
-
 <%= Cnfs::Core.fixture_content(:project, __FILE__) %>
 <%= Cnfs::Core.fixture_content(:user, __FILE__) %>

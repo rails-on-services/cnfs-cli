@@ -2,46 +2,34 @@
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
-
-production: &production
-  <<: *DEFAULTS 
-  layers: cluster, cloud_networking
-  runtime: skaffold
-
-test: &test
-  name: $LABEL
   runtime: compose
   provider: localstack
+  config:
+    image_environment: development
+  environment:
+    application:
+      rails_env: development
 
-development_image:
-  <<: *test
-
-development:
-  <<: *test
+development: &development
+  <<: *DEFAULTS 
   layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
-  # provider: aws_sg
-  tf_config:
-    tags:
-      environment: staging
   config:
     mount: yes
     # dns_root_domain: localhost
     dns_root_domain: demo.cnfs.io
     dns_sub_domain: development
-    root_domain_managed_in_route53: yes
     lb_dns_hostnames: ['api']
-  environment:
-    application:
-      rails_env: development
+    image_environment: development
+    root_domain_managed_in_route53: yes
 
-infra-testing:
-  <<: *test
-  layers: cloud_networking, cluster
-  provider: localstack
+test: &test
+  <<: *DEFAULTS 
+
+production: &production
+  <<: *DEFAULTS 
+  layers: cluster, cloud_networking
+  runtime: skaffold
   infra_runtime: terraform
-  tf_config:
-    tags:
-      environment: staging
   config:
     # mount: yes
     # dns_root_domain: localhost
@@ -49,9 +37,12 @@ infra-testing:
     dns_sub_domain: development
     root_domain_managed_in_route53: yes
     lb_dns_hostnames: ['api']
+  tf_config:
+    tags:
+      environment: staging
   environment:
     application:
-      rails_env: development
+      rails_env: production
 
 <%= Cnfs::Core.fixture_content(:project, __FILE__) %>
 <%= Cnfs::Core.fixture_content(:user, __FILE__) %>

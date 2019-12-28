@@ -9,6 +9,18 @@ module Cnfs::Core
       $stdout = rs
     end
 
+    def self.setup
+      # Set up in-memory database
+      ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+      create_schema
+    end
+
+    def self.reload
+      # Enable fixtures to be re-seeded on code reload
+      ActiveRecord::FixtureSet.reset_cache
+      create_schema
+    end
+
     # Set up database tables and columns
     def self.create_schema
       ActiveSupport::Inflector.inflections do |inflect|
@@ -121,6 +133,7 @@ module Cnfs::Core
             t.string :config
             t.string :environment
             t.string :type
+            t.string :template
           end
           Service.reset_column_information
         end

@@ -55,7 +55,7 @@ cognito: &core_rails_services
   layer: core
   config:
     profiles: ['scheduler', 'server', 'worker']
-    ros: yes
+    is_cnfs_service: yes
     images: &core_rails_images
       static_gems:
         bundler: 2.0.1
@@ -92,7 +92,7 @@ storage:
   layer: storage
   config:
     profiles: ['scheduler', 'server', 'sqs_worker', 'worker']
-    ros: yes
+    is_cnfs_service: yes
     images:
       <<: *core_rails_images
 

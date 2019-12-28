@@ -1,4 +1,9 @@
 # rails/compose.yml.erb
+<%-
+def context_path; service.context_path(relative_path) end
+
+def mount_cnfs; (!Cnfs::Core.cnfs_services_project? and !service.is_cnfs_service) end
+-%>
 ---
 version: '<%= version %>'
 services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server') ? '' : "_#{profile}" %>
@@ -6,10 +11,8 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
     labels:
       <%= labels %>
       profile: <%= profile %>
-    image: "${IMAGE_REPOSITORY}/<%= service.name %>:${IMAGE_TAG}"<% if profile.eql?('server') %>
-    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]<% elsif profile.eql?('worker') %>
-    command: ["bundle", "exec", "sidekiq",<% if is_cnfs_service %> "-r", "spec/dummy",<% end %> "-C", "config/sidekiq.yml"]<% elsif profile.eql?('sqs_worker') %>
-    command: ["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]<% end %><% if env_files.size.positive? %>
+    image: "${IMAGE_REPOSITORY}/<%= service.name %>:${IMAGE_TAG}"
+    command: <%= service.command(profile) %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>
     depends_on:
@@ -22,25 +25,25 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
       - "3000"<% end %><% if mount %>
     volumes:
       - type: bind
-        source: "${<%= context_dir %>}/services/<%= service.name %>"
+        source: "<%= context_path.join("services/#{service.name}") %>"
         target: "/home/rails/services/app"
         consistency: consistent
       - type: bind
-        source: "${<%= context_dir %>}/lib"
+        source: "<%= context_path.join('lib') %>"
         target: "/home/rails/lib"
         consistency: consistent
       - type: bind
-        source: "${<%= context_dir %>}/sre"
+        source: "<%= context_path.join('sre') %>"
         target: "/home/rails/sre"
         consistency: consistent<% if mount_cnfs %>
       - type: bind
-        source: "${ROS_CONTEXT_DIR}/lib"
+        source: "<%= context_path.join('ros/lib') %>"
         target: "/home/rails/ros/lib"
         consistency: consistent<% end %><% end %><% if profile.eql?('server') %>
     build:
-      context: "${<%= context_dir %>}"
-      args:<% build_args.each_pair do |name, value| %>
-        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end %>
+      context: "<%= context_path %>"<% if service.build_args(target) %>
+      args:<% service.build_args(target).each_pair do |name, value| %>
+        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end; end %>
         project: <%= service.name %>
         GEM_SERVER: "${GEM_SERVER:-https://rubygems.org}"
         PUID: "${PUID:-1000}"

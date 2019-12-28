@@ -1,9 +1,0 @@
----
-version: '<%= version %>'
-services:
-  wait:
-    image: waisbrot/wait
-    depends_on:
-      <%= depends_on %>
-    environment:
-      TARGETS: "<%= targets %>"

@@ -1,4 +1,7 @@
 # sftp/skaffold.yml.erb
+<%-
+def hostname; 'sftp' end
+-%>
 ---
 apiVersion: <%= version %>
 kind: Config
@@ -10,9 +13,9 @@ deploy:
         remote: true
         overrides:
           labels:
-            <%= labels %>
-          envFromSecrets:<% env_files.each do |file| %>
-            - <%= file %><% end %>
+            <%= labels %><% if env_files.size.positive? %>
+          envFromSecrets:
+            - <%= env_files %><% end %>
           image:
             pullPolicy: <%= pull_policy %>
           service:

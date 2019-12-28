@@ -17,4 +17,16 @@ class Provider::Aws < Provider
   def region; super || 'us-east-1' end
 
   def storage; super.merge(credentials).compact end
+
+  def resource_to_template(res)
+    return res.template || res.name unless (type = res.type)
+    key = type.demodulize.underscore.to_sym
+    {
+      bucket: :s3,
+      cdn: :cloudfront,
+      cert: :acm,
+      dns: :route53,
+      redis: 'elasticache-redis'
+    }[key] || key
+  end
 end

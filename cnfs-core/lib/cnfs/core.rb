@@ -64,6 +64,8 @@ module Cnfs
 
       def cnfs_project?; Dir.exist?(project_config_dir) end
 
+      def cnfs_services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
+
       def gem_root; Pathname.new(File.expand_path('../../..', __FILE__)) end
 
       def encrypt(value); box.encrypt(value).to_yaml.gsub("--- !binary |-\n  ", '').chomp end
@@ -101,15 +103,11 @@ module Cnfs
         loader.enable_reloading
         loader.setup
         plugins.each { |plugin| plugin_after_initialize(plugin) }
-        # Set up in-memory database
-        ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-        Cnfs::Core::Schema.create_schema
+        Cnfs::Core::Schema.setup
       end
 
       def reload
-        # Enable fixtures to be re-seeded on code reload
-        ActiveRecord::FixtureSet.reset_cache
-        Cnfs::Core::Schema.create_schema
+        Cnfs::Core::Schema.reload
         loader.reload
       end
 

@@ -11,7 +11,7 @@ class Deployment < ApplicationRecord
   has_many :deployment_targets
   has_many :targets, through: :deployment_targets
 
-  store :config, accessors: %i[base_path image_environment], coder: YAML
+  store :config, accessors: %i[base_path], coder: YAML
 
   validates :base_path, presence: true
   validates :name, presence: true

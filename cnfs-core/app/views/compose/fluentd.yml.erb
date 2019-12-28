@@ -1,0 +1,15 @@
+---
+version: '<%= version %>'
+services:
+  fluentd:
+    labels:
+      <%= labels %>
+    image: railsonservices/fluentd
+    ports:
+      - <%= expose_ports(24224) %>
+      - <%= expose_ports('24224/udp') %>
+      - <%= expose_ports(9880) %>
+    volumes:
+      - "<%= "#{relative_path}/#{target.write_path(:runtime)}/fluentd/log" %>:/fluentd/log"
+      - "<%= "#{relative_path}/#{target.write_path(:runtime)}/fluentd/etc/config.d" %>:/fluentd/etc/config.d"
+      # - "../fluentd/etc/config.d:/fluentd/etc/config.d"
