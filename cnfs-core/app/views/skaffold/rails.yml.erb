@@ -1,0 +1,107 @@
+# rails/skaffold.yml.erb
+<%-
+# NOTE: from skaffold v0.36.0 dockerfile_path is relative to context_path; leaving this in case behvior reverts
+# def dockerfile_path; context_path.join('Dockerfile') end
+def dockerfile_path; 'Dockerfile' end
+
+# def tag; config&.tag || 'latest' end
+# def repository; config&.repository || name end
+# def ports; config&.ports || [] end
+
+# TODO: should not know about application, just check self (service) .environment
+def metrics_enabled
+  application.environment.dig(:self, :platform, :metrics, :enabled)
+end
+
+# TODO: This will be true if backend settings has kafkaconnect.config.enabled; make sure this is the correct test
+def kafka_schema_registry_enabled
+  application.environment.dig(:"kafka-schema-registry", :config, :enabled)
+end
+-%>
+---
+<%# binding.pry %>
+apiVersion: <%= version %>
+kind: Config
+build:
+  artifacts:
+  - image: <%= service.name %>
+    context: <%= service.context_path(relative_path) %>
+    docker:
+      dockerfile: <%= dockerfile_path %><% if service.build_args(target) %>
+      buildArgs:<% service.build_args(target).each_pair do |name, value| %>
+        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end; end %>
+        project: <%= service.name %>
+  tagPolicy:
+    envTemplate:
+      template: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+  local:
+    useDockerCLI: true
+    push: true
+profiles:
+  <%- service.profiles.each do |profile| -%>
+  <%- xname = profile.eql?('server') ? '' : "_#{profile}" -%>
+  - name: <%= profile %>
+    deploy:
+      helm:
+        releases:
+        - name: <%= service.name.to_s.gsub('_', '-') %><%= xname.gsub('_', '-') %>
+          chartPath: ros/service
+          remote: true
+          # values:
+            # image: <%= service.name %>
+          # imageStrategy:
+          #   helm: {}
+          wait: true
+          recreatePods: true
+          setValueTemplates:
+            replicaCount: "{{.REPLICA_COUNT}}"
+            image.tag: "{{.IMAGE_TAG}}"
+            image.repository: "{{.SKAFFOLD_DEFAULT_REPO}}/<%= service.name %>"
+          overrides:
+            labels:
+              <%= labels(14) %>
+            nameOverride: <%= service.name.to_s.gsub('_', '-') %><%= xname.gsub('_', '-') %>
+            image:
+              pullPolicy: <%= pull_policy %>
+            imagePullSecrets:
+              - name: <%= pull_secret %>
+            app:
+              command: <%= service.command(profile) %><% if env_files.size.positive? %>
+              envFromSecrets:
+                - <%= env_files %><% end %>
+            <%- if profile.eql?('server') -%>
+            bootstrap:
+              enabled: true
+              command: ["bundle", "exec", "rails", "<%= "#{service.prefix}ros:db:reset\", \"#{service.prefix}ros:#{service.name}:db:seed" %>"<% if kafka_schema_registry_enabled %>, "<% "#{service.prefix}ros:avro:register" %>"<% end %>]
+            hook:
+              upgradeMigration:
+                enabled: true
+                command: ["bundle", "exec", "rails", "<%= "#{service.prefix}db:migrate" %>"]
+            <%- elsif profile.eql?('worker') -%>
+            service:
+              enabled: false
+            containerPort:
+            httpProbePath:
+            bootstrap:
+              enabled: false
+            hook:
+              upgradeMigration:
+                enabled: false
+            <%- end -%>
+            metrics:
+              <%- if metrics_enabled -%>
+              enabled: true
+              <%- if profile.eql?('server') -%>
+              command: ["bundle", "exec", "prometheus_exporter", "-a", "/home/rails/<% unless service.is_cnfs_service %>ros/<% end %>lib/core/lib/ros/prometheus_exporter/web_collector.rb"]
+              <%- end -%>
+              <%- else -%>
+              enabled: false
+              <%- end -%>
+            resources:
+              limits:
+                cpu: 1
+                memory: 2.5Gi
+              requests:
+                cpu: 0.5
+                memory: 2Gi
+<%- end -%>

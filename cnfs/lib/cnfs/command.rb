@@ -60,7 +60,7 @@ module Cnfs
       @request = Request.new(deployment, target, args, options)
 
       # Set runtime object to an instance of compose or skaffold
-      @runtime = current_runtime
+      return unless (@runtime = current_runtime)
       # Set the runtime's controller virtual attribute to this command
       # so the runtime can access the command method, options, etc
       @runtime.controller = self

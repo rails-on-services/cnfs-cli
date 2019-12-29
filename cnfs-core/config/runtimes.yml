@@ -15,6 +15,10 @@ compose:
   config:
     version: 3.2
 
+native:
+  <<: *DEFAULTS
+  type: Runtime::Native
+
 terraform:
   <<: *DEFAULTS
   type: Runtime::Terraform

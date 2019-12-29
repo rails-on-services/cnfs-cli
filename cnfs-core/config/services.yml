@@ -5,12 +5,10 @@ DEFAULTS: &DEFAULTS
 
 wait:
   <<: *DEFAULTS
-  type: Service::Wait
-  layer: dev_cloud
 
 localstack:
   <<: *DEFAULTS
-  layer: dev_cloud
+  tags: infra, storage
   environment:
     self:
       services: s3:4572,lambda:4574,sns:4575,sqs:4576
@@ -20,14 +18,12 @@ localstack:
       hostname_external: localstack
 
 nginx:
+  tags: infra, storage
   <<: *DEFAULTS
-  type: Service::Nginx
-  # layer: dev_networking
-  layer: dev_cloud
 
 postgres:
   <<: *DEFAULTS
-  layer: dev_database
+  tags: service_db, storage
   environment:
     self:
       postgres_user: admin
@@ -40,22 +36,22 @@ postgres:
 
 redis:
   <<: *DEFAULTS
-  layer: dev_database
+  tags: service_db, storage
   environment:
     application:
       redis_url: redis://redis:6379
 
 sftp:
   <<: *DEFAULTS
-  layer: storage
+  tags: core, storage
 
 cognito: &core_rails_services
   <<: *DEFAULTS
   type: Service::Rails
-  layer: core
+  tags: core
   config:
     profiles: ['scheduler', 'server', 'worker']
-    ros: yes
+    is_cnfs_service: yes
     images: &core_rails_images
       static_gems:
         bundler: 2.0.1
@@ -78,7 +74,6 @@ comm:
 
 iam:
   <<: *core_rails_services
-  layer: aaa
   environment:
     self:
       platform:
@@ -89,10 +84,10 @@ organization:
 
 storage:
   <<: *core_rails_services
-  layer: storage
+  tags: core, storage
   config:
     profiles: ['scheduler', 'server', 'sqs_worker', 'worker']
-    ros: yes
+    is_cnfs_service: yes
     images:
       <<: *core_rails_images
 

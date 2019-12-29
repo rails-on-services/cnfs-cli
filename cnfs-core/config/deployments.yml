@@ -2,23 +2,21 @@
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
-
-default: &default
-  <<: *DEFAULTS 
   application: default
-  targets: development
   config:
     base_path: cnfs_tmp
-    image_environment: development
 
-local_storage:
-  <<: *default
-  application: storage_app
+development: &development
+  <<: *DEFAULTS
   targets: development
 
-cicd:
-  <<: *default
+test:
+  <<: *DEFAULTS
   targets: test
+
+production:
+  <<: *DEFAULTS
+  targets: production
 
 <%= Cnfs::Core.fixture_content(:project, __FILE__) %>
 <%= Cnfs::Core.fixture_content(:user, __FILE__) %>

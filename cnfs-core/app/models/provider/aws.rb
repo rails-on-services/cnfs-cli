@@ -17,4 +17,14 @@ class Provider::Aws < Provider
   def region; super || 'us-east-1' end
 
   def storage; super.merge(credentials).compact end
+
+  def resource_to_terraform_template_map
+    {
+      object_storage: :s3,
+      cdn: :cloudfront,
+      cert: :acm,
+      dns: :route53,
+      redis: 'elasticache-redis'
+    }
+  end
 end

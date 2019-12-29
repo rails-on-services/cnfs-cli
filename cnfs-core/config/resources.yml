@@ -6,7 +6,7 @@ DEFAULTS: &DEFAULTS
 object_storage:
   <<: *DEFAULTS
   # type: Resource::Bucket
-  layer: storage
+  tags: storage
   template: s3
   config:
     postfix: 'whistler-whatever-default'
@@ -30,24 +30,20 @@ object_storage:
 dns:
   <<: *DEFAULTS
   template: route53
-  layer: cloud_networking
-  # config:
-  #   root_domain: demo.cnfs.io
-  #   sub_domain: testing
+  tags: networking
   resources:
     endpoints:
       - name: api
         scheme: https
-      - name: grafana
-        scheme: https
+      # - name: grafana
+      #   scheme: https
       - name: sftp
 
 image_cdn:
-  # <<: *DEFAULTS
-  # layer: cdns
+  <<: *DEFAULTS
   type: Resource::Cdn
   name: cdn
-  layer: storage
+  tags: storage
 
 # api_endpoint: &api_endpoint
 #   <<: *DEFAULTS
@@ -70,19 +66,19 @@ image_cdn:
 
 ses:
   <<: *DEFAULTS
-  layer: cluster
+  tags: cluster
 
 globalaccelerator:
   <<: *DEFAULTS
   type: Resource::Globalaccelerator
-  layer: cluster
+  tags: networking
   config:
     hostname: '*.staging.whistler.perxtech.io'
 
 kubernetes:
   <<: *DEFAULTS
   type: Resource::Kubernetes
-  layer: cluster
+  tags: cluster
   config:
     name: whistler-staging
     aws_profile: perx-whistler
@@ -103,7 +99,7 @@ kubernetes:
 
 eks-resource-1:
   <<: *DEFAULTS
-  layer: cluster
+  tags: cluster
   template: eks-resource
   config:
     name: whistler-staging
@@ -132,15 +128,15 @@ eks-resource-1:
 
 cert-manager:
   <<: *DEFAULTS
-  layer: cluster
+  tags: cluster
 
 iam:
   <<: *DEFAULTS
-  layer: cluster
+  tags: cluster
 
 monitor:
   <<: *DEFAULTS
-  layer: cluster
+  tags: cluster
   config:
     namespace: monitor
     grafana_user: admin
@@ -182,7 +178,7 @@ kubernetes_staging:
 postgres:
   <<: *DEFAULTS
   type: Resource::Postgres
-  layer: cluster_database
+  tags: db
   config:
     clusters:
       default:
@@ -194,7 +190,7 @@ postgres:
 redis:
   <<: *DEFAULTS
   type: Resource::Redis
-  layer: cluster_database
+  tags: db
   config:
     clusters:
       default:
@@ -209,7 +205,7 @@ redis:
 vpc_with_db:
   <<: *DEFAULTS
   type: Resource::Vpc
-  layer: cloud_networking
+  tags: networking
   config:
     cidr: 10.6.0.0/16
     create_database_subnet_group: true
@@ -219,7 +215,7 @@ vpc_with_db:
 instance:
   <<: *DEFAULTS
   type: Resource::Instance
-  layer: dev_cluster
+  tags: dev_cluster
   config:
     name_prefix: dev
     ec2_key_pair: perx_admin
@@ -227,7 +223,7 @@ instance:
 cert:
   <<: *DEFAULTS
   type: Resource::Cert
-  layer: dev_cluster
+  tags: dev_cluster
   config:
     subject_alternative_names: ['hello', 'there']
     domain_name: duh

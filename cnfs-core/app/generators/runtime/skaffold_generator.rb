@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-class Runtime::SkaffoldGenerator < ApplicationGenerator
-
-  def generate
-    binding.pry
-  end
+class Runtime::SkaffoldGenerator < RuntimeGenerator
+  # TODO: generate image pull secrets file
 
   private
 
-  def internal_path; __FILE__ end
+  # TODO: get the pull secret sorted
+  # def pull_secret; Stack.registry_secret_name end
+  def pull_secret; 'test' end
+
+  def pull_policy; 'Always' end
 end

@@ -2,20 +2,31 @@
 
 module Cnfs::Core
   class Schema
-    def self.silence_output(silence = true)
-      rs = $stdout
-      $stdout = StringIO.new if silence
-      yield
-      $stdout = rs
+    def self.setup
+      # Set up in-memory database
+      ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+      ActiveSupport::Inflector.inflections do |inflect|
+        inflect.uncountable %w[dns kubernetes postgres redis rails]
+      end
+      create_schema
+      load_data
+    end
+
+    def self.reload
+      # Enable fixtures to be re-seeded on code reload
+      ActiveRecord::FixtureSet.reset_cache
+      create_schema
+      load_data
+    end
+
+    def self.load_data
+      dir = Cnfs::Core.config_dir
+      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
+      ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
     end
 
     # Set up database tables and columns
     def self.create_schema
-      ActiveSupport::Inflector.inflections do |inflect|
-        inflect.uncountable %w[dns kubernetes postgres redis rails]
-      end
-      # old_logger = ActiveRecord::Base.logger
-      # ActiveRecord::Base.logger = nil
       silence_output do
         ActiveRecord::Schema.define do
           create_table :deployments, force: true do |t|
@@ -31,7 +42,6 @@ module Cnfs::Core
             t.string :name
             t.string :config
             t.string :environment
-            # t.references :environment
           end
           Application.reset_column_information
 
@@ -44,40 +54,8 @@ module Cnfs::Core
             t.string :tf_config
             t.string :environment
             t.boolean :namespaces
-
-            # t.string :dns
-            # t.string :globalaccelerator
-            # t.string :kubernetes
-            # t.string :postgres
-            # t.string :redis
-            # t.string :vpc
           end
           Target.reset_column_information
-
-          create_table :deployment_targets, force: true do |t|
-            t.references :deployment
-            t.references :target
-          end
-          DeploymentTarget.reset_column_information
-
-          create_table :layers, force: true do |t|
-            t.string :name
-            t.string :config
-            t.string :environment
-          end
-          Layer.reset_column_information
-
-          create_table :application_layers, force: true do |t|
-            t.references :application
-            t.references :layer
-          end
-          ApplicationLayer.reset_column_information
-
-          create_table :target_layers, force: true do |t|
-            t.references :target
-            t.references :layer
-          end
-          ApplicationLayer.reset_column_information
 
           create_table :providers, force: true do |t|
             t.string :name
@@ -96,15 +74,7 @@ module Cnfs::Core
           end
           Runtime.reset_column_information
 
-          create_table :environments, force: true do |t|
-            t.string :name
-            t.string :values
-            # t.references :owner, polymorphic: true
-          end
-          Environment.reset_column_information
-
           create_table :resources, force: true do |t|
-            t.references :layer
             t.string :name
             t.string :config
             t.string :environment
@@ -116,24 +86,75 @@ module Cnfs::Core
 
           # Application::Service.joins(:layer).select(:name, 'application_layers.name as layer_name')'
           create_table :services, force: true do |t|
-            t.references :layer
             t.string :name
             t.string :config
             t.string :environment
             t.string :type
+            t.string :template
           end
           Service.reset_column_information
-        end
 
-        load_data
-        # ActiveRecord::Base.logger = old_logger
+          create_table :tags, force: true do |t|
+            t.string :name
+            t.string :description
+            t.string :config
+            t.string :environment
+          end
+          Tag.reset_column_information
+
+          create_table :deployment_targets, force: true do |t|
+            t.references :deployment
+            t.references :target
+          end
+          DeploymentTarget.reset_column_information
+
+          create_table :target_services, force: true do |t|
+            t.references :target
+            t.references :service
+          end
+          TargetService.reset_column_information
+
+          create_table :target_resources, force: true do |t|
+            t.references :target
+            t.references :resource
+          end
+          TargetResource.reset_column_information
+
+          create_table :application_services, force: true do |t|
+            t.references :application
+            t.references :service
+          end
+          ApplicationService.reset_column_information
+
+          create_table :application_resources, force: true do |t|
+            t.references :application
+            t.references :resource
+          end
+          ApplicationResource.reset_column_information
+
+          create_table :resource_tags, force: true do |t|
+            t.references :resource
+            t.references :tag
+          end
+          ApplicationResource.reset_column_information
+
+          create_table :service_tags, force: true do |t|
+            t.references :service
+            t.references :tag
+          end
+          ApplicationResource.reset_column_information
+        end
       end
     end
 
-    def self.load_data
-      dir = Cnfs::Core.config_dir
-      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
-      ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
+    def self.silence_output(silence = true)
+      # old_logger = ActiveRecord::Base.logger
+      # ActiveRecord::Base.logger = nil
+      rs = $stdout
+      $stdout = StringIO.new if silence
+      yield
+      $stdout = rs
+      # ActiveRecord::Base.logger = old_logger
     end
   end
 end

@@ -1,35 +1,53 @@
 # frozen_string_literal: true
 
 class Target < ApplicationRecord
+  has_many :target_services
+  has_many :services, through: :target_services
+  has_many :target_resources
+  has_many :resources, through: :target_resources
   belongs_to :provider
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
   has_many :deployment_targets
   has_many :deployments, through: :deployment_targets
-  has_many :target_layers
-  has_many :layers, through: :target_layers
-  has_many :services, through: :layers
-  has_many :resources, through: :layers
 
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
   attr_accessor :deployment, :application
 
   store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
-  store :tf_config, accessors: %i[tags], coder: YAML
+  store :tf_config, accessors: %i[tags image_environment], coder: YAML
 
-  delegate :version, to: :runtime
-
-  def orchestrator; runtime.name end
+  validates :runtime, presence: true
+  validates :provider, presence: true
 
   def provider_type_to_s
     provider.type.underscore.split('/').last
   end
 
   def write_path(type = :deployment)
-    # Pathname.new([deployment.base_path, type, name, deployment.name].join('/'))
-    Pathname.new([deployment.base_path, name, deployment.name, type].join('/'))
+    Pathname.new([deployment.base_path, path_for(type), name, deployment.name].join('/'))
   end
+
+  def path_for(type)
+    case type
+    when :deployment
+      'cache/deployment'
+    when :infra
+      'data/infra'
+    when :runtime
+      'runtime'
+    end
+  end
+
+  def domain_slug
+    @domain_slug ||= domain_name.gsub('.', '-')
+  end
+
+  def domain_name
+    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
+  end
+end
 
   # def dns; options_hash(:dns) end
   # def globalaccelerator; options_hash(:globalaccelerator) end
@@ -76,12 +94,3 @@ class Target < ApplicationRecord
   #                  services: values.services || [],
   #                  path: (sub_deploy and sub) ? "#{ret_name}/#{sub}" : ret_name)
   # end
-
-  def domain_slug
-    @domain_slug ||= domain_name.gsub('.', '-')
-  end
-
-  def domain_name
-    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
-  end
-end

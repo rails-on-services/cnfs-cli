@@ -1,0 +1,32 @@
+# sftp/skaffold.yml.erb
+<%-
+def hostname; 'sftp' end
+-%>
+---
+apiVersion: <%= version %>
+kind: Config
+deploy:
+  helm:
+    releases:
+      - name: sftp
+        chartPath: ros/sftp
+        remote: true
+        overrides:
+          labels:
+            <%= labels %><% if env_files.size.positive? %>
+          envFromSecrets:
+            - <%= env_files %><% end %>
+          image:
+            pullPolicy: <%= pull_policy %>
+          service:
+            type: LoadBalancer
+            annotations:
+              service.beta.kubernetes.io/aws-load-balancer-type: nlb
+              external-dns.alpha.kubernetes.io/hostname: <%= hostname %>
+          resources: 
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi

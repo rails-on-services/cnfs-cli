@@ -17,7 +17,7 @@ class ApplicationController < Thor
       return
     end
 
-    deployment_name = options.deployment || ENV['CNFS_DEPLOY'] || :default
+    deployment_name = options.deployment || ENV['CNFS_DEPLOY'] || :development
     unless (deployment = Deployment.find_by(name: deployment_name))
       raise Error, set_color("Deployment not found: #{deployment_name}", :red)
     end

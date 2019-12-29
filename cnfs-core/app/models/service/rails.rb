@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Service::Rails < Service
-  store :config, accessors: %i[ros profiles images], coder: YAML
+  store :config, accessors: %i[is_cnfs_service profiles images], coder: YAML
 
   def test_commands(rspec_options = nil)
     ['bundle exec rubocop', "rails #{prefix}db:test:prepare", "#{exec_dir}bin/spring rspec #{rspec_options}"]
@@ -11,7 +11,31 @@ class Service::Rails < Service
     ["rails #{prefix}ros:db:reset:seed"]
   end
 
-  def prefix; ros ? 'app:' : '' end
+  def prefix; is_cnfs_service ? 'app:' : '' end
 
-  def exec_dir; ros ? 'spec/dummy/' : '' end
+  def exec_dir; is_cnfs_service ? 'spec/dummy/' : '' end
+  # def image_prefix; config.dig(:image, :build_args, :rails_env) end
+
+  def build_args(target)
+    @build_args ||= images[target.image_environment].try(:[], :build_args)
+  end
+
+  def context_path(relative_path)
+    (!Cnfs::Core.cnfs_services_project? and is_cnfs_service) ? relative_path.join('ros') : relative_path
+  end
+
+  def command(profile)
+    case profile
+    when 'server'
+      %w[bundle exec rails server -b 0.0.0.0 -P /tmp/server.pid]
+    when 'worker'
+      return %w[bundle exec sidekiq -C config/sidekiq.yml] unless is_cnfs_service
+
+      %w[bundle exec sidekiq -r spec/dummy -C config/sidekiq.yml]
+    when 'sqs_worker'
+      %w[bundle exec shoryuken -r ./app/workers/aws -C config/shoryuken.yml]
+    when 'scheduler'
+     %w[bundle exec rails runner ./lib/scheduler.rb]
+    end
+  end
 end
