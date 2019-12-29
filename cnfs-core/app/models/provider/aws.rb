@@ -18,15 +18,13 @@ class Provider::Aws < Provider
 
   def storage; super.merge(credentials).compact end
 
-  def resource_to_template(res)
-    return res.template || res.name unless (type = res.type)
-    key = type.demodulize.underscore.to_sym
+  def resource_to_terraform_template_map
     {
-      bucket: :s3,
+      object_storage: :s3,
       cdn: :cloudfront,
       cert: :acm,
       dns: :route53,
       redis: 'elasticache-redis'
-    }[key] || key
+    }
   end
 end

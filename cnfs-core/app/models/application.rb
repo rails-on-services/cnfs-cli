@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 class Application < ApplicationRecord
-  has_many :application_layers
-  has_many :layers, through: :application_layers
-  has_many :services, through: :layers
-  has_many :resources, through: :layers
-  # belongs_to :environment
+  has_many :application_services
+  has_many :services, through: :application_services
+  has_many :application_resources
+  has_many :resources, through: :application_resources
 
   store :config, accessors: %i[secret_key_base rails_master_key jwt_encryption_key], coder: YAML
 
@@ -14,9 +13,8 @@ class Application < ApplicationRecord
   end
 
   # Called by RuntimeGenerator
-  def environment(target = nil)
-    return super() unless target
-    env = super().self.merge!(platform: { jwt: jwt(target) }).merge!(other_stuff)
+  def to_env(target)
+    env = environment.self.merge!(platform: { jwt: jwt(target) }).merge!(other_stuff)
     env.merge!(target.provider.credentials) if target.provider.credentials
     env
   end

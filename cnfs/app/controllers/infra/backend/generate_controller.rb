@@ -23,6 +23,6 @@ module Infra::Backend
       generator.invoke_all
     end
 
-    def generator_class; "#{target.infra_runtime.type.demodulize}Generator".safe_constantize end
+    def generator_class; "InfraRuntime::#{target.infra_runtime.type.demodulize}Generator".safe_constantize end
   end
 end

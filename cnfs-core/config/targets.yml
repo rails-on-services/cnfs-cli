@@ -12,7 +12,9 @@ DEFAULTS: &DEFAULTS
 
 development: &development
   <<: *DEFAULTS 
-  layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
+  services: localstack, postgres, redis, nginx, wait
+  resources: instance
+  # layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
   config:
     mount: yes
     # dns_root_domain: localhost
@@ -27,7 +29,7 @@ test: &test
 
 production: &production
   <<: *DEFAULTS 
-  layers: cluster, cloud_networking
+  # layers: cluster, cloud_networking
   runtime: skaffold
   infra_runtime: terraform
   config:

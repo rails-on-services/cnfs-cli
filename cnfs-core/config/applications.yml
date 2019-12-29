@@ -5,12 +5,12 @@ DEFAULTS: &DEFAULTS
 
 default:
   <<: *DEFAULTS
-  layers: core, aaa, storage, dns
+  services: comm, cognito, iam, organization, storage, sftp
+  resources: object_storage, dns, image_cdn
   config:
     secret_key_base: 2uoN6F2YEqqf10qMKJ5R17KmPUhWM0L6TgQoTi47MeMdyNHrQbv6gL1nstp7F4rbfnCIPThWcZRlk1iJlgC/+E75JVg4f0CQVkM7PrAN3UFFnYXTsdsInIer/I4KOlDI+jt/7WC90MhVi1xD7gmRZNBDKgXwOocP5/OcWnaE1PoK+flR4nq74jYf8esbbzEliMKfGb0iPa6QSME8
     rails_master_key: XPLLaXVyF5TEzjzjDG66NQ6cGEmQs5FdSSoRqjccpznW3Rz92oO6JYR0Xh15f/c6kixs3K7TxcC2aXSd
     jwt_encryption_key: LI7TSL6lIyjEVjnm1TKQpGznjBuR4Foi5yTOiTT9BZKZ9xG9Zuk9YcnAD5GGG7LXUe1Apz4Fk6iyoWuY
-  # environment: production_app
   environment:
     self:
       platform:

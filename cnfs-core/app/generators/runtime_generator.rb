@@ -4,49 +4,54 @@ class RuntimeGenerator < GeneratorBase
   attr_accessor :service
 
   # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files
-  def application_env
-    template('../env.erb', target.write_path(:deployment).join('application.env'), { env: envs })
+  def generate_application_environment
+    generated_files << template('../env.erb',
+                                target.write_path(path_type).join('application.env'),
+                                { env: application_environment })
   end
 
-  def services_env
+  def generate_service_environments
     services.each do |service|
-      next unless (env = service.environment.dig(:self))
+      next unless (service_environment = service.environment.dig(:self))
 
-      template('../env.erb', target.write_path(:deployment).join("#{service.name}.env"), { env: env })
+      generated_files << template('../env.erb',
+                                  target.write_path(path_type).join("#{service.name}.env"),
+                                  { env: service_environment })
     end
   end
 
-  def manifest
-    generated_files = services.each_with_object([]) do |service, files|
-      @service = service
-      files << generate
-    end
-    # FileUtils.rm(all_files - generated_files - excluded_files)
-  rescue Thor::Error => e
-    # TODO: add to errors array and have controller output the result
-    puts e
-    puts service.to_json
+  def invoke_parent_methods
+    generate_entity_manifests
+    remove_stale_files
   end
 
   private
 
-  def envs
-    base_env = application.environment(target)
-    [[target], resources, services].each_with_object(base_env) do |entities, environment|
-      entities.each do |entity|
-        next unless (env = entity.environment.dig(:application))
+  def entity_name; :service end
+
+  def entities; services end
+
+  def application_environment
+    base_env = application.to_env(target)
+    [[target], resources, services].each_with_object(base_env) do |providers, environment|
+      providers.each do |provider|
+        next unless (env = provider.environment.dig(:application))
+
         environment.merge!(env.to_hash)
       end
     end
   end
 
+  def generate
+    template("#{entity_to_template}.yml.erb", "#{target.write_path(path_type)}/#{service.name}.yml")
+  end
+
+  def path_type; :deployment end
+
+  # Methods for all runtime templates
   def relative_path; @relative_path ||= Pathname.new('../' * target.write_path(:deployment).to_s.split('/').size) end
 
-  def service_types; @service_types ||= services.pluck(:type).compact.uniq.map{ |t| t.demodulize.underscore.to_sym } end
-
-  def services; @services ||= (target.services + application.services) end
-
-  def resources; @resources ||= (target.resources + application.resources) end
+  def template_types; @template_types ||= services.map{ |service| entity_to_template(service).to_sym }.uniq end
 
   def version; target.runtime.version end
 
@@ -71,17 +76,4 @@ class RuntimeGenerator < GeneratorBase
     files << "./#{service.name}.env" if File.exist?(target.write_path(:deployment).join("#{service.name}.env"))
     files
   end
-
-  def generate
-    tmpl = service_to_template(service).to_s
-    template("#{tmpl}.yml.erb", "#{target.write_path(path_type)}/#{[tmpl, service.name].uniq.join('-')}.yml")
-  end
-
-  def service_to_template(svc = service)
-    return svc.template || svc.name unless (type = svc.type)
-    key = type.demodulize.underscore.to_sym
-    {}[key] || key
-  end
-
-  def path_type; :deployment end
 end

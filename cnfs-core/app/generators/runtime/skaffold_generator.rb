@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class SkaffoldGenerator < RuntimeGenerator
+class Runtime::SkaffoldGenerator < RuntimeGenerator
   # TODO: generate image pull secrets file
 
   private

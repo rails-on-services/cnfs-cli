@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class Target < ApplicationRecord
+  has_many :target_services
+  has_many :services, through: :target_services
+  has_many :target_resources
+  has_many :resources, through: :target_resources
   belongs_to :provider
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
   has_many :deployment_targets
   has_many :deployments, through: :deployment_targets
-  has_many :target_layers
-  has_many :layers, through: :target_layers
-  has_many :services, through: :layers
-  has_many :resources, through: :layers
 
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
@@ -20,10 +20,6 @@ class Target < ApplicationRecord
 
   validates :runtime, presence: true
   validates :provider, presence: true
-
-  # delegate :version, to: :runtime
-
-  # def orchestrator; runtime.name end
 
   def provider_type_to_s
     provider.type.underscore.split('/').last

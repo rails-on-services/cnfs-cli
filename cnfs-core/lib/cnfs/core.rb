@@ -7,7 +7,7 @@ require 'active_record/fixtures'
 require 'active_support/inflector'
 require 'active_support/string_inquirer'
 require 'config'
-require 'json_schemer'
+# require 'json_schemer'
 require 'lockbox'
 require 'open-uri'
 # require 'open3'
@@ -16,7 +16,7 @@ require 'thor'
 require 'xdg'
 require 'zeitwerk'
 
-# adds instance method #to_env to Config::Options class
+# adds instance method #to_array to Config::Options class
 require_relative '../config/options'
 
 # Config.setup do |config|
@@ -25,7 +25,6 @@ require_relative '../config/options'
 #   config.env_separator = '__'
 #   config.merge_nil_values = false
 # end
-# require 'yaml_vault'
 
 
 module Cnfs

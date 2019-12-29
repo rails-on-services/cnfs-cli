@@ -1,26 +1,28 @@
 # frozen_string_literal: true
 
-class ComposeGenerator < RuntimeGenerator
-  def nginx_conf
-    template('nginx.conf.erb', "#{target.write_path(:deployment)}/nginx.conf") if service_types.include?(:nginx)
+class Runtime::ComposeGenerator < RuntimeGenerator
+  def generate_nginx_conf
+    template('nginx.conf.erb', "#{target.write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
   end
 
-  def fluentd_log_dir
-    return unless behavior.eql?(:invoke) and service_types.include?(:fluentd)
+  def create_fluentd_log_dir
+    return unless behavior.eql?(:invoke) and template_types.include?(:fluentd)
 
     fluentd_dir = "#{target.write_path(:runtime)}/fluentd"
     empty_directory("#{fluentd_dir}/log")
     FileUtils.chmod('+w', "#{fluentd_dir}/log")
   end
 
-  def compose_env
-    template('../env.erb', target.runtime.compose_file, { env: environment })
+  def generate_compose_environment
+    template('../env.erb', target.runtime.compose_file, { env: compose_environment })
   end
 
   private
 
+  def excluded_files; ["#{target.write_path(path_type)}/nginx.conf"] end
+
   def nginx_services
-    services.select{ |s| s.profiles.include? 'server' if s.respond_to?(:profiles) }.map(&:name)
+    services.select{ |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }.map(&:name)
   end
 
   def mount; target.mount end
@@ -34,7 +36,7 @@ class ComposeGenerator < RuntimeGenerator
 
   def map_ports_to_host; false end
 
-  def environment
+  def compose_environment
     Config::Options.new({
       compose_file: Dir["#{target.write_path}/**/*.yml"].join(':'),
       compose_project_name: target.runtime.project_name,

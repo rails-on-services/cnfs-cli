@@ -18,6 +18,6 @@ module App::Backend
       generator.invoke_all
     end
 
-    def generator_class; "#{target.runtime.type.demodulize}Generator".safe_constantize end
+    def generator_class; "Runtime::#{target.runtime.type.demodulize}Generator".safe_constantize end
   end
 end

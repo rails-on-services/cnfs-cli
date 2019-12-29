@@ -5,10 +5,10 @@ module Config
   class Options
     # TODO: Replace hardcoded '__' with value from Config
     # Underscored representation of a Config hash
-    def to_env(key = '', value = self, ary = [])
+    def to_array(key = '', value = self, ary = [])
       if value.is_a?(Config::Options)
         value.each_pair do |skey, value|
-          to_env("#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
+          to_array("#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
         end
       else
         if value.is_a? Array

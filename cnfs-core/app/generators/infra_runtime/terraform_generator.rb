@@ -1,34 +1,17 @@
 # frozen_string_literal: true
 
-class TerraformGenerator < GeneratorBase
-  attr_accessor :resource
-
-  def manifest
-    generated_files = resources.each_with_object([]) do |resource, files|
-      @resource = resource
-      files << generate
-    end
-    FileUtils.rm(all_files - excluded_files - generated_files)
-  rescue Thor::Error => e
-    # TODO: add to errors array and have controller output the result
-    puts e
-    puts resource.to_json
-  end
+class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
 
   private
 
-  def views_path; super.join(target.provider.type.demodulize.underscore) end
-
   def generate
-    tmpl = target.provider.resource_to_template(resource).to_s
+    tmpl = entity_to_template.to_s
     template("#{tmpl}.tf.erb", "#{target.write_path(path_type)}/#{[tmpl, resource.name].uniq.join('-')}.tf")
   end
 
+  def entity_template_map; target.provider.resource_to_terraform_template_map end
+
   def excluded_files; Dir[target.write_path(path_type).join('terraform-provider*')] end
-
-  def path_type; :infra end
-
-  def resources; @resources ||= (target.resources + application.resources) end
 
   # def deploy_type; target.runtime.deploy_type end
   def deploy_type; :kubernetes end
