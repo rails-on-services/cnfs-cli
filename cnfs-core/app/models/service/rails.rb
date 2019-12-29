@@ -14,6 +14,7 @@ class Service::Rails < Service
   def prefix; is_cnfs_service ? 'app:' : '' end
 
   def exec_dir; is_cnfs_service ? 'spec/dummy/' : '' end
+  # def image_prefix; config.dig(:image, :build_args, :rails_env) end
 
   def build_args(target)
     @build_args ||= images[target.image_environment].try(:[], :build_args)
