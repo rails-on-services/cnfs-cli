@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InfraRuntimeGenerator < GeneratorBase
+class InfraRuntimeGenerator < ApplicationGenerator
   attr_accessor :resource
 
   def invoke_parent_methods

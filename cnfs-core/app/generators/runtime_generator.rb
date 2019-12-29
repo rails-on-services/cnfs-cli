@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class RuntimeGenerator < GeneratorBase
+class RuntimeGenerator < ApplicationGenerator
   attr_accessor :service
 
   # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files

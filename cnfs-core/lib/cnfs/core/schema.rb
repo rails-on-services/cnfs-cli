@@ -42,6 +42,7 @@ module Cnfs::Core
             t.string :name
             t.string :config
             t.string :environment
+            t.string :type
           end
           Application.reset_column_information
 

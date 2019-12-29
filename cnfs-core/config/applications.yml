@@ -5,6 +5,7 @@ DEFAULTS: &DEFAULTS
 
 default:
   <<: *DEFAULTS
+  type: Application::Backend
   services: comm, cognito, iam, organization, storage, sftp
   resources: object_storage, dns, image_cdn
   config:
