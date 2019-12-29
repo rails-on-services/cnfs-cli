@@ -48,14 +48,4 @@ class Runtime::ComposeGenerator < RuntimeGenerator
       pgid: '1002'
     })
   end
-
-  # def gid
-  #   ext_info = OpenStruct.new
-  #   if (RbConfig::CONFIG['host_os'] =~ /linux/ and Etc.getlogin)
-  #     shell_info = Etc.getpwnam(Etc.getlogin)
-  #     ext_info.puid = shell_info.uid
-  #     ext_info.pgid = shell_info.gid
-  #   end
-  #   ext_info
-  # end
 end

@@ -10,12 +10,13 @@ localstack:
   <<: *DEFAULTS
   tags: infra, storage
   environment:
-    self:
-      services: s3:4572,lambda:4574,sns:4575,sqs:4576
-      port_web_ui: 8080
-      debug: s3
-      hostname: localstack
-      hostname_external: localstack
+    all:
+      self:
+        services: s3:4572,lambda:4574,sns:4575,sqs:4576
+        port_web_ui: 8080
+        debug: s3
+        hostname: localstack
+        hostname_external: localstack
 
 nginx:
   tags: infra, storage
@@ -25,21 +26,23 @@ postgres:
   <<: *DEFAULTS
   tags: service_db, storage
   environment:
-    self:
-      postgres_user: admin
-      postgres_password: admin
-      postgres_db: postgres
-    application:
-      rails_database_host: postgres
-      # rails_database_user: admin
-      # rails_database_password: admin
+    development:
+      self:
+        postgres_user: admin
+        postgres_password: admin
+        postgres_db: postgres
+      application:
+        rails_database_host: postgres
+        # rails_database_user: admin
+        # rails_database_password: admin
 
 redis:
   <<: *DEFAULTS
   tags: service_db, storage
   environment:
-    application:
-      redis_url: redis://redis:6379
+    all:
+      application:
+        redis_url: redis://redis:6379
 
 sftp:
   <<: *DEFAULTS
@@ -75,9 +78,10 @@ comm:
 iam:
   <<: *core_rails_services
   environment:
-    self:
-      platform:
-        salt: 'salty value'
+    development:
+      self:
+        platform:
+          salt: 'salty value'
 
 organization:
   <<: *core_rails_services

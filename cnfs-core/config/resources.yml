@@ -3,27 +3,34 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-object_storage:
+os_app:
   <<: *DEFAULTS
+  template: object_storage
   # type: Resource::Bucket
   tags: storage
-  template: s3
   config:
-    postfix: 'whistler-whatever-default'
-  resources:
-    buckets:
-      app:
-        postfix: kostya-bucket-123abc
-      image:
-        logging: true
-        cors:
-          this: that
+    name: app
+    postfix: whistler-whatever-default
   environment:
     application:
       platform:
         storage:
           app:
             services: ['documents', 'reports', 'sftp']
+
+os_image:
+  <<: *DEFAULTS
+  template: object_storage
+  tags: storage
+  config:
+    name: image
+    logging: true
+    cors:
+      this: that
+  environment:
+    application:
+      platform:
+        storage:
           image:
             services: ['images']
 

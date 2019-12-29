@@ -16,7 +16,8 @@ class Target < ApplicationRecord
   attr_accessor :deployment, :application
 
   store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
-  store :tf_config, accessors: %i[tags image_environment], coder: YAML
+  store :config, accessors: %i[environment]
+  store :tf_config, accessors: %i[tags], coder: YAML
 
   validates :runtime, presence: true
   validates :provider, presence: true

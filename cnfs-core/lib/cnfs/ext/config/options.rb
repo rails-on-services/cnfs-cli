@@ -11,7 +11,7 @@ module Config
         end
       else
         if value.is_a? Array
-          ary.append("#{key.upcase}=#{value.join("\n")}")
+          ary.append("#{key.upcase}=#{value.join(",")}")
         else
           ary.append("#{key.upcase}=#{value}") unless value.nil?
         end
