@@ -28,13 +28,6 @@ require_relative '../config/options'
 
 
 module Cnfs
-  # class << self
-  #   attr_accessor :platform, :settings
-
-  #   def platform; @platform ||= Cnfs::Core::Platform.new end
-  #   def settings; @settings ||= {} end
-  # end
-
   module Core
     class Error < StandardError; end
 

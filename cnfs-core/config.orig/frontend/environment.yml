@@ -1,7 +1,0 @@
----
-candyland:
-  environment:
-    this: that
-blackcomb:
-  environment:
-    this: that
