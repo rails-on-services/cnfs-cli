@@ -12,15 +12,21 @@ class ApplicationRecord < ActiveRecord::Base
   # See: https://github.com/davishmcclurg/json_schemer
   def validator(schema = self.class.schema); JSONSchemer.schema(schema) end
 
-  def environment; options_hash(:environment) end
-
-  def options_hash(attr)
-    @options_hash ||= {}
-    @options_hash[attr] ||= hash_options(attr)
+  def environment
+    Config::Options.new.merge!(YAML.load(self[:environment] || '') || {})
   end
 
-  def hash_options(attr)
-    return Config::Options.new unless yaml = self[attr.to_sym]
-    Config::Options.new.merge!(YAML.load(yaml))
+  def to_env(env_scope, options = {})
+    environment.dig(env_scope)
   end
+
+  # def options_hash(attr)
+  #   @options_hash ||= {}
+  #   @options_hash[attr] ||= hash_options(attr)
+  # end
+
+  # def hash_options(attr)
+  #   return Config::Options.new unless yaml = self[attr.to_sym]
+  #   Config::Options.new.merge!(YAML.load(yaml))
+  # end
 end

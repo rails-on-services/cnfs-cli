@@ -22,7 +22,7 @@ class Target < ApplicationRecord
   validates :provider, presence: true
 
   def provider_type_to_s
-    provider.type.underscore.split('/').last
+    provider.type.demodulize.underscore
   end
 
   def write_path(type = :deployment)

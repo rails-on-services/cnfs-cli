@@ -32,10 +32,10 @@ class RuntimeGenerator < ApplicationGenerator
   def entities; services end
 
   def application_environment
-    base_env = application.to_env(target)
-    [[target], resources, services].each_with_object(base_env) do |providers, environment|
-      providers.each do |provider|
-        next unless (env = provider.environment.dig(:application))
+    base_env = application.to_env(:self, target)
+    [[target], resources, services].each_with_object(base_env) do |env_providers, environment|
+      env_providers.each do |env_provider|
+        next unless (env = env_provider.to_env(:application, target)) # environment.dig(:application))
 
         environment.merge!(env.to_hash)
       end

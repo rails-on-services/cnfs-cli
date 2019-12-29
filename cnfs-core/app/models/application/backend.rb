@@ -1,39 +1,39 @@
 # frozen_string_literal: true
 
 class Application::Backend < Application
-  store :config, accessors: %i[secret_key_base rails_master_key jwt_encryption_key], coder: YAML
+  attr_accessor :target
+
+  store :config, accessors: %i[platform endpoints secret_key_base rails_master_key], coder: YAML
 
   def partition_name # called by CredentialsController
     environment.self.platform.partition_name
   end
 
-  # Called by RuntimeGenerator
-  def to_env(target)
-    env = environment.self.merge!(platform: { jwt: jwt(target) }).merge!(other_stuff)
-    env.merge!(target.provider.credentials) if target.provider.credentials
-    env
+  # Called by RuntimeGenerator#application_environment
+  def to_env(env_scope, target = nil)
+    return super unless (@target = target)
+
+    return unless (env = environment[env_scope])
+
+    env.merge!(platform: { jwt: jwt })
+    env.merge!(other_stuff)
+    env.merge!(platform_infra)
   end
 
-  def some
-    application.environment.self.secret_key_base = Cnfs::Core.decrypt(application.secret_key_base)
-    application.environment.self.rails_master_key = Cnfs::Core.decrypt(application.rails_master_key)
-    application.environment.self.platform.jwt = Config::Options.new.merge!(jwt)
-    application.environment.self.platform.infra = Config::Options.new.merge!(platform_infra)
-  end
+  def secret_key_base; super._cnfs_decrypt end
+  def rails_master_key; super._cnfs_decrypt end
 
-
-  def jwt(target)
-    jwt = {
-      aud: "https://api.#{target.domain_name}",
-      iss: "https://iam.api.#{target.domain_name}"
-    }
-    jwt.merge!(environment.dig(:self, :platform, :jwt) || {})
-    jwt.merge!(encryption_key: Cnfs::Core.decrypt(jwt_encryption_key))
+  def jwt
+    return {} unless (hash = platform[:jwt])
+    hash.each_pair do |key, value|
+      value.gsub!('{domain}', target.domain_name)
+      hash[key] = Cnfs::Core.decrypt(value) if value._cnfs_encrypted
+    end
   end
 
   def other_stuff
     {
-      bucket_endpoint_url: 'http://localstack:4572',
+      bucket_endpoint_url: 'http://localstack:4572 # this comes from backend.rb',
       infra: { provider: 'aws' },
       platform: {
         api_docs: {

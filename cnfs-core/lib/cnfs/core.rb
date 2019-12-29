@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'cnfs/core/version'
-
 require 'active_record'
 require 'active_record/fixtures'
 require 'active_support/inflector'
@@ -16,16 +14,16 @@ require 'thor'
 require 'xdg'
 require 'zeitwerk'
 
-# adds instance method #to_array to Config::Options class
-require_relative '../config/options'
+require_relative 'ext/config/options'
+require_relative 'ext/string'
+require_relative 'core/version'
 
-# Config.setup do |config|
-#   config.use_env = true
-#   config.env_prefix = 'CNFS'
-#   config.env_separator = '__'
-#   config.merge_nil_values = false
-# end
-
+Config.setup do |config|
+  config.use_env = true
+  config.env_separator = '__'
+  # config.env_prefix = 'CNFS'
+  # config.merge_nil_values = false
+end
 
 module Cnfs
   module Core
@@ -60,10 +58,14 @@ module Cnfs
 
       def gem_root; Pathname.new(File.expand_path('../../..', __FILE__)) end
 
-      def encrypt(value); box.encrypt(value).to_yaml.gsub("--- !binary |-\n  ", '').chomp end
+      def encrypt(value, strip_yaml = false)
+        value = box.encrypt(value).to_yaml
+        strip_yaml ? value.gsub("--- !binary |-\n  ", '').chomp : value
+      end
 
-      def decrypt(value)
-        box.decrypt(YAML.load("--- !binary |-\n  #{value}\n"))
+      def decrypt(value, add_yaml = false)
+        value = add_yaml ? "--- !binary |-\n  #{value}\n" : value
+        box.decrypt(YAML.load(value))
       rescue Lockbox::DecryptionError
         nil
       end
