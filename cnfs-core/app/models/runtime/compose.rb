@@ -96,10 +96,11 @@ class Runtime::Compose < Runtime
       FileUtils.rm_f('.env')
       FileUtils.ln_s(compose_file, '.env')
     end
-    Dir.chdir("#{target.deployment.root}/services") do
-      FileUtils.rm_f('.env')
-      FileUtils.ln_s("../#{target.write_path}", '.env')
-    end
+    # TODO: This is specific to a Cnfs Backend project
+    # Dir.chdir("#{target.deployment.root}/services") do
+    #   FileUtils.rm_f('.env')
+    #   FileUtils.ln_s("../#{target.write_path}", '.env')
+    # end
     # unless config.platform.is_cnfs?
     #   Dir.chdir("#{deployment.root}/ros/services") do
     #     FileUtils.rm_f('.env')

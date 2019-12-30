@@ -1,12 +1,5 @@
 # frozen_string_literal: true
 
-# deployment has many targets
-# each target has one runtime
-# each target has many layers
-# deployment has one application
-# application has many layers
-# each layer has many services and resources
-
 class ApplicationController < Thor
 
   private

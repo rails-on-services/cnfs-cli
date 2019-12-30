@@ -14,7 +14,8 @@ module Cnfs
   class << self
     def gem_root; Pathname.new(File.expand_path('../..', __FILE__)) end
 
-    def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/controllers"] end
+    # def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/controllers"] end
+    def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib"] end
   end
 
   module Cli

@@ -10,7 +10,7 @@ module App::Backend
     end
 
     def execute_on_target
-      unless service and show_file
+      unless service and File.exist?(show_file)
         output.puts "Request not found: #{request.last_service_name}"
         return
       end
@@ -19,13 +19,17 @@ module App::Backend
     end
 
     def show_file
-      @show_file ||= (
-        %w[application target].each do |dir|
-          path = target.write_path.join(dir).join(service.layer.name).join(file_name).to_s
-          return path if File.exist?(path)
-        end
-      )
+      @show_file ||= target.write_path.join(file_name).to_s
     end
+
+    # def show_file
+    #   @show_file ||= (
+    #     %w[application target].each do |dir|
+    #       path = target.write_path.join(dir).join(file_name).to_s
+    #       return path if File.exist?(path)
+    #     end
+    #   )
+    # end
 
     def file_name; options.modifier ? "#{service_name}#{options.modifier}" : "#{service_name}.yml" end
 

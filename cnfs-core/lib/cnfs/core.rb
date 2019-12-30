@@ -106,7 +106,7 @@ module Cnfs
       end
 
       # TODO: remove lib; only load app dirs; core/schema.rb should still be reloaded
-      def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
+      def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/controllers", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
 
       def add_plugins(list); self.plugins += list end
 

@@ -10,7 +10,7 @@ module App
 
     class_option :deployment, type: :string, aliases: '-d'
     class_option :target, type: :string, aliases: '-t'
-    class_option :layer, type: :string, aliases: '-l'
+    class_option :tag, type: :string
 
     # class_option :environment, type: :string, default: nil, aliases: '-e', desc: 'Environment'
     # class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'

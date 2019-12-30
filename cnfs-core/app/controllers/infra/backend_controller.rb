@@ -11,7 +11,7 @@ module Infra
 
     class_option :deployment, type: :string, aliases: '-d'
     class_option :target, type: :string, aliases: '-t'
-    class_option :layer, type: :string, aliases: '-l'
+    class_option :tag, type: :string
 
     # desc 'create', 'Create target infrastructure'
     # def create(*args); run(:create, args) end
