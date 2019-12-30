@@ -40,7 +40,7 @@ module Cnfs
     end
 
     def fixture(type, file)
-      replace_path = type.to_sym.eql?(:project) ? project_config_dir : xdg.config_home.join('cnfs').join(project_name)
+      replace_path = type.to_sym.eql?(:project) ? project_config_dir : user_config_dir
       file.gsub(config_dir.to_s, replace_path.to_s)
     end
 
@@ -51,6 +51,8 @@ module Cnfs
     def config_dir; gem_root.join('config') end
 
     def project_config_dir; root.join('cnfs_config') end
+
+    def user_config_dir; xdg.config_home.join('cnfs/projects').join(project_name) end
 
     def xdg; @xdg ||= XDG::Environment.new end
 
