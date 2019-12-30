@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Infra::Backend
+module Infra
   class PlanController < Cnfs::Command
     def execute
       each_target do |target|

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-module App
-  class BackendController < ApplicationController
+# module App
+  class DeploymentController < ApplicationController
+    namespace :deployment
+
     # namespace 'application backend' #:backend
     class_option :verbose, type: :boolean, default: false, aliases: '-v'
     class_option :debug, type: :numeric, default: 0, aliases: '--debug'
@@ -155,8 +157,8 @@ module App
     end
 
     desc 'sh SERVICE', 'execute an interactive shell on a service'
-    # NOTE: shell is a reserved word in Thor so it can't be used
     option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
+    # NOTE: shell is a reserved word in Thor so it can't be used
     def sh(*args)
       validate_one_service(args)
       run(:shell, args)
@@ -228,4 +230,4 @@ module App
     def application; Ros::Be::Application::Model end
 =end
   end
-end
+# end

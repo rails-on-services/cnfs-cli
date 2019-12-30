@@ -27,7 +27,7 @@ module Cnfs
     desc 'version', 'cnfs version'
     map %w(--version -v) => :version
     def version
-      puts "v#{Cnfs::VERSION}"
+      puts "v#{Cnfs::Core::VERSION}"
     end
 
     desc 'console', 'Start a command console (short-cut alias: "c")'
@@ -36,12 +36,12 @@ module Cnfs
       if options[:help]
         invoke :help, ['console']
       else
-        ConsoleController.new(options).execute
+        CliController.new(options).execute
       end
     end
 
     # Load sub-commnds
-    register AppController, 'application', 'application [SUBCOMMAND]', 'Run application commands'
+    register DeploymentController, 'deployment', 'deployment [SUBCOMMAND]', 'Run deployment commands'
     register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
   end
 end
