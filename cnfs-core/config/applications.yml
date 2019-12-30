@@ -6,42 +6,56 @@ DEFAULTS: &DEFAULTS
 default: &default
   <<: *DEFAULTS
   type: Application::CnfsBackend
-  services: comm, cognito, iam, organization, storage, sftp
-  resources: os_app, os_image, dns, image_cdn
+  services: cognito, comm, iam, organization, storage, sftp
+  resources: app_bucket, image_bucket, dns, image_cdn
   config: &default_config
     endpoints:
       api: 'api.{domain}'
       sftp: 'sftp.{domain}'
-    platform:
-      jwt:
-        encryption_key: "--- !binary |-\n  I4jIDksHjk69Tfm6b4CVSrexPMivI1xolyrOD2r13XcxG2+dZbT2HScYJulTlDWnkk7Oi2qZ0/0wwr8P\n"
-        aud: 'https://api.{domain}'
-        iss: 'https://iam.api.{domain}'
-    secret_key_base: "--- !binary |-\n  MtymaUourpHTXC35E37mRJNbCcRJEyEBIaBk5GcXAqDxosh/4k5GYKnUJKodFLMg4rwndIjnQGxQ63+JqjnCIXuIGBRf6g8hrnqHjVQUWFiDH1m8XxFJoO6vPBFg7JbMBUnM5haqmu3mdyhVxWqVRRfIeITdccWj3b/pFZnaofjnglfaFUYfqD76BZ33ydmgxbdeW9sP103fFq4A\n"
-    rails_master_key: "--- !binary |-\n  pPXpTHLhm1rdbQayHCCx7IUOU4JH7f1gwR3AGRFf7W8jINVO+6V+ICfONsvcG8ZqwYriC04OXKIekgvs\n"
   environment:
+    all:
+      platform:
+        api_docs:
+          server:
+            host: 'https://api.{domain}'
+        connection:
+          type: host
+          external_connection_type: path
+          # feature_set: mounted
+          hosts: 'api.{domain}'
+        jwt:
+          aud: 'https://api.{domain}'
+          iss: 'https://iam.api.{domain}'
+        partition_name: ros
+        postman:
+          workspace: 'api.{domain}'
     development:
       rails_env: development
       platform:
         # name: whistler
-        metrics:
-          enabled: no
-          process_stats_enabled: no
+        jwt:
+          encryption_key: "--- !binary |-\n  I4jIDksHjk69Tfm6b4CVSrexPMivI1xolyrOD2r13XcxG2+dZbT2HScYJulTlDWnkk7Oi2qZ0/0wwr8P\n"
+      secret_key_base: "--- !binary |-\n  MtymaUourpHTXC35E37mRJNbCcRJEyEBIaBk5GcXAqDxosh/4k5GYKnUJKodFLMg4rwndIjnQGxQ63+JqjnCIXuIGBRf6g8hrnqHjVQUWFiDH1m8XxFJoO6vPBFg7JbMBUnM5haqmu3mdyhVxWqVRRfIeITdccWj3b/pFZnaofjnglfaFUYfqD76BZ33ydmgxbdeW9sP103fFq4A\n"
+      rails_master_key: "--- !binary |-\n  pPXpTHLhm1rdbQayHCCx7IUOU4JH7f1gwR3AGRFf7W8jINVO+6V+ICfONsvcG8ZqwYriC04OXKIekgvs\n"
+    production:
+      rails_env: production
+      platform:
         partition_name: ros
+        metrics:
+          enabled: yes
+          process_stats_enabled: yes
         request_logging:
-          enabled: no
+          enabled: yes
           config:
             host: fluentd
             port: 24224
         event_logging:
-          enabled: no
+          enabled: yes
           config:
             name: events-log
             host: fluentd
             port: 24224
             schema_registry_url: http://kafkastack:8081
-    production:
-      rails_env: production
 
 <%= Cnfs::Core.fixture_content(:project, __FILE__) %>
 <%= Cnfs::Core.fixture_content(:user, __FILE__) %>

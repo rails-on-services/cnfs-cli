@@ -3,7 +3,7 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-os_app:
+app_bucket:
   <<: *DEFAULTS
   template: object_storage
   # type: Resource::Bucket
@@ -12,13 +12,13 @@ os_app:
     name: app
     postfix: whistler-whatever-default
   environment:
-    application:
+    all:
       platform:
         storage:
           app:
             services: ['documents', 'reports', 'sftp']
 
-os_image:
+image_bucket:
   <<: *DEFAULTS
   template: object_storage
   tags: storage
@@ -28,7 +28,7 @@ os_image:
     cors:
       this: that
   environment:
-    application:
+    all:
       platform:
         storage:
           image:
@@ -193,6 +193,10 @@ postgres:
         name: whistler-staging-main
         instance_type: db.r5.large
         replica_count: 1
+  environment:
+    all:
+      application:
+        database_url: postgres://{url-to-elasticache-redis}:6379
 
 redis:
   <<: *DEFAULTS
@@ -206,8 +210,9 @@ redis:
         node_type: cache.r5.large
         number_cache_clusters: 1
   environment:
-    application:
-      redis_url: redis://redis-master:6379
+    all:
+      application:
+        redis_url: redis://{url-to-elasticache-redis}:6379
 
 vpc_with_db:
   <<: *DEFAULTS

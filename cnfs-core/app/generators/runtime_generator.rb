@@ -14,7 +14,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def generate_service_environments
     services.each do |service|
-      next unless (service_environment = service.to_env(target.environment))
+      next unless (service_environment = service.to_env(target.application_environment))
 
       generated_files << template('../env.erb',
                                   target.write_path(path_type).join("#{service.name}.env"),

@@ -3,24 +3,41 @@
 class Target < ApplicationRecord
   has_many :target_services
   has_many :services, through: :target_services
+  has_many :service_tags, through: :services, source: :tags
+
   has_many :target_resources
   has_many :resources, through: :target_resources
+  has_many :resource_tags, through: :resources, source: :tags
+
+  has_many :deployment_targets
+  has_many :deployments, through: :deployment_targets
+
   belongs_to :provider
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
-  has_many :deployment_targets
-  has_many :deployments, through: :deployment_targets
+
 
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
   attr_accessor :deployment, :application
 
   store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
-  store :config, accessors: %i[environment]
+  store :config, accessors: %i[application_environment]
   store :tf_config, accessors: %i[tags], coder: YAML
 
   validates :runtime, presence: true
   validates :provider, presence: true
+
+  def to_env
+    {
+      platform: {
+        infra: {
+          provider: provider_type_to_s,
+          resources: provider.resources
+        }
+      }
+    }.merge(environment)
+  end
 
   def provider_type_to_s
     provider.type.demodulize.underscore

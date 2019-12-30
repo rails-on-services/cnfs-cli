@@ -17,11 +17,10 @@ class ApplicationRecord < ActiveRecord::Base
   # See: https://github.com/davishmcclurg/json_schemer
   def validator(schema = self.class.schema); JSONSchemer.schema(schema) end
 
-  def to_env(env = nil, env_scope = :self) # , target = nil)
-    # @target = target if target
-
-    all = environment.dig(:all, env_scope) || {}
-    env = (environment.dig(env, env_scope) || {}).merge(all)
+  # env_scope is ignored; implemented to maintain compatibility with service model
+  def to_env(env = nil, _env_scope = nil)
+    all = environment.dig(:all) || {}
+    env = (environment.dig(env) || {}).merge(all)
     env.empty? ? nil : Config::Options.new.merge!(env)
   end
 end

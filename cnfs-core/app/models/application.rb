@@ -3,8 +3,11 @@
 class Application < ApplicationRecord
   has_many :application_services
   has_many :services, through: :application_services
+  has_many :service_tags, through: :services, source: :tags
+
   has_many :application_resources
   has_many :resources, through: :application_resources
+  has_many :resource_tags, through: :resources, source: :tags
 
   store :config, accessors: %i[path], coder: YAML
 
