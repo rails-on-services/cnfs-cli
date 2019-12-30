@@ -11,7 +11,7 @@ module Cnfs
       puts "v#{Cnfs::VERSION}"
     end
 
-    desc 'console', 'Start a command console (short-cut alias: "c")'
+    desc 'console', 'Start a command console'
     method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
     def console(*)
       if options[:help]
@@ -19,6 +19,11 @@ module Cnfs
       else
         ConsoleController.new(options).execute
       end
+    end
+
+    desc 'new', 'Create a new CNFS project'
+    def new(name)
+      NewController.new(name, options).execute
     end
 
     # Load sub-commnds

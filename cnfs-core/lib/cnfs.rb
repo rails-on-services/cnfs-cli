@@ -8,6 +8,7 @@ require 'config'
 # require 'json_schemer'
 require 'lockbox'
 require 'open-uri'
+require 'pry'
 # require 'open3'
 require 'sqlite3'
 require 'thor'
@@ -39,9 +40,13 @@ module Cnfs
     end
 
     def fixture(type, file)
-      replace_path = type.to_sym.eql?(:project) ? project_config_dir : xdg.config_home.join('cnfs')
+      replace_path = type.to_sym.eql?(:project) ? project_config_dir : xdg.config_home.join('cnfs').join(project_name)
       file.gsub(config_dir.to_s, replace_path.to_s)
     end
+
+    def project_name; File.read(config_file).chomp end
+
+    def config_file; root.join('.cnfs') end
 
     def config_dir; gem_root.join('config') end
 
@@ -52,7 +57,7 @@ module Cnfs
     # TODO: rather than Dir.pwd should take from the Platform method that calculates project dir
     def root; Pathname.new(Dir.pwd) end
 
-    def cnfs_project?; Dir.exist?(project_config_dir) end
+    def cnfs_project?; File.exist?(config_file) end
 
     def cnfs_services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
 
@@ -89,7 +94,7 @@ module Cnfs
     def loader; @loader ||= Zeitwerk::Loader.new end
 
     # use Zeitwerk loader for class reloading
-    def setup
+    def setup(skip_schema = false)
       plugins.each { |plugin| load_plugin(plugin) }
       # Zeitwerk::Loader.default_logger = method(:puts)
       autoload_dirs.each { |dir| loader.push_dir(dir) }
@@ -97,7 +102,7 @@ module Cnfs
       loader.enable_reloading
       loader.setup
       plugins.each { |plugin| plugin_after_initialize(plugin) }
-      Schema.setup
+      Schema.setup unless skip_schema
     end
 
     def reload

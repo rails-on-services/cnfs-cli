@@ -6,12 +6,14 @@ $:.unshift(lib_path) if !$:.include?(lib_path)
 
 require 'cnfs'
 
-if not Cnfs.cnfs_project? and not ARGV[0].eql?('version')
+lite_setup = %w[version new].include?(ARGV[0])
+
+unless Cnfs.cnfs_project? or lite_setup
   STDOUT.puts('WARN: not a cnfs project')
   return
 end
 
-Cnfs.setup
+Cnfs.setup(lite_setup)
 
 Signal.trap('INT') do
   warn("\n#{caller.join("\n")}: interrupted")

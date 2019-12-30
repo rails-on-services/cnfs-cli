@@ -22,12 +22,7 @@ class ConsoleController < ApplicationController
     end
   end
 
-  # def initialize(options)
-  #   @options = options
-  # end
-
   def execute(input: $stdin, output: $stdout)
-    require 'pry'
     Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|
       ConsoleController.reset_cache
       Cnfs.reload

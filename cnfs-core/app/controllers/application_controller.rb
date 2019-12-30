@@ -22,12 +22,6 @@ class ApplicationController
     @errors = Cnfs::Errors.new
   end
 
-  def each_layer
-    deployment.application.layers.each do |layer|
-      yield layer
-    end
-  end
-
   def with_selected_target
     target = deployment.targets.find_by(name: options.target) || deployment.targets.first
     configure_target(target)
@@ -161,10 +155,6 @@ class ApplicationController
     hash.merge!(only_output_on_error: true) unless options.verbose
     hash
   end
-
-  # def generator_namespace(command, generate)
-  #   self.class.name.gsub('::Commands::', "::#{command}::").gsub('::Generate', "::#{generate}")
-  # end
 
   # The cursor movement
   #
