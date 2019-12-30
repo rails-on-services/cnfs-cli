@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CliController < Cnfs::Command
+class CliController < ApplicationController
   def self.cache; @cache ||= {} end
 
   def self.reset_cache; @cache = nil end

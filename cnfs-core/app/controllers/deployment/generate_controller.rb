@@ -2,7 +2,7 @@
 
 # module Deployment
   # class GenerateController < Cnfs::Command
-  class Deployment::GenerateController < Cnfs::Command
+  class Deployment::GenerateController < ApplicationController
     def execute
       each_target do |target|
         # before_execute_on_target

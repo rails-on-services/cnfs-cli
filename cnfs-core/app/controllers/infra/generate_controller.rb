@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Infra
-  class GenerateController < Cnfs::Command
+  class GenerateController < ApplicationController
     def execute
       each_target do |target|
         # before_execute_on_target
