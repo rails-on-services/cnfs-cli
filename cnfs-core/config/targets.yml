@@ -5,36 +5,36 @@ DEFAULTS: &DEFAULTS
   runtime: compose
   provider: localstack
   config:
-    image_environment: development
-  environment:
-    application:
-      rails_env: development
+    application_environment: development
 
 development: &development
   <<: *DEFAULTS 
+  # type: Target::Docker
+  # generator: Generator::Compose
   services: localstack, postgres, redis, nginx, wait
-  resources: instance
+  resources: instance # instance resource contains dns records, alb, instance, etc
   # layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
   config:
+    application_environment: development
     mount: yes
     # dns_root_domain: localhost
     dns_root_domain: demo.cnfs.io
     dns_sub_domain: development
     lb_dns_hostnames: ['api']
-    image_environment: development
     root_domain_managed_in_route53: yes
+  environment:
+    from_target: target_value
 
 test: &test
   <<: *DEFAULTS 
 
 production: &production
   <<: *DEFAULTS 
-  # layers: cluster, cloud_networking
+  resources: postgres, redis, kubernetes
   runtime: skaffold
   infra_runtime: terraform
   config:
-    # mount: yes
-    # dns_root_domain: localhost
+    application_environment: production
     dns_root_domain: infra-testing.perxtech.io
     dns_sub_domain: development
     root_domain_managed_in_route53: yes
@@ -42,9 +42,6 @@ production: &production
   tf_config:
     tags:
       environment: staging
-  environment:
-    application:
-      rails_env: production
 
 <%= Cnfs::Core.fixture_content(:project, __FILE__) %>
 <%= Cnfs::Core.fixture_content(:user, __FILE__) %>

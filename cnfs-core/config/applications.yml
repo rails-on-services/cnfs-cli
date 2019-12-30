@@ -3,29 +3,54 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-default:
+default: &default
   <<: *DEFAULTS
-  services: comm, cognito, iam, organization, storage, sftp
-  resources: object_storage, dns, image_cdn
-  config:
-    secret_key_base: 2uoN6F2YEqqf10qMKJ5R17KmPUhWM0L6TgQoTi47MeMdyNHrQbv6gL1nstp7F4rbfnCIPThWcZRlk1iJlgC/+E75JVg4f0CQVkM7PrAN3UFFnYXTsdsInIer/I4KOlDI+jt/7WC90MhVi1xD7gmRZNBDKgXwOocP5/OcWnaE1PoK+flR4nq74jYf8esbbzEliMKfGb0iPa6QSME8
-    rails_master_key: XPLLaXVyF5TEzjzjDG66NQ6cGEmQs5FdSSoRqjccpznW3Rz92oO6JYR0Xh15f/c6kixs3K7TxcC2aXSd
-    jwt_encryption_key: LI7TSL6lIyjEVjnm1TKQpGznjBuR4Foi5yTOiTT9BZKZ9xG9Zuk9YcnAD5GGG7LXUe1Apz4Fk6iyoWuY
+  type: Application::CnfsBackend
+  services: cognito, comm, iam, organization, storage, sftp
+  resources: app_bucket, image_bucket, dns, image_cdn
+  config: &default_config
+    endpoints:
+      api: 'api.{domain}'
+      sftp: 'sftp.{domain}'
   environment:
-    self:
+    all:
+      platform:
+        api_docs:
+          server:
+            host: 'https://api.{domain}'
+        connection:
+          type: host
+          external_connection_type: path
+          # feature_set: mounted
+          hosts: 'api.{domain}'
+        jwt:
+          aud: 'https://api.{domain}'
+          iss: 'https://iam.api.{domain}'
+        partition_name: ros
+        postman:
+          workspace: 'api.{domain}'
+    development:
+      rails_env: development
       platform:
         # name: whistler
-        metrics:
-          enabled: no
-          process_stats_enabled: no
+        jwt:
+          encryption_key: "--- !binary |-\n  I4jIDksHjk69Tfm6b4CVSrexPMivI1xolyrOD2r13XcxG2+dZbT2HScYJulTlDWnkk7Oi2qZ0/0wwr8P\n"
+      secret_key_base: "--- !binary |-\n  MtymaUourpHTXC35E37mRJNbCcRJEyEBIaBk5GcXAqDxosh/4k5GYKnUJKodFLMg4rwndIjnQGxQ63+JqjnCIXuIGBRf6g8hrnqHjVQUWFiDH1m8XxFJoO6vPBFg7JbMBUnM5haqmu3mdyhVxWqVRRfIeITdccWj3b/pFZnaofjnglfaFUYfqD76BZ33ydmgxbdeW9sP103fFq4A\n"
+      rails_master_key: "--- !binary |-\n  pPXpTHLhm1rdbQayHCCx7IUOU4JH7f1gwR3AGRFf7W8jINVO+6V+ICfONsvcG8ZqwYriC04OXKIekgvs\n"
+    production:
+      rails_env: production
+      platform:
         partition_name: ros
+        metrics:
+          enabled: yes
+          process_stats_enabled: yes
         request_logging:
-          enabled: no
+          enabled: yes
           config:
             host: fluentd
             port: 24224
         event_logging:
-          enabled: no
+          enabled: yes
           config:
             name: events-log
             host: fluentd

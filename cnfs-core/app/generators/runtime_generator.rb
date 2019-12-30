@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-class RuntimeGenerator < GeneratorBase
+class RuntimeGenerator < ApplicationGenerator
   attr_accessor :service
 
   # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files
   def generate_application_environment
+    return unless (application_environment = application.to_env(target))
+
     generated_files << template('../env.erb',
                                 target.write_path(path_type).join('application.env'),
                                 { env: application_environment })
@@ -12,7 +14,7 @@ class RuntimeGenerator < GeneratorBase
 
   def generate_service_environments
     services.each do |service|
-      next unless (service_environment = service.environment.dig(:self))
+      next unless (service_environment = service.to_env(target.application_environment))
 
       generated_files << template('../env.erb',
                                   target.write_path(path_type).join("#{service.name}.env"),
@@ -31,17 +33,6 @@ class RuntimeGenerator < GeneratorBase
 
   def entities; services end
 
-  def application_environment
-    base_env = application.to_env(target)
-    [[target], resources, services].each_with_object(base_env) do |providers, environment|
-      providers.each do |provider|
-        next unless (env = provider.environment.dig(:application))
-
-        environment.merge!(env.to_hash)
-      end
-    end
-  end
-
   def generate
     template("#{entity_to_template}.yml.erb", "#{target.write_path(path_type)}/#{service.name}.yml")
   end
@@ -49,7 +40,7 @@ class RuntimeGenerator < GeneratorBase
   def path_type; :deployment end
 
   # Methods for all runtime templates
-  def relative_path; @relative_path ||= Pathname.new('../' * target.write_path(:deployment).to_s.split('/').size) end
+  def relative_path; @relative_path ||= Pathname.new('../' * target.write_path(path_type).to_s.split('/').size) end
 
   def template_types; @template_types ||= services.map{ |service| entity_to_template(service).to_sym }.uniq end
 
@@ -72,8 +63,8 @@ class RuntimeGenerator < GeneratorBase
 
   def set_env_files
     files = []
-    files << "./application.env" if File.exist?(target.write_path(:deployment).join('application.env'))
-    files << "./#{service.name}.env" if File.exist?(target.write_path(:deployment).join("#{service.name}.env"))
+    files << "./application.env" if File.exist?(target.write_path(path_type).join('application.env'))
+    files << "./#{service.name}.env" if File.exist?(target.write_path(path_type).join("#{service.name}.env"))
     files
   end
 end

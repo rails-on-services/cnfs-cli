@@ -17,7 +17,7 @@ class Service::Rails < Service
   # def image_prefix; config.dig(:image, :build_args, :rails_env) end
 
   def build_args(target)
-    @build_args ||= images[target.image_environment].try(:[], :build_args)
+    @build_args ||= images[target.application_environment].try(:[], :build_args)
   end
 
   def context_path(relative_path)

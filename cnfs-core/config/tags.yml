@@ -10,24 +10,21 @@ core:
 storage:
   <<: *DEFAULTS
   description: Resources and services for running the storage component
+  environment:
+    all:
+      storage_tag: hello
 
 service_db:
   <<: *DEFAULTS
   description: Service backed database resources 
   config:
     this: that
-  environment:
-    application:
-      tag_env: hello
 
 db:
   <<: *DEFAULTS
   description: Cloud provider database resources
   config:
     this: that
-  environment:
-    application:
-      tag_env: hello
 
 cluster:
   <<: *DEFAULTS
@@ -36,3 +33,6 @@ cluster:
 networking:
   <<: *DEFAULTS
   description: Networking Resources
+  environment:
+    all:
+      networking_tag: hello

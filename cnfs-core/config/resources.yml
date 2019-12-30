@@ -3,27 +3,34 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-object_storage:
+app_bucket:
   <<: *DEFAULTS
+  template: object_storage
   # type: Resource::Bucket
   tags: storage
-  template: s3
   config:
-    postfix: 'whistler-whatever-default'
-  resources:
-    buckets:
-      app:
-        postfix: kostya-bucket-123abc
-      image:
-        logging: true
-        cors:
-          this: that
+    name: app
+    postfix: whistler-whatever-default
   environment:
-    application:
+    all:
       platform:
         storage:
           app:
             services: ['documents', 'reports', 'sftp']
+
+image_bucket:
+  <<: *DEFAULTS
+  template: object_storage
+  tags: storage
+  config:
+    name: image
+    logging: true
+    cors:
+      this: that
+  environment:
+    all:
+      platform:
+        storage:
           image:
             services: ['images']
 
@@ -186,6 +193,10 @@ postgres:
         name: whistler-staging-main
         instance_type: db.r5.large
         replica_count: 1
+  environment:
+    all:
+      application:
+        database_url: postgres://{url-to-elasticache-redis}:6379
 
 redis:
   <<: *DEFAULTS
@@ -199,8 +210,9 @@ redis:
         node_type: cache.r5.large
         number_cache_clusters: 1
   environment:
-    application:
-      redis_url: redis://redis-master:6379
+    all:
+      application:
+        redis_url: redis://{url-to-elasticache-redis}:6379
 
 vpc_with_db:
   <<: *DEFAULTS
