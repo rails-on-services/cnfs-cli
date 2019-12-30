@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-# module Deployment
-  # class GenerateController < Cnfs::Command
-  class Deployment::GenerateController < ApplicationController
+module Primary
+  class GenerateController < ApplicationController
     def execute
       each_target do |target|
         # before_execute_on_target
@@ -21,4 +20,4 @@
 
     def generator_class; "Runtime::#{target.runtime.type.demodulize}Generator".safe_constantize end
   end
-# end
+end

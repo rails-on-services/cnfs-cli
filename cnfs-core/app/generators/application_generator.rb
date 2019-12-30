@@ -9,7 +9,7 @@ class ApplicationGenerator < Thor::Group
 
   def source_paths; [user_views_path, views_path] end
 
-  def user_views_path; Cnfs::Core.root.join(views_path.to_s.gsub("#{Cnfs::Core.gem_root}/app", 'lib/generators')) end
+  def user_views_path; Cnfs.root.join(views_path.to_s.gsub("#{Cnfs.gem_root}/app", 'lib/generators')) end
 
   def views_path
     @views_path ||= internal_path.join('../views')

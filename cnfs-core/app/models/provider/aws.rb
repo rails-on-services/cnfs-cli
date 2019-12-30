@@ -5,8 +5,8 @@ class Provider::Aws < Provider
 
   def credentials
     {
-      access_key_id: Cnfs::Core.decrypt(access_key_id),
-      secret_access_key: Cnfs::Core.decrypt(secret_access_key)
+      access_key_id: Cnfs.decrypt(access_key_id),
+      secret_access_key: Cnfs.decrypt(secret_access_key)
     }
   end
 

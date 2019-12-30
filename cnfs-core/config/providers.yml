@@ -39,5 +39,5 @@ localstack:
       endpoint: http://localstack:4572
       region: localstack
 
-<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
-<%= Cnfs::Core.fixture_content(:user, __FILE__) %>
+<%= Cnfs.config_content(:project, __FILE__) %>
+<%= Cnfs.config_content(:user, __FILE__) %>

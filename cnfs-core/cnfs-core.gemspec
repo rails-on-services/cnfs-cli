@@ -1,10 +1,10 @@
 lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "cnfs/core/version"
+require "cnfs/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "cnfs-core"
-  spec.version       = Cnfs::Core::VERSION
+  spec.name          = 'cnfs-cli'
+  spec.version       = Cnfs::VERSION
   spec.authors       = ["Robert Roach"]
   spec.email         = ["rjayroach@gmail.com"]
 

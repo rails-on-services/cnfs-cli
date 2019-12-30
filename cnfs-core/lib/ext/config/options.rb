@@ -14,7 +14,7 @@ module Config
           ary.append("#{key.upcase}=#{value.join(",")}")
         else
           if value.is_a? String
-            value = value._cnfs_decrypt
+            value = value._cnfs_plaintext
             value = value.gsub('{domain}', target.domain_name) if target
           end
           ary.append("#{key.upcase}=#{value}") unless value.nil?

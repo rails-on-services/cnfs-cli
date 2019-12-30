@@ -36,3 +36,6 @@ networking:
   environment:
     all:
       networking_tag: hello
+
+<%= Cnfs.config_content(:project, __FILE__) %>
+<%= Cnfs.config_content(:user, __FILE__) %>

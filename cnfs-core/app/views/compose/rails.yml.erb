@@ -2,7 +2,7 @@
 <%-
 def context_path; service.context_path(relative_path) end
 
-def mount_cnfs; (!Cnfs::Core.cnfs_services_project? and !service.is_cnfs_service) end
+def mount_cnfs; (!Cnfs.cnfs_services_project? and !service.is_cnfs_service) end
 -%>
 ---
 version: '<%= version %>'

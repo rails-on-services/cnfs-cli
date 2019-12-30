@@ -240,5 +240,5 @@ cert:
     subject_alternative_names: ['hello', 'there']
     domain_name: duh
 
-<%= Cnfs::Core.fixture_content(:project, __FILE__) %>
-<%= Cnfs::Core.fixture_content(:user, __FILE__) %>
+<%= Cnfs.config_content(:project, __FILE__) %>
+<%= Cnfs.config_content(:user, __FILE__) %>

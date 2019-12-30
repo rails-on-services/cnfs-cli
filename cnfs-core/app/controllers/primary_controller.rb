@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class DeploymentController < CommandController
-  namespace :deployment
+class PrimaryController < CommandController
+  # namespace :deployment
 
   # namespace 'application backend' #:backend
   class_option :verbose, type: :boolean, default: false, aliases: '-v'

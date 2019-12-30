@@ -1,5 +1,5 @@
-require "bundler/setup"
-require "cnfs/core"
+require 'bundler/setup'
+require 'cnfs'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
