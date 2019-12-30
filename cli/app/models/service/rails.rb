@@ -21,7 +21,7 @@ class Service::Rails < Service
   end
 
   def context_path(relative_path)
-    (!Cnfs.cnfs_services_project? and is_cnfs_service) ? relative_path.join('ros') : relative_path
+    (!Cnfs.services_project? and is_cnfs_service) ? relative_path.join('ros') : relative_path
   end
 
   def command(profile)

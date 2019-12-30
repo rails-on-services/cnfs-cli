@@ -8,7 +8,7 @@ require 'cnfs'
 
 lite_setup = %w[version new].include?(ARGV[0])
 
-unless Cnfs.cnfs_project? or lite_setup
+unless Cnfs.project? or lite_setup
   STDOUT.puts('WARN: not a cnfs project')
   return
 end
@@ -20,10 +20,8 @@ Signal.trap('INT') do
   exit(1)
 end
 
-require 'cnfs/cli'
-
 begin
-  Cnfs::Cli.start
+  PrimaryController.start
 rescue Cnfs::Cli::Error => err
   puts "ERROR: #{err.message}"
   exit 1

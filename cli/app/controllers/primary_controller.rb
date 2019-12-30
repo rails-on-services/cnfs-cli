@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class PrimaryController < CommandController
+  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
   # namespace :deployment
 
   # namespace 'application backend' #:backend
@@ -17,6 +18,27 @@ class PrimaryController < CommandController
   # class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'
   # class_option :feature_set, type: :string, default: nil, aliases: '--fs', desc: 'feature set'
 
+  # Global commands
+  desc 'version', 'cnfs version'
+  def version
+    puts "v#{Cnfs::VERSION}"
+  end
+
+  desc 'console', 'Start a command console'
+  method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
+  def console(*)
+    if options[:help]
+      invoke :help, ['console']
+    else
+      ConsoleController.new(options).execute
+    end
+  end
+
+  desc 'new', 'Create a new CNFS project'
+  def new(name)
+    NewController.new(name, options).execute
+  end
+
   desc 'attach SERVICE', 'attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
   def attach(*args); run(:attach, args) end
 
@@ -26,6 +48,9 @@ class PrimaryController < CommandController
 
   desc 'cmd', 'Run arbitrary command in context'
   def cmd(*args); run(:cmd, args) end
+
+  # desc 'console', 'C
+  # def copy(*args); run(:copy, args) end
 
   desc 'copy', 'Copy file to service'
   def copy(*args); run(:copy, args) end

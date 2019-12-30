@@ -17,6 +17,7 @@ require 'zeitwerk'
 
 require_relative 'ext/config/options'
 require_relative 'ext/string'
+require_relative 'cnfs/schema'
 require_relative 'cnfs/errors'
 require_relative 'cnfs/version'
 
@@ -31,39 +32,52 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :plugins, :autoload_dirs, :obj
+    attr_accessor :plugins, :autoload_dirs
 
-    def obj; @obj ||= {} end
+    # project attributes
+    def name; @name ||= File.read(config_file).chomp end
 
-    def config_content(type, file)
-      ERB.new(IO.read(fixture(type, file))).result.gsub("---\n", '') if File.exist?(fixture(type, file))
-    end
+    def project?; File.exist?(config_file) end
 
-    def fixture(type, file)
-      replace_path = type.to_sym.eql?(:project) ? project_config_dir : user_config_dir
-      file.gsub(config_dir.to_s, replace_path.to_s)
-    end
+    def debug; ARGV.include?('-d') end
 
-    def project_name; File.read(config_file).chomp end
+    def services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
 
-    def config_file; root.join('.cnfs') end
+    def config_file; @config_file ||= root.join('.cnfs') end
 
-    def config_dir; gem_root.join('config') end
+    def config_path; @config_path ||= root.join('config') end
 
-    def project_config_dir; root.join('cnfs_config') end
+    def root; @root ||= Pathname.new(Dir.pwd) end
 
-    def user_config_dir; xdg.config_home.join('cnfs/projects').join(project_name) end
+    # user attributes
+    def user_config_path; @user_config_path ||= user_root.join('config') end
+
+    def user_root; @user_root ||= xdg.config_home.join('cnfs').join(name) end
 
     def xdg; @xdg ||= XDG::Environment.new end
 
-    # TODO: rather than Dir.pwd should take from the Platform method that calculates project dir
-    def root; Pathname.new(Dir.pwd) end
+    # gem attributes
+    def gem_config_path; @gem_config_path ||= gem_root.join('config') end
 
-    def cnfs_project?; File.exist?(config_file) end
+    def gem_root; @gem_root ||= Pathname.new(__dir__).join('..') end
 
-    def cnfs_services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
+    def box; @box ||= Lockbox.new(key: ENV['CNFS_MASTER_KEY']) end
 
-    def gem_root; Pathname.new(File.expand_path('../..', __FILE__)) end
+    def loader; @loader ||= Zeitwerk::Loader.new end
+
+    # Utility methods
+    def config_content(type, file)
+      fixture_file = fixture(type, file)
+      if File.exist?(fixture_file)
+        STDOUT.puts "Loading config file #{fixture_file}" if debug
+        ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
+      end
+    end
+
+    def fixture(type, file)
+      replace_path = type.to_sym.eql?(:project) ? config_path : user_config_path
+      file.gsub(gem_config_path.to_s, replace_path.to_s)
+    end
 
     def encrypt(value, strip_yaml = false)
       value = box.encrypt(value).to_yaml
@@ -76,8 +90,6 @@ module Cnfs
     rescue Lockbox::DecryptionError
       nil
     end
-
-    def box; @box ||= Lockbox.new(key: ENV['CNFS_MASTER_KEY']) end
 
     def load_plugin(plugin_name)
       lib_path = File.expand_path("../../../#{plugin_name}/lib", __dir__)
@@ -93,12 +105,10 @@ module Cnfs
       plugin_class.send(:after_initialize) if plugin_class.respond_to?(:after_initialize)
     end
 
-    def loader; @loader ||= Zeitwerk::Loader.new end
-
     # use Zeitwerk loader for class reloading
     def setup(skip_schema = false)
       plugins.each { |plugin| load_plugin(plugin) }
-      # Zeitwerk::Loader.default_logger = method(:puts)
+      Zeitwerk::Loader.default_logger = method(:puts) if debug
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 
       loader.enable_reloading
@@ -112,8 +122,7 @@ module Cnfs
       loader.reload
     end
 
-    # TODO: remove lib; only load app dirs; core/schema.rb should still be reloaded
-    def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/lib", "#{gem_root}/app/controllers", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
+    def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/app/controllers", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
 
     def add_plugins(list); self.plugins += list end
 

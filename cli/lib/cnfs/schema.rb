@@ -19,8 +19,9 @@ module Cnfs
 
     def self.load_data
       silence_output(!ARGV.include?('-v')) { create_schema }
-      dir = Cnfs.config_dir
+      dir = Cnfs.gem_config_path
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
+      fixtures.each { |f| STDOUT.puts "Loading config file #{dir.join(f)}.yml" } if Cnfs.debug
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
     end
 

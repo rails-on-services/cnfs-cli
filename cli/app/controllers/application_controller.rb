@@ -120,7 +120,7 @@ class ApplicationController
   end
 
   def last_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
-  def config_files; Dir[Cnfs.project_config_dir.join('**/*.yml')] end
+  def config_files; Dir[Cnfs.config_path.join('**/*.yml')] end
 
   def first_manifest_file_created; manifest_files.map { |f| File.mtime(f) }.min end
   def manifest_files; Dir[target.write_path.join('**/*')] end
