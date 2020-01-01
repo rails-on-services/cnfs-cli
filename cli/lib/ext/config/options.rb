@@ -13,10 +13,7 @@ module Config
         if value.is_a? Array
           ary.append("#{key.upcase}=#{value.join(",")}")
         else
-          if value.is_a? String
-            value = value.plaintext
-            value = value.gsub('{domain}', target.domain_name) if target
-          end
+          value = value.plaintext.cnfs_sub(target) if value.is_a? String
           ary.append("#{key.upcase}=#{value}") unless value.nil?
         end
       end

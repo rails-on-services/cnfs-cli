@@ -43,7 +43,7 @@ module Cnfs
 
     def project?; File.exist?(config_file) end
 
-    def debug; ARGV.include?('-d') end
+    def debug; ARGV.include?('--debug') end
 
     def services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
 
