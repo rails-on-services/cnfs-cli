@@ -9,7 +9,7 @@ class Application < ApplicationRecord
   has_many :resources, through: :application_resources
   has_many :resource_tags, through: :resources, source: :tags
 
-  store :config, accessors: %i[path], coder: YAML
+  # store :config, accessors: %i[path], coder: YAML
 
   # NOTE: If these methods can be used across application types then they should be here
   # otherwise they should be in the model for the specific application type

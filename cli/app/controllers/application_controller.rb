@@ -12,15 +12,21 @@ class ApplicationController
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
 
-  def initialize(deployment, args = [], options = Thor::CoreExt::HashWithIndifferentAccess.new)
-    @deployment = deployment
-    @application = deployment.application
+  # def initialize(deployment, args = [], options = Thor::CoreExt::HashWithIndifferentAccess.new)
+  #   @deployment = deployment
+  def initialize(args, options)
     @args = args
     @options = options
     @input = $stdin
     @output = $stdout
     @errors = Cnfs::Errors.new
   end
+
+  def application; @application = deployment.application end
+
+  def deployment; @deployment ||= Deployment.find_by(name: deployment_name) end
+
+  def deployment_name; args.deployment_name || ENV['CNFS_DEPLOY'] || :development end
 
   def with_selected_target
     target = deployment.targets.find_by(name: options.target) || deployment.targets.first

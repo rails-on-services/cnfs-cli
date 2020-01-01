@@ -3,6 +3,10 @@
 module Primary
   class GenerateController < ApplicationController
     def execute
+      binding.pry
+    end
+
+    def x
       each_target do |target|
         # before_execute_on_target
         execute_on_target

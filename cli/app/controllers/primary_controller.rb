@@ -1,22 +1,20 @@
 # frozen_string_literal: true
 
-class PrimaryController < CommandController
-  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Run infrastructure commands'
+class PrimaryController < CommandsController
+  register TargetsController, 'target', 'target [SUBCOMMAND]', 'Manage target infrastructure'
   # namespace :deployment
 
-  # namespace 'application backend' #:backend
   class_option :verbose, type: :boolean, default: false, aliases: '-v'
   class_option :debug, type: :numeric, default: 0, aliases: '--debug'
   class_option :noop, type: :boolean, aliases: '-n'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
 
-  class_option :deployment, type: :string, aliases: '-d'
-  class_option :target, type: :string, aliases: '-t'
-  class_option :tag, type: :string
+  # class_option :deployment_name, type: :string, aliases: '-d'
+  class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
+  class_option :application_name, type: :string, aliases: '-a'
+  class_option :service_names, type: :array, aliases: '-s'
+  # class_option :tag_name, type: :string, aliases: '--tag'
 
-  # class_option :environment, type: :string, default: nil, aliases: '-e', desc: 'Environment'
-  # class_option :profile, type: :string, default: nil, aliases: '-p', desc: 'profile'
-  # class_option :feature_set, type: :string, default: nil, aliases: '--fs', desc: 'feature set'
 
   # Global commands
   desc 'version', 'cnfs version'
@@ -30,7 +28,7 @@ class PrimaryController < CommandController
     if options[:help]
       invoke :help, ['console']
     else
-      ConsoleController.new(options).execute
+      ConsoleController.new([], options).execute
     end
   end
 
@@ -39,12 +37,14 @@ class PrimaryController < CommandController
     NewController.new(name, options).execute
   end
 
-  desc 'attach SERVICE', 'attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
+  desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
   def attach(*args); run(:attach, args) end
 
-  desc 'build IMAGE', 'build one or all images'
-  option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
-  def build(*args); run(:build, args) end
+  desc 'build APPLICATION [SERVICES]', 'Build all application images or just for specifc services'
+  option :shell, type: :boolean, aliases: '-s', desc: 'Connect to service shell after building'
+  def build(application_name, *service_names)
+    run(:build, application_name: application_name, service_names: service_names)
+  end
 
   desc 'cmd', 'Run arbitrary command in context'
   def cmd(*args); run(:cmd, args) end
@@ -52,7 +52,7 @@ class PrimaryController < CommandController
   # desc 'console', 'C
   # def copy(*args); run(:copy, args) end
 
-  desc 'copy', 'Copy file to service'
+  desc 'copy', 'Copy a file to or from a running service'
   def copy(*args); run(:copy, args) end
 
   desc 'create SERVICE', 'Create a namespace'
@@ -82,18 +82,15 @@ class PrimaryController < CommandController
     end
   end
 
-  desc 'exec SERVICE COMMAND', 'execute a command on a service'
-  def exec(*args); run(:exec, args) end
+  desc 'exec COMMAND', 'Execute a command on a running service'
+  def exec(command_name); run(:exec,  params(:exec, binding)) end
 
-  desc 'generate', 'Generate manifests for deployment'
+  desc 'generate', 'Generate manifests for application deployment'
   # option :force, type: :boolean, default: false, aliases: '-f'
-  def generate(*args); run(:generate, args) end
+  def generate; run(:generate) end
 
-  # desc 'init', 'Initialize a project environment'
-  # def init
-  #   preflight_check(fix: true)
-  #   preflight_check
-  # end
+  desc 'init', 'Initialize a project environment'
+  def init; run(:init) end
 
   desc 'list', 'List backend application configuration objects'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
@@ -215,42 +212,4 @@ class PrimaryController < CommandController
   option :fail_fast, type: :boolean, aliases: '-f', desc: 'Skip any remaining tests for a service after a test fails'
   option :push, type: :boolean, desc: 'Push image after successful testing'
   def test(*args); run(:test, args) end
-
-  private
-
-  def validate_one_service(args)
-    raise Error, set_color('one service name is required', :red) unless args.size.eql?(1)
-  end
-
-=begin
-  def preflight_check(fix: false)
-    options = {}
-    ros_repo = Dir.exists?(Ros.ros_root)
-    environments = Dir["#{Ros.deployments_dir}/*.yml"].select{ |f| not File.basename(f).index('-') }.map{ |f| File.basename(f).chomp('.yml') }
-    if fix
-      %x(git clone git@github.com:rails-on-services/ros.git) unless ros_repo
-      require 'ros/main/env/generator'
-      environments.each do |env|
-        Ros::Main::Env::Generator.new([env]).invoke_all if not File.exist?("#{Ros.environments_dir}/#{env}.yml")
-      end
-    else
-      STDOUT.puts "ros repo: #{ros_repo ? 'ok' : 'missing'}"
-      env_ok = environments.each do |env|
-        break false if not File.exist?("#{Ros.environments_dir}/#{env}.yml")
-      end
-      STDOUT.puts "environment configuration: #{env_ok ? 'ok' : 'missing'}"
-    end
-  end
-
-  def context(options = {})
-    return @context if @context
-    raise Error, set_color('ERROR: Not a Ros project', :red) if Ros.root.nil?
-
-    require "ros/be/application/cli/#{infra_x.cluster_type}"
-    @context = Ros::Be::Application.const_get(infra_x.cluster_type.capitalize).new(options)
-    @context
-  end
-  def infra_x; Ros::Be::Infra::Model end
-  def application; Ros::Be::Application::Model end
-=end
 end

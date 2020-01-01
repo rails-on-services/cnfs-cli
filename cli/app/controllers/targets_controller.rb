@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InfraController < CommandController
+class TargetsController < CommandsController
   namespace :infra
 
   class_option :verbose, type: :boolean, default: false, aliases: '-v'

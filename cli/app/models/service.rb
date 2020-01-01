@@ -4,6 +4,8 @@ class Service < ApplicationRecord
   has_many :service_tags
   has_many :tags, through: :service_tags
 
+  # store :config, accessors: %i[path], coder: YAML
+
   def test_commands(options = nil); [] end
 
   def to_env(env = nil, env_scope = :self)

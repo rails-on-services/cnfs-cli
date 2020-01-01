@@ -42,6 +42,7 @@ module Cnfs
           t.string :config
           t.string :environment
           t.string :type
+          t.string :path
         end
         Application.reset_column_information
 
@@ -91,6 +92,7 @@ module Cnfs
           t.string :environment
           t.string :type
           t.string :template
+          t.string :path
         end
         Service.reset_column_information
 

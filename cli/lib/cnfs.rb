@@ -50,10 +50,11 @@ module Cnfs
       # project attributes
       @root = Pathname.new(path)
       @config_path = root.join('config')
-      @config_file = root.join('.cnfs')
+      @config_file = root.join('.cnfs.yml')
       return unless File.exist? config_file
 
-      @project_name = File.read(config_file).chomp
+      @cnfs_config = YAML.load_file(config_file)
+      @project_name = @cnfs_config['project_name']
       # user attributes
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')

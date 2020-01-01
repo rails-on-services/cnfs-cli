@@ -1,8 +1,21 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class BuildController < Cnfs::Command
+module Primary
+  class BuildController < ApplicationController
     def execute
+      services.each do |service|
+        Dir.chdir(service.path || application.path) do
+          # target.runtime.build(service)
+          binding.pry
+        end
+      end
+    end
+
+    def services; @services ||= application.services.where(name: args.service_names) end
+
+    def application; @application ||= Application.find_by(name: args.application_name) end
+
+    def x
       with_selected_target do
         before_execute_on_target
         execute_on_target
