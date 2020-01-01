@@ -6,6 +6,7 @@ require 'active_support/inflector'
 require 'active_support/string_inquirer'
 require 'config'
 # require 'json_schemer'
+require 'little-plugger'
 require 'lockbox'
 require 'open-uri'
 require 'pry'
@@ -29,13 +30,16 @@ Config.setup do |config|
 end
 
 module Cnfs
+  extend LittlePlugger
+  module Plugins; end
+
   class Error < StandardError; end
 
   class << self
-    attr_accessor :plugins, :autoload_dirs
+    attr_accessor :autoload_dirs
 
     # project attributes
-    def name; @name ||= File.read(config_file).chomp end
+    def project_name; @project_name ||= File.read(config_file).chomp end
 
     def project?; File.exist?(config_file) end
 
@@ -52,7 +56,7 @@ module Cnfs
     # user attributes
     def user_config_path; @user_config_path ||= user_root.join('config') end
 
-    def user_root; @user_root ||= xdg.config_home.join('cnfs').join(name) end
+    def user_root; @user_root ||= xdg.config_home.join('cnfs').join(project_name) end
 
     def xdg; @xdg ||= XDG::Environment.new end
 
@@ -91,29 +95,14 @@ module Cnfs
       nil
     end
 
-    def load_plugin(plugin_name)
-      lib_path = File.expand_path("../../../#{plugin_name}/lib", __dir__)
-      $:.unshift(lib_path) if !$:.include?(lib_path)
-      plugin_module = plugin_name.gsub('-', '/')
-      require plugin_module
-      plugin_class = plugin_module.camelize.constantize
-      self.autoload_dirs += plugin_class.send(:autoload_dirs) if plugin_class.respond_to?(:autoload_dirs)
-    end
-
-    def plugin_after_initialize(plugin_name)
-      plugin_class = plugin_name.gsub('-', '/').camelize.constantize
-      plugin_class.send(:after_initialize) if plugin_class.respond_to?(:after_initialize)
-    end
-
     # use Zeitwerk loader for class reloading
     def setup(skip_schema = false)
-      plugins.each { |plugin| load_plugin(plugin) }
+      initialize_plugins
       Zeitwerk::Loader.default_logger = method(:puts) if debug
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 
       loader.enable_reloading
       loader.setup
-      plugins.each { |plugin| plugin_after_initialize(plugin) }
       Schema.setup unless skip_schema
     end
 
@@ -124,10 +113,6 @@ module Cnfs
 
     def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/app/controllers", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
 
-    def add_plugins(list); self.plugins += list end
-
-    def plugins; @plugins ||= [] end
-
     def gid
       ext_info = OpenStruct.new
       if (RbConfig::CONFIG['host_os'] =~ /linux/ and Etc.getlogin)
@@ -137,28 +122,5 @@ module Cnfs
       end
       ext_info
     end
-
-    # TODO: determine how plugins are discovered and loaded
-    # How are plugins declared?
-    # def config_file; 'config/cnfs.yml' end
-
-    # def settings; @settings ||= Config.load_and_set_settings(config_file) end
-
-    # def plugins; @plugins ||= (%w[cnfs-core cnfs cnfs-ext] + (settings.plugins || [])) end
-    # def plugins; @plugins ||= %w[cnfs-core cnfs cnfs-ext] end
-    # def plugins; @plugins ||= %w[cnfs-core cnfs] end
-    # def plugins; @plugins ||= %w[cnfs cnfs-ext] end
-
-    # require any plugins listed in config/cnfs.yml and add each gem's lib path to Zeitwerk
-    # NOTE: this currently only works with gems laid out in the same top level dir
-    # TODO: get this to work with a real gem based plugin structure
-
-    # def require_core
-    #   plugin = 'cnfs-core'
-    #   lib_path = File.expand_path("../../#{plugin}/lib", __dir__)
-    #   $:.unshift(lib_path) if !$:.include?(lib_path)
-    #   plugin_module = plugin.gsub('-', '/')
-    #   require plugin_module
-    # end
   end
 end

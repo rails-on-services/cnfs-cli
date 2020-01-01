@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activesupport'
   spec.add_dependency 'config'
   spec.add_dependency 'json_schemer'
+  spec.add_dependency 'little-plugger'
   spec.add_dependency 'lockbox'
   spec.add_dependency 'pastel', '~> 0.7.2'
   spec.add_dependency 'pry'
