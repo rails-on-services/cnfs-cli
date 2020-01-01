@@ -2,21 +2,53 @@
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
-  application: default
   config:
     base_path: cnfs_tmp
 
-development: &development
+frontend_development: &frontend_development
   <<: *DEFAULTS
-  targets: development
+  application: frontend
+  target: development
 
-test:
+frontend_test: &frontend_test
   <<: *DEFAULTS
-  targets: test
+  application: frontend
+  target: test
 
-production:
+frontend_production: &frontend_production
   <<: *DEFAULTS
-  targets: production
+  application: frontend
+  target: production
+
+backend_development: &backend_development
+  <<: *DEFAULTS
+  application: backend
+  target: development
+
+backend_test: &backend_test
+  <<: *DEFAULTS
+  application: backend
+  target: test
+
+backend_production: &backend_production
+  <<: *DEFAULTS
+  application: backend
+  target: production
+
+pipeline_development: &pipeline_development
+  <<: *DEFAULTS
+  application: pipeline
+  target: development
+
+pipeline_test: &pipeline_test
+  <<: *DEFAULTS
+  application: pipeline
+  target: test
+
+pipeline_production: &pipeline_production
+  <<: *DEFAULTS
+  application: pipeline
+  target: production
 
 <%= Cnfs.config_content(:project, __FILE__) %>
 <%= Cnfs.config_content(:user, __FILE__) %>

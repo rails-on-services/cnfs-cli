@@ -37,7 +37,8 @@ module Cnfs
 
   class << self
     attr_accessor :autoload_dirs
-    attr_reader :root, :config_path, :config_file, :project_name, :user_root, :user_config_path
+    attr_reader :root, :config_path, :config_file, :user_root, :user_config_path
+    attr_reader :project_name, :default_deployment
 
     def setup(skip_schema = false)
       setup_paths
@@ -53,11 +54,18 @@ module Cnfs
       @config_file = root.join('.cnfs.yml')
       return unless File.exist? config_file
 
-      @cnfs_config = YAML.load_file(config_file)
-      @project_name = @cnfs_config['project_name']
+      @project_config = YAML.load_file(config_file)
+      @project_name = @project_config['project_name']
+
       # user attributes
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
+      @user_config_file = user_root.join('cnfs.yml')
+      @user_project_config = YAML.load_file(@user_config_file) if File.exist?(@user_config_file)
+
+      # project attributes
+      @project_config.merge!(@user_project_config || {})
+      @default_deployment = @project_config['default_deployment']
     end
 
     def project?; File.exist?(config_file) end

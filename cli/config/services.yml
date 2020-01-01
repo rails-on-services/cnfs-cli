@@ -3,6 +3,9 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
+kafka:
+  <<: *DEFAULTS
+
 wait:
   <<: *DEFAULTS
 

@@ -3,10 +3,6 @@
 module Primary
   class GenerateController < ApplicationController
     def execute
-      binding.pry
-    end
-
-    def x
       each_target do |target|
         # before_execute_on_target
         execute_on_target
@@ -15,8 +11,9 @@ module Primary
 
     def execute_on_target
       generator = generator_class.new(args, options)
-      generator.deployment = deployment
-      generator.application = deployment.application
+      binding.pry
+      generator.deployment = target.deployment
+      generator.application = target.application
       generator.target = target
       generator.write_path = Pathname.new(target.write_path(:deployment))
       generator.invoke_all

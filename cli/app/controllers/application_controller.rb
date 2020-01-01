@@ -12,8 +12,6 @@ class ApplicationController
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
 
-  # def initialize(deployment, args = [], options = Thor::CoreExt::HashWithIndifferentAccess.new)
-  #   @deployment = deployment
   def initialize(args, options)
     @args = args
     @options = options
@@ -22,11 +20,23 @@ class ApplicationController
     @errors = Cnfs::Errors.new
   end
 
-  def application; @application = deployment.application end
+  def deployments
+    if args.deployment_name
+      Deployment.where(name: args.deployment_name)
+    elsif args.application_name
+      Application.find_by(name: args.application_name)&.deployments || []
+    elsif args.target_name
+      Target.find_by(name: args.target_name)&.deployments || []
+    else
+      []
+    end
+  end
 
-  def deployment; @deployment ||= Deployment.find_by(name: deployment_name) end
+  # def application; @application = deployment.application end
 
-  def deployment_name; args.deployment_name || ENV['CNFS_DEPLOY'] || :development end
+  # def deployment; @deployment ||= Deployment.find_by(name: deployment_name) end
+
+  # def deployment_name; args.deployment_name || ENV['CNFS_DEPLOY'] || :development end
 
   def with_selected_target
     target = deployment.targets.find_by(name: options.target) || deployment.targets.first
@@ -36,25 +46,24 @@ class ApplicationController
   end
 
   def each_target
-    targets = options.target ? deployment.targets.where(name: options.target) : deployment.targets
-    targets.each do |target|
-      configure_target(target)
+    deployments.each do |deployment|
+      configure_target(deployment)
       yield target
       configure_target
     end
   end
 
-  def configure_target(target = nil)
-    if target.nil?
+  def configure_target(deployment = nil)
+    if deployment.nil?
       @target = nil
       @request = nil
       @runtime = nil
       return
     end
 
-    @target = target
+    @target = deployment.target
     @target.deployment = deployment
-    @target.application = application
+    @target.application = deployment.application
 
     @request = Request.new(deployment, target, args, options)
 

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Application < ApplicationRecord
+  has_many :deployments
+  has_many :targets, through: :deployments
+
   has_many :application_services
   has_many :services, through: :application_services
   has_many :service_tags, through: :services, source: :tags

@@ -3,7 +3,14 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-default: &default
+frontend: &frontend
+  <<: *DEFAULTS
+
+pipeline: &pipeline
+  <<: *DEFAULTS
+  services: kafka
+
+backend: &backend
   <<: *DEFAULTS
   type: Application::CnfsBackend
   services: cognito, comm, iam, organization, storage, sftp

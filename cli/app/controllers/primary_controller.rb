@@ -9,7 +9,7 @@ class PrimaryController < CommandsController
   class_option :noop, type: :boolean, aliases: '-n'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
 
-  # class_option :deployment_name, type: :string, aliases: '-d'
+  class_option :deployment_name, type: :string, aliases: '-d'
   class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
   class_option :application_name, type: :string, aliases: '-a'
   class_option :service_names, type: :array, aliases: '-s'
@@ -83,7 +83,7 @@ class PrimaryController < CommandsController
   end
 
   desc 'exec COMMAND', 'Execute a command on a running service'
-  def exec(command_name); run(:exec,  params(:exec, binding)) end
+  def exec(command_name); run(:exec,  params(:exec, binding), { service_names: 1 }) end
 
   desc 'generate', 'Generate manifests for application deployment'
   # option :force, type: :boolean, default: false, aliases: '-f'

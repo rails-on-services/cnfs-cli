@@ -28,15 +28,6 @@ module Cnfs
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
-        create_table :deployments, force: true do |t|
-          t.references :application
-          t.string :name
-          t.string :config
-          t.string :environment
-          t.text :platform_name
-        end
-        Deployment.reset_column_information
-
         create_table :applications, force: true do |t|
           t.string :name
           t.string :config
@@ -104,11 +95,15 @@ module Cnfs
         end
         Tag.reset_column_information
 
-        create_table :deployment_targets, force: true do |t|
-          t.references :deployment
+        create_table :deployments, force: true do |t|
+          t.references :application
           t.references :target
+          t.string :name
+          t.string :config
+          t.string :environment
+          t.text :platform_name
         end
-        DeploymentTarget.reset_column_information
+        Deployment.reset_column_information
 
         create_table :target_services, force: true do |t|
           t.references :target
