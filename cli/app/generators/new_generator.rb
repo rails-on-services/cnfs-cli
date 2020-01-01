@@ -4,9 +4,14 @@ class NewGenerator < Thor::Group
   include Thor::Actions
   argument :name
 
-  def generate
+  def generate_project_files
     directory('files', '.')
     template('cnfs', '.cnfs')
+  end
+
+  def generate_encryption_key
+    Cnfs.setup_paths(destination_root)
+    template('credentials', Cnfs.box_file)
   end
 
   private

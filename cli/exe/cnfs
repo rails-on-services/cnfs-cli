@@ -7,13 +7,12 @@ $:.unshift(lib_path) if !$:.include?(lib_path)
 require 'cnfs'
 
 lite_setup = %w[version new].include?(ARGV[0])
+Cnfs.setup(lite_setup)
 
 unless Cnfs.project? or lite_setup
   STDOUT.puts('WARN: not a cnfs project')
   return
 end
-
-Cnfs.setup(lite_setup)
 
 Signal.trap('INT') do
   warn("\n#{caller.join("\n")}: interrupted")
