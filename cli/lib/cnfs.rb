@@ -65,7 +65,14 @@ module Cnfs
 
     def gem_root; @gem_root ||= Pathname.new(__dir__).join('..') end
 
-    def box; @box ||= Lockbox.new(key: ENV['CNFS_MASTER_KEY']) end
+    def box; @box ||= Lockbox.new(key: box_key) end
+
+    def box_key
+      return ENV['CNFS_MASTER_KEY'] if ENV['CNFS_MASTER_KEY']
+      File.read(box_file).chomp if File.exist?(box_file)
+    end
+
+    def box_file; user_root.join('credentials') end
 
     def loader; @loader ||= Zeitwerk::Loader.new end
 
@@ -91,8 +98,6 @@ module Cnfs
     def decrypt(value, add_yaml = false)
       value = add_yaml ? "--- !binary |-\n  #{value}\n" : value
       box.decrypt(YAML.load(value))
-    rescue Lockbox::DecryptionError
-      nil
     end
 
     # use Zeitwerk loader for class reloading

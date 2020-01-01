@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class String
-  def _cnfs_encrypted?; start_with?("--- !binary |-\n  ") end
+  def ciphertext(strip_yaml = false); Cnfs.encrypt(self, strip_yaml) end
 
-  def _cnfs_ciphertext; Cnfs.encrypt(self) end
+  def plaintext(strip_yaml = false); encrypted? || strip_yaml ? Cnfs.decrypt(self, strip_yaml) : self end
 
-  def _cnfs_plaintext; _cnfs_encrypted? ? Cnfs.decrypt(self) : self end
+  def encrypted?; start_with?("--- !binary |-\n  ") end
 end
