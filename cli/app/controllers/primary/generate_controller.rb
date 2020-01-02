@@ -11,7 +11,6 @@ module Primary
 
     def execute_on_target
       generator = generator_class.new(args, options)
-      binding.pry
       generator.deployment = target.deployment
       generator.application = target.application
       generator.target = target

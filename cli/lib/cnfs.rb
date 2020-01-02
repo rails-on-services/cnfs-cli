@@ -113,17 +113,7 @@ module Cnfs
       file.gsub(gem_config_path.to_s, replace_path.to_s)
     end
 
-    # Lockbox based encryption methods
-    def encrypt(value, strip_yaml = false)
-      value = box.encrypt(value).to_yaml
-      strip_yaml ? value.gsub("--- !binary |-\n  ", '').chomp : value
-    end
-
-    def decrypt(value, add_yaml = false)
-      value = add_yaml ? "--- !binary |-\n  #{value}\n" : value
-      box.decrypt(YAML.load(value))
-    end
-
+    # Lockbox encryption methods
     def box; @box ||= Lockbox.new(key: box_key) end
 
     def box_key

@@ -18,7 +18,7 @@ module Cnfs
     end
 
     def self.load_data
-      silence_output(!ARGV.include?('-d')) { create_schema }
+      silence_output(!ARGV.include?('--debug')) { create_schema }
       dir = Cnfs.gem_config_path
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
       fixtures.each { |f| STDOUT.puts "Loading config file #{dir.join(f)}.yml" } if Cnfs.debug

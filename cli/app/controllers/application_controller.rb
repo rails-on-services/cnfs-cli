@@ -24,9 +24,9 @@ class ApplicationController
     if args.deployment_name
       Deployment.where(name: args.deployment_name)
     elsif args.application_name
-      Application.find_by(name: args.application_name)&.deployments || []
+      Deployment.joins(:application).where(applications: { name: args.application_name })
     elsif args.target_name
-      Target.find_by(name: args.target_name)&.deployments || []
+      Deployment.joins(:target).where(targets: { name: args.target_name })
     else
       []
     end
