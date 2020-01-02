@@ -24,9 +24,8 @@ require_relative 'cnfs/version'
 
 Config.setup do |config|
   config.use_env = true
-  config.env_separator = '__'
+  config.env_separator = '_'
   config.env_prefix = 'CNFS'
-  # config.merge_nil_values = false
 end
 
 module Cnfs
@@ -38,7 +37,7 @@ module Cnfs
   class << self
     attr_accessor :autoload_dirs
     attr_reader :root, :config_path, :config_file, :user_root, :user_config_path
-    attr_reader :project_name, :default_deployment
+    attr_reader :project_name
 
     def setup(skip_schema = false)
       setup_paths
@@ -51,22 +50,22 @@ module Cnfs
       # project attributes
       @root = Pathname.new(path)
       @config_path = root.join('config')
-      @config_file = root.join('.cnfs.yml')
+      @config_file = root.join('.cnfs')
+
       return unless File.exist? config_file
 
-      @project_config = YAML.load_file(config_file)
-      @project_name = @project_config['project_name']
+      @project_name = File.read(config_file).chomp
 
       # user attributes
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
-      @user_config_file = user_root.join('cnfs.yml')
-      @user_project_config = YAML.load_file(@user_config_file) if File.exist?(@user_config_file)
 
       # project attributes
-      @project_config.merge!(@user_project_config || {})
-      @default_deployment = @project_config['default_deployment']
+      Config.load_and_set_settings(gem_root.join('project.yml'),
+                                   root.join('project.yml'), user_root.join('project.yml'))
     end
+
+    def config; Settings end
 
     def project?; File.exist?(config_file) end
 

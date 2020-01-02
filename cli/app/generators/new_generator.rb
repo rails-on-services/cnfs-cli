@@ -6,7 +6,7 @@ class NewGenerator < Thor::Group
 
   def generate_project_files
     directory('files', '.')
-    template('cnfs', '.cnfs.yml')
+    template('cnfs', '.cnfs')
   end
 
   def setup_project
