@@ -2,15 +2,16 @@
 
 class PrimaryController < CommandsController
   register TargetsController, 'target', 'target [SUBCOMMAND]', 'Manage target infrastructure'
-  # namespace :deployment
 
-  class_option :verbose, type: :boolean, default: false, aliases: '-v'
-  class_option :debug, type: :numeric, default: 0, aliases: '--debug'
-  class_option :noop, type: :boolean, aliases: '-n'
+  class_option :verbose, type: :boolean, aliases: '-v'
+  class_option :quiet, type: :boolean, aliases: '-q'
+  class_option :debug, type: :numeric, aliases: '-d'
+  class_option :noop, type: :boolean, aliases: '--noop'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
 
-  class_option :deployment_name, type: :string, aliases: '-d'
   class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
+  class_option :namespace_name, type: :string, aliases: '-n'
+  class_option :profile_name, type: :string, aliases: '-p'
   class_option :application_name, type: :string, aliases: '-a'
   class_option :service_names, type: :array, aliases: '-s'
   # class_option :tag_name, type: :string, aliases: '--tag'
@@ -18,19 +19,10 @@ class PrimaryController < CommandsController
 
   # Global commands
   desc 'version', 'cnfs version'
-  def version
-    puts "v#{Cnfs::VERSION}"
-  end
+  def version; puts "v#{Cnfs::VERSION}" end
 
-  desc 'console', 'Start a command console'
-  method_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
-  def console(*)
-    if options[:help]
-      invoke :help, ['console']
-    else
-      ConsoleController.new([], options).execute
-    end
-  end
+  desc 'console [SERVICE]', 'Start a cnfs or service console'
+  def console(service_name = nil); run(:console, service_names: service_name) end
 
   desc 'new', 'Create a new CNFS project'
   def new(name)
@@ -38,13 +30,11 @@ class PrimaryController < CommandsController
   end
 
   desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
-  def attach(*args); run(:attach, args) end
+  def attach(servcie_name); run(:attach, service_name: service_name) end
 
   desc 'build APPLICATION [SERVICES]', 'Build all application images or just for specifc services'
   option :shell, type: :boolean, aliases: '-s', desc: 'Connect to service shell after building'
-  def build(application_name, *service_names)
-    run(:build, application_name: application_name, service_names: service_names)
-  end
+  def build; run(:build) end
 
   desc 'cmd', 'Run arbitrary command in context'
   def cmd(*args); run(:cmd, args) end
@@ -86,7 +76,6 @@ class PrimaryController < CommandsController
   def exec(command_name); run(:exec,  params(:exec, binding), { service_names: 1 }) end
 
   desc 'generate', 'Generate manifests for application deployment'
-  # option :force, type: :boolean, default: false, aliases: '-f'
   def generate; run(:generate) end
 
   desc 'init', 'Initialize a project environment'
@@ -95,9 +84,7 @@ class PrimaryController < CommandsController
   desc 'list', 'List backend application configuration objects'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
   map %w(ls) => :list
-  def list(what = 'deployments')
-    run(:list, what)
-  end
+  def list; run(:list) end
 
   desc 'logs', 'Tail logs of a running service'
   option :tail, type: :boolean, aliases: '-f'

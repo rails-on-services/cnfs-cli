@@ -92,7 +92,7 @@ class Runtime::Compose < Runtime
   def before_execute_on_target; switch! end
 
   def switch!
-    Dir.chdir(target.deployment.root) do
+    Dir.chdir(target.exec_path) do
       FileUtils.rm_f('.env')
       FileUtils.ln_s(compose_file, '.env')
     end

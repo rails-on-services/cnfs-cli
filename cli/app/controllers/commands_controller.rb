@@ -10,24 +10,18 @@ class CommandsController < Thor
       return
     end
 
-    args = Thor::CoreExt::HashWithIndifferentAccess.new(args.merge(options.slice(*options_to_args)))
-    check_limits(limits, args) if limits.any?
-
     controller_class = "#{self.class.name.gsub('Controller', '')}::#{command_name.to_s.camelize}Controller"
     unless (controller = controller_class.safe_constantize)
       raise Error, set_color("Class not found: #{controller_class} (this is a bug. please report)", :red)
     end
-    controller.new(args, Thor::CoreExt::HashWithIndifferentAccess.new(options.except(*options_to_args))).call
-  end
 
-  def check_limits(limits, args)
-    limits.each_pair do |name, size|
-      raise Error, set_color("#{name} must be exactly #{size}", :red) if args[name] and args[name].size != size
-    end
+    args = Thor::CoreExt::HashWithIndifferentAccess.new(args.merge(options.slice(*options_to_args)))
+    opts = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(*options_to_args))
+    controller.new(args, opts).call
   end
 
   def options_to_args
-    %w[deployment_name target_name application_name service_names]
+    %w[profile_name target_name application_name service_names]
   end
 
   def params(method_name, method_binding)

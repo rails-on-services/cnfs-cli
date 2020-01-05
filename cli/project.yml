@@ -1,0 +1,8 @@
+---
+profiles:
+  development:
+    target: development
+  test:
+    target: test
+  production:
+    target: production

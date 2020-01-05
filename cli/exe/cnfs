@@ -21,7 +21,7 @@ end
 
 begin
   PrimaryController.start
-rescue Cnfs::Cli::Error => err
+rescue Cnfs::Error => err
   puts "ERROR: #{err.message}"
   exit 1
 end

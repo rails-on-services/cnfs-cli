@@ -44,8 +44,10 @@ class Target < ApplicationRecord
   end
 
   def write_path(type = :deployment)
-    Pathname.new([deployment.base_path, path_for(type), name, deployment.name].join('/'))
+    Pathname.new([deployment.base_path, path_for(type), "#{name}_#{application.name}"].join('/'))
   end
+
+  def exec_path; File.expand_path(application.path || '.') end
 
   def path_for(type)
     case type

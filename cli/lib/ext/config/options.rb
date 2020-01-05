@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-# monkeypatch Config gem's Options class to add instance method #to_array
-# which returns an array representation of the Config hash
 module Config
   class Options
+    # Return an array representation of the Config hash
     def to_array(target = nil, key = '', value = self, ary = [])
       if value.is_a?(Config::Options)
         value.each_pair do |skey, value|
@@ -18,6 +17,13 @@ module Config
         end
       end
       ary
+    end
+
+    def to_cnfs
+      to_h.stringify_keys.each_with_object({}) do |(key, value), hash|
+        mkey = key.pluralize == key ? "#{key.singularize}_names" : "#{key}_name"
+        hash[mkey] = value.index(',') ? value.split(',') : value
+      end
     end
   end
 end

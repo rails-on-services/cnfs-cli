@@ -8,49 +8,50 @@ class ApplicationController
   def_delegators :command, :run
 
   attr_accessor :deployment, :application, :target, :runtime
-  attr_accessor :args, :options, :request
+  attr_accessor :args, :cli_args, :options, :request
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
 
   def initialize(args, options)
-    @args = args
-    @options = options
     @input = $stdin
     @output = $stdout
+    @cli_args = args
+    Cnfs.current_profile = args.profile_name
+    @args = Config::Options.new(Cnfs.current_config.merge(args))
+    @options = options
     @errors = Cnfs::Errors.new
-  end
-
-  def deployments
-    if args.deployment_name
-      Deployment.where(name: args.deployment_name)
-    elsif args.application_name
-      Deployment.joins(:application).where(applications: { name: args.application_name })
-    elsif args.target_name
-      Deployment.joins(:target).where(targets: { name: args.target_name })
-    else
-      []
-    end
-  end
-
-  # def application; @application = deployment.application end
-
-  # def deployment; @deployment ||= Deployment.find_by(name: deployment_name) end
-
-  # def deployment_name; args.deployment_name || ENV['CNFS_DEPLOY'] || :development end
-
-  def with_selected_target
-    target = deployment.targets.find_by(name: options.target) || deployment.targets.first
-    configure_target(target)
-    yield
-    configure_target
+    output.puts "options: #{options}" if options.debug
+    output.puts "user args: #{cli_args}" if options.debug
+    output.puts "profile name: #{Cnfs.current_profile}" if options.debug
+    output.puts "profile args: #{Cnfs.current_config}" if options.debug
+    output.puts "command args: #{@args.to_h}" if options.debug
   end
 
   def each_target
+    # check_limits(:deployments)
     deployments.each do |deployment|
       configure_target(deployment)
+      # check_limits(:services)
       yield target
       configure_target
     end
+  end
+
+  # def check_limits(key)
+  #   raise Cnfs::Error, "#{key} must be exactly #{limits[key]}" if limits[key] and send(key).size != limits[key]
+  # end
+
+  # def limits; {} end
+
+  def deployments(query_args = nil); @deploymnets ||= configure_deployents(query_args) end
+
+  def configure_deployents(query_args)
+    query_args ||= args
+    result = Deployment.all
+    result = result.joins(:application).where(applications: { name: query_args.application_name }) if query_args.application_name
+    result = result.joins(:target).where(targets: { name: query_args.target_name }) if query_args.target_name
+    output.puts "selected deployments: #{result.pluck(:name).join(', ')}" if options.debug
+    result
   end
 
   def configure_target(deployment = nil)
@@ -65,7 +66,7 @@ class ApplicationController
     @target.deployment = deployment
     @target.application = deployment.application
 
-    @request = Request.new(deployment, target, args, options)
+    @request = Request.new(deployment, args, options)
 
     # Set runtime object to an instance of compose or skaffold
     return unless (@runtime = current_runtime)
@@ -94,7 +95,7 @@ class ApplicationController
     replace_this = self.class.name.demodulize
     with_that = "#{command.to_s.camelize}Controller"
     controller_class = self.class.name.gsub(replace_this, with_that).safe_constantize
-    controller = controller_class.new(deployment, args, options)
+    controller = controller_class.new(args, options)
     controller.configure_target(target)
     controller.execute_on_target
   end

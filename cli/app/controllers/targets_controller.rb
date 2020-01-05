@@ -4,12 +4,12 @@ class TargetsController < CommandsController
   namespace :infra
 
   class_option :verbose, type: :boolean, default: false, aliases: '-v'
-  class_option :debug, type: :numeric, default: 0, aliases: '--debug'
-  class_option :noop, type: :boolean, aliases: '-n'
+  class_option :debug, type: :numeric, aliases: '-d'
+  class_option :noop, type: :boolean, aliases: '--noop'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
 
-  class_option :deployment, type: :string, aliases: '-d'
   class_option :target, type: :string, aliases: '-t'
+  class_option :namespace, type: :string, aliases: '-n'
   class_option :tag, type: :string
 
   # desc 'create', 'Create target infrastructure'

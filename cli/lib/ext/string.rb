@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
 class String
+  YAML_STRING = "--- !binary |-\n  "
+
   def ciphertext(strip: false)
-    strip ? encrypt(self).gsub("--- !binary |-\n  ", '').chomp : encrypt(self)
+    strip ? encrypt(self).gsub(YAML_STRING, '').chomp : encrypt(self)
   end
 
   def plaintext(force: false)
-    encrypted? ? decrypt(self) : (force ? decrypt("--- !binary |-\n  #{self}\n") : self)
+    encrypted? ? decrypt(self) : (force ? decrypt("#{YAML_STRING} #{self}\n") : self)
   end
 
-  def encrypted?; start_with?("--- !binary |-\n  ") end
+  def encrypted?; start_with?(YAML_STRING) end
 
   def cnfs_sub(target = nil)
     return self unless target
 
-    # string = self.dup
-    # string.gsub!('{domain}', target.domain_name)
     self.gsub('{domain}', target.domain_name)
   end
 

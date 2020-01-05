@@ -5,15 +5,15 @@ module Primary
     def execute
       each_target do |target|
         # before_execute_on_target
-        execute_on_target
+        Dir.chdir(target.exec_path) { execute_on_target }
       end
     end
 
     def execute_on_target
-      generator = generator_class.new(args, options)
+      generator = generator_class.new([], options)
       generator.deployment = target.deployment
-      generator.application = target.application
       generator.target = target
+      generator.application = target.application
       generator.write_path = Pathname.new(target.write_path(:deployment))
       generator.invoke_all
     end

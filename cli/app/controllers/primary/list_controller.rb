@@ -1,38 +1,32 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class ListController < Cnfs::Command
+module Primary
+  class ListController < ApplicationController
     def execute
-      unless respond_to?(args)
-        output.puts 'try another'
-        return
-      end
-      send(args)
-      # STDOUT.puts what.classify.safe_constantize.all.pluck(:name).sort
-      # binding.pry
-      # what = "infra/#{what}" if %w[targets runtimes].include? what
-      # what = "app/#{what}" if %w[layers services].include? what
-    end
-
-    def deployments
       require 'tty-tree'
-      deployments = options.deployment ? Deployment.where(name: options.deployment) : Deployment.all
-      data = deployments.each_with_object({}) do |d, hash|
-        app = d.application
-        hash[d.name] = [{
-          targets: [ d.targets.pluck(:name) ],
-          application: [ { services: app.services.pluck(:name), resources: app.resources.pluck(:name) }]
-        }]
+      data = deployments(cli_args).each_with_object({}) do |deployment, hash|
+        item = deploy_hash(deployment)
+        hash[deployment.name] = [item] unless item.empty?
       end
       output.puts(TTY::Tree.new(data).render)
     end
 
-    def application
-      app.layers.each_with_object([]) do |layer, ary|
-        ary.append(
-          { }
-        )
-      end
+    def deploy_hash(deployment)
+      result = {}
+      result[:target] = ta_hash(deployment.target) unless ta_hash(deployment.target).empty?
+      result[:application] = ta_hash(deployment.application) unless ta_hash(deployment.application).empty?
+      result
+    end
+
+    def ta_hash(ta)
+      result = {}
+      services = ta.services
+      services = services.where(name: cli_args.service_names) if cli_args.service_names
+      result[:services] = services.pluck(:name) if services.size.positive?
+      resources = ta.resources
+      resources = [] if cli_args.service_names
+      result[:resources] = resources.pluck(:name) if resources.size.positive?
+      result
     end
   end
 end

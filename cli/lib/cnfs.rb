@@ -35,41 +35,49 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs
+    attr_accessor :autoload_dirs, :current_profile
     attr_reader :root, :config_path, :config_file, :user_root, :user_config_path
     attr_reader :project_name
 
     def setup(skip_schema = false)
-      setup_paths
+      setup_paths(Dir.pwd)
+      load_config('project.yml')
       initialize_plugins
       setup_loader
       Schema.setup unless skip_schema
     end
 
-    def setup_paths(path = Dir.pwd)
-      # project attributes
-      @root = Pathname.new(path)
+    def setup_paths(project_path)
+      @root = Pathname.new(project_path)
       @config_path = root.join('config')
       @config_file = root.join('.cnfs')
 
       return unless File.exist? config_file
 
       @project_name = File.read(config_file).chomp
-
-      # user attributes
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
-
-      # project attributes
-      Config.load_and_set_settings(gem_root.join('project.yml'),
-                                   root.join('project.yml'), user_root.join('project.yml'))
     end
+
+    def load_config(file_name)
+      load_files = gem_root.join(file_name), root.join(file_name), user_root.join(file_name)
+      load_files.each { |lf| STDOUT.puts "Loading project file: #{lf}" } if debug > 0
+      Config.load_and_set_settings(gem_root.join(file_name), root.join(file_name), user_root.join(file_name))
+    end
+
+    def current_config; config.profiles[current_profile].to_cnfs end
 
     def config; Settings end
 
+    def current_profile; @current_profile || ENV['CNFS_PROFILE'] || :development end
+
+    def profiles; config.profiles.keys end
+
     def project?; File.exist?(config_file) end
 
-    def services_project?; File.exist?(root.join('lib/core/lib/ros/core.rb')) end
+    # NTOE: Dir.pwd is the current application's root (switched into)
+    # TODO: This should probably move out to rails or some other place
+    def services_project?; File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb')) end
 
     def gem_config_path; @gem_config_path ||= gem_root.join('config') end
 
@@ -77,11 +85,11 @@ module Cnfs
 
     def xdg; @xdg ||= XDG::Environment.new end
 
-    def debug; ARGV.include?('--debug') end
+    def debug; ARGV.include?('-d') ? ARGV[ARGV.index('-d') + 1].to_i : 0 end
 
     # Zeitwerk based class loader methods
     def setup_loader
-      Zeitwerk::Loader.default_logger = method(:puts) if debug
+      Zeitwerk::Loader.default_logger = method(:puts) if debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 
       loader.enable_reloading
@@ -102,7 +110,7 @@ module Cnfs
     def config_content(type, file)
       fixture_file = fixture(type, file)
       if File.exist?(fixture_file)
-        STDOUT.puts "Loading config file #{fixture_file}" if debug
+        STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
         ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
       end
     end

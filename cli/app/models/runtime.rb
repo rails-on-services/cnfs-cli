@@ -34,7 +34,7 @@ class Runtime < ApplicationRecord
 
   def runtime_path; @runtime_path ||= target.write_path(:runtime) end
 
-  def project_name; "#{target.application.name}_#{target.name}" end
+  def project_name; [Cnfs.project_name, target.name, target.application.name].join('_') end
 
   # run command with output captured to variables
   # returns boolean true if command successful, false otherwise
