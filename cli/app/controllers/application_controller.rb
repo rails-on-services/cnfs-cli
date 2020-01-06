@@ -8,9 +8,49 @@ class ApplicationController
   def_delegators :command, :run
 
   attr_accessor :deployment, :application, :target, :runtime
-  attr_accessor :args, :cli_args, :options, :request
+  attr_accessor :args, :cli_args, :options, :request, :response
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
+
+  # Execute enqueued commands
+  def run!
+    loop do
+      break unless (rt_command = response.commands.shift)
+      output.puts rt_command.exec if options.verbose or options.debug
+
+      if rt_command.pty
+        system(rt_command.exec) unless options.noop
+      else
+        # with_spinner('Building...') do end
+        result = command(command_options).run!(rt_command.env, rt_command.exec)
+        # TODO: Break if a cli switch to fail fast is in effect
+        errors.add(:build, result.err.chomp) if result.failure?
+      end
+    end
+  end
+
+  # TODO: Integrate this method into standard flow
+  def publish_results
+    require 'tty-table'
+    table = TTY::Table.new(['Commands', 'Errors'], errors.messages.to_a)
+    output.puts "\n"
+    output.puts table.render(:basic, alignments: [:left, :left], padding: [0, 4, 0, 0])
+  end
+
+  # TODO: Test
+  def with_spinner(spin_msg)
+    if options.quiet
+      require 'tty-spinner'
+      spinner = TTY::Spinner.new("[:spinner] #{spin_msg}", format: :pulse_2)
+      spinner.auto_spin # Automatic animation with default interval
+    end
+    result = yield
+    if options.quiet
+      spinner_msg = result.failure? ? 'Failed!' : 'Done!'
+      spinner.stop(spinner_msg)
+    end
+    errors.add(:build, result.err.chomp) if result.failure?
+  end
 
   def initialize(args, options)
     @input = $stdin
@@ -20,19 +60,22 @@ class ApplicationController
     @args = Config::Options.new(Cnfs.current_config.merge(args))
     @options = options
     @errors = Cnfs::Errors.new
-    output.puts "options: #{options}" if options.debug
-    output.puts "user args: #{cli_args}" if options.debug
-    output.puts "profile name: #{Cnfs.current_profile}" if options.debug
-    output.puts "profile args: #{Cnfs.current_config}" if options.debug
-    output.puts "command args: #{@args.to_h}" if options.debug
+    if options.debug
+      output.puts ENV.select { |env| env.start_with? 'CNFS_'}
+      output.puts "options: #{options}\nuser args: #{cli_args}\nprofile name: #{Cnfs.current_profile}\n" \
+        "profile args: #{Cnfs.current_config}\ncommand args: #{@args.to_h}"
+    end
   end
 
   def each_target
     # check_limits(:deployments)
     deployments.each do |deployment|
       configure_target(deployment)
+      output.puts "Running in #{target.exec_path}" if options.debug
+      Dir.chdir(target.exec_path) do
       # check_limits(:services)
-      yield target
+        yield target
+      end
       configure_target
     end
   end
@@ -58,6 +101,7 @@ class ApplicationController
     if deployment.nil?
       @target = nil
       @request = nil
+      @response = nil
       @runtime = nil
       return
     end
@@ -67,12 +111,16 @@ class ApplicationController
     @target.application = deployment.application
 
     @request = Request.new(deployment, args, options)
+    @response = Response.new
+    output.puts "selected services: #{request.service_names_to_s}" if options.debug
 
     # Set runtime object to an instance of compose or skaffold
     return unless (@runtime = current_runtime)
-    # Set the runtime's controller virtual attribute to this command
-    # so the runtime can access the command method, options, etc
-    @runtime.controller = self
+
+    # Set the runtime's request and response virtual attributes
+    @runtime.request = request
+    @runtime.response = response
+
     # Set the runtime's target virtual attribute to the current target
     # Runtime methods are called directly and some values are dependent upon the current target
     @runtime.target = target
@@ -151,26 +199,31 @@ class ApplicationController
     TTY::Command.new(options)
   end
 
-  def command_options; @command_options ||= cmdx_options end
-
-  def cmdx_options
-    hash = default_options
-    # hash.merge!(printer: :null) unless options.verbose
-    hash
+  def command_options # ; @command_options ||= cmdx_options end
+    cmd_options = { uuid: false }
+    cmd_options.merge!(dry_run: true) if options.noop
+    cmd_options.merge!(printer: :null) if options.quiet
+    cmd_options
   end
 
-  def default_options
-    {
-      uuid: false,
-      only_output_on_error: true
-    }
-  end
+  # def cmdx_options
+  #   hash = default_options
+  #   # hash.merge!(printer: :null) unless options.verbose
+  #   hash
+  # end
 
-  def cmd_options
-    hash = {}
-    hash.merge!(only_output_on_error: true) unless options.verbose
-    hash
-  end
+  # def default_options
+  #   {
+  #     uuid: false,
+  #     only_output_on_error: true
+  #   }
+  # end
+
+  # def cmd_options
+  #   hash = {}
+  #   hash.merge!(only_output_on_error: true) unless options.verbose
+  #   hash
+  # end
 
   # The cursor movement
   #

@@ -13,11 +13,13 @@ class Request
 
   def last_service_name; args.service_names&.last end
 
-  def service_names; services.pluck(:name) end
-
   def service_names_to_s; service_names.join(' ') end
 
+  def service_names; services.pluck(:name) end
+
   def services
+    return (application.services + target.services) unless args.service_names
+
     application.services.where(name: args.service_names) + target.services.where(name: args.service_names)
   end
 

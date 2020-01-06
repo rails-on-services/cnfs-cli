@@ -5,7 +5,7 @@ module Primary
     def execute
       each_target do |target|
         # before_execute_on_target
-        Dir.chdir(target.exec_path) { execute_on_target }
+        execute_on_target
       end
     end
 

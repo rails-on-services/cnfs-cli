@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class RestartController < Cnfs::Command
+module Primary
+  class RestartController < ApplicationController
     def execute
-      with_selected_target do
-        before_execute_on_target
+      each_target do
+        # before_execute_on_target
         call(:build) if options.build
         execute_on_target
         post_start_options
@@ -12,7 +12,8 @@ module App::Backend
     end
 
     def execute_on_target
-      runtime.restart(request)
+      runtime.restart
+      run!
     end
   end
 end

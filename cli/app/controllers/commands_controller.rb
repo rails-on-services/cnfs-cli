@@ -10,6 +10,8 @@ class CommandsController < Thor
       return
     end
 
+    # TODO: Implement are you sure? for k8s destroy and so all commands can leverage it
+
     controller_class = "#{self.class.name.gsub('Controller', '')}::#{command_name.to_s.camelize}Controller"
     unless (controller = controller_class.safe_constantize)
       raise Error, set_color("Class not found: #{controller_class} (this is a bug. please report)", :red)

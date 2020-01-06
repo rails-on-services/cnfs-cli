@@ -5,7 +5,8 @@ class Application::CnfsBackend < Application
 
   def partition_name(env) # called by CredentialsController
     # TODO: CredentialsController needs to pass target.application_environment
-    environment.dig(env, :platform, :partition_name)
+    environment['all']['platform']['partition_name']
+    # environment.dig(env, :platform, :partition_name)
   end
 
   # TODO: Rails service needs to pass target.application_environment

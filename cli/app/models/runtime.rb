@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'open3'
+# require 'open3'
 
 class Runtime < ApplicationRecord
   has_many :targets
@@ -7,16 +7,18 @@ class Runtime < ApplicationRecord
   store :config, accessors: %i[version], coder: YAML
 
   # Attributes configured by the controller
-  attr_accessor :controller, :target
+  # attr_accessor :controller, :target
+  attr_accessor :target, :request, :response
 
   # Sub-classes, e.g. compose, skaffold can override to implement, e.g. switch!
   def before_execute_on_target; end
 
-  def clean_cache(request)
+  def clean_cache
     if request.services.empty?
       FileUtils.rm_rf(runtime_path)
       return
     end
+
     request.services.each do |service|
       migration_file = "#{runtime_path}/#{service.name}-migrated"
       FileUtils.rm(migration_file) if File.exist?(migration_file)
@@ -30,7 +32,7 @@ class Runtime < ApplicationRecord
       local_path: "#{runtime_path}/target" }
   end
 
-  def options; controller.options end
+  # def options; controller.options end
 
   def runtime_path; @runtime_path ||= target.write_path(:runtime) end
 
@@ -38,33 +40,33 @@ class Runtime < ApplicationRecord
 
   # run command with output captured to variables
   # returns boolean true if command successful, false otherwise
-  def capture_cmd(cmd, envs = {})
-    return if setup_cmd(cmd)
-    @stdout, @stderr, process_status = Open3.capture3(envs, cmd)
-    @exit_code = process_status.exitstatus
-    @exit_code.zero?
-  end
+  # def capture_cmd(cmd, envs = {})
+  #   return if setup_cmd(cmd)
+  #   @stdout, @stderr, process_status = Open3.capture3(envs, cmd)
+  #   @exit_code = process_status.exitstatus
+  #   @exit_code.zero?
+  # end
 
-  # run command with output captured unless options.verbose then to terminal
-  # returns boolean true if command successful, false otherwise
-  def system_cmd(cmd, envs = {}, never_capture = false)
-    return capture_cmd(cmd, envs) unless (options.verbose or never_capture)
-    return if setup_cmd(cmd)
-    system(envs, cmd)
-    @exit_code = $?.exitstatus
-    @exit_code.zero?
-  end
+  # # run command with output captured unless options.verbose then to terminal
+  # # returns boolean true if command successful, false otherwise
+  # def system_cmd(cmd, envs = {}, never_capture = false)
+  #   return capture_cmd(cmd, envs) unless (options.verbose or never_capture)
+  #   return if setup_cmd(cmd)
+  #   system(envs, cmd)
+  #   @exit_code = $?.exitstatus
+  #   @exit_code.zero?
+  # end
 
-  def setup_cmd(cmd)
-    puts cmd if options.verbose
-    @stdout = nil
-    @stderr = nil
-    @exit_code = 0
-    options.noop
-  end
+  # def setup_cmd(cmd)
+  #   puts cmd if options.verbose
+  #   @stdout = nil
+  #   @stderr = nil
+  #   @exit_code = 0
+  #   options.noop
+  # end
 
-  def exit
-    STDOUT.puts(errors.messages.map{ |(k, v)| "#{v}\n" }) if errors.size.positive?
-    Kernel.exit(errors.size)
-  end
+  # def exit
+  #   STDOUT.puts(errors.messages.map{ |(k, v)| "#{v}\n" }) if errors.size.positive?
+  #   Kernel.exit(errors.size)
+  # end
 end

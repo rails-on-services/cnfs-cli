@@ -6,7 +6,7 @@ module Config
     def to_array(target = nil, key = '', value = self, ary = [])
       if value.is_a?(Config::Options)
         value.each_pair do |skey, value|
-          to_array(target, "#{key}#{key.empty? ? '' : Config.env_separator}#{skey}", value, ary)
+          to_array(target, "#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
         end
       else
         if value.is_a? Array

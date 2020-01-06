@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class PsController < Cnfs::Command
+module Primary
+  class PsController < ApplicationController
     def execute
-      with_selected_target do
-        before_execute_on_target
+      # with_selected_target do
+      each_target do |target|
+        # before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      output.puts runtime.services(format: format, status: status)
+      # Dir.chdir(target.exec_path)  do
+        output.puts runtime.services(format: format, status: status)
+      # end
     end
 
     # TODO: format and status are specific to the runtime so refactor when implementing skaffold

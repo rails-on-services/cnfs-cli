@@ -1,40 +1,30 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class ShowController < Cnfs::Command
+module Primary
+  class ShowController < ApplicationController
     def execute
-      with_selected_target do
-        before_execute_on_target
+      each_target do
+        # before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      unless service and File.exist?(show_file)
-        output.puts "Request not found: #{request.last_service_name}"
+      if request.services.empty?
+        output.puts 'Configuration not found'
         return
       end
-      output.puts(File.read(show_file))
-      output.puts("\nContents from: #{show_file}")
+
+      request.services.each do |service|
+        file_name = options.modifier ? "#{service.name}#{options.modifier}" : "#{service.name}.yml"
+        show_file = target.write_path.join(file_name) # .to_s
+        if File.exist?(show_file)
+          output.puts(File.read(show_file))
+          output.puts("\nContents from: #{show_file}")
+        else
+          output.puts "File not found: #{show_file}"
+        end
+      end
     end
-
-    def show_file
-      @show_file ||= target.write_path.join(file_name).to_s
-    end
-
-    # def show_file
-    #   @show_file ||= (
-    #     %w[application target].each do |dir|
-    #       path = target.write_path.join(dir).join(file_name).to_s
-    #       return path if File.exist?(path)
-    #     end
-    #   )
-    # end
-
-    def file_name; options.modifier ? "#{service_name}#{options.modifier}" : "#{service_name}.yml" end
-
-    def service_name; service.name end
-
-    def service; request.services.first end
   end
 end

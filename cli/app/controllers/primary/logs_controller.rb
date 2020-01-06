@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class LogsController < Cnfs::Command
+module Primary
+  class LogsController < ApplicationController
     def execute
       trap('SIGINT') { throw StandardError } if options.tail
-      with_selected_target do
-        before_execute_on_target
+      each_target do
+      # with_selected_target do
+        # before_execute_on_target
         execute_on_target
       end
     rescue StandardError
@@ -13,6 +14,7 @@ module App::Backend
 
     def execute_on_target
       runtime.logs(request.last_service_name)
+      run!
     end
   end
 end

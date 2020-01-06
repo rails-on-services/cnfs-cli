@@ -1,22 +1,25 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class CredentialsController < Cnfs::Command
+module Primary
+  class CredentialsController < ApplicationController
     def execute
       each_target do
-        before_execute_on_target
+        # before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
       FileUtils.mkdir_p(local_path)
+      # container_id = runtime.service_id('iam')
+      # runtime.copy("#{container_id}:#{remote_file}", local_file) unless File.exist?(local_file)
       runtime.copy("iam:#{remote_file}", local_file) unless File.exist?(local_file)
+      run!
       output.puts credentials
     end
 
     def credentials
-      credentials = json.each_with_object([]) { |j, a| a.append(Credential.new(j, application)) }
+      credentials = json.each_with_object([]) { |j, a| a.append(Credential.new(j, target)) }
       if options.format.nil?
         credentials.map(&:to_env).flatten.join("\n")
       elsif options.format.eql?('sdk')
@@ -41,15 +44,16 @@ module App::Backend
   end
 
   class Credential
-    attr_accessor :type, :owner, :tenant, :credential, :secret, :application
+    attr_accessor :type, :owner, :tenant, :credential, :secret, :target, :application
 
-    def initialize(json, application)
+    def initialize(json, target)
       self.type = json['type']
       self.owner = json['owner']
       self.tenant = json['tenant']
       self.credential = json['credential']
       self.secret = json['secret']
-      self.application = application
+      self.target = target
+      self.application = target.application
     end
 
     def to_env
@@ -63,7 +67,7 @@ module App::Backend
             }
           }
         }
-      }).to_env
+      }).to_array
     end
 
     def to_cli
@@ -94,7 +98,7 @@ module App::Backend
 
     def cred_uid; type.eql?('root') ? owner['email'].split('@').first : owner['username'] end
 
-    def part_name; application.partition_name end
+    def part_name; application.partition_name(target.application_environment) end
 
     def tenant_account_id; tenant['urn'].split('/').last end
   end

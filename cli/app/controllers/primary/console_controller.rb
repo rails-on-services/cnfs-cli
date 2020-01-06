@@ -24,20 +24,27 @@ module Primary
     end
 
     def execute
-      if not args.service_names
+      if args.service_names.empty?
         start_cnfs_console
         return
       end
 
       each_target do |target|
-        output.puts "TODO: execute a console on the #{args.service_names} remote service"
+        execute_on_target
       end
     end
 
-    def limits
-      return {} unless args.service_name
-      { deployments: 1, services: 1 }
+    def execute_on_target
+      return unless request.services.last.respond_to?(:console_command)
+
+      runtime.exec(request.last_service_name, request.services.last.console_command, true)
+      run!
     end
+
+    # def limits
+    #   return {} unless args.service_name
+    #   { deployments: 1, services: 1 }
+    # end
 
     def start_cnfs_console
       Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|

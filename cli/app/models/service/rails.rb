@@ -7,6 +7,8 @@ class Service::Rails < Service
     ['bundle exec rubocop', "rails #{prefix}db:test:prepare", "#{exec_dir}bin/spring rspec #{rspec_options}"]
   end
 
+  def console_command; 'rails console' end
+
   def database_seed_commands
     ["rails #{prefix}ros:db:reset:seed"]
   end
