@@ -12,23 +12,6 @@ class ApplicationController
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
 
-  # Execute enqueued commands
-  def run!
-    loop do
-      break unless (rt_command = response.commands.shift)
-      output.puts rt_command.exec if options.verbose or options.debug
-
-      if rt_command.pty
-        system(rt_command.exec) unless options.noop
-      else
-        # with_spinner('Building...') do end
-        result = command(command_options).run!(rt_command.env, rt_command.exec)
-        # TODO: Break if a cli switch to fail fast is in effect
-        errors.add(:build, result.err.chomp) if result.failure?
-      end
-    end
-  end
-
   # TODO: Integrate this method into standard flow
   def publish_results
     require 'tty-table'
@@ -111,7 +94,7 @@ class ApplicationController
     @target.application = deployment.application
 
     @request = Request.new(deployment, args, options)
-    @response = Response.new
+    @response = Response.new(self.class.name.demodulize.underscore.gsub('_controller', ''), self)
     output.puts "selected services: #{request.service_names_to_s}" if options.debug
 
     # Set runtime object to an instance of compose or skaffold
@@ -144,7 +127,7 @@ class ApplicationController
     with_that = "#{command.to_s.camelize}Controller"
     controller_class = self.class.name.gsub(replace_this, with_that).safe_constantize
     controller = controller_class.new(args, options)
-    controller.configure_target(target)
+    controller.configure_target(target.deployment)
     controller.execute_on_target
   end
 
@@ -199,31 +182,13 @@ class ApplicationController
     TTY::Command.new(options)
   end
 
-  def command_options # ; @command_options ||= cmdx_options end
+  def command_options
     cmd_options = { uuid: false }
     cmd_options.merge!(dry_run: true) if options.noop
     cmd_options.merge!(printer: :null) if options.quiet
+    # cmd_options.merge!(only_output_on_error: true) unless options.verbose
     cmd_options
   end
-
-  # def cmdx_options
-  #   hash = default_options
-  #   # hash.merge!(printer: :null) unless options.verbose
-  #   hash
-  # end
-
-  # def default_options
-  #   {
-  #     uuid: false,
-  #     only_output_on_error: true
-  #   }
-  # end
-
-  # def cmd_options
-  #   hash = {}
-  #   hash.merge!(only_output_on_error: true) unless options.verbose
-  #   hash
-  # end
 
   # The cursor movement
   #

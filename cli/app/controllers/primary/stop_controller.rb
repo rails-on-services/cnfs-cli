@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class StopController < Cnfs::Command
+module Primary
+  class StopController < ApplicationController
     def execute
-      with_selected_target do
-        before_execute_on_target
+      each_target do
+        # before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      runtime.stop(request)
+      runtime.stop.run!
     end
   end
 end

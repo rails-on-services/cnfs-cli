@@ -14,8 +14,7 @@ module Primary
 
     def execute_on_target
       runtime.clean if options.clean
-      runtime.start
-      run!
+      runtime.start.run!
     end
   end
 end

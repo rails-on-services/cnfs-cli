@@ -11,8 +11,7 @@ module Primary
     end
 
     def execute_on_target
-      runtime.exec(request.last_service_name, :bash, true)
-      run!
+      runtime.exec(request.last_service_name, :bash, true).run!
     end
   end
 end

@@ -3,28 +3,27 @@
 class PrimaryController < CommandsController
   register TargetsController, 'target', 'target [SUBCOMMAND]', 'Manage target infrastructure'
 
-  class_option :verbose, type: :boolean, aliases: '-v'
-  class_option :quiet, type: :boolean, aliases: '-q'
   class_option :debug, type: :numeric, aliases: '-d'
-  class_option :noop, type: :boolean, aliases: '--noop'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
+  class_option :noop, type: :boolean, aliases: '--no'
+  class_option :quiet, type: :boolean, aliases: '-q'
+  class_option :verbose, type: :boolean, aliases: '-v'
 
+  class_option :profile_name, type: :string, aliases: '-p'
   class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
   class_option :namespace_name, type: :string, aliases: '-n'
-  class_option :profile_name, type: :string, aliases: '-p'
   class_option :application_name, type: :string, aliases: '-a'
   class_option :service_names, type: :array, aliases: '-s'
   # class_option :tag_name, type: :string, aliases: '--tag'
-
 
   desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
   def attach(*service_name); run(:attach, service_names: service_name) end
 
   desc 'build APPLICATION [SERVICES]', 'Build all application images or just for specifc services'
-  option :shell, type: :boolean, aliases: '-s', desc: 'Connect to service shell after building'
+  option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
   def build; run(:build) end
 
-  desc 'cmd', 'Run arbitrary command in context'
+  desc 'cmd', 'Run specified command on service'
   def cmd(*args); run(:cmd, args) end
 
   desc 'console [SERVICE]', 'Start a cnfs or service console'
@@ -48,6 +47,7 @@ class PrimaryController < CommandsController
   def destroy; run(:destroy) end
 
   desc 'exec COMMAND', 'Execute a command on a running service'
+  # TODO: review params method
   def exec(command_name); run(:exec,  params(:exec, binding), { service_names: 1 }) end
 
   desc 'generate', 'Generate manifests for application deployment'
@@ -75,21 +75,20 @@ class PrimaryController < CommandsController
 
   desc 'publish', 'Publish API documentation to Postman'
   option :force, type: :boolean, aliases: '-f', desc: 'Force generation of new documentation'
+  # TODO: refactor
   def publish(type, *services)
     raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w(postman erd).include?(type)
   end
 
   desc 'pull IMAGE', 'push one or all images'
+  # TODO: refactor
   def pull(*args); run(:pull, args) end
 
   desc 'push IMAGE', 'push one or all images'
+  # TODO: refactor
   def push(*args); run(:push, args) end
 
 =begin
-  desc 'xdeploy API', 'deploy to UAT at an endpoint'
-  def xdeploy(tag_name)
-  end
-
   desc 'up SERVICE', 'bring up service(s)'
   option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
   option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
@@ -128,8 +127,7 @@ class PrimaryController < CommandsController
   end
 
   desc 'redeploy', 'Create and Start'
-  def redeploy
-  end
+  def redeploy(namespace_name = nil); run(:redeploy, namespace_name: namespace_name) end
 
   desc 'restart SERVICE', 'Start and stop one or more services'
   option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after executing command'
@@ -139,7 +137,7 @@ class PrimaryController < CommandsController
   option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after executing command'
-  def restart(service_names); run(:restart, service_names: service_names) end
+  def restart(*service_names); run(:restart, service_names: service_names) end
 
   desc 'sh SERVICE', 'execute an interactive shell on a service'
   option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
@@ -167,7 +165,7 @@ class PrimaryController < CommandsController
   def stop(*service_names); run(:stop, service_names: service_names) end
 
   desc 'terminate SERVICE', 'Terminate a service'
-  def terminate(*args); run(:terminate, args) end
+  def terminate(*service_names); run(:terminate, service_names: service_names) end
 
   desc 'test IMAGE', 'Run tests on image(s)'
   option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'

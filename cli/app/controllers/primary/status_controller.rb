@@ -12,7 +12,7 @@ module Primary
 
     def execute_on_target
       header = %w[Application Status Target Status_]
-      table = TTY::Table.new(header: header, rows: compiled_results)
+      table = TTY::Table.new(header: header, rows: rows)
 
       output.puts "\nServices"
       output.puts table.render(:basic, alignments: [:left, :left], padding: [0, 4, 0, 0])
@@ -31,7 +31,7 @@ module Primary
       output.puts "*** API Docs available at [TO IMPLEMENT] ***\n\n"
     end
 
-    def compiled_results
+    def rows
       # Format results into an array that TTY::Table can handle
       all_services = compile_services
       rows = all_services.values.map(&:size).max

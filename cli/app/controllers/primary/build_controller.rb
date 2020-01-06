@@ -19,8 +19,7 @@ module Primary
     def execute_on_target
       return unless request.services.any?
 
-      runtime.build
-      run!
+      runtime.build.run!
     end
   end
 end

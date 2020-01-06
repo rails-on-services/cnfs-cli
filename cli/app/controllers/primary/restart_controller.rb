@@ -12,8 +12,7 @@ module Primary
     end
 
     def execute_on_target
-      runtime.restart
-      run!
+      runtime.restart.run!
     end
   end
 end
