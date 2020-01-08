@@ -1,0 +1,22 @@
+# contexts.yml
+# name is not namespace
+# target with no application is all applications
+# application with no target is all targets
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+development: &development
+  <<: *DEFAULTS
+  target: development
+
+test:
+  <<: *DEFAULTS
+  target: test
+
+production:
+  <<: *DEFAULTS
+  target: production
+
+<%= Cnfs.config_content(:project, __FILE__) %>
+<%= Cnfs.config_content(:user, __FILE__) %>

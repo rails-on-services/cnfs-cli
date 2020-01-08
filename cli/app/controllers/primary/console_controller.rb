@@ -37,8 +37,7 @@ module Primary
     def execute_on_target
       return unless request.services.last.respond_to?(:console_command)
 
-      runtime.exec(request.last_service_name, request.services.last.console_command, true)
-      run!
+      runtime.exec(request.last_service_name, request.services.last.console_command, true).run!
     end
 
     # def limits
@@ -57,7 +56,7 @@ module Primary
         Cnfs.reload
       end
       Primary::ConsoleController::Commands.load
-      Pry.start PrimaryController.new
+      Pry.start # PrimaryController.new
     end
   end
 end

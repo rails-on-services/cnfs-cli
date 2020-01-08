@@ -9,7 +9,7 @@ DEFAULTS: &DEFAULTS
 
 development: &development
   <<: *DEFAULTS 
-  # type: Target::Docker
+  type: Target::Instance
   # generator: Generator::Compose
   services: localstack, postgres, redis, nginx, wait
   resources: instance # instance resource contains dns records, alb, instance, etc
@@ -30,10 +30,12 @@ test: &test
 
 production: &production
   <<: *DEFAULTS 
+  type: Target::Kubernetes
   resources: postgres, redis, kubernetes
   runtime: skaffold
   infra_runtime: terraform
   config:
+    # TODO: move ENVs to deployments so application_environment is removed
     application_environment: production
     dns_root_domain: infra-testing.perxtech.io
     dns_sub_domain: development

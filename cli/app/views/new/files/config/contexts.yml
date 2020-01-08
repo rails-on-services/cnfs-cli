@@ -1,0 +1,19 @@
+---
+dev:
+  <<: *DEFAULTS
+  target: development
+
+bd:
+  <<: *DEFAULTS
+  target: development
+  application: backend
+
+fd:
+  <<: *DEFAULTS
+  target: development
+  application: frontend
+
+pd:
+  <<: *DEFAULTS
+  target: development
+  application: pipeline

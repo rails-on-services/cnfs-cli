@@ -9,12 +9,13 @@ class PrimaryController < CommandsController
   class_option :quiet, type: :boolean, aliases: '-q'
   class_option :verbose, type: :boolean, aliases: '-v'
 
-  class_option :profile_name, type: :string, aliases: '-p'
+  class_option :context_name, type: :string, aliases: '-c'
   class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
   class_option :namespace_name, type: :string, aliases: '-n'
   class_option :application_name, type: :string, aliases: '-a'
   class_option :service_names, type: :array, aliases: '-s'
-  # class_option :tag_name, type: :string, aliases: '--tag'
+  class_option :profile_name, type: :string, aliases: '-p'
+  class_option :tag_names, type: :array, aliases: '--tags'
 
   desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
   def attach(*service_name); run(:attach, service_names: service_name) end
@@ -29,22 +30,23 @@ class PrimaryController < CommandsController
   desc 'console [SERVICE]', 'Start a cnfs or service console'
   def console(*service_name); run(:console, service_names: service_name) end
 
-  desc 'copy', 'Copy a file to or from a running service'
+  desc 'copy SRC DEST', 'Copy a file to or from a running service'
   map %w(cp) => :copy
   def copy(src, dest); run(:copy, src: src, dest: dest) end
 
   desc 'create [NAMESPACE]', "Create a namespace; default is 'master'"
   def create(namespace_name = nil); run(:create, namespace_name: namespace_name) end
 
-  desc 'credentials', 'show iam credentials'
+  desc 'credentials', 'Display IAM credentials'
   option :format, type: :string, aliases: '-f'
   def credentials; run(:credentials) end
 
-  desc 'deploy', 'Deploy backend application to infrastructure targets'
+  desc 'deploy [NAMESPACE]', 'Deploy application to target infrastructure'
+  option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
   def deploy(namespace_name = nil); run(:deploy, namespace_name: namespace_name) end
 
-  desc 'destroy', 'Remove backend application from target infrastructure'
-  def destroy; run(:destroy) end
+  desc 'destroy [NAMESPACE]', 'Remove application from target infrastructure'
+  def destroy(namespace_name = nil); run(:destroy, namespace_name: namespace_name) end
 
   desc 'exec COMMAND', 'Execute a command on a running service'
   # TODO: review params method
@@ -59,7 +61,7 @@ class PrimaryController < CommandsController
   desc 'list', 'List backend application configuration objects'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
   map %w(ls) => :list
-  def list; run(:list) end
+  def list(what = :deployments); run(:list, what: what) end
 
   desc 'logs', 'Tail logs of a running service'
   option :tail, type: :boolean, aliases: '-f'

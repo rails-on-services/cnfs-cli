@@ -28,6 +28,9 @@ class Target < ApplicationRecord
   validates :runtime, presence: true
   validates :provider, presence: true
 
+  # Default intitialze of target is to do nothing
+  def init(options); end
+
   def to_env
     {
       platform: {

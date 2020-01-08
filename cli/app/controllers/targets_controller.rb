@@ -18,17 +18,10 @@ class TargetsController < CommandsController
   desc 'generate', 'Generate target infrastructure'
   def generate(*args); run(:generate, args) end
 
-  # desc 'init', 'Initialize the cluster'
-  # option :long, type: :boolean, aliases: '-l', desc: 'Run the long form of the command'
-  # option :role_name, type: :string, aliases: '--role-name', desc: 'Override the aws iam role to be used'
-  # def init
-  #   cluster.init(self)
-  # end
-
-  # def initialize(*args)
-  #   @errors = Ros::Errors.new
-  #   super
-  # end
+  desc 'init', 'Initialize the cluster'
+  option :long, type: :boolean, aliases: '-l', desc: 'Run the long form of the command'
+  option :role_name, type: :string, aliases: '-r', desc: 'Override the aws iam role to be used'
+  def init; run(:init) end
 
   desc 'plan', 'Show the terraform infrastructure plan'
   option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'

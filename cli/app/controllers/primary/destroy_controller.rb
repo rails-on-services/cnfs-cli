@@ -10,8 +10,7 @@ module Primary
     end
 
     def execute_on_target
-      runtime.destroy
-      run!
+      runtime.destroy.run!
     end
   end
 end

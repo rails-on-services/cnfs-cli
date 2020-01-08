@@ -1,4 +1,0 @@
----
-deployment: backend_development
-target: development
-application: backend

@@ -13,28 +13,38 @@ module Primary
     end
 
     def execute_on_target
-      runtime.deploy
-      run!
+      if options.local
+        runtime.deploy.run!
+        return
+      end
+
+      deploy_git_tag
     end
 
-    def uat_or_cluster
-      # prefix = Settings.components.be.components.application.config.deploy_tag
+    def deploy_git_tag
       prefix = 'enable-api.'
-      api_tag_name = "#{prefix}#{tag_name}"
-      existing_local_tags = %x(git tag).split
-      existing_remote_tags = %x(git ls-remote --tags).split("\n").map { |tag_string| tag_string.split("\t").last.gsub('refs/tags/', '') }
-      versions = []
-      (existing_local_tags + existing_remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) }.each do |tag|
-        # push numeric version suffix into versions array
-        versions.push(tag[/\d+$/].to_i)
+      api_tag_name = "#{prefix}#{args.namespace_name}"
+      Dir.chdir('..') do
+      versions = tags(api_tag_name)
+      new_tag = "#{api_tag_name}.v#{versions.shift + 1}"
+      output.puts new_tag
       end
-      versions.sort!.reverse!
-      # bump version
-      version = "v#{versions[0].to_i + 1}"
       # retag local
-      %x(git tag -a -m #{api_tag_name}.#{version} #{api_tag_name}.#{version})
+      # command.run("git tag -a -m #{new_tag} #{new_tag}")
       # push tag
-      %x(git push origin #{api_tag_name}.#{version})
+      # command.run("git push origin #{new_tag}")
+    end
+
+    def tags(api_tag_name)
+      all_tags = (local_tags + remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) }
+      # push numeric version suffix into array
+      all_tags.each_with_object([]) { |tag, versions| versions.push(tag[/\d+$/].to_i) }.sort.reverse
+    end
+
+    def local_tags; %x(git tag).split end
+
+    def remote_tags
+      %x(git ls-remote --tags).split("\n").map { |tag| tag.split("\t").last.gsub('refs/tags/', '') }
     end
   end
 end

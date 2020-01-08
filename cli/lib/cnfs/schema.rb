@@ -45,7 +45,8 @@ module Cnfs
           t.string :config
           t.string :tf_config
           t.string :environment
-          t.boolean :namespaces
+          t.string :type
+          t.string :namespaces
         end
         Target.reset_column_information
 
@@ -94,6 +95,17 @@ module Cnfs
           t.string :environment
         end
         Tag.reset_column_information
+
+        create_table :contexts, force: true do |t|
+          t.references :application
+          t.references :target
+          t.string :namespace
+          t.string :name
+          t.string :services
+          t.string :resources
+          t.string :tags
+        end
+        Context.reset_column_information
 
         create_table :deployments, force: true do |t|
           t.references :application

@@ -17,10 +17,20 @@ class Request
 
   def service_names; services.pluck(:name) end
 
-  def services
-    return (application.services + target.services) unless args.service_names
+  def services; application_services + target_services end
 
-    application.services.where(name: args.service_names) + target.services.where(name: args.service_names)
+  def application_services
+    result = application.services
+    result = result.where(name: args.service_names) unless args.service_names.empty?
+    result = result.joins(:tags).where(tags: { name: args.tag_names }) unless args.tag_names.empty?
+    result
+  end
+
+  def target_services
+    result = target.services
+    result = result.where(name: args.service_names) unless args.service_names.empty?
+    result = result.joins(:tags).where(tags: { name: args.tag_names }) unless args.tag_names.empty?
+    result
   end
 
   # def resources

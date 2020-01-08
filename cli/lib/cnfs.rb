@@ -35,13 +35,12 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :current_profile
+    attr_accessor :autoload_dirs, :current_context_name
     attr_reader :root, :config_path, :config_file, :user_root, :user_config_path
     attr_reader :project_name
 
     def setup(skip_schema = false)
       setup_paths(Dir.pwd)
-      load_config('project.yml')
       initialize_plugins
       setup_loader
       Schema.setup unless skip_schema
@@ -59,19 +58,9 @@ module Cnfs
       @user_config_path = user_root.join('config')
     end
 
-    def load_config(file_name)
-      load_files = gem_root.join(file_name), root.join(file_name), user_root.join(file_name)
-      load_files.each { |lf| STDOUT.puts "Loading project file: #{lf}" } if debug > 0
-      Config.load_and_set_settings(gem_root.join(file_name), root.join(file_name), user_root.join(file_name))
-    end
+    def current_context; Context.find_by(name: current_context_name) end
 
-    def current_config; config.profiles[current_profile].to_cnfs end
-
-    def config; Settings end
-
-    def current_profile; @current_profile || ENV['CNFS_PROFILE'] || :development end
-
-    def profiles; config.profiles.keys end
+    def current_context_name; @current_context_name || ENV['CNFS_CONTEXT'] || :default end
 
     def project?; File.exist?(config_file) end
 

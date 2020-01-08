@@ -12,8 +12,7 @@ module Primary
     end
 
     def execute_on_target
-      runtime.attach
-      run!
+      runtime.attach.run!
     end
   end
 end

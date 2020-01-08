@@ -18,12 +18,5 @@ module Config
       end
       ary
     end
-
-    def to_cnfs
-      to_h.stringify_keys.each_with_object({}) do |(key, value), hash|
-        mkey = key.pluralize == key ? "#{key.singularize}_names" : "#{key}_name"
-        hash[mkey] = value.index(',') ? value.split(',') : value
-      end
-    end
   end
 end

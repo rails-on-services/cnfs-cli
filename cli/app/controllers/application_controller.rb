@@ -39,14 +39,14 @@ class ApplicationController
     @input = $stdin
     @output = $stdout
     @cli_args = args
-    Cnfs.current_profile = args.profile_name
-    @args = Config::Options.new(Cnfs.current_config.merge(args))
+
+    @args = Config::Options.new(Cnfs.current_context&.config(args) || args)
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
       output.puts ENV.select { |env| env.start_with? 'CNFS_'}
-      output.puts "options: #{options}\nuser args: #{cli_args}\nprofile name: #{Cnfs.current_profile}\n" \
-        "profile args: #{Cnfs.current_config}\ncommand args: #{@args.to_h}"
+      output.puts "options: #{options}\nuser args: #{cli_args}\ncontext name: #{@args.context_name}\n" \
+        "context args: #{Cnfs.current_context&.to_args}\ncommand args: #{@args.to_h}"
     end
   end
 
@@ -186,7 +186,6 @@ class ApplicationController
     cmd_options = { uuid: false }
     cmd_options.merge!(dry_run: true) if options.noop
     cmd_options.merge!(printer: :null) if options.quiet
-    # cmd_options.merge!(only_output_on_error: true) unless options.verbose
     cmd_options
   end
 

@@ -19,16 +19,17 @@ class CommandsController < Thor
 
     args = Thor::CoreExt::HashWithIndifferentAccess.new(args.merge(options.slice(*options_to_args)))
     opts = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(*options_to_args))
+    Cnfs.current_context_name = args.context_name
     controller.new(args, opts).call
   end
 
   def options_to_args
-    %w[profile_name target_name application_name service_names]
+    %w[context_name target_name namespace_name application_name service_names tag_names]
   end
 
-  def params(method_name, method_binding)
-    method(method_name).parameters.each_with_object({}) do |(_, name), hash|
-      hash[name] = method_binding.local_variable_get(name)
-    end
-  end
+  # def params(method_name, method_binding)
+  #   method(method_name).parameters.each_with_object({}) do |(_, name), hash|
+  #     hash[name] = method_binding.local_variable_get(name)
+  #   end
+  # end
 end
