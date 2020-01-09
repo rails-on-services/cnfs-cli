@@ -1,8 +1,8 @@
 # keys.yml
 # WARN: do not commit to repository
 ---
-<% environments.each do |env| %>
+<% box_keys.each do |env, value| %>
 <%= env %>:
   name: <%= env %>
-  value: <%= Lockbox.generate_key %>
+  value: <%= value %>
 <% end %>

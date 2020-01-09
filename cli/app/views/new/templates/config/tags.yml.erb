@@ -1,0 +1,38 @@
+# tags.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+core:
+  <<: *DEFAULTS
+  description: The core application services
+
+storage:
+  <<: *DEFAULTS
+  description: Resources and services for running the storage component
+  environment:
+    all:
+      storage_tag: hello
+
+service_db:
+  <<: *DEFAULTS
+  description: Service backed database resources 
+  config:
+    this: that
+
+db:
+  <<: *DEFAULTS
+  description: Cloud provider database resources
+  config:
+    this: that
+
+cluster:
+  <<: *DEFAULTS
+  description: Kubernetes Resources
+
+networking:
+  <<: *DEFAULTS
+  description: Networking Resources
+  environment:
+    all:
+      networking_tag: hello

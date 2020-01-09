@@ -1,0 +1,36 @@
+# targets.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+  type: Target::Instance
+  runtime: compose
+  provider: localstack
+
+development: &development
+  <<: *DEFAULTS 
+  services: localstack, postgres, redis, wait, nginx
+  config:
+    mount: yes
+    dns_root_domain: localhost
+    # dns_sub_domain: development
+    # lb_dns_hostnames: ['api']
+    # root_domain_managed_in_route53: yes
+
+test: &test
+  <<: *DEFAULTS 
+  services: localstack, postgres, redis, wait
+
+production: &production
+  <<: *DEFAULTS 
+  type: Target::Kubernetes
+  resources: postgres, redis, kubernetes
+  runtime: skaffold
+  infra_runtime: terraform
+  config:
+    dns_root_domain: infra-testing.perxtech.io
+    dns_sub_domain: development
+    root_domain_managed_in_route53: yes
+    lb_dns_hostnames: ['api']
+  tf_config:
+    tags:
+      environment: staging

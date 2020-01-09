@@ -1,19 +1,21 @@
+# contexts.yml
+# target with no application is all applications
+# application with no target is all targets
 ---
-dev:
-  <<: *DEFAULTS
-  target: development
+DEFAULTS: &DEFAULTS
+  name: $LABEL
 
-bd:
+bd: &bd
   <<: *DEFAULTS
   target: development
   application: backend
 
-fd:
+fd: &fd
   <<: *DEFAULTS
   target: development
   application: frontend
 
-pd:
+pd: &pd
   <<: *DEFAULTS
   target: development
   application: pipeline

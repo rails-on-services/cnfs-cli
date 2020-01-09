@@ -25,6 +25,7 @@ backend_development: &backend_development
   application: backend
   target: development
 <% if options.cnfs %>
+  <% Cnfs.box_key = box_keys[:development] %>
   environment:
     rails_env: development
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -39,12 +40,24 @@ backend_test: &backend_test
   <<: *DEFAULTS
   application: backend
   target: test
+<% if options.cnfs %>
+  <% Cnfs.box_key = box_keys[:test] %>
+  environment:
+    rails_env: test
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+<% end %>
 
 backend_production: &backend_production
   <<: *DEFAULTS
   application: backend
   target: production
 <% if options.cnfs %>
+  <% Cnfs.box_key = box_keys[:production] %>
   environment:
     rails_env: production
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"

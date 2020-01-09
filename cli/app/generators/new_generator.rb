@@ -23,9 +23,19 @@ class NewGenerator < Thor::Group
 
   private
 
+  def box_keys; @box_keys ||= set_box_keys end
+
+  def set_box_keys
+    {
+      development: Lockbox.generate_key,
+      test: Lockbox.generate_key,
+      production: Lockbox.generate_key
+    }
+  end
+
   def environments; %w[development test production] end
 
-  def configs; %w[deployments applications] end
+  def configs; %w[deployments targets runtimes providers resources applications services tags] end
 
   def source_paths; [views_path, views_path.join('templates')] end
 
