@@ -1,0 +1,5 @@
+# keys.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+<%= Cnfs.config_content(:user, __FILE__) %>

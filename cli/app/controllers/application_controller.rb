@@ -40,14 +40,17 @@ class ApplicationController
     @output = $stdout
     @cli_args = args
 
-    @args = Config::Options.new(Cnfs.current_context&.config(args) || args)
+    @args = Config::Options.new(Cnfs.context&.config(args) || args)
+    Cnfs.key_name = args.key_name if args.key_name
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
-      output.puts ENV.select { |env| env.start_with? 'CNFS_'}
-      output.puts "options: #{options}\nuser args: #{cli_args}\ncontext name: #{@args.context_name}\n" \
-        "context args: #{Cnfs.current_context&.to_args}\ncommand args: #{@args.to_h}"
+      output.puts "ENVs: #{ENV.select { |env| env.start_with? 'CNFS_'}}\n" \
+        "cli options: #{options}\ncli args: #{cli_args}\n" \
+        "key name: #{Cnfs.key_name}\ncontext: #{Cnfs.context_name}\ncontext args: #{Cnfs.context&.to_args}\n" \
+        "command args: #{@args.to_h}"
     end
+    output.puts "WARN: encrypition key not found for key name '#{Cnfs.key_name}'" unless Cnfs.key
   end
 
   def each_target
@@ -94,8 +97,9 @@ class ApplicationController
     @target.application = deployment.application
 
     @request = Request.new(deployment, args, options)
-    @response = Response.new(self.class.name.demodulize.underscore.gsub('_controller', ''), self)
     output.puts "selected services: #{request.service_names_to_s}" if options.debug
+
+    @response = Response.new(command_name, options, output, command(command_options), errors)
 
     # Set runtime object to an instance of compose or skaffold
     return unless (@runtime = current_runtime)
@@ -108,6 +112,8 @@ class ApplicationController
     # Runtime methods are called directly and some values are dependent upon the current target
     @runtime.target = target
   end
+
+  def command_name; self.class.name.demodulize.underscore.delete_suffix('_controller') end
 
   def current_runtime
     mod = self.class.name.underscore.split('/').first

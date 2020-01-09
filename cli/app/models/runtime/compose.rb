@@ -87,6 +87,11 @@ class Runtime::Compose < Runtime
     services.map{ |a| a.gsub("#{project_name}_", '').chomp('_1') }
   end
 
+  def labels(base_labels, space_count)
+    space_count ||= 6
+    base_labels.select { |k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
+  end
+
   private
 
   def refresh_services; @services = nil end
@@ -105,11 +110,6 @@ class Runtime::Compose < Runtime
   def deploy_type; :instance end
 
   # Generate
-  def labels(base_labels, space_count)
-    space_count ||= 6
-    base_labels.select { |k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
-  end
-
   # TODO: taken from deploy command; is it needed/appropriate here?
   def set_compose_options
     @compose_options = ''

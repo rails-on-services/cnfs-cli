@@ -8,7 +8,7 @@ class Context < ApplicationRecord
 
   def to_args
     {
-      profile_name: name,
+      context_name: name,
       namespace_name: namespace,
       service_names: YAML.load(self[:services] || '') || [],
       resource_names: YAML.load(self[:resources] || '') || [],

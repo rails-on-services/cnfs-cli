@@ -35,9 +35,9 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :current_context_name
-    attr_reader :root, :config_path, :config_file, :user_root, :user_config_path
-    attr_reader :project_name
+    attr_accessor :autoload_dirs, :context_name, :key_name
+    attr_reader :root, :config_path, :config_file
+    attr_reader :project_name, :user_root, :user_config_path
 
     def setup(skip_schema = false)
       setup_paths(Dir.pwd)
@@ -58,9 +58,13 @@ module Cnfs
       @user_config_path = user_root.join('config')
     end
 
-    def current_context; Context.find_by(name: current_context_name) end
+    def context; Context.find_by(name: context_name) end
 
-    def current_context_name; @current_context_name || ENV['CNFS_CONTEXT'] || :default end
+    def context_name; @context_name || ENV['CNFS_CONTEXT'] || :default end
+
+    def key; Key.find_by(name: key_name) end
+
+    def key_name; @key_name || ENV['CNFS_KEY'] || :default end
 
     def project?; File.exist?(config_file) end
 
@@ -96,6 +100,10 @@ module Cnfs
 
     # Utility methods
     # Configuration fixture file loading methods
+    def load_configs(file)
+      %i[project user].each_with_object([]) { |type, ary| ary << config_content(type, file) }.join("\n")
+    end
+
     def config_content(type, file)
       fixture_file = fixture(type, file)
       if File.exist?(fixture_file)
@@ -112,12 +120,7 @@ module Cnfs
     # Lockbox encryption methods
     def box; @box ||= Lockbox.new(key: box_key) end
 
-    def box_key
-      return ENV['CNFS_MASTER_KEY'] if ENV['CNFS_MASTER_KEY']
-      File.read(box_file).chomp if File.exist?(box_file)
-    end
-
-    def box_file; user_root.join('credentials') end
+    def box_key; ENV['CNFS_MASTER_KEY'] || key&.value end
 
     # OS methods
     def gid

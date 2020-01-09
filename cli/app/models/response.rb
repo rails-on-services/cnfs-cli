@@ -1,35 +1,76 @@
 # frozen_string_literal: true
 
 class Response
-  attr_accessor :name, :controller, :options, :commands
+  attr_accessor :command_name, :options, :output, :command, :errors, :commands
 
-  def initialize(name, controller)
-    @name = name
-    @controller = controller
-    @options = controller.options
+  def initialize(command_name, options, output, command, errors)
+    @command_name = command_name
+    @options = options
+    @output = output
+    @command = command
+    @errors = errors
     @commands = []
   end
 
-  def add(exec:, env: {}, pty: false)
-    commands << OpenStruct.new(exec: exec, env: env, pty: pty)
+  def add(exec:, env: {}, pty: false, dir: nil)
+    commands << OpenStruct.new(exec: exec, env: env, pty: pty, dir: dir)
     self
   end
+
+  def run(cmd); command.run(cmd, only_output_on_error: !options.debug) end
 
   # Execute enqueued commands
   def run!
     loop do
-      break unless (command = commands.shift)
+      break unless (cmd = commands.shift)
 
-      if command.pty
-        controller.output.puts command.exec if options.verbose or options.debug
-        system(command.exec) unless options.noop
+      if cmd.pty
+        output.puts(cmd.exec) if options.verbose or options.debug
+        system(cmd.exec) unless options.noop
+        # TODO: handle error on system command
       else
-        controller.output.puts command.exec if (options.verbose or options.debug) and not options.noop
+        output.puts(cmd.exec) if (options.verbose or options.debug) and not options.noop
+        command_options = cmd.env.merge(only_output_on_error: !options.debug)
+        command_options.merge!(chdir: cmd.dir) if cmd.dir
         # with_spinner('Building...') do end
-        result = controller.command(controller.command_options).run!(command.env, command.exec)
-        # TODO: Break if a cli switch to fail fast is in effect
-        controller.errors.add(name, result.err.chomp) if result.failure?
+        result = command.run!(cmd.exec, command_options)
+        if result.failure?
+          errors.add(command_name, result.err.chomp)
+          break
+        end
       end
     end
   end
+
+  # run command with output captured to variables
+  # returns boolean true if command successful, false otherwise
+  # def capture_cmd(cmd, envs = {})
+  #   return if setup_cmd(cmd)
+  #   @stdout, @stderr, process_status = Open3.capture3(envs, cmd)
+  #   @exit_code = process_status.exitstatus
+  #   @exit_code.zero?
+  # end
+
+  # # run command with output captured unless options.verbose then to terminal
+  # # returns boolean true if command successful, false otherwise
+  # def system_cmd(cmd, envs = {}, never_capture = false)
+  #   return capture_cmd(cmd, envs) unless (options.verbose or never_capture)
+  #   return if setup_cmd(cmd)
+  #   system(envs, cmd)
+  #   @exit_code = $?.exitstatus
+  #   @exit_code.zero?
+  # end
+
+  # def setup_cmd(cmd)
+  #   puts cmd if options.verbose
+  #   @stdout = nil
+  #   @stderr = nil
+  #   @exit_code = 0
+  #   options.noop
+  # end
+
+  # def exit
+  #   STDOUT.puts(errors.messages.map{ |(k, v)| "#{v}\n" }) if errors.size.positive?
+  #   Kernel.exit(errors.size)
+  # end
 end

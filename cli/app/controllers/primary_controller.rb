@@ -10,17 +10,18 @@ class PrimaryController < CommandsController
   class_option :verbose, type: :boolean, aliases: '-v'
 
   class_option :context_name, type: :string, aliases: '-c'
-  class_option :target_name, type: :string, aliases: '-t', desc: 'The target infrastructure'
+  class_option :key_name, type: :string, aliases: '-k'
+  class_option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
   class_option :namespace_name, type: :string, aliases: '-n'
   class_option :application_name, type: :string, aliases: '-a'
   class_option :service_names, type: :array, aliases: '-s'
-  class_option :profile_name, type: :string, aliases: '-p'
+  class_option :profile_names, type: :array, aliases: '-p'
   class_option :tag_names, type: :array, aliases: '--tags'
 
   desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
   def attach(*service_name); run(:attach, service_names: service_name) end
 
-  desc 'build APPLICATION [SERVICES]', 'Build all application images or just for specifc services'
+  desc 'build APPLICATION [SERVICES]', 'Build all or specific application images'
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
   def build; run(:build) end
 
@@ -58,7 +59,7 @@ class PrimaryController < CommandsController
   desc 'init', 'Initialize a project environment'
   def init; run(:init) end
 
-  desc 'list', 'List backend application configuration objects'
+  desc 'list', 'List configuration objects: deployments, ns, profiles'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
   map %w(ls) => :list
   def list(what = :deployments); run(:list, what: what) end
@@ -68,6 +69,7 @@ class PrimaryController < CommandsController
   def logs(*service_name); run(:logs, service_names: service_name) end
 
   desc 'new', 'Create a new CNFS project'
+  option :cnfs, type: :boolean
   def new(name); NewController.new(name, options).execute end
 
   desc 'ps', 'List running services'
@@ -82,11 +84,11 @@ class PrimaryController < CommandsController
     raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w(postman erd).include?(type)
   end
 
-  desc 'pull IMAGE', 'push one or all images'
+  desc 'pull IMAGE', 'Pull one or all images'
   # TODO: refactor
   def pull(*args); run(:pull, args) end
 
-  desc 'push IMAGE', 'push one or all images'
+  desc 'push IMAGE', 'Push one or all images'
   # TODO: refactor
   def push(*args); run(:push, args) end
 
@@ -121,9 +123,8 @@ class PrimaryController < CommandsController
   end
 =end
 
-  # TODO: refactor to a rails specifc set of commands in a dedicated file
-  # TODO: see about using little plugger for this one
-  desc 'rails SERVICE COMMAND', 'execute a rails command on a service'
+  # TODO: refactor to a rails specifc set of commands in a plugin
+  desc 'rails SERVICE COMMAND', 'Execute a rails command on a service'
   def rails(service, cmd)
     exec(service, "rails #{cmd}")
   end
@@ -141,12 +142,12 @@ class PrimaryController < CommandsController
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after executing command'
   def restart(*service_names); run(:restart, service_names: service_names) end
 
-  desc 'sh SERVICE', 'execute an interactive shell on a service'
+  desc 'sh SERVICE', 'Execute an interactive shell on a service'
   option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
   # NOTE: shell is a reserved word in Thor so it can't be used
   def sh(*service_name); run(:shell, service_names: service_name) end
 
-  desc 'show', 'show service config'
+  desc 'show', 'Show service config'
   option :modifier, type: :string, aliases: '-m'
   def show(*service_name); run(:show, service_names: service_name) end
 
@@ -176,6 +177,6 @@ class PrimaryController < CommandsController
   option :push, type: :boolean, desc: 'Push image after successful testing'
   def test(*args); run(:test, args) end
 
-  desc 'version', 'cnfs version'
+  desc 'version', 'Show cnfs version'
   def version; puts "v#{Cnfs::VERSION}" end
 end

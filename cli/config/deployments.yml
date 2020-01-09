@@ -50,5 +50,4 @@ pipeline_production: &pipeline_production
   application: pipeline
   target: production
 
-<%= Cnfs.config_content(:project, __FILE__) %>
-<%= Cnfs.config_content(:user, __FILE__) %>
+<%= Cnfs.load_configs(__FILE__) %>

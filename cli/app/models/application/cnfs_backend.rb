@@ -16,8 +16,10 @@ class Application::CnfsBackend < Application
   def to_env(target = nil)
     @target = target
 
-    env = Config::Options.new.merge!(environment.dig(:all))
-    env.merge!(Config::Options.new.merge!(environment.dig(target.application_environment)).to_hash)
+    env = Config::Options.new.merge!(environment) # .dig(:all))
+    # env.merge!(Config::Options.new.merge!(environment.dig(target.application_environment)).to_hash)
+    env.merge!(Config::Options.new.merge!(target.deployment.environment).to_hash)
+    binding.pry
     env.merge!(entities_env(self))
     env.merge!(entities_env(target))
     env.merge!(target.to_env)

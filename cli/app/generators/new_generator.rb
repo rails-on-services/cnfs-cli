@@ -11,14 +11,21 @@ class NewGenerator < Thor::Group
 
   def setup_project
     Cnfs.setup_paths(destination_root)
-    empty_directory(Cnfs.user_config_path)
   end
 
-  def generate_encryption_key
-    template('credentials', Cnfs.box_file)
+  def generate_encryption_keys
+    template('config/keys.yml.erb', Cnfs.user_config_path.join('keys.yml'))
+  end
+
+  def generate_default_configs
+    configs.each { |type| template("config/#{type}.yml.erb", "config/#{type}.yml") }
   end
 
   private
+
+  def environments; %w[development test production] end
+
+  def configs; %w[deployments applications] end
 
   def source_paths; [views_path, views_path.join('templates')] end
 

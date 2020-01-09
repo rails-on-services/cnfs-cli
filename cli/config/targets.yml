@@ -2,6 +2,7 @@
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
+  type: Target::Instance
   runtime: compose
   provider: localstack
   config:
@@ -9,10 +10,9 @@ DEFAULTS: &DEFAULTS
 
 development: &development
   <<: *DEFAULTS 
-  type: Target::Instance
-  # generator: Generator::Compose
   services: localstack, postgres, redis, nginx, wait
-  resources: instance # instance resource contains dns records, alb, instance, etc
+  # TODO: resources are in addition to the resources specified by the type
+  # resources: instance # instance resource contains dns records, alb, instance, etc
   # layers: dev_cloud, cloud_networking, cluster, dev_cluster, cluster_database # dev_database
   config:
     application_environment: development
@@ -45,5 +45,4 @@ production: &production
     tags:
       environment: staging
 
-<%= Cnfs.config_content(:project, __FILE__) %>
-<%= Cnfs.config_content(:user, __FILE__) %>
+<%= Cnfs.load_configs(__FILE__) %>

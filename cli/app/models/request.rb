@@ -17,7 +17,7 @@ class Request
 
   def service_names; services.pluck(:name) end
 
-  def services; application_services + target_services end
+  def services; @services ||= application_services + target_services end
 
   def application_services
     result = application.services

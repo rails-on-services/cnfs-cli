@@ -18,7 +18,7 @@ module Primary
         end
 
         def shortcuts
-          { d: Deployment, a: Application, t: Target, r: Resource, s: Service, p: Provider }
+          { c: Context, k: Key, d: Deployment, a: Application, t: Target, r: Resource, s: Service, p: Provider }
         end
       end
     end

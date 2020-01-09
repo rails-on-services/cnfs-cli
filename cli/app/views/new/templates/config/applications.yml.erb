@@ -12,6 +12,7 @@ pipeline: &pipeline
 
 backend: &backend
   <<: *DEFAULTS
+<% if options.cnfs %>
   type: Application::CnfsBackend
   services: cognito, comm, iam, organization, storage, sftp
   resources: app_bucket, image_bucket, dns, image_cdn
@@ -35,5 +36,4 @@ backend: &backend
       partition_name: ros
       postman:
         workspace: 'api.{domain}'
-
-<%= Cnfs.load_configs(__FILE__) %>
+<% end %>

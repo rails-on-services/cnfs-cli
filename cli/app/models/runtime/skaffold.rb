@@ -10,26 +10,26 @@ class Runtime::Skaffold < Runtime
     response.add(env: kube_env, exec: kubectl("exec -it #{service_pod(service)} -c #{service} bash"), pty: true)
   end
 
-  def labels(base_labels, space_count)
-    space_count ||= 12
-    base_labels.select { |k, v| v }.map { |key, value| "#{label_base}/#{key.to_s.gsub('_', '-')}: #{value}" }.join("\n#{' ' * space_count}")
+  def build # (services)
+    # generate_config if stale_config
+    request.services.each do |service|
+      # service_file = "#{target_wr}/#{service}.yml"
+      response.add(exec: skaffold("build -f #{service.name}.yml"), env: skaffold_env, dir: target.write_dir)
+    end
+    response
+
+    # services.each do |service|
+    #   next true unless platform.components.keys.include?(service.to_sym)
+
+    #   service_file = "#{platform_root}/#{service}.yml"
+    #   Dir.chdir(platform_root) do
+    #     # TODO: next unless check and gem_version_check
+    #     run_cmd = 'build'
+    #     skaffold("#{run_cmd} -f #{File.basename(service_file)}")
+    #     errors.add(:skaffold, stderr) if exit_code.positive?
+    #   end
+    # end
   end
-
-  # This is the method ps command will call
-  def services(format: '{{.Names}}', status: :running, **filters)
-  end
-
-  def run(cmd); response.add(env: kube_env, exec: kubectl(cmd)) end
-
-  # TODO: get the labels sorted out
-  def exec(service_name, command, pty)
-    pods = query_cluster(:pod, name: service_name, component: :server)
-    return unless (pod = pods.first)
-
-    response.add(exec: kubectl("exec -it #{pod} -c #{service_name} #{command}"), env: kube_env, pty: pty)
-  end
-
-  def deploy_type; :kubernetes end
 
   # Creates a new namespace in an existing cluster
   def create
@@ -39,7 +39,7 @@ class Runtime::Skaffold < Runtime
 
     # deploy helm into namespace
     # TODO: Need to generate tiller-rbac
-    response.add(exec: kubectl("apply -f #{target.write_path}/tiller-k8s-ns.yaml"), env: kube_env)
+    response.add(exec: kubectl("apply -f #{target.write_path}/tiller-k8s-ns.yml"), env: kube_env)
     response.add(exec: 'helm init --upgrade --wait --service-account tiller', env: kube_env)
   end
 
@@ -51,6 +51,29 @@ class Runtime::Skaffold < Runtime
     response.add(exec: "kubectl delete ns #{namespace}", env: kube_env)
   end
 
+  # TODO: get the labels sorted out
+  def exec(service_name, command, pty)
+    pods = query_cluster(:pod, name: service_name, component: :server)
+    return unless (pod = pods.first)
+
+    response.add(exec: kubectl("exec -it #{pod} -c #{service_name} #{command}"), env: kube_env, pty: pty)
+  end
+
+
+  # Utility Methods
+  def labels(base_labels, space_count)
+    space_count ||= 12
+    base_labels.select { |k, v| v }.map { |key, value| "#{label_base}/#{key.to_s.gsub('_', '-')}: #{value}" }.join("\n#{' ' * space_count}")
+  end
+
+  # This is the method ps command will call
+  def services(format: '{{.Names}}', status: :running, **filters)
+  end
+
+  def run(cmd); response.add(env: kube_env, exec: kubectl(cmd)) end
+
+  # TODO: replace with self.class.type
+  def deploy_type; :kubernetes end
 
   private
 
@@ -62,7 +85,7 @@ class Runtime::Skaffold < Runtime
   def query_cluster(asset_type, labels = {})
     label_string = labels.map{ |k, v| "app.kubernetes.io/#{k}=#{v}" }.join(',')
     cmd = kubectl("get #{asset_type} -l #{label_string} -o yaml")
-    out, err = response.controller.command(response.controller.command_options).run(cmd, only_output_on_error: !request.options.debug)
+    out, err = response.run(cmd)
     return [] unless (result = YAML.safe_load(out))
 
     result['items'].map { |i| i['metadata']['name'] }

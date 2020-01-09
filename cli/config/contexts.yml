@@ -1,5 +1,4 @@
 # contexts.yml
-# name is not namespace
 # target with no application is all applications
 # application with no target is all targets
 ---
@@ -10,13 +9,12 @@ development: &development
   <<: *DEFAULTS
   target: development
 
-test:
+test: &test
   <<: *DEFAULTS
   target: test
 
-production:
+production: &production
   <<: *DEFAULTS
   target: production
 
-<%= Cnfs.config_content(:project, __FILE__) %>
-<%= Cnfs.config_content(:user, __FILE__) %>
+<%= Cnfs.load_configs(__FILE__) %>

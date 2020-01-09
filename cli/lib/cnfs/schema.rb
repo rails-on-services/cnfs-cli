@@ -28,6 +28,23 @@ module Cnfs
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
+        create_table :contexts, force: true do |t|
+          t.references :application
+          t.references :target
+          t.string :namespace
+          t.string :name
+          t.string :services
+          t.string :resources
+          t.string :tags
+        end
+        Context.reset_column_information
+
+        create_table :keys, force: true do |t|
+          t.string :name
+          t.string :value
+        end
+        Key.reset_column_information
+
         create_table :applications, force: true do |t|
           t.string :name
           t.string :config
@@ -49,6 +66,15 @@ module Cnfs
           t.string :namespaces
         end
         Target.reset_column_information
+
+        create_table :deployments, force: true do |t|
+          t.references :application
+          t.references :target
+          t.string :name
+          t.string :config
+          t.string :environment
+        end
+        Deployment.reset_column_information
 
         create_table :providers, force: true do |t|
           t.string :name
@@ -77,7 +103,6 @@ module Cnfs
         end
         Resource.reset_column_information
 
-        # Application::Service.joins(:layer).select(:name, 'application_layers.name as layer_name')'
         create_table :services, force: true do |t|
           t.string :name
           t.string :config
@@ -95,26 +120,6 @@ module Cnfs
           t.string :environment
         end
         Tag.reset_column_information
-
-        create_table :contexts, force: true do |t|
-          t.references :application
-          t.references :target
-          t.string :namespace
-          t.string :name
-          t.string :services
-          t.string :resources
-          t.string :tags
-        end
-        Context.reset_column_information
-
-        create_table :deployments, force: true do |t|
-          t.references :application
-          t.references :target
-          t.string :name
-          t.string :config
-          t.string :environment
-        end
-        Deployment.reset_column_information
 
         create_table :target_services, force: true do |t|
           t.references :target
