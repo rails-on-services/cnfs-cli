@@ -35,11 +35,12 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :context_name, :key_name
+    attr_accessor :autoload_dirs, :context_name, :key_name, :box_key
     attr_reader :root, :config_path, :config_file
-    attr_reader :project_name, :user_root, :user_config_path
+    attr_reader :project_name, :user_root, :user_config_path, :skip_schema
 
     def setup(skip_schema = false)
+      @skip_schema = skip_schema
       setup_paths(Dir.pwd)
       initialize_plugins
       setup_loader
@@ -96,31 +97,37 @@ module Cnfs
 
     def loader; @loader ||= Zeitwerk::Loader.new end
 
-    def autoload_dirs; @autoload_dirs ||= ["#{gem_root}/app/controllers", "#{gem_root}/app/models", "#{gem_root}/app/generators"] end
+    def autoload_dirs; @autoload_dirs ||= autoload_all(gem_root) end
+
+    def autoload_all(path)
+      %w[controllers models generators].each_with_object([]) { |type, ary| ary << path.join('app').join(type) }
+    end
 
     # Utility methods
     # Configuration fixture file loading methods
     def load_configs(file)
-      %i[project user].each_with_object([]) { |type, ary| ary << config_content(type, file) }.join("\n")
+      config_dirs.each_with_object([]) { |path, ary| ary << load_config(file, path) }.join("\n")
     end
 
-    def config_content(type, file)
-      fixture_file = fixture(type, file)
-      if File.exist?(fixture_file)
-        STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
-        ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
-      end
-    end
+    def config_dirs; @config_dirs ||= [config_path, user_config_path] end
 
-    def fixture(type, file)
-      replace_path = type.to_sym.eql?(:project) ? config_path : user_config_path
-      file.gsub(gem_config_path.to_s, replace_path.to_s)
+    def load_config(file, path)
+      fixture_file = path.join(File.basename(file))
+      return unless File.exist?(fixture_file)
+
+      STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
+      ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
     end
 
     # Lockbox encryption methods
     def box; @box ||= Lockbox.new(key: box_key) end
 
-    def box_key; ENV['CNFS_MASTER_KEY'] || key&.value end
+    def box_key; @box_key || ENV['CNFS_MASTER_KEY'] || key&.value end
+
+    def box_key=(key)
+      @box = nil
+      @box_key = key
+    end
 
     # OS methods
     def gid

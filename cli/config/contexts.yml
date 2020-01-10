@@ -1,20 +1,4 @@
 # contexts.yml
-# target with no application is all applications
-# application with no target is all targets
 ---
-DEFAULTS: &DEFAULTS
-  name: $LABEL
-
-development: &development
-  <<: *DEFAULTS
-  target: development
-
-test: &test
-  <<: *DEFAULTS
-  target: test
-
-production: &production
-  <<: *DEFAULTS
-  target: production
 
 <%= Cnfs.load_configs(__FILE__) %>

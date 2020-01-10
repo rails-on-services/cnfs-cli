@@ -1,4 +1,6 @@
 # providers.yml
+# Providers are define in the cli config because
+# they are fixed to what is available as TF templates
 ---
 DEFAULTS: &DEFAULTS
   amazon: &AMAZON_DEFAULTS
@@ -11,33 +13,5 @@ DEFAULTS: &DEFAULTS
   azure: &AZURE_DEFAULTS
     name: $LABEL
     type: Provider::Azure
-  gcp: &GCP_DEFAULTS
-    name: $LABEL
-    type: Provider::Gcp
 
-aws_sg:
-  <<: *AMAZON_DEFAULTS
-
-big_query:
-  name: $LABEL
-  type: Provider::Gcp
-  config:
-    service_account_key: PgUbh6xSff/wsLUkd6Yp0FFGZn630K1BxNL6eLJ4g+eURAyqvJgZKR+0Lf9G
-
-localstack:
-  name: $LABEL
-  type: Provider::Aws
-  config:
-    account_id: 251316246111
-    access_key_id: 1LCDE/udAJWIsU/3No34RCcQvCvJ0pQ0qorJbbtQqaDnaXQKVC5TTdJdzxZCgG90
-    secret_access_key: BzGkgBy5tpHDlDduhiU8FKgAXe9hZwwHcm2AUuL1v1rSM082pj7yg3Mt7MJPHM0D5bWgLze8g9UctNUDSn+Iax+KEWM=
-    region: ap-southeast-1
-    storage:
-      endpoint: http://localstack:4576
-      region: localstack
-    mq:
-      endpoint: http://localstack:4572
-      region: localstack
-
-<%= Cnfs.config_content(:project, __FILE__) %>
-<%= Cnfs.config_content(:user, __FILE__) %>
+<%= Cnfs.load_configs(__FILE__) %>
