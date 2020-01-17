@@ -70,9 +70,11 @@ module Cnfs
         create_table :deployments, force: true do |t|
           t.references :application
           t.references :target
+          t.references :key
           t.string :name
           t.string :config
           t.string :environment
+          t.string :service_environments
         end
         Deployment.reset_column_information
 
@@ -149,13 +151,13 @@ module Cnfs
           t.references :resource
           t.references :tag
         end
-        ApplicationResource.reset_column_information
+        ResourceTag.reset_column_information
 
         create_table :service_tags, force: true do |t|
           t.references :service
           t.references :tag
         end
-        ApplicationResource.reset_column_information
+        ServiceTag.reset_column_information
       end
     end
 

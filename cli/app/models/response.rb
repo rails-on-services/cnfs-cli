@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Response
-  attr_accessor :command_name, :options, :output, :command, :errors, :commands
+  attr_accessor :command_name, :options, :output, :command, :errors, :commands, :results
 
   def initialize(command_name, options, output, command, errors)
     @command_name = command_name
@@ -10,6 +10,7 @@ class Response
     @command = command
     @errors = errors
     @commands = []
+    @results = []
   end
 
   def add(exec:, env: {}, pty: false, dir: nil)
@@ -26,8 +27,13 @@ class Response
 
       if cmd.pty
         output.puts(cmd.exec) if options.verbose or options.debug
-        system(cmd.exec) unless options.noop
-        # TODO: handle error on system command
+        result = system(cmd.exec) unless options.noop
+        # TODO: improve error handling and reporting
+        unless result
+          errors.add(command_name, cmd.exec)
+          break
+        end
+        @results << result
       else
         output.puts(cmd.exec) if (options.verbose or options.debug) and not options.noop
         command_options = cmd.env.merge(only_output_on_error: !options.debug)
@@ -38,6 +44,7 @@ class Response
           errors.add(command_name, result.err.chomp)
           break
         end
+        @results << result.out
       end
     end
   end

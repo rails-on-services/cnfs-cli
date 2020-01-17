@@ -4,14 +4,13 @@ module Primary
   class ShowController < ApplicationController
     def execute
       each_target do
-        # before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
       args.service_names.each do |service_name|
-        file_name = options.modifier ? "#{service_name}#{options.modifier}" : "#{service.name}.yml"
+        file_name = options.modifier ? "#{service_name}#{options.modifier}" : "#{service_name}.yml"
         show_file = target.write_path.join(file_name)
         if File.exist?(show_file)
           output.puts(File.read(show_file))

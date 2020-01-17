@@ -5,4 +5,6 @@ class Resource < ApplicationRecord
   has_many :tags, through: :resource_tags
 
   store :config, accessors: %i[tf_version], coder: YAML
+
+  def resources; YAML.load(self[:resources] || '') || {} end
 end

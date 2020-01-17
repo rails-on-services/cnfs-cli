@@ -35,15 +35,15 @@ module Primary
     end
 
     def execute_on_target
-      return unless request.services.last.respond_to?(:console_command)
+      unless request.services.last.respond_to?(:console_command)
+        output.puts "#{request.services.last.name} does not implement the console command"
+        return
+      end
 
-      runtime.exec(request.last_service_name, request.services.last.console_command, true).run!
+      before_execute_on_target
+      runtime.exec(request.last_service_name, request.services.last.console_command, true)
+      response.run!
     end
-
-    # def limits
-    #   return {} unless args.service_name
-    #   { deployments: 1, services: 1 }
-    # end
 
     def start_cnfs_console
       Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|

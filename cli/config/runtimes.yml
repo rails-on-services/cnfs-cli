@@ -3,12 +3,6 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-skaffold:
-  <<: *DEFAULTS
-  type: Runtime::Skaffold
-  config:
-    version: skaffold/v1
-
 compose:
   <<: *DEFAULTS
   type: Runtime::Compose
@@ -18,13 +12,5 @@ compose:
 native:
   <<: *DEFAULTS
   type: Runtime::Native
-
-terraform:
-  <<: *DEFAULTS
-  type: Runtime::Terraform
-  config:
-    version: 0.12.6
-    custom_providers:
-      restapi: https://github.com/Mastercard/terraform-provider-restapi/releases/download/v1.10.0/terraform-provider-restapi_v1.10.0-{platform}-amd64
 
 <%= Cnfs.load_configs(__FILE__) %>

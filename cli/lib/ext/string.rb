@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 class String
   YAML_STRING = "--- !binary |-\n  "
@@ -14,9 +14,13 @@ class String
   def encrypted?; start_with?(YAML_STRING) end
 
   def cnfs_sub(target = nil)
-    return self unless target
-
-    self.gsub('{domain}', target.domain_name)
+    a = self.dup
+    if target
+      a.gsub!('{domain}', target.domain_name)
+      a.gsub!('{domain_slug}', target.domain_slug)
+    end
+    a.gsub!('{project_name}', Cnfs.config.name)
+    a
   end
 
   private

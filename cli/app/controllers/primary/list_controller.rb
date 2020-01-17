@@ -7,16 +7,26 @@ module Primary
       send("execute_#{args.what}")
     end
 
+    def method_missing(m, *args)
+      output.puts 'Valid options are ns, contexts, deployments'
+    end
+
     def execute_ns
       each_target do
-        # binding.pry
-        runtime.run('get ns').run!
+        before_execute_on_target
+        if runtime.respond_to?(:run)
+          runtime.run('get ns', pty: true)
+        else
+          # TODO: the only use of runtime.run is in skaffold to 'get ns' so this
+          # will need to be refactored if/when that changes
+          output.puts "Selected target #{target.name} does not support namespaces"
+        end
       end
     end
     # Service.joins(:tags).where(tags: {name: Tag.last.name})
 
-    def execute_profiles
-      data = Profile.all.each_with_object({}) do |profile, hash|
+    def execute_contexts
+      data = Context.all.each_with_object({}) do |profile, hash|
         item = []
         item.append("target: #{profile.target.name}") if profile.target
         item.append("namespace: #{profile.namespace}") if profile.namespace

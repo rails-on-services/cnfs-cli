@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 class PrimaryController < CommandsController
-  register TargetsController, 'target', 'target [SUBCOMMAND]', 'Manage target infrastructure'
+  Cnfs.controllers.each do |controller|
+    controller = OpenStruct.new(controller)
+    register controller.klass.safe_constantize, controller.title, controller.help, controller.description
+  end
+
+  def self.exit_on_failure?; true end
 
   class_option :debug, type: :numeric, aliases: '-d'
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
@@ -9,7 +14,7 @@ class PrimaryController < CommandsController
   class_option :quiet, type: :boolean, aliases: '-q'
   class_option :verbose, type: :boolean, aliases: '-v'
 
-  class_option :context_name, type: :string, aliases: '-c'
+  class_option :context_name, type: :string, aliases: '-c', desc: 'The context name to configure targets and applications'
   class_option :key_name, type: :string, aliases: '-k'
   class_option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
   class_option :namespace_name, type: :string, aliases: '-n'
@@ -39,7 +44,7 @@ class PrimaryController < CommandsController
   def create(namespace_name = nil); run(:create, namespace_name: namespace_name) end
 
   desc 'credentials', 'Display IAM credentials'
-  option :format, type: :string, aliases: '-f'
+  option :format, type: :string, aliases: '-f', desc: 'Options: sdk, cli, postman'
   def credentials; run(:credentials) end
 
   desc 'deploy [NAMESPACE]', 'Deploy application to target infrastructure'
@@ -47,13 +52,18 @@ class PrimaryController < CommandsController
   def deploy(namespace_name = nil); run(:deploy, namespace_name: namespace_name) end
 
   desc 'destroy [NAMESPACE]', 'Remove application from target infrastructure'
-  def destroy(namespace_name = nil); run(:destroy, namespace_name: namespace_name) end
+  option :yes, type: :boolean, desc: 'Do not prompt for confirmation'
+  def destroy(namespace_name = nil)
+    return unless options.yes or yes?("\nWARNING!!! Destroy cannot be undone!\n\nAre you sure?")
 
-  desc 'exec COMMAND', 'Execute a command on a running service'
-  # TODO: review params method
-  def exec(command_name); run(:exec,  params(:exec, binding), { service_names: 1 }) end
+    run(:destroy, namespace_name: namespace_name)
+  end
+
+  desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
+  def exec(service_name, command_name); run(:exec,  service_names: [service_name], command_name: command_name) end
 
   desc 'generate', 'Generate manifests for application deployment'
+  option :clean, type: :boolean, desc: 'Remove existing manifests before generating'
   def generate; run(:generate) end
 
   desc 'init', 'Initialize a project environment'
@@ -68,8 +78,8 @@ class PrimaryController < CommandsController
   option :tail, type: :boolean, aliases: '-f'
   def logs(*service_name); run(:logs, service_names: service_name) end
 
-  desc 'new', 'Create a new CNFS project'
-  option :cnfs, type: :boolean
+  desc 'new NAME', 'Create a new CNFS project'
+  option :type, type: :string
   def new(name); NewController.new(name, options).execute end
 
   desc 'ps', 'List running services'
@@ -92,42 +102,23 @@ class PrimaryController < CommandsController
   # TODO: refactor
   def push(*args); run(:push, args) end
 
-=begin
-  desc 'up SERVICE', 'bring up service(s)'
-  option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
-  option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
-  option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
-  option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background'
-  option :force, type: :boolean, default: false, aliases: '-f', desc: 'Force cluster creation'
-  option :profile, type: :string, aliases: '-p', desc: 'Service profile to bring up'
-  option :replicas, type: :numeric, aliases: '-r', desc: 'Number of containers (instance) or pods (kubernetes) to run'
-  option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-  option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-  option :skip, type: :boolean, aliases: '--skip', desc: 'Skip starting services (just initialize cluster)'
-  option :skip_infra, type: :boolean, aliases: '--skip-infra', desc: 'Skip deploy infra services'
-  def up(*services)
-    command = context(options)
-    command.up(services)
-    command.exit
-  end
-
-  desc 'server PROFILE', 'Start all services (short-cut alias: "s")'
-  option :daemon, type: :boolean, aliases: '-d'
-  # option :environment, type: :string, aliases: '-e', default: 'development'
-  def server(*services)
-    # TODO: Test this
-    # Ros.load_env(options.environment) if options.environment != Ros.default_env
-    command = context(options)
-    command.up(services)
-    command.exit
-  end
-=end
-
-  # TODO: refactor to a rails specifc set of commands in a plugin
-  desc 'rails SERVICE COMMAND', 'Execute a rails command on a service'
-  def rails(service, cmd)
-    exec(service, "rails #{cmd}")
-  end
+  # desc 'up SERVICE', 'bring up service(s)'
+  # option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
+  # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
+  # option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
+  # option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background'
+  # option :force, type: :boolean, default: false, aliases: '-f', desc: 'Force cluster creation'
+  # option :profile, type: :string, aliases: '-p', desc: 'Service profile to bring up'
+  # option :replicas, type: :numeric, aliases: '-r', desc: 'Number of containers (instance) or pods (kubernetes) to run'
+  # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
+  # option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
+  # option :skip, type: :boolean, aliases: '--skip', desc: 'Skip starting services (just initialize cluster)'
+  # option :skip_infra, type: :boolean, aliases: '--skip-infra', desc: 'Skip deploy infra services'
+  # def up(*services)
+  #   command = context(options)
+  #   command.up(services)
+  #   command.exit
+  # end
 
   desc 'redeploy', 'Create and Start'
   def redeploy(namespace_name = nil); run(:redeploy, namespace_name: namespace_name) end
@@ -145,7 +136,7 @@ class PrimaryController < CommandsController
   desc 'sh SERVICE', 'Execute an interactive shell on a service'
   option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
   # NOTE: shell is a reserved word in Thor so it can't be used
-  def sh(*service_name); run(:shell, service_names: service_name) end
+  def sh(service_name); run(:shell, service_names: [service_name]) end
 
   desc 'show', 'Show service config'
   option :modifier, type: :string, aliases: '-m'
@@ -159,10 +150,10 @@ class PrimaryController < CommandsController
   option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-  def start(service_names); run(:start, service_names: service_names) end
+  def start(*service_names); run(:start, service_names: service_names) end
 
   desc 'status', 'Show platform services status'
-  def status; run(:status) end
+  def status(status = :running); run(:status, status: status) end
 
   desc 'stop SERVICE', 'Stop a service'
   def stop(*service_names); run(:stop, service_names: service_names) end

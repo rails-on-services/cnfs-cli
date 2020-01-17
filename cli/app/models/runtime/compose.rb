@@ -83,8 +83,8 @@ class Runtime::Compose < Runtime
     @services ||= list_services(format: format, status: status, **filters)
   end
 
-  def service_names
-    services.map{ |a| a.gsub("#{project_name}_", '').chomp('_1') }
+  def service_names(status: :running)
+    services(status: status).map{ |a| a.gsub("#{project_name}_", '').chomp('_1') }
   end
 
   def labels(base_labels, space_count)
@@ -127,14 +127,18 @@ class Runtime::Compose < Runtime
 
     command_string = "docker ps #{filter.join(' ')}"
     result = `#{command_string}`
-    result.split("\n").size > 1 ? result.split("\n") : ''
+    response.output.puts command_string if request.options.verbose
+    result.split("\n").size > 1 ? result.split("\n") : []
   end
 
 
   def gem_cache_server
     return unless %x(docker ps).index('gem_server')
+
     host = RbConfig::CONFIG['host_os']
+    # TODO: Make this configurable per user
     return %x(ifconfig vboxnet1).split[7] if host =~ /darwin/
+
     %x(ip -o -4 addr show dev docker0).split[3].split('/')[0]
   end
 
@@ -149,7 +153,7 @@ class Runtime::Compose < Runtime
       service.database_seed_commands.each do |command|
         response.add(exec: compose(command, service.name)).run!
         # TODO: refactor; this knows too much about what's going on in the response object
-        if response.controller.errors.size.zero?
+        if response.errors.size.zero?
           FileUtils.touch(migration_file)
         else
           break

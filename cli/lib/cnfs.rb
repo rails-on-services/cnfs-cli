@@ -16,11 +16,11 @@ require 'thor'
 require 'xdg'
 require 'zeitwerk'
 
-require_relative 'ext/config/options'
-require_relative 'ext/string'
-require_relative 'cnfs/schema'
 require_relative 'cnfs/errors'
 require_relative 'cnfs/version'
+require_relative 'cnfs/schema'
+require_relative 'ext/config/options'
+require_relative 'ext/string'
 
 Config.setup do |config|
   config.use_env = true
@@ -35,37 +35,54 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :context_name, :key_name, :box_key
-    attr_reader :root, :config_path, :config_file
+    attr_accessor :autoload_dirs, :context_name, :key_name
+    attr_reader :root, :config_path, :config_file, :key
     attr_reader :project_name, :user_root, :user_config_path, :skip_schema
 
-    def setup(skip_schema = false)
-      @skip_schema = skip_schema
-      setup_paths(Dir.pwd)
-      initialize_plugins
+    def setup(lite = false)
+      project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/.cnfs.yml") }
+      lite = true if project_dir.nil?
+      @skip_schema = lite # for plugins. necessary?
+      setup_paths(project_dir || Dir.pwd)
+      ARGV.delete('--dev') || ENV['CNFS_DEV'] ? initialize_dev_plugins : initialize_plugins
       setup_loader
-      Schema.setup unless skip_schema
+      Schema.setup unless lite
+    end
+
+    def initialize_dev_plugins
+      gem_root.join('..').children.select(&:directory?).each do |dir|
+        plugin_dir = dir.join('lib/cnfs/plugins')
+        next unless plugin_dir.directory?
+
+        plugin_dir.children.each do |file|
+          fname = File.basename(file).delete_suffix('.rb')
+          plugin_module = "cnfs/cli/#{fname}"
+          lib_path = File.expand_path(dir.join('lib'))
+          $:.unshift(lib_path) if !$:.include?(lib_path)
+          require plugin_module
+          next unless (klass = plugin_module.camelize.safe_constantize)
+
+          klass.setup
+        end
+      end
     end
 
     def setup_paths(project_path)
       @root = Pathname.new(project_path)
       @config_path = root.join('config')
-      @config_file = root.join('.cnfs')
+      @config_file = root.join('.cnfs.yml')
 
       return unless File.exist? config_file
 
-      @project_name = File.read(config_file).chomp
+      Config.load_and_set_settings(gem_root.join('cnfs.yml'), config_file)
+      @project_name = config.name
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
     end
 
-    def context; Context.find_by(name: context_name) end
+    def config; Settings end
 
-    def context_name; @context_name || ENV['CNFS_CONTEXT'] || :default end
-
-    def key; Key.find_by(name: key_name) end
-
-    def key_name; @key_name || ENV['CNFS_KEY'] || :default end
+    def context; Context.find_by(name: config.context) end
 
     def project?; File.exist?(config_file) end
 
@@ -119,14 +136,17 @@ module Cnfs
       ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
     end
 
+    def controllers; @controllers ||= [] end
+
     # Lockbox encryption methods
-    def box; @box ||= Lockbox.new(key: box_key) end
+    def box; @box ||= Lockbox.new(key: key.value) end
 
-    def box_key; @box_key || ENV['CNFS_MASTER_KEY'] || key&.value end
-
-    def box_key=(key)
+    # Set the key name to a name that is present in the Key model
+    def key_name=(name)
+      @key_name = name
+      @key = Key.find_by(name: name)
       @box = nil
-      @box_key = key
+      name
     end
 
     # OS methods

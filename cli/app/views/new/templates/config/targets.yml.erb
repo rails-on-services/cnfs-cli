@@ -23,12 +23,12 @@ test: &test
 production: &production
   <<: *DEFAULTS 
   type: Target::Kubernetes
-  resources: postgres, redis, kubernetes
+  resources: postgres, redis, kubernetes, eks-resources, eks-monitor, globalaccelerator, cert-manager, iam, ses
   runtime: skaffold
   infra_runtime: terraform
   config:
-    dns_root_domain: infra-testing.perxtech.io
-    dns_sub_domain: development
+    dns_root_domain: example.com
+    # dns_sub_domain: development
     root_domain_managed_in_route53: yes
     lb_dns_hostnames: ['api']
   tf_config:

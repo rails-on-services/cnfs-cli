@@ -1,0 +1,29 @@
+# EKS Resources
+<%-
+@module_name = 'eks-resources'
+def defaults
+  {
+    source: 'rails-on-services/eks-resources/k8s',
+    version: '>= 0.0.3',
+    # aws_profile: target.provider.profile,
+    cluster_name: resource.name,
+    logging_credentials: Provider.find_by(name: resource.config['cluster_logging_provider'])&.credentials || {}
+  }
+end
+-%>
+
+module "<%= title %>" {
+<%= resource_config(target, resource, defaults).render.join("\n") %>
+
+  clusterrolebindings        = module.iam.kubernetes_clusterrolebindings
+  external_dns_domainFilters = [module.acm.this.domain_name]
+  external_dns_zoneIdFilters = [module.route53.this.zone_id]
+
+  istio_ingressgateway_alb_cert_arn = module.acm.this.arn
+  kubeconfig                        = module.eks-cluster.this.kubeconfig
+  vpc_id                            = module.vpc.vpc_id
+}
+
+output "<%= title :istio_ingressgateway_alb_arn %>" {
+  value = module.eks-resources.istio_ingressgateway_alb_arn
+}

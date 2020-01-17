@@ -1,0 +1,28 @@
+# Cloudfront distributions
+<%-
+@module_name = :cloudfront
+def defaults
+  {
+    source: 'rails-on-services/cloudfront-s3/aws',
+    # bucket: resource.name,
+    # postfix: target.domain_slug,
+    hostname: resource.name,
+    domain_name: target.domain_name,
+    create_acm_certificate: true,
+    add_route53_record: true,
+    # aws_profile: target.provider.profile
+  }
+end
+-%>
+<%- resource.resources.each do |key, config| -%>
+
+module "<%= title key %>" {
+<%= resource_config(target, resource, defaults, config).render.join("\n") %>
+
+  route53_zone_id        = module.route53.this.zone_id
+}
+
+output "<%= title key %>" {
+  value = module.dns.this
+}
+<% end -%>

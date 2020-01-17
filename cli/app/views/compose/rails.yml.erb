@@ -43,9 +43,9 @@ services:<% service.profiles.each do |profile| %><% xname = profile.eql?('server
     build:
       context: "<%= context_path %>"<% if service.build_args(target) %>
       args:<% service.build_args(target).each_pair do |name, value| %>
-        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end; end %>
+        <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end %>
         project: <%= service.name %>
         GEM_SERVER: "${GEM_SERVER:-https://rubygems.org}"
         PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"<% end %>
+        PGID: "${PGID:-1000}"<% end; end %>
 <% end %>

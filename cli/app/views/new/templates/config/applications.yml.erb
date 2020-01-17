@@ -12,7 +12,7 @@ pipeline: &pipeline
 
 backend: &backend
   <<: *DEFAULTS
-<% if options.cnfs %>
+<% if options.type&.eql?('cnfs') %>
   type: Application::CnfsBackend
   services: cognito, comm, iam, organization, storage, sftp
   resources: app_bucket, image_bucket, dns, image_cdn
@@ -21,6 +21,10 @@ backend: &backend
       api: 'api.{domain}'
       sftp: 'sftp.{domain}'
   environment:
+    rails_database_host: postgres
+    # rails_database_user: admin
+    # rails_database_password: admin
+    redis_url: redis://redis:6379
     platform:
       api_docs:
         server:
@@ -36,4 +40,9 @@ backend: &backend
       partition_name: ros
       postman:
         workspace: 'api.{domain}'
+      storage:
+        image:
+          services: ['images']
+        app:
+          services: ['documents', 'reports', 'sftp']
 <% end %>

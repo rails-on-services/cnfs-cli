@@ -8,9 +8,13 @@ class Service < ApplicationRecord
 
   def test_commands(options = nil); [] end
 
-  def to_env(env = nil, env_scope = :self)
-    all = environment.dig(:all, env_scope) || {}
-    env = (environment.dig(env, env_scope) || {}).merge(all)
-    env.empty? ? nil : Config::Options.new.merge!(env)
+  # Called by RuntimeGenerator#service_environment
+  def to_env(target = nil)
+    @target = target
+    env = Config::Options.new.merge!(environment)
+    if (deployment_env = target.deployment.service_environments[self.name])
+      env.merge!(Config::Options.new.merge!(deployment_env).to_hash)
+    end
+    env.empty? ? nil : env
   end
 end

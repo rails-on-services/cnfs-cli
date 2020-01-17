@@ -1,0 +1,19 @@
+# providers.yml
+# Providers are defined to map to what is available as TF templates
+# Generic providers, e.g. localstack are defined in the CLI
+# NOTE: Important to be indented two spaces
+---
+  amazon: &AMAZON_DEFAULTS
+    name: $LABEL
+    type: Provider::Aws
+    config:
+      tf_version: '>= 2.38.0'
+  alicloud: &ALICLOUD_DEFAULTS
+    name: $LABEL
+    type: Provider::Alicloud
+  azure: &AZURE_DEFAULTS
+    name: $LABEL
+    type: Provider::Azure
+  gcp: &GCP_DEFAULTS
+    name: $LABEL
+    type: Provider::Gcp

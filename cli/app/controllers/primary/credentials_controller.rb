@@ -4,17 +4,15 @@ module Primary
   class CredentialsController < ApplicationController
     def execute
       each_target do
-        # before_execute_on_target
+        before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
       FileUtils.mkdir_p(local_path)
-      # container_id = runtime.service_id('iam')
-      # runtime.copy("#{container_id}:#{remote_file}", local_file) unless File.exist?(local_file)
       runtime.copy("iam:#{remote_file}", local_file) unless File.exist?(local_file)
-      run!
+      response.run!
       output.puts credentials
     end
 

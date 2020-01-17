@@ -32,14 +32,17 @@ class Target < ApplicationRecord
   def init(options); end
 
   def to_env
-    {
+    a = {
       platform: {
         infra: {
           provider: provider_type_to_s,
-          resources: provider.resources
+          clients: provider.clients
         }
       }
-    }.merge(environment)
+    }
+    b = Config::Options.new.merge!(environment).to_hash
+    c = Config::Options.new.merge!(provider.environment).to_hash
+    Config::Options.new.merge!(a).merge!(b).merge!(c).to_hash
   end
 
   def provider_type_to_s

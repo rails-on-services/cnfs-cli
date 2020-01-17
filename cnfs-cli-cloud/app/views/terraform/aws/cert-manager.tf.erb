@@ -1,0 +1,18 @@
+# Cert-manager
+<%-
+@module_name = 'cert-manager'
+def defaults
+  {
+    source: 'rails-on-services/cert-manager/k8s',
+    version: '>= 0.0.2'
+    # TODO: fix
+    # namespace: infra.components.kubernetes.components.services.components.cert_manager&.config&.namespace
+  }
+end
+-%>
+
+module "<%= title %>" {
+<%= resource_config(target, resource, defaults).render.join("\n") %>
+
+  cm_depends_on = module.eks-resources
+}

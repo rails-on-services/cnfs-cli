@@ -6,37 +6,20 @@ DEFAULTS: &DEFAULTS
 app_bucket:
   <<: *DEFAULTS
   template: object_storage
-  # type: Resource::Bucket
   tags: storage
   config:
-    name: app
-    postfix: whistler-whatever-default
-  environment:
-    all:
-      platform:
-        storage:
-          app:
-            services: ['documents', 'reports', 'sftp']
+    name: app-{domain_slug}
 
 image_bucket:
   <<: *DEFAULTS
   template: object_storage
   tags: storage
   config:
-    name: image
-    logging: true
-    cors:
-      this: that
-  environment:
-    all:
-      platform:
-        storage:
-          image:
-            services: ['images']
+    name: image-{domain_slug}
 
 dns:
   <<: *DEFAULTS
-  template: route53
+  template: dns
   tags: networking
   resources:
     endpoints:
@@ -48,9 +31,11 @@ dns:
 
 image_cdn:
   <<: *DEFAULTS
-  type: Resource::Cdn
+  template: cdn
   name: cdn
   tags: storage
+  config:
+    bucket: cdn-{domain_slug}
 
 # api_endpoint: &api_endpoint
 #   <<: *DEFAULTS

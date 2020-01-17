@@ -10,8 +10,6 @@ class CommandsController < Thor
       return
     end
 
-    # TODO: Implement are you sure? for k8s destroy and so all commands can leverage it
-
     controller_class = "#{self.class.name.gsub('Controller', '')}::#{command_name.to_s.camelize}Controller"
     unless (controller = controller_class.safe_constantize)
       raise Error, set_color("Class not found: #{controller_class} (this is a bug. please report)", :red)
@@ -26,10 +24,4 @@ class CommandsController < Thor
   def options_to_args
     %w[context_name key_name target_name namespace_name application_name service_names profile_names tag_names]
   end
-
-  # def params(method_name, method_binding)
-  #   method(method_name).parameters.each_with_object({}) do |(_, name), hash|
-  #     hash[name] = method_binding.local_variable_get(name)
-  #   end
-  # end
 end

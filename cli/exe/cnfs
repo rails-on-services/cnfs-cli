@@ -6,7 +6,7 @@ $:.unshift(lib_path) if !$:.include?(lib_path)
 
 require 'cnfs'
 
-lite_setup = %w[version new].include?(ARGV[0])
+lite_setup = %w[version help new].include?(ARGV[0])
 Cnfs.setup(lite_setup)
 
 unless Cnfs.project? or lite_setup

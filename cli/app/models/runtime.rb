@@ -10,8 +10,10 @@ class Runtime < ApplicationRecord
   # attr_accessor :controller, :target
   attr_accessor :target, :request, :response
 
-  # Sub-classes, e.g. compose, skaffold can override to implement, e.g. switch!
-  def before_execute_on_target; end
+  # Sub-classes, e.g. compose, skaffold override to implement, e.g. switch!
+  def before_execute_on_target
+    raise NotImplementedError, 'this needs to be done'
+  end
 
   def clean_cache
     if request.services.empty?

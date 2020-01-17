@@ -3,15 +3,5 @@
 # they are fixed to what is available as TF templates
 ---
 DEFAULTS: &DEFAULTS
-  amazon: &AMAZON_DEFAULTS
-    type: Provider::Aws
-    config:
-      tf_version: '>= 2.38.0'
-  alicloud: &ALICLOUD_DEFAULTS
-    name: $LABEL
-    type: Provider::Alicloud
-  azure: &AZURE_DEFAULTS
-    name: $LABEL
-    type: Provider::Azure
 
 <%= Cnfs.load_configs(__FILE__) %>

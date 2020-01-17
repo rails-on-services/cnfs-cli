@@ -40,37 +40,34 @@ class ApplicationController
     @output = $stdout
     @cli_args = args
 
+    Cnfs.config.context = args.context_name if args.context_name
     @args = Config::Options.new(Cnfs.context&.config(args) || args)
-    Cnfs.key_name = args.key_name if args.key_name
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
       output.puts "ENVs: #{ENV.select { |env| env.start_with? 'CNFS_'}}\n" \
         "cli options: #{options}\ncli args: #{cli_args}\n" \
-        "key name: #{Cnfs.key_name}\ncontext: #{Cnfs.context_name}\ncontext args: #{Cnfs.context&.to_args}\n" \
+        "context: #{Cnfs.context_name}\ncontext args: #{Cnfs.context&.to_args}\n" \
         "command args: #{@args.to_h}"
     end
-    output.puts "WARN: encrypition key not found for key name '#{Cnfs.key_name}'" unless Cnfs.key
   end
 
   def each_target
-    # check_limits(:deployments)
     deployments.each do |deployment|
+      Cnfs.key_name = deployment.key&.name
+      if Cnfs.key
+        output.puts "encrypition key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
+      else
+        output.puts "WARN: encrypition key not found for key name '#{Cnfs.key_name}'"
+      end
       configure_target(deployment)
       output.puts "Running in #{target.exec_path}" if options.debug
       Dir.chdir(target.exec_path) do
-      # check_limits(:services)
         yield target
       end
       configure_target
     end
   end
-
-  # def check_limits(key)
-  #   raise Cnfs::Error, "#{key} must be exactly #{limits[key]}" if limits[key] and send(key).size != limits[key]
-  # end
-
-  # def limits; {} end
 
   def deployments(query_args = nil); @deploymnets ||= configure_deployents(query_args) end
 
@@ -156,12 +153,15 @@ class ApplicationController
 
   def before_execute_on_target
     runtime.before_execute_on_target
-    call(:generate) if stale_config?
+    if stale_config?
+      FileUtils.rm(manifest_files)
+      call(:generate)
+    end
   end
 
   def stale_config?
     return false if config_files.empty?
-    manifest_files.empty? || (last_config_file_updated > first_manifest_file_created)
+    manifest_files.empty? || (latest_config_file_updated > earliest_manifest_file_generated)
     # Check template files
     # Dir["#{Ros.gem_root.join('lib/ros/be')}/**/{templates,files}/**/*"].each do |f|
     #   return true if mtime < File.mtime(f)
@@ -172,10 +172,10 @@ class ApplicationController
     # end
   end
 
-  def last_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
+  def latest_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
   def config_files; Dir[Cnfs.config_path.join('**/*.yml')] end
 
-  def first_manifest_file_created; manifest_files.map { |f| File.mtime(f) }.min end
+  def earliest_manifest_file_generated; manifest_files.map { |f| File.mtime(f) }.min end
   def manifest_files; Dir[target.write_path.join('**/*')] end
 
   # The external commands runner
