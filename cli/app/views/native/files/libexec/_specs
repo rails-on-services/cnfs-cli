@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+set -eEuo pipefail
+
+set -a
+
+. "${BASE_DIR}/libexec/lib.sh"
+
+cleanup() {
+  rm -f $LOG_DIR/*_test.txt
+  rm -f $RUN_DIR/*.running
+}
+
+test_service() {
+  local service_path=$1
+
+  name=$(basename $service_path)
+  run=$RUN_DIR/test_${name}.running
+  # echo "Starting: $name"
+  touch $run
+  services+=("$name")
+  pushd $service_path >/dev/null
+  export BUNDLE_GEMFILE=$(pwd)/Gemfile
+  install_gems_maybe
+  migrate_and_seed_db_maybe "$(db_name_for_service $(pwd))"
+  test -d $LOG_DIR || mkdir -p $LOG_DIR
+  bundle exec rspec spec &> $LOG_DIR/${name}_test.txt
+  echo "Finished: $name"
+  rm -f $run
+  popd >/dev/null
+}
+
+cleanup
+
+for service in $CORE_PATH/../lib/core $CORE_PATH/* $PLATFORM_PATH/*; do
+  test -d $service/spec || continue
+
+  if command -v parallel >/dev/null; then
+     SHELL=$(type -p bash)
+     parallel --semaphore -j +2 test_service $service
+  else
+    test_service $service &
+  fi
+done
+
+if command -v parallel >/dev/null; then
+  parallel --semaphore --wait
+else
+  # wait for our subprocesses to exit
+  wait
+fi
+
+cleanup
+
+echo "Test details are available in $LOG_DIR"
+ls -1 $LOG_DIR

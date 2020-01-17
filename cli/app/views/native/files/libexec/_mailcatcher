@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -eEuo pipefail
+
+MAIL_IP=${MAIL_IP:-0.0.0.0}
+MAIL_HTTP_PORT=${MAIL_HTTP_PORT:-1080}
+MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-1025}
+
+if command -v MailHog >/dev/null; then
+  MailHog \
+    -api-bind-addr ${MAIL_IP}:${MAIL_HTTP_PORT} \
+    -ui-bind-addr ${MAIL_IP}:${MAIL_HTTP_PORT} \
+    -smtp-bind-addr ${MAIL_IP}:${MAIL_SMTP_PORT} \
+    -storage maildir \
+    -maildir-path $DATA_DIR/mails
+elif command -v mailcatcher >/dev/null; then
+  mailcatcher \
+    --foreground \
+    --verbose \
+    --ip ${MAIL_IP} \
+    --smtp-port ${MAIL_SMTP_PORT} \
+    --http-port ${MAIL_HTTP_PORT}
+else
+  echo "mailhog and mailcatcher are not available"
+  sleep 9999d
+fi

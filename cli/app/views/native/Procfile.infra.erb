@@ -1,0 +1,5 @@
+
+db:         _postgres
+<% if services.pluck(:name).include? 'fluentd' %>
+fluentd:    bundle exec fluentd --config config/fluent.conf
+<% end %>
