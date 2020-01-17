@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+# NOTE: if config is not required before 'bundler/setup' it doesn't work properly
+require 'config'
+# require 'awesome_print'
+require 'bundler/setup'
+require 'cnfs/core'
+require 'pry'
+
+Cnfs.setup
+
+Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|
+  output.puts Cnfs.reload
+end
+
+Pry.start
+
+ENV['YAML_VAULT_PASSPHRASE'] = "66560efd23c2aca731c5af6520179287"

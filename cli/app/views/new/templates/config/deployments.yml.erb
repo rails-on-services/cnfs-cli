@@ -1,0 +1,99 @@
+# deployments.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+  config:
+    base_path: cnfs_tmp
+
+frontend_development: &frontend_development
+  <<: *DEFAULTS
+  application: frontend
+  target: development
+
+frontend_test: &frontend_test
+  <<: *DEFAULTS
+  application: frontend
+  target: test
+
+frontend_production: &frontend_production
+  <<: *DEFAULTS
+  application: frontend
+  target: production
+
+backend_development: &backend_development
+  <<: *DEFAULTS
+  application: backend
+  target: development
+<% if options.type&.eql?('cnfs') %>
+  <% Cnfs.key_name = :development %>
+  environment:
+    rails_env: development
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+<% end %>
+
+backend_test: &backend_test
+  <<: *DEFAULTS
+  application: backend
+  target: test
+<% if options.type&.eql?('cnfs') %>
+  <% Cnfs.key_name = :test %>
+  environment:
+    rails_env: test
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+<% end %>
+
+backend_production: &backend_production
+  <<: *DEFAULTS
+  application: backend
+  target: production
+<% if options.type&.eql?('cnfs') %>
+  <% Cnfs.key_name = :production %>
+  environment:
+    rails_env: production
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+      metrics:
+        enabled: yes
+        process_stats_enabled: yes
+      request_logging:
+        enabled: yes
+        config:
+          host: fluentd
+          port: 24224
+      event_logging:
+        enabled: yes
+        config:
+          name: events-log
+          host: fluentd
+          port: 24224
+          schema_registry_url: http://kafkastack:8081
+<% end %>
+
+pipeline_development: &pipeline_development
+  <<: *DEFAULTS
+  application: pipeline
+  target: development
+
+pipeline_test: &pipeline_test
+  <<: *DEFAULTS
+  application: pipeline
+  target: test
+
+pipeline_production: &pipeline_production
+  <<: *DEFAULTS
+  application: pipeline
+  target: production

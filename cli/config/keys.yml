@@ -1,0 +1,4 @@
+# keys.yml
+---
+
+<%= Cnfs.load_config(__FILE__, Cnfs.user_config_path) %>

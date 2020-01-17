@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+module <%= name %>
+  class Engine < ::Rails::Engine
+    config.generators.api_only = true
+
+    # Adds this gem's db/migrations path to the enclosing application's migraations_path array
+    # if the gem has been included in an application, i.e. it is not running in the dummy app
+    # https://github.com/rails/rails/issues/22261
+    initializer 'core.configure_migrations', after: 'ros_core.configure_migrations' do |app|
+      if Settings.dig(:service, :name) # then we are in a service
+        config.paths['db/migrate'].expanded.each do |expanded_path|
+          app.config.paths['db/migrate'] << expanded_path
+          ActiveRecord::Migrator.migrations_paths << expanded_path
+        end
+      end
+    end
+
+    initializer 'core.configure_console_methods', before: 'ros_core.configure_console_methods' do |_app|
+      if Rails.env.development? and not Rails.const_defined?('Server')
+        Ros.config.factory_paths += Dir[Pathname.new(__FILE__).join('../../../../spec/factories')]
+      end
+    end
+  end
+end

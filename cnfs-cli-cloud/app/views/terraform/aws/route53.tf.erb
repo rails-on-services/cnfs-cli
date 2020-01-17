@@ -1,0 +1,21 @@
+# Route53
+<%-
+@module_name = :route53
+def defaults(key)
+  {
+    source: 'rails-on-services/route53/aws',
+    root_domain: target.domain_name,
+    name: key
+  }
+end
+-%>
+<%- resource.resources.each do |key, config| -%>
+
+module "<%= title key %>" {
+<%= resource_config(target, resource, defaults(key), config).render.join("\n") %>
+}
+
+output "<%= title key %>" {
+  value = module.dns.this
+}
+<% end -%>

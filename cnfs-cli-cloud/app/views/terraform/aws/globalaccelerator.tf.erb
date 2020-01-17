@@ -1,0 +1,24 @@
+# Global accelerator
+<%-
+@module_name = :globalaccelerator
+def defaults
+  {
+    source: 'rails-on-services/globalaccelerator/aws',
+    name: resource.name,
+    add_route53_record: (resource.config['hostname'].nil? ? false : true),
+    route53_record_name: resource.config['hostname'],
+    add_elb_listener: true
+  }
+end
+-%>
+
+module "<%= title %>" {
+<%= resource_config(target, resource, defaults).render.join("\n") %>
+
+  route53_zone_id             = module.route53.this.zone_id
+  elb_endpoint                = module.eks-resources.istio_ingressgateway_alb_arn
+}
+
+output "<%= title :ips %>" {
+  value = module.globalaccelerator.globalaccelerator_ips
+}

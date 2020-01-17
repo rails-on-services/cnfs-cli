@@ -1,0 +1,226 @@
+# resources.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+app_bucket:
+  <<: *DEFAULTS
+  template: object_storage
+  tags: storage
+  config:
+    name: app-{domain_slug}
+
+image_bucket:
+  <<: *DEFAULTS
+  template: object_storage
+  tags: storage
+  config:
+    name: image-{domain_slug}
+
+dns:
+  <<: *DEFAULTS
+  template: dns
+  tags: networking
+  resources:
+    endpoints:
+      - name: api
+        scheme: https
+      # - name: grafana
+      #   scheme: https
+      - name: sftp
+
+image_cdn:
+  <<: *DEFAULTS
+  template: cdn
+  name: cdn
+  tags: storage
+  config:
+    bucket: cdn-{domain_slug}
+
+# api_endpoint: &api_endpoint
+#   <<: *DEFAULTS
+#   type: Resource::Endpoint
+#   layer: dns
+#   config:
+#     hostname: api
+#     scheme: https
+# 
+# grafana_endpoint:
+#   <<: *api_endpoint
+#   config:
+#     hostname: grafana
+#     scheme: https
+# 
+# sftp_endpoint:
+#   <<: *api_endpoint
+#   config:
+#     hostname: sftp
+
+ses:
+  <<: *DEFAULTS
+  tags: cluster
+
+globalaccelerator:
+  <<: *DEFAULTS
+  type: Resource::Globalaccelerator
+  tags: networking
+  config:
+    hostname: '*.staging.whistler.perxtech.io'
+
+kubernetes:
+  <<: *DEFAULTS
+  type: Resource::Kubernetes
+  tags: cluster
+  config:
+    name: whistler-staging
+    aws_profile: perx-whistler
+    admins: [kostya, duan]
+    worker_groups:
+      - name: default_pool
+        instance_type: r5.2xlarge
+        asg_max_size: 20
+        asg_min_size: 1
+    worker_groups_launch_template:
+      - name: spot_pool
+        override_instance_types: [r5.2xlarge, m5.2xlarge, r5.xlarge, m5.xlarge]
+        spot_instance_pools: 4
+        asg_max_size: 15
+        asg_min_size: 5
+        asg_desired_capacity: 5
+        kubelet_extra_args: --node-labels=kubernetes.io/lifecycle=spot --register-with-taints=spotInstance=true:NoSchedule
+
+eks-resource-1:
+  <<: *DEFAULTS
+  tags: cluster
+  template: eks-resource
+  config:
+    name: whistler-staging
+    extra_namespaces: ['monitor', 'cert-manager']
+    cert_manager_namespace: cert-manager
+    enable_external_dns: yes
+    enable_fluentd_gcp_logging: yes
+    cluster_logging_provider: big_query
+    # TODO: this is going to come from provider: fluentd_gcp_logging_service_account_json_key
+    # helm_configuration_overrides: {}
+    istio:
+      version: '1.3.5'
+      configuration_overrides:
+        prometheus:
+          enabled: no
+        gateways:
+          istio-ingressgateway:
+            externalTrafficPolicy: Cluster
+            type: LoadBalancer
+            serviceAnnotations:
+              service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: 900
+              service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: true
+              external-dns.alpha.kubernetes.io/hostname: ingressgateway.whistler.perxtech.io
+            sds:
+              enabled: true
+
+cert-manager:
+  <<: *DEFAULTS
+  tags: cluster
+
+iam:
+  <<: *DEFAULTS
+  tags: cluster
+
+monitor:
+  <<: *DEFAULTS
+  tags: cluster
+  config:
+    namespace: monitor
+    grafana_user: admin
+    grafana_password: encrypted_password
+    helm_configuration_overrides:
+      grafana.ini:
+        database:
+          type: sqlite3
+        auth.google:
+          enabled: true
+          scopes: https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+          auth_url: https://accounts.google.com/o/oauth2/auth
+          token_url: https://accounts.google.com/o/oauth2/token
+          allowed_domains: perxtech.com,getperx.com
+          allow_sign_up: true
+        panels:
+          disable_sanitize_html: true
+        server:
+          root_url: https://grafana.whistler.perxtech.io
+
+kubernetes_staging:
+  <<: *DEFAULTS
+  type: Resource::Kubernetes
+  config:
+    name: whistler-staging
+    services:
+      grafana:
+        configuration_overrides:
+          grafana.ini:
+            server:
+              root_url: 'https://grafana.staging.whistler.perxtech.io'
+      istio:
+        configuration_overrides:
+          gateways:
+            istio-ingressgateway:
+              serviceAnnotations:
+                external-dns.alpha.kubernetes.io/hostname: ingressgateway.staging.whistler.perxtech.io
+
+postgres:
+  <<: *DEFAULTS
+  type: Resource::Postgres
+  tags: db
+  config:
+    clusters:
+      default:
+        # TODO: name comes from DNS unless set here
+        name: whistler-staging-main
+        instance_type: db.r5.large
+        replica_count: 1
+  environment:
+    all:
+      application:
+        database_url: postgres://{url-to-elasticache-redis}:6379
+
+redis:
+  <<: *DEFAULTS
+  type: Resource::Redis
+  tags: db
+  config:
+    clusters:
+      default:
+        # TODO: name comes from DNS unless set here
+        name: whistler-staging
+        node_type: cache.r5.large
+        number_cache_clusters: 1
+  environment:
+    all:
+      application:
+        redis_url: redis://{url-to-elasticache-redis}:6379
+
+vpc_with_db:
+  <<: *DEFAULTS
+  type: Resource::Vpc
+  tags: networking
+  config:
+    cidr: 10.6.0.0/16
+    create_database_subnet_group: true
+    create_elasticache_subnet_group: true
+    name: whistler-development
+
+instance:
+  <<: *DEFAULTS
+  type: Resource::Instance
+  tags: dev_cluster
+  config:
+    name_prefix: dev
+    ec2_key_pair: perx_admin
+
+cert:
+  <<: *DEFAULTS
+  type: Resource::Cert
+  tags: dev_cluster
+  config:
+    subject_alternative_names: ['hello', 'there']
+    domain_name: duh

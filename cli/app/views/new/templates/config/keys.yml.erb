@@ -1,0 +1,8 @@
+# keys.yml
+# WARN: do not commit to repository
+---
+<% box_keys.each do |env, value| %>
+<%= env %>:
+  name: <%= env %>
+  value: <%= value %>
+<% end %>

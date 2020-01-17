@@ -1,0 +1,35 @@
+# RDS Aurora
+<%-
+@module_name = :rds
+def defaults
+  {
+    source: 'terraform-aws-modules/rds-aurora/aws',
+    version: '~> 2.9.0',
+    engine: 'aurora-postgresql',
+    engine_version: '10.7',
+    performance_insights_enabled: true,
+    db_subnet_group_name: '',
+    username: 'postgres',
+    password: 'password',
+    storage_encrypted: true,
+    apply_immediately: true,
+    monitoring_interval: 10,
+    db_cluster_parameter_group_name: 'default.aurora-postgresql10',
+    db_parameter_group_name: 'default.aurora-postgresql10'
+  }
+end
+-%>
+<%- resource.resources.each do |key, config| -%>
+
+module "<%= title key %>" {
+<%= resource_config(target, resource, defaults, config).render.join("\n") %>
+
+  allowed_security_groups         = [module.vpc.default_security_group_id]
+  subnets                         = module.vpc.database_subnets
+  vpc_id                          = module.vpc.vpc_id
+}
+
+output "<%= title key %>" {
+  value = module.<%= title key %>.this
+}
+<% end -%>
