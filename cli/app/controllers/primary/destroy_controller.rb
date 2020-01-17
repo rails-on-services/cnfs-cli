@@ -4,7 +4,7 @@ module Primary
   class DestroyController < ApplicationController
     def execute
       each_target do
-        # before_execute_on_target
+        before_execute_on_target
         execute_on_target
       end
     end

@@ -3,17 +3,14 @@
 module Primary
   class PsController < ApplicationController
     def execute
-      # with_selected_target do
       each_target do |target|
-        # before_execute_on_target
+        before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      # Dir.chdir(target.exec_path)  do
-        output.puts runtime.services(format: format, status: status)
-      # end
+      output.puts runtime.services(format: format, status: status)
     end
 
     # TODO: format and status are specific to the runtime so refactor when implementing skaffold
@@ -25,7 +22,6 @@ module Primary
       end
     end
 
-    # created, restarting, running, removing, paused, exited, or dead
     def status
       options.status || :running
     end

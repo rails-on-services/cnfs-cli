@@ -4,7 +4,7 @@ module Primary
   class RestartController < ApplicationController
     def execute
       each_target do
-        # before_execute_on_target
+        before_execute_on_target
         call(:build) if options.build
         execute_on_target
         post_start_options

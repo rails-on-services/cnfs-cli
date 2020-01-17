@@ -83,8 +83,8 @@ class PrimaryController < CommandsController
   def new(name); NewController.new(name, options).execute end
 
   desc 'ps', 'List running services'
-  option :format, type: :string, aliases: '-f'
-  option :status, type: :string, aliases: '-s', desc: ''
+  option :format, type: :string, aliases: '-f', desc: ''
+  option :status, type: :string, desc: 'created, restarting, running, removing, paused, exited, or dead'
   def ps(*args); run(:ps, args: args) end
 
   desc 'publish', 'Publish API documentation to Postman'
@@ -152,7 +152,7 @@ class PrimaryController < CommandsController
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
   def start(*service_names); run(:start, service_names: service_names) end
 
-  desc 'status', 'Show platform services status'
+  desc 'status', 'Show platform services status: created, restarting, running, removing, paused, exited, or dead'
   def status(status = :running); run(:status, status: status) end
 
   desc 'stop SERVICE', 'Stop a service'

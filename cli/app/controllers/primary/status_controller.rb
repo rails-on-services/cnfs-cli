@@ -4,7 +4,7 @@ require 'tty-table'
 module Primary
   class StatusController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do
         before_execute_on_target
         execute_on_target
       end
