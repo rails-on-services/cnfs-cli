@@ -18,10 +18,10 @@ module Cnfs
     end
 
     def self.load_data
-      silence_output { create_schema }
+      show_output = Cnfs.debug > 0
+      Cnfs.silence_output(!show_output) { create_schema }
       dir = Cnfs.gem_config_path
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
-      fixtures.each { |f| STDOUT.puts "Loading config file #{dir.join(f)}.yml" } if Cnfs.debug > 0
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
     end
 
@@ -159,13 +159,6 @@ module Cnfs
         end
         ServiceTag.reset_column_information
       end
-    end
-
-    def self.silence_output
-      rs = $stdout
-      $stdout = StringIO.new unless Cnfs.debug > 0
-      yield
-      $stdout = rs
     end
   end
 end

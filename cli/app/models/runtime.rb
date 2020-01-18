@@ -10,6 +10,9 @@ class Runtime < ApplicationRecord
   # attr_accessor :controller, :target
   attr_accessor :target, :request, :response
 
+  # method inherited from A/R base interferes with controller#destroy
+  undef_method :destroy
+
   # Sub-classes, e.g. compose, skaffold override to implement, e.g. switch!
   def before_execute_on_target
     raise NotImplementedError, 'this needs to be done'

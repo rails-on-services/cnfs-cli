@@ -35,7 +35,7 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :context_name, :key_name
+    attr_accessor :autoload_dirs, :context_name
     attr_reader :root, :config_path, :config_file, :key
     attr_reader :project_name, :user_root, :user_config_path, :skip_schema
 
@@ -123,6 +123,7 @@ module Cnfs
     # Utility methods
     # Configuration fixture file loading methods
     def load_configs(file)
+      STDOUT.puts "Loading config file #{file}" if Cnfs.debug > 0
       config_dirs.each_with_object([]) { |path, ary| ary << load_config(file, path) }.join("\n")
     end
 
@@ -142,11 +143,9 @@ module Cnfs
     def box; @box ||= Lockbox.new(key: key.value) end
 
     # Set the key name to a name that is present in the Key model
-    def key_name=(name)
-      @key_name = name
-      @key = Key.find_by(name: name)
+    def key=(name)
       @box = nil
-      name
+      @key = Key.find_by!(name: name)
     end
 
     # OS methods
@@ -158,6 +157,13 @@ module Cnfs
         ext_info.pgid = shell_info.gid
       end
       ext_info
+    end
+
+    def silence_output(enforce)
+      rs = $stdout
+      $stdout = StringIO.new if enforce
+      yield
+      $stdout = rs
     end
   end
 end

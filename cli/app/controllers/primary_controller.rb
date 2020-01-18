@@ -40,8 +40,8 @@ class PrimaryController < CommandsController
   map %w(cp) => :copy
   def copy(src, dest); run(:copy, src: src, dest: dest) end
 
-  desc 'create [NAMESPACE]', "Create a namespace; default is 'master'"
-  def create(namespace_name = nil); run(:create, namespace_name: namespace_name) end
+  desc 'create [NAMESPACE]', 'Create a new namespace'
+  def create(namespace_name); run(:create, namespace_name: namespace_name) end
 
   desc 'credentials', 'Display IAM credentials'
   option :format, type: :string, aliases: '-f', desc: 'Options: sdk, cli, postman'

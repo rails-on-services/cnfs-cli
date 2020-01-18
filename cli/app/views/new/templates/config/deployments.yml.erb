@@ -25,7 +25,7 @@ backend_development: &backend_development
   application: backend
   target: development
 <% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key_name = :development %>
+  <% Cnfs.key = :development %>
   environment:
     rails_env: development
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -41,7 +41,7 @@ backend_test: &backend_test
   application: backend
   target: test
 <% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key_name = :test %>
+  <% Cnfs.key = :test %>
   environment:
     rails_env: test
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -57,7 +57,7 @@ backend_production: &backend_production
   application: backend
   target: production
 <% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key_name = :production %>
+  <% Cnfs.key = :production %>
   environment:
     rails_env: production
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"

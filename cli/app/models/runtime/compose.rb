@@ -17,18 +17,6 @@ class Runtime::Compose < Runtime
     response.add(exec: "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:"))
   end
 
-  # NOTE: For docker this is a noop function as deploy is all that is needed
-  def create; end
-
-  def deploy; start end
-
-  def destroy
-    return response.add(exec: compose(:down)) if request.args.service_names.nil? # request.services.empty?
-
-    terminate
-    # clean_cache(request)
-  end
-
   def exec(service_name, command, pty)
     response.add(exec: compose(command, service_name), pty: pty)
   end

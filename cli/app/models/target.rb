@@ -31,15 +31,12 @@ class Target < ApplicationRecord
   # Default intitialze of target is to do nothing
   def init(options); end
 
+  def namespace_names; namespaces ? namespaces.split(',').map(&:strip) : [] end
+
+  def valid_namespace?(namespace_name); namespace_names.include? namespace_name end
+
   def to_env
-    a = {
-      platform: {
-        infra: {
-          provider: provider_type_to_s,
-          clients: provider.clients
-        }
-      }
-    }
+    a = { platform: { infra: { provider: provider_type_to_s } } }
     b = Config::Options.new.merge!(environment).to_hash
     c = Config::Options.new.merge!(provider.environment).to_hash
     Config::Options.new.merge!(a).merge!(b).merge!(c).to_hash

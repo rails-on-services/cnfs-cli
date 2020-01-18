@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
 class Provider::Aws < Provider
-  store :config, accessors: %i[account_id profile access_key_id secret_access_key region], coder: YAML
-
   def credentials
-    {
-      access_key_id: access_key_id&.plaintext,
-      secret_access_key: secret_access_key&.plaintext
-    }
+    Config::Options.new({
+      aws_access_key_id: aws_access_key_id,
+      aws_secret_access_key: aws_secret_access_key,
+    }).to_array
   end
 
-  def mq; (super || {}).merge(credentials).compact end
-
-  def storage; (super || {}).merge(credentials).compact end
+  def aws_access_key_id; environment['aws_access_key_id'] || config['aws_access_key_id'] end
+  def aws_secret_access_key; environment['aws_secret_access_key'] || config['aws_secret_access_key'] end
+  def aws_region; environment['aws_region'] || config['aws_region'] end
+  def aws_account_id; environment['aws_account_id'] || config['aws_account_id'] end
 
   def resource_to_terraform_template_map
     {
@@ -25,7 +24,7 @@ class Provider::Aws < Provider
   end
 
   def kubectl_context(target)
-    "arn:aws:eks:#{environment['aws_region']}:#{account_id}:cluster/#{target.cluster_name.cnfs_sub}"
+    "arn:aws:eks:#{aws_region}:#{aws_account_id}:cluster/#{target.cluster_name.cnfs_sub}"
   end
 
   # NOTE: This will work with a cluster on any target since the provider instance, ie credentials, is per target

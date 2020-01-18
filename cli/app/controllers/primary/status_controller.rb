@@ -21,7 +21,7 @@ module Primary
       # stuff = [target.application, target].each.map(&:resources).flatten.compact.map { |svc| [svc.type, svc.name, svc.config.to_s] }
       # output.puts TTY::Table.new(header: ['type', 'name', 'config'], rows: stuff).render(:basic, padding: [0, 4, 0, 0])
 
-      output.puts "\nContext:\ndeployment\t#{target.deployment.name}\ntarget\t\t#{target.name} (#{args.namespace_name})\napplication\t#{target.application.name}"
+      output.puts "\nContext:\ndeployment\t#{target.deployment.name}\nkey\t\t#{Cnfs.key.name}\ntarget\t\t#{target.name} (#{args.namespace_name})\napplication\t#{target.application.name}"
       show_endpoint
     end
 

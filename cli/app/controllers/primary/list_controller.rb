@@ -15,7 +15,7 @@ module Primary
       each_target do
         before_execute_on_target
         if runtime.respond_to?(:run)
-          runtime.run('get ns', pty: true)
+          runtime.run('get ns', pty: true).run!
         else
           # TODO: the only use of runtime.run is in skaffold to 'get ns' so this
           # will need to be refactored if/when that changes
@@ -49,7 +49,7 @@ module Primary
 
     def deploy_hash(deployment)
       result = {}
-      result[:target] = ta_hash(deployment.target) unless ta_hash(deployment.target).empty?
+      result["target (#{deployment.target.provider.type})"] = ta_hash(deployment.target) unless ta_hash(deployment.target).empty?
       result[:application] = ta_hash(deployment.application) unless ta_hash(deployment.application).empty?
       result
     end

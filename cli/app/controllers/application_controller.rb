@@ -12,6 +12,18 @@ class ApplicationController
   attr_accessor :input, :output, :errors
   attr_accessor :result, :display
 
+  def valid_action?(action)
+    return true if runtime.respond_to?(action)
+
+    output.puts "#{runtime.type} does not support namespaces"
+  end
+
+  def valid_namespace?
+    return true if target.valid_namespace?(args.namespace_name)
+
+    output.puts "Invalid namespace \"#{args.namespace_name}\". Valid namespaces: #{target.namespace_names}"
+  end
+
   # TODO: Integrate this method into standard flow
   def publish_results
     require 'tty-table'
@@ -155,7 +167,8 @@ class ApplicationController
     runtime.before_execute_on_target
     if stale_config?
       FileUtils.rm(manifest_files)
-      call(:generate)
+      show_output = options.key?('debug') || options.verbose
+      Cnfs.silence_output(!show_output) { call(:generate) }
     end
   end
 
