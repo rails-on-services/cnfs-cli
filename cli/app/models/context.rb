@@ -4,7 +4,7 @@ class Context < ApplicationRecord
   belongs_to :target
   belongs_to :application
 
-  def config(args); to_args.merge(args) end
+  def config(args); to_args.merge(args || {}) end
 
   def to_args
     {

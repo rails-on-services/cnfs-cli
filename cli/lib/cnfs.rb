@@ -35,16 +35,20 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :context_name
-    attr_reader :root, :config_path, :config_file, :key
-    attr_reader :project_name, :user_root, :user_config_path, :skip_schema
+    PROJECT_FILE = '.cnfs'
+    CONFIG_FILE = 'cnfs.yml'
+    attr_reader :project_file, :project_name
+    attr_accessor :autoload_dirs, :context_name, :skip_schema
+    attr_reader :root, :config_path, :user_root, :user_config_path
+    attr_accessor :request, :response, :key
 
     def setup(lite = false)
-      project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/.cnfs.yml") }
+      project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/#{PROJECT_FILE}") }
       lite = true if project_dir.nil?
       @skip_schema = lite # for plugins. necessary?
+      ENV['CNFS_DEV'] = '1' if ARGV.delete('--dev')
       setup_paths(project_dir || Dir.pwd)
-      ARGV.delete('--dev') || ENV['CNFS_DEV'] ? initialize_dev_plugins : initialize_plugins
+      config.dev ? initialize_dev_plugins : initialize_plugins
       setup_loader
       Schema.setup unless lite
     end
@@ -70,21 +74,23 @@ module Cnfs
     def setup_paths(project_path)
       @root = Pathname.new(project_path)
       @config_path = root.join('config')
-      @config_file = root.join('.cnfs.yml')
 
-      return unless File.exist? config_file
+      @project_file = root.join(PROJECT_FILE)
+      return unless File.exist? @project_file
 
-      Config.load_and_set_settings(gem_root.join('cnfs.yml'), config_file)
-      @project_name = config.name
+      @project_name = File.read(@project_file).chomp
+
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
+
+      Config.load_and_set_settings(root.join(CONFIG_FILE), user_root.join(CONFIG_FILE))
     end
 
     def config; Settings end
 
     def context; Context.find_by(name: config.context) end
 
-    def project?; File.exist?(config_file) end
+    def project?; File.exist?(project_file) end
 
     # NTOE: Dir.pwd is the current application's root (switched into)
     # TODO: This should probably move out to rails or some other place
@@ -140,12 +146,12 @@ module Cnfs
     def controllers; @controllers ||= [] end
 
     # Lockbox encryption methods
-    def box; @box ||= Lockbox.new(key: key.value) end
+    def box; @box ||= Lockbox.new(key: key&.value) end
 
-    # Set the key name to a name that is present in the Key model
     def key=(name)
       @box = nil
-      @key = Key.find_by!(name: name)
+      @key = Key.find_by(name: name)
+      STDOUT.puts "WARN: Invalid Key. Valid keys: #{Key.pluck(:name).join(', ')}" if @key.nil?
     end
 
     # OS methods
@@ -157,6 +163,16 @@ module Cnfs
         ext_info.pgid = shell_info.gid
       end
       ext_info
+    end
+
+    def git_details
+      return Config::Options.new unless system('git rev-parse --git-dir > /dev/null 2>&1')
+
+      Config::Options.new(
+        tag_name: %x(git tag --points-at HEAD).chomp,
+        branch_name: %x(git rev-parse --abbrev-ref HEAD).strip.gsub(/[^A-Za-z0-9-]/, '-'),
+        sha: %x(git rev-parse --short HEAD).chomp
+      )
     end
 
     def silence_output(enforce)

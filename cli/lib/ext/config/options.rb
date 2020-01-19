@@ -18,5 +18,10 @@ module Config
       end
       ary
     end
+
+    def merge_many!(*ary)
+      ary.each { |hash| merge!(Config::Options.new.merge!(hash).to_hash) }
+      self
+    end
   end
 end

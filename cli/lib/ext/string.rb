@@ -20,6 +20,12 @@ class String
       a.gsub!('{domain_slug}', target.domain_slug)
     end
     a.gsub!('{project_name}', Cnfs.config.name)
+    # binding.pry if a.index('{project_name}')
+    if Cnfs.request
+      a.gsub!('{application_name}', Cnfs.request.args.application_name)
+    # binding.pry if a.index('{namespace}')
+      a.gsub!('{namespace}', Cnfs.request.args.namespace_name)
+    end
     a
   end
 

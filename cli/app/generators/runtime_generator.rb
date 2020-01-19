@@ -5,7 +5,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files
   def generate_application_environment
-    return unless (application_environment = application.to_env(target))
+    return unless (application_environment = deployment.to_env)
 
     generated_files << template('../env.erb',
                                 target.write_path(path_type).join('application.env'),

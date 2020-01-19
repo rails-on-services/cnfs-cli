@@ -65,7 +65,69 @@ class Runtime::Skaffold < Runtime
 
   # Deploy services based on tags
   def deploy
+    binding.pry
+    # update_helm_repo
+    response
   end
+
+  def update_helm_repo
+    response.add(exec: 'helm repo add ros https://rails-on-services.github.io/helm-charts')
+    response.add(exec: 'helm repo update')
+    response.run!
+  end
+
+  def deploy_services
+    env_file = "#{target.write_path(:deployment)}/application.env"
+    sync_secret(env_file) if File.exists?(env_file)
+
+    target.services.each do |service|
+      # if service.name.eql?('kafka-connect')
+      #   deploy_gcp_bigquery_secret unless application.components.services.components[:'kafka-connect']&.config&.gcp_service_account_key.nil?
+      # end
+      if service.name.eql?('ingress')
+        next true unless options.n || virtual_service(name: :ingress).empty? || options.force
+      else
+        next if pod(name: service) unless @force_infra_deploy
+      end
+      env_file = "#{target.write_path(:deployment)}/#{service.name}.env"
+      sync_secret(env_file) if File.exist?(env_file)
+      service_file = "#{service}.yml"
+      Dir.chdir(target.write_path(:deployment)) do
+        base_cmd = options.build ? 'run' : 'deploy'
+        force = @force_infra_deploy ? '--force=true' : ''
+        skaffold("#{base_cmd} #{force} -f #{service_file}")
+        # errors.add("skaffold_#{base_cmd}", stderr) if exit_code.positive?
+      end
+    end
+  end
+
+  def sync_secret(file)
+    name = File.basename(file, '.env')
+    return if local_secrets_content(file) == k8s_secrets_content(name)
+
+    response.output.puts "NOTICE: Updating cluster with new contents for secret #{name}"
+    response.add(exec: kubectl("delete secret #{name}")) # if kubectl("get secret #{name}")
+    response.add(exec: kubectl("create secret generic #{name} --from-env-file #{file}"))
+    response.run!
+    # errors.add(:create_secret, stderr) if exit_code.positive?
+  end
+
+  def local_secrets_content(file)
+    File.read(file).split("\n").each_with_object({}) { |a, h| b = a.split('='); h[b[0]] = b[1] || '' }
+  end
+
+  def k8s_secrets_content(type = 'platform')
+    require 'base64'
+    # TODO: Capture output using response command
+    res = kubectl("get secret #{type} -o yaml")
+    return {} if exit_code.positive? || options.n
+    yml = YAML.load(stdout)
+    yml['data'].each_with_object({}) { |a, h| h[a[0]] = Base64.decode64(a[1]) }
+  end
+
+  # -------------------------------------
+  # END: New Stuff
+  # -------------------------------------
 
   def destroy
     response.add(exec: "kubectl delete ns #{namespace}", env: kube_env)
@@ -115,6 +177,26 @@ class Runtime::Skaffold < Runtime
     result['items'].map { |i| i['metadata']['name'] }
   end
 
+  # def skaffold(cmd, envs = {})
+  #   puts "run skaffold with environment: #{skaffold_env.merge(envs)}" if options.v
+  #   system_cmd("skaffold -n #{namespace} #{cmd}", skaffold_env.merge(envs))
+  # end
+
+  def skaffold(command) #, service_name = nil)
+    cmd = ["skaffold -n #{namespace} #{command}"]
+  end
+
+  def skaffold_env
+    @skaffold_env ||= {
+      'SKAFFOLD_DEFAULT_REPO' => target.application.image_registry,
+      'IMAGE_TAG' => target.application.image_tag(target)
+    }.merge(kube_env)
+  end
+
+  # TODO: The service model has an image_registry value which if nil gets from the application
+  # This method just creates a name of a secrets file in which to store the repo secret on k8s
+  def registry_secret_name; "registry-#{target.application.image_registry}" end
+
   def kubectl(command, service_name = nil)
     cmd = ['kubectl']
     cmd.append('-n', namespace) if namespace
@@ -125,11 +207,13 @@ class Runtime::Skaffold < Runtime
 
   def kube_env; @kube_env ||= { 'KUBECONFIG' => kubeconfig, 'TILLER_NAMESPACE' => namespace } end
 
+  def check; File.file?(kubeconfig) end
+
   def kubeconfig; @kubeconfig ||= "#{Dir.home}/.kube/config" end
 
   # def show_command_output; request.options.verbose || request.options.debug end
 
-  def namespace; @namespace ||= request.args.namespace_name end
+  def namespace; @namespace ||= [request.args.namespace_name, request.args.application_name].compact.join('-') end
 
   def label_base; 'app.kubernetes.io' end # 'cnfs.io'
 end

@@ -53,7 +53,7 @@ class ApplicationController
     @cli_args = args
 
     Cnfs.config.context = args.context_name if args.context_name
-    @args = Config::Options.new(Cnfs.context&.config(args) || args)
+    @args = Config::Options.new(Cnfs.context&.config(args.compact) || args.compact)
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
@@ -66,11 +66,11 @@ class ApplicationController
 
   def each_target
     deployments.each do |deployment|
-      Cnfs.key_name = deployment.key&.name
+      Cnfs.key = deployment.key&.name
       if Cnfs.key
-        output.puts "encrypition key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
+        output.puts "encryption key set to '#{Cnfs.key.name}'" if options.verbose or options.debug
       else
-        output.puts "WARN: encrypition key not found for key name '#{Cnfs.key_name}'"
+        output.puts "WARN: encryption key not found for key name '#{Cnfs.key}'"
       end
       configure_target(deployment)
       output.puts "Running in #{target.exec_path}" if options.debug
@@ -109,6 +109,8 @@ class ApplicationController
     output.puts "selected services: #{request.service_names_to_s}" if options.debug
 
     @response = Response.new(command_name, options, output, command(command_options), errors)
+    Cnfs.request = @request
+    Cnfs.response = @response
 
     # Set runtime object to an instance of compose or skaffold
     return unless (@runtime = current_runtime)
@@ -164,7 +166,14 @@ class ApplicationController
   end
 
   def before_execute_on_target
+    # TODO: validate all necessary models
+    unless target.application.valid?
+      # TODO: Add the model type to the message
+      raise Cnfs::Error.new(target.application.errors.full_messages)
+    end
+
     runtime.before_execute_on_target
+
     if stale_config?
       FileUtils.rm(manifest_files)
       show_output = options.key?('debug') || options.verbose
