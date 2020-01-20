@@ -68,9 +68,9 @@ class ApplicationController
     deployments.each do |deployment|
       Cnfs.key_name = deployment.key&.name
       if Cnfs.key
-        output.puts "encrypition key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
+        output.puts "encryption key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
       else
-        output.puts "WARN: encrypition key not found for key name '#{Cnfs.key_name}'"
+        output.puts "WARN: encryption key not found for key name '#{Cnfs.key_name}'"
       end
       configure_target(deployment)
       output.puts "Running in #{target.exec_path}" if options.debug
