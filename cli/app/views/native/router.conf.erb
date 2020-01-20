@@ -1,0 +1,42 @@
+global
+  log stdout format raw local0 info
+
+defaults
+  mode http
+  timeout connect 10s
+  timeout client 1m
+  timeout server 1m
+  log global
+  option httplog
+
+frontend stats
+  bind *:3001
+  stats enable
+  stats uri /stats
+  stats refresh 10s
+  stats admin if LOCALHOST
+  http-request set-log-level silent
+  # prometheus
+  option http-use-htx
+  # homebrew's version of haproxy doesn't have the prometheus module built-in
+  # http-request use-service prometheus-exporter if { path /metrics }
+
+frontend localhost
+  bind *:3000
+
+  http-request add-header X-Forwarded-For %[src]
+  http-request add-header X-Forwarded-Proto http
+
+<% services.select { |s| s.type.eql?('Service::Rails') }.each do |service| -%>
+  use_backend <%= service.name %> if { path_beg -i /<%= service.name %> } || { hdr(host) -i -m beg <%= service.name %> }
+<% end -%>
+
+<% port = web_port -%>
+
+<% services.select { |s| s.type.eql?('Service::Rails') }.each do |service| -%>
+backend <%= service.name %>
+  http-request set-path /<%= service.name %>%[path] unless { path_beg -i /<%= service.name %>/ }
+  server <%= service.name %> localhost:<%= port %>
+
+  <% port += web_port_increment %>
+<% end -%>
