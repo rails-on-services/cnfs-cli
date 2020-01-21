@@ -81,9 +81,9 @@ class ApplicationController
     end
   end
 
-  def deployments(query_args = nil); @deploymnets ||= configure_deployents(query_args) end
+  def deployments(query_args = nil); @deployments ||= configure_deployments(query_args) end
 
-  def configure_deployents(query_args)
+  def configure_deployments(query_args)
     query_args ||= args
     result = Deployment.all
     result = result.joins(:application).where(applications: { name: query_args.application_name }) if query_args.application_name
@@ -165,15 +165,21 @@ class ApplicationController
 
   def before_execute_on_target
     runtime.before_execute_on_target
-    if stale_config?
-      FileUtils.rm(manifest_files)
-      show_output = options.key?('debug') || options.verbose
-      Cnfs.silence_output(!show_output) { call(:generate) }
-    end
+    maybe_regenerate_config!
+  end
+
+  # Regenerate config if needed
+  def maybe_regenerate_config!
+    return unless stale_config?
+
+    FileUtils.rm_rf(manifest_files)
+    show_output = options.key?('debug') || options.verbose
+    Cnfs.silence_output(!show_output) { call(:generate) }
   end
 
   def stale_config?
     return false if config_files.empty?
+
     manifest_files.empty? || (latest_config_file_updated > earliest_manifest_file_generated)
     # Check template files
     # Dir["#{Ros.gem_root.join('lib/ros/be')}/**/{templates,files}/**/*"].each do |f|
@@ -185,11 +191,23 @@ class ApplicationController
     # end
   end
 
-  def latest_config_file_updated; config_files.map { |f| File.mtime(f) }.max end
+  # @return [DateTime]
+  def latest_config_file_updated
+    find_earliest_latest(config_files, :max)
+  end
+
+  # @return [DateTime]
+  def earliest_manifest_file_generated
+    find_earliest_latest(manifest_files, :min)
+  end
+
   def config_files; Dir[Cnfs.config_path.join('**/*.yml')] end
 
-  def earliest_manifest_file_generated; manifest_files.map { |f| File.mtime(f) }.min end
   def manifest_files; Dir[target.write_path.join('**/*')] end
+
+  def find_earliest_latest(list, method)
+    list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }.send(method)
+  end
 
   # The external commands runner
   #

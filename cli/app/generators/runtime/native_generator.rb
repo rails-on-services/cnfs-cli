@@ -7,9 +7,11 @@ class Runtime::NativeGenerator < RuntimeGenerator
 
     directory('files', outdir)
 
-    Dir.chdir(outdir.join('libexec')) do
-      symlink_map.each_pair do |src, dest|
-        FileUtils.ln_s(dest, src.to_s)
+    symlink_map.each_pair do |dir, links|
+      Dir.chdir(outdir.join(dir.to_s)) do
+        links.each_pair do |src, dest|
+          FileUtils.ln_s(dest, src.to_s)
+        end
       end
     end
 
@@ -20,14 +22,23 @@ class Runtime::NativeGenerator < RuntimeGenerator
 
   private
 
+  # Determine the path to a given service
+  # TODO: does not belong here as it should not know anything about cnfs services
   def service_path(service)
-    service&.config[:is_cnfs_service] ? '$CORE_PATH' : '$PLATFORM_PATH'
+    service&.config&.dig(:is_cnfs_service) ? '$CORE_PATH' : '$PLATFORM_PATH'
   end
 
+  # Add spring to the list of profiles
+  # TODO: does not belong here
   def service_profiles(service)
     (service.profiles || []) << 'spring'
   end
 
+  # Create a Procfile entry for a given service
+  # @param service [String] the service to process
+  # @param profile [String] the service profile
+  # @param port [Number] port or `nil`. Only needed for services that need to listen on a particular port
+  # @return [String] a Procfile line
   def procfile_entry(service, profile, port = nil)
     name = service.name
 
@@ -42,6 +53,7 @@ class Runtime::NativeGenerator < RuntimeGenerator
     ].compact.join ' '
   end
 
+  # Infrastructure services that may not be enabled
   def conditional_infra_services_map
     {
       postgres: '_postgres',
@@ -52,6 +64,7 @@ class Runtime::NativeGenerator < RuntimeGenerator
     }
   end
 
+  # Infrastructure services that are always enabled
   def infra_services_map
     {
       web: 'haproxy -- ./router.conf',
@@ -59,14 +72,23 @@ class Runtime::NativeGenerator < RuntimeGenerator
     }
   end
 
+  # Symlinks to create
   def symlink_map
-    { _kafka: '_docker', _localstack: '_docker', _sidekiq: '_rails', _spring: '_rails' }.freeze
+    {
+      libexec: {
+        _kafka: '_docker',
+        _localstack: '_docker',
+        _sidekiq: '_rails',
+        _spring: '_rails'
+      }
+    }
   end
 
   def server_name_map
     { server: '_rails', worker: '_sidekiq', scheduler: '_scheduler', sqs_worker: '_sqs' }.freeze
   end
 
+  # The starting port for application services
   def web_port
     5000
   end

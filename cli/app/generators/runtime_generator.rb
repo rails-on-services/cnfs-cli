@@ -3,7 +3,8 @@
 class RuntimeGenerator < ApplicationGenerator
   attr_accessor :service
 
-  # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files
+  # NOTE: Generate the environment files first b/c the manifest template will
+  # look for the existence of those files
   def generate_application_environment
     return unless (application_environment = application.to_env(target))
 
@@ -29,6 +30,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   private
 
+  # Is a given service enabled?
   def service_enabled?(name)
     services.pluck(:name).include? name.to_s
   end
@@ -41,6 +43,7 @@ class RuntimeGenerator < ApplicationGenerator
     services
   end
 
+  # Render template
   def generate
     template("#{entity_to_template}.yml.erb", "#{target.write_path(path_type)}/#{service.name}.yml")
   end

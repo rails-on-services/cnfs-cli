@@ -71,10 +71,6 @@ class Runtime::Compose < Runtime
     @services ||= list_services(format: format, status: status, **filters)
   end
 
-  def service_names(status: :running)
-    services(status: status).map{ |a| a.gsub("#{project_name}_", '').chomp('_1') }
-  end
-
   def labels(base_labels, space_count)
     space_count ||= 6
     base_labels.select { |k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
