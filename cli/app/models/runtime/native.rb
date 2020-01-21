@@ -10,7 +10,7 @@ class Runtime::Native < Runtime
 
   # As we are running multiple overmind instances, we need to switch into the proper one
   def switch!
-    @env = {} # _env
+    @env = {}
   end
 
   def start
@@ -68,18 +68,5 @@ class Runtime::Native < Runtime
 
   def procfile_name
     'Procfile.woot'
-  end
-
-  def _env
-    {
-      DB_DIR: '${DB_DIR:-$(realpath $DATA_DIR/db)',
-      DB_PORT: '${DB_PORT:-5432}',
-      DB_SOCKET: '${DB_SOCKET:-$DB_DIR/.s.PGSQL.$DB_PORT}',
-      REDIS_DIR: '${REDIS_DIR:-$(realpath $DATA_DIR/redis)}',
-      RUN_DIR: '${RUN_DIR:-${XDG_RUNTIME_DIR:-$(realpath $DATA_DIR/run)}}',
-      OVERMIND_SOCKET: '${OVERMIND_SOCKET:-${RUN_DIR}/overmind/$(basename $(pwd)).sock}',
-      LOG_DIR: '$(realpath $DATA_DIR/log)',
-      PLATFORM_PATH: '${PLATFORM_PATH:-perx/whistler-services/services}'
-    }
   end
 end
