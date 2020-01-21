@@ -30,10 +30,6 @@ class Runtime < ApplicationRecord
     end
   end
 
-  def service_names(status: :running)
-    services(status: status).map { |a| a.gsub("#{project_name}_", '').chomp('_1') }
-  end
-
   def credentials
     { remote_file: "/home/rails/services/app/tmp/#{'mounted'}/credentials.json",
       local_file: "#{runtime_path}/target/credentials.json",

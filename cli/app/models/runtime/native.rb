@@ -37,6 +37,10 @@ class Runtime::Native < Runtime
     YAML.load_file(file).keys
   end
 
+  def service_names(status: :running)
+    services(status: status).map { |a| a.gsub("#{project_name}_", '').chomp('_1') }
+  end
+
   private
 
   def background?
