@@ -3,13 +3,14 @@
 class RuntimeGenerator < ApplicationGenerator
   attr_accessor :service
 
-  # NOTE: Generate the environment files first b/c the manifest template will look for the existence of those files
+  # NOTE: Generate the environment files first b/c the manifest template will
+  # look for the existence of those files
   def generate_application_environment
     return unless (application_environment = application.to_env(target))
 
     generated_files << template('../env.erb',
                                 target.write_path(path_type).join('application.env'),
-                                { env: application_environment })
+                                env: application_environment)
   end
 
   def generate_service_environments
@@ -18,7 +19,7 @@ class RuntimeGenerator < ApplicationGenerator
 
       generated_files << template('../env.erb',
                                   target.write_path(path_type).join("#{service.name}.env"),
-                                  { env: service_environment })
+                                  env: service_environment)
     end
   end
 
@@ -29,22 +30,40 @@ class RuntimeGenerator < ApplicationGenerator
 
   private
 
-  def entity_name; :service end
+  # Is a given service enabled?
+  def service_enabled?(name)
+    services.pluck(:name).include? name.to_s
+  end
 
-  def entities; services end
+  def entity_name
+    :service
+  end
 
+  def entities
+    services
+  end
+
+  # Render template
   def generate
     template("#{entity_to_template}.yml.erb", "#{target.write_path(path_type)}/#{service.name}.yml")
   end
 
-  def path_type; :deployment end
+  def path_type
+    :deployment
+  end
 
   # Methods for all runtime templates
-  def relative_path; @relative_path ||= Pathname.new('../' * target.write_path(path_type).to_s.split('/').size) end
+  def relative_path
+    @relative_path ||= Pathname.new('../' * target.write_path(path_type).to_s.split('/').size)
+  end
 
-  def template_types; @template_types ||= services.map{ |service| entity_to_template(service).to_sym }.uniq end
+  def template_types
+    @template_types ||= services.map { |service| entity_to_template(service).to_sym }.uniq
+  end
 
-  def version; target.runtime.version end
+  def version
+    target.runtime.version
+  end
 
   def labels(space_count = nil)
     target.runtime.labels(base_labels, space_count)
@@ -63,7 +82,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    files << "./application.env" if File.exist?(target.write_path(path_type).join('application.env'))
+    files << './application.env' if File.exist?(target.write_path(path_type).join('application.env'))
     files << "./#{service.name}.env" if File.exist?(target.write_path(path_type).join("#{service.name}.env"))
     files
   end

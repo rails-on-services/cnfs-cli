@@ -1,0 +1,9 @@
+# <%= Time.now %>
+<% port = web_port -%>
+<% services.select { |s| s.type.eql?('Service::Rails') }.each do |service| -%>
+<% profiles = (service.profiles || []) << "spring" -%>
+<% profiles.each do |profile| -%>
+<%= procfile_entry service, profile, port %>
+<% end -%>
+<% port += web_port_increment %>
+<% end -%>

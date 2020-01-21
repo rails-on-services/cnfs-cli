@@ -3,5 +3,6 @@
 # they are fixed to what is available as TF templates
 ---
 DEFAULTS: &DEFAULTS
+  name: $LABEL
 
 <%= Cnfs.load_configs(__FILE__) %>

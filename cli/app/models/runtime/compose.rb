@@ -72,7 +72,7 @@ class Runtime::Compose < Runtime
   end
 
   def service_names(status: :running)
-    services(status: status).map{ |a| a.gsub("#{project_name}_", '').chomp('_1') }
+    services(status: status).map { |a| a.gsub("#{project_name}_", '').chomp('_1') }
   end
 
   def labels(base_labels, space_count)
