@@ -12,15 +12,29 @@ class Runtime::Native < Runtime
     @env = {}
   end
 
+  def attach(type = :application)
+    response.add(exec: overmind('connect', type)
+  end
+
+  def build
+    true
+  end
+
   def start
-    response.add(exec: overmind("start #{procfile} #{background? ? '--daemonize' : ''}"))
+    types.each do |type|
+      response.add(exec: overmind("start #{procfile(type)} #{background? ? '--daemonize' : ''}", type))
+    end
   end
 
   def stop
-    response.add(exec: overmind(background? ? 'quit' : 'kill'))
+    types.reverse.each do |type|
+      response.add(exec: overmind(background? ? 'quit' : 'kill', type))
+    end
   end
 
-  def overmind(command, type = 'application')
+  def overmind(command, type = :application)
+    raise "Unsupported type: #{type}" unless types.include?(type)
+
     cmd = [
       'overmind',
       command,
@@ -42,30 +56,41 @@ class Runtime::Native < Runtime
 
   private
 
+  def types
+    %i[infrastructure application]
+  end
+
   def background?
     true
   end
 
-  def socket(type = 'application')
+  def socket(type = :application)
     "--socket #{File.join(runtime_dir, project_name)}_#{type}.sock"
   end
 
   def runtime_dir
-    %w[XDG_RUNTIME_DIR TMPDIR TMP TEMP .].each do |v|
+    %w[XDG_RUNTIME_DIR TMPDIR TMP TEMP].each do |v|
       dir = ENV.fetch(v, nil)
 
-      return Pathname.new(dir) if dir
+      return Pathname.new(dir) if Dir.exist?(dir.to_s)
     end
+
+    Pathname.new '.'
   end
 
-  def procfile
+  def procfile(type = :application)
     [
       '--procfile',
-      deployment_path.join(procfile_name)
+      deployment_path.join(procfile_name(type))
     ].join ' '
   end
 
-  def procfile_name
-    'Procfile.woot'
+  def procfile_name(type = :application)
+    case type
+    when :application
+      'application.procfile'
+    when :infrastructure
+      'infrastructure.procfile'
+    end
   end
 end

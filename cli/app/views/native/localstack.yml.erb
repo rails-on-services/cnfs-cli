@@ -1,0 +1,26 @@
+# native/localstack.yml.erb
+---
+version: '<%= version %>'
+
+services:
+  localstack:
+    image: localstack/localstack<% if env_files.size.positive? %>
+    ports:
+      - <%= expose_ports(4572) %>
+      - <%= expose_ports(4574) %>
+      - <%= expose_ports(4575) %>
+      - <%= expose_ports(4576) %>
+      - <%= expose_ports(8080) %>
+    env_file:
+      - <%= env_files %><% end %>
+    environment:
+      - SERVICES=${SERVICES- }
+      - DEBUG=${DEBUG- }
+      - DATA_DIR=${DATA_DIR- }
+      - PORT_WEB_UI=${PORT_WEB_UI- }
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR- }
+      - KINESIS_ERROR_PROBABILITY=${KINESIS_ERROR_PROBABILITY- }
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - ./localstack:/docker-entrypoint-initaws.d
+      - ${TMPDIR:-/tmp}/localstack:/tmp/localstack

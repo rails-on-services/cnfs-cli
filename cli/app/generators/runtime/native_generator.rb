@@ -10,14 +10,14 @@ class Runtime::NativeGenerator < RuntimeGenerator
     symlink_map.each_pair do |dir, links|
       Dir.chdir(outdir.join(dir.to_s)) do
         links.each_pair do |src, dest|
-          FileUtils.ln_s(dest, src.to_s)
+          FileUtils.ln_sf(dest, src.to_s)
         end
       end
     end
 
     template('router.conf.erb', "#{outdir}/router.conf")
-    template('Procfile.infra.erb', "#{outdir}/Procfile.infra")
-    template('Procfile.erb', "#{outdir}/Procfile")
+    template('Procfile.infra.erb', "#{outdir}/infrastructure.procfile")
+    template('Procfile.erb', "#{outdir}/application.procfile")
   end
 
   private
@@ -56,18 +56,18 @@ class Runtime::NativeGenerator < RuntimeGenerator
   # Infrastructure services that may not be enabled
   def conditional_infra_services_map
     {
-      postgres: '_postgres',
+      postgres: './libexec/_postgres',
       fluentd: 'bundle exec fluentd --config ./fluent.conf',
-      kafka: '_kafka',
-      mail: '_mailcatcher',
-      redis: '_redis'
+      haproxy: 'haproxy -- ./router.conf',
+      kafka: './libexec/_kafka',
+      mail: './libexec/_mailcatcher',
+      redis: './libexec/_redis'
     }
   end
 
   # Infrastructure services that are always enabled
   def infra_services_map
     {
-      web: 'haproxy -- ./router.conf',
       yard: 'yard server --gems'
     }
   end
@@ -76,8 +76,10 @@ class Runtime::NativeGenerator < RuntimeGenerator
   def symlink_map
     {
       libexec: {
+        _elasticsearch: '_docker',
         _kafka: '_docker',
         _localstack: '_docker',
+        _rabbitmq: '_docker',
         _sidekiq: '_rails',
         _spring: '_rails'
       }
@@ -85,7 +87,12 @@ class Runtime::NativeGenerator < RuntimeGenerator
   end
 
   def server_name_map
-    { server: '_rails', worker: '_sidekiq', scheduler: '_scheduler', sqs_worker: '_sqs' }.freeze
+    {
+      server: '_rails',
+      worker: '_sidekiq',
+      scheduler: '_scheduler',
+      sqs_worker: '_sqs'
+    }
   end
 
   # The starting port for application services

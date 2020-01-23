@@ -22,21 +22,24 @@ class String
       a.gsub!('{domain_slug}', target.domain_slug)
     end
     # puts a
-    # binding.pry if a.index('{project_name}')
-    a.gsub!('{project_name}', Cnfs.config.name)
+    a.substitute_placeholders!(project_name: Cnfs&.config&.name)
     begin
-      if Cnfs.request
-        a.gsub!('{application_name}', Cnfs.request.args.application_name) if a.index('{application_name}')
-        # binding.pry if a.index('{namespace}')
-        if a.index('{namespace}') && Cnfs.request.args.namespace_name
-          a.gsub!('{namespace}', Cnfs.request.args.namespace_name)
-        end
-      end
+      a.substitute_placeholders!(
+        application_name: Cnfs&.request&.args&.application_name,
+        namespace: Cnfs&.request&.args&.namespace_name
+      ) if Cnfs.request
     rescue TypeError => e
       binding.pry
     end
 
     a
+  end
+
+  def substitute_placeholders!(attrs)
+    attrs.each_pair do |var, txt|
+      placeholder = "{#{var}}"
+      gsub!(placeholder, txt.to_s) if index(placeholder)
+    end
   end
 
   private

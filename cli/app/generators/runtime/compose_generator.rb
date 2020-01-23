@@ -27,17 +27,6 @@ class Runtime::ComposeGenerator < RuntimeGenerator
     target.mount
   end
 
-  def expose_ports(port)
-    port, proto = port.to_s.split('/')
-    host_port = map_ports_to_host ? "#{port}:" : ''
-    proto = proto ? "/#{proto}" : ''
-    "\"#{host_port}#{port}#{proto}\""
-  end
-
-  def map_ports_to_host
-    false
-  end
-
   def compose_environment
     Config::Options.new(
       compose_file: Dir["#{target.write_path}/**/*.yml"].join(':'),

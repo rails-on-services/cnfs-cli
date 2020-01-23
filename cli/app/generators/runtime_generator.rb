@@ -35,6 +35,17 @@ class RuntimeGenerator < ApplicationGenerator
     services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
   end
 
+  def expose_ports(start_port, _end_port = nil)
+    port, proto = start_port.to_s.split('/')
+    host_port = map_ports_to_host ? "#{port}:" : ''
+    proto = proto ? "/#{proto}" : ''
+    "\"#{host_port}#{port}#{proto}\""
+  end
+
+  def map_ports_to_host
+    false
+  end
+
   # Is a given service enabled?
   def service_enabled?(name)
     services.pluck(:name).include? name.to_s

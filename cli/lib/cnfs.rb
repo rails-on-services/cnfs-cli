@@ -40,7 +40,7 @@ module Cnfs
     attr_reader :project_file, :project_name
     attr_accessor :autoload_dirs, :context_name, :skip_schema
     attr_reader :root, :config_path, :user_root, :user_config_path
-    attr_accessor :request, :response, :key
+    attr_accessor :request, :response
 
     def setup(lite = false)
       project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/#{PROJECT_FILE}") }
@@ -105,7 +105,7 @@ module Cnfs
       File.exist?(project_file)
     end
 
-    # NTOE: Dir.pwd is the current application's root (switched into)
+    # NOTE: Dir.pwd is the current application's root (switched into)
     # TODO: This should probably move out to rails or some other place
     def services_project?
       File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
@@ -181,10 +181,18 @@ module Cnfs
       @box ||= Lockbox.new(key: key&.value)
     end
 
+    def key(name = key_name)
+      Key.find_by(name: name)
+    end
+
     def key=(name)
       @box = nil
-      @key = Key.find_by(name: name)
+      @key = key(name)
       STDOUT.puts "WARN: Invalid Key. Valid keys: #{Key.pluck(:name).join(', ')}" if @key.nil?
+    end
+
+    def key_name
+      'development'
     end
 
     def encrypt_file(file_name)
