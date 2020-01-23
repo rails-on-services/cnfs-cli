@@ -1,30 +1,32 @@
 # frozen_string_literal: true
 
+# An application consists of multiple services each of which may have their own:
+# - container registry
+# - git repo
+# - image tag calculation/format
+# - version
+# - image prefix
+
+# Application has a repo, each service can have a repo
+# Application or service can be a path within the repo
+# The path on the application and service is where it is on the file system relative to the project
+# Override the application and service path with local config
+      # if application path is not defined then use .
+      # if app path starts with ~ then call expand_path otherwise just pathname
+      # if pathname is not relative then return path
+      # otherwise all pathnames start with 'apps/'
+      # if application path is not defined and app.sourcE_repo is defined then apps/[repo.name + repo.path].compact
+
+      # if application path is not defined then apps/name
+      # clone the source to source repo in teh application_path or '.'
+
 module Primary
   class InitController < ApplicationController
-    # This maybe isn't necessary
-    # The application should check if the path exists
-    # If it does not and there is a git repo defined then go get it
     def execute
-      binding.pry
-    end
+      return unless (app = Application.find_by(name: args.application_name))
 
-    def preflight_check(fix: false)
-      options = {}
-      ros_repo = Dir.exists?(Ros.ros_root)
-      environments = Dir["#{Ros.deployments_dir}/*.yml"].select{ |f| not File.basename(f).index('-') }.map{ |f| File.basename(f).chomp('.yml') }
-      if fix
-        %x(git clone git@github.com:rails-on-services/ros.git) unless ros_repo
-        require 'ros/main/env/generator'
-        environments.each do |env|
-          Ros::Main::Env::Generator.new([env]).invoke_all if not File.exist?("#{Ros.environments_dir}/#{env}.yml")
-        end
-      else
-        STDOUT.puts "ros repo: #{ros_repo ? 'ok' : 'missing'}"
-        env_ok = environments.each do |env|
-          break false if not File.exist?("#{Ros.environments_dir}/#{env}.yml")
-        end
-        STDOUT.puts "environment configuration: #{env_ok ? 'ok' : 'missing'}"
+      app.source_repos.uniq.each do |repo|
+        command.run!(repo.clone_cmd) unless Dir.exist?(repo.full_path)
       end
     end
   end

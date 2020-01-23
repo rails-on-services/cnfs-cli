@@ -28,6 +28,36 @@ module Cnfs
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
+        create_table :applications, force: true do |t|
+          t.string :name
+          t.string :config
+          t.string :environment
+          t.string :type
+          t.string :path
+        end
+        Application.reset_column_information
+
+        create_table :application_resources, force: true do |t|
+          t.references :application
+          t.references :resource
+        end
+        ApplicationResource.reset_column_information
+
+        create_table :application_services, force: true do |t|
+          t.references :application
+          t.references :service
+        end
+        ApplicationService.reset_column_information
+
+        create_table :assets, force: true do |t|
+          t.string :name
+          t.string :type
+          t.string :path
+          t.string :owner_type
+          t.string :owner_id
+        end
+        Asset.reset_column_information
+
         create_table :contexts, force: true do |t|
           t.references :application
           t.references :target
@@ -38,34 +68,6 @@ module Cnfs
           t.string :tags
         end
         Context.reset_column_information
-
-        create_table :keys, force: true do |t|
-          t.string :name
-          t.string :value
-        end
-        Key.reset_column_information
-
-        create_table :applications, force: true do |t|
-          t.string :name
-          t.string :config
-          t.string :environment
-          t.string :type
-          t.string :path
-        end
-        Application.reset_column_information
-
-        create_table :targets, force: true do |t|
-          t.references :runtime
-          t.references :infra_runtime
-          t.references :provider
-          t.string :name
-          t.string :config
-          t.string :tf_config
-          t.string :environment
-          t.string :type
-          t.string :namespaces
-        end
-        Target.reset_column_information
 
         create_table :deployments, force: true do |t|
           t.references :application
@@ -78,14 +80,27 @@ module Cnfs
         end
         Deployment.reset_column_information
 
+        create_table :keys, force: true do |t|
+          t.string :name
+          t.string :value
+        end
+        Key.reset_column_information
+
         create_table :providers, force: true do |t|
           t.string :name
           t.string :config
           t.string :environment
           t.string :type
-          t.string :kubernetes
+          # t.string :kubernetes
         end
         Provider.reset_column_information
+
+        create_table :repositories, force: true do |t|
+          t.string :name
+          t.string :config
+          t.string :type
+        end
+        Repository.reset_column_information
 
         create_table :runtimes, force: true do |t|
           t.string :name
@@ -105,7 +120,16 @@ module Cnfs
         end
         Resource.reset_column_information
 
+        create_table :resource_tags, force: true do |t|
+          t.references :resource
+          t.references :tag
+        end
+        ResourceTag.reset_column_information
+
         create_table :services, force: true do |t|
+          t.references :source_repo
+          t.references :image_repo
+          t.references :chart_repo
           t.string :name
           t.string :config
           t.string :environment
@@ -115,6 +139,12 @@ module Cnfs
         end
         Service.reset_column_information
 
+        create_table :service_tags, force: true do |t|
+          t.references :service
+          t.references :tag
+        end
+        ServiceTag.reset_column_information
+
         create_table :tags, force: true do |t|
           t.string :name
           t.string :description
@@ -122,6 +152,20 @@ module Cnfs
           t.string :environment
         end
         Tag.reset_column_information
+
+        create_table :targets, force: true do |t|
+          t.references :runtime
+          t.references :infra_runtime
+          t.references :provider
+          t.string :name
+          t.string :config
+          t.string :tf_config
+          t.string :environment
+          t.string :type
+          t.string :namespaces
+          t.string :dns_root_domain
+        end
+        Target.reset_column_information
 
         create_table :target_services, force: true do |t|
           t.references :target
@@ -135,29 +179,11 @@ module Cnfs
         end
         TargetResource.reset_column_information
 
-        create_table :application_services, force: true do |t|
-          t.references :application
-          t.references :service
+        create_table :users, force: true do |t|
+          t.string :name
+          t.string :role
         end
-        ApplicationService.reset_column_information
-
-        create_table :application_resources, force: true do |t|
-          t.references :application
-          t.references :resource
-        end
-        ApplicationResource.reset_column_information
-
-        create_table :resource_tags, force: true do |t|
-          t.references :resource
-          t.references :tag
-        end
-        ResourceTag.reset_column_information
-
-        create_table :service_tags, force: true do |t|
-          t.references :service
-          t.references :tag
-        end
-        ServiceTag.reset_column_information
+        User.reset_column_information
       end
     end
   end

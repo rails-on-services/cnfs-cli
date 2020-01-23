@@ -19,13 +19,19 @@ class String
       a.gsub!('{domain}', target.domain_name)
       a.gsub!('{domain_slug}', target.domain_slug)
     end
-    a.gsub!('{project_name}', Cnfs.config.name)
+    # puts a
     # binding.pry if a.index('{project_name}')
+    a.gsub!('{project_name}', Cnfs.config.name)
+    begin
     if Cnfs.request
-      a.gsub!('{application_name}', Cnfs.request.args.application_name)
-    # binding.pry if a.index('{namespace}')
-      a.gsub!('{namespace}', Cnfs.request.args.namespace_name)
+      a.gsub!('{application_name}', Cnfs.request.args.application_name) if a.index('{application_name}')
+      # binding.pry if a.index('{namespace}')
+      a.gsub!('{namespace}', Cnfs.request.args.namespace_name) if a.index('{namespace}') and Cnfs.request.args.namespace_name
     end
+    rescue TypeError => e
+      binding.pry
+    end
+
     a
   end
 

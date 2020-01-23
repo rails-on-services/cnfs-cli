@@ -21,7 +21,7 @@ class Target < ApplicationRecord
   # Set by controler#configure_target
   attr_accessor :deployment, :application
 
-  store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
+  store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
   store :config, accessors: %i[application_environment]
   store :tf_config, accessors: %i[tags], coder: YAML
 

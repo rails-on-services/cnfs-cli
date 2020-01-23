@@ -48,6 +48,7 @@ module Cnfs
       @skip_schema = lite # for plugins. necessary?
       ENV['CNFS_DEV'] = '1' if ARGV.delete('--dev')
       setup_paths(project_dir || Dir.pwd)
+      load_project_config
       config.dev ? initialize_dev_plugins : initialize_plugins
       setup_loader
       Schema.setup unless lite
@@ -82,8 +83,14 @@ module Cnfs
 
       @user_root = xdg.config_home.join('cnfs').join(project_name)
       @user_config_path = user_root.join('config')
+    end
 
-      Config.load_and_set_settings(root.join(CONFIG_FILE), user_root.join(CONFIG_FILE))
+    def load_project_config
+      if File.exist? project_file
+        Config.load_and_set_settings(root.join(CONFIG_FILE), user_root.join(CONFIG_FILE))
+      else
+        Config.load_and_set_settings('')
+      end
     end
 
     def config; Settings end
@@ -153,6 +160,17 @@ module Cnfs
       @key = Key.find_by(name: name)
       STDOUT.puts "WARN: Invalid Key. Valid keys: #{Key.pluck(:name).join(', ')}" if @key.nil?
     end
+
+    def encrypt_file(file_name)
+      plaintext = File.read(file_name)
+      File.open("#{file_name}.enc", 'w') { |f| f.write(Cnfs.box.encrypt(plaintext)) }
+    end
+
+    def decrypt_file(file_name)
+      ciphertext = File.binread(file_name)
+      box.decrypt(ciphertext).chomp
+    end
+
 
     # OS methods
     def gid

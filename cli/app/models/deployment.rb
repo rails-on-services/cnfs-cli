@@ -5,6 +5,8 @@ class Deployment < ApplicationRecord
   belongs_to :target
   belongs_to :key
 
+  has_many :assets, as: :owner
+
   store :config, accessors: %i[base_path], coder: YAML
   store :service_environments, accessors: %i[path], coder: YAML
 

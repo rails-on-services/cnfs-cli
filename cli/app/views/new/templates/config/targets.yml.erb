@@ -1,4 +1,4 @@
-# targets.yml
+# <%= name %> targets.yml
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
@@ -9,9 +9,9 @@ DEFAULTS: &DEFAULTS
 development: &development
   <<: *DEFAULTS 
   services: localstack, postgres, redis, wait, nginx
+  dns_root_domain: localhost
   config:
     mount: yes
-    dns_root_domain: localhost
     # dns_sub_domain: development
     # lb_dns_hostnames: ['api']
     # root_domain_managed_in_route53: yes
@@ -26,11 +26,11 @@ production: &production
   resources: postgres, redis, kubernetes, eks-resources, eks-monitor, globalaccelerator, cert-manager, iam, ses
   runtime: skaffold
   infra_runtime: terraform
+  dns_root_domain: example.com
   config:
-    dns_root_domain: example.com
     # dns_sub_domain: development
     root_domain_managed_in_route53: yes
     lb_dns_hostnames: ['api']
   tf_config:
     tags:
-      environment: staging
+      environment: production

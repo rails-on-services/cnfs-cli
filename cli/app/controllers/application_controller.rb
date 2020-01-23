@@ -15,7 +15,7 @@ class ApplicationController
   def valid_action?(action)
     return true if runtime.respond_to?(action)
 
-    output.puts "#{runtime.type} does not support namespaces"
+    output.puts "#{runtime.type} does not support this command"
   end
 
   def valid_namespace?
@@ -77,7 +77,7 @@ class ApplicationController
       Dir.chdir(target.exec_path) do
         yield target
       end
-      configure_target
+      clean_target
     end
   end
 
@@ -92,15 +92,14 @@ class ApplicationController
     result
   end
 
-  def configure_target(deployment = nil)
-    if deployment.nil?
-      @target = nil
-      @request = nil
-      @response = nil
-      @runtime = nil
-      return
-    end
+  def clean_target
+    @target = nil
+    @request = nil
+    @response = nil
+    @runtime = nil
+  end
 
+  def configure_target(deployment = nil)
     @target = deployment.target
     @target.deployment = deployment
     @target.application = deployment.application

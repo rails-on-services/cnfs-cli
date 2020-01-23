@@ -10,13 +10,15 @@ module Primary
     end
 
     def execute_on_target
-      # User must specify local otherwise deployment is done via a git tag
-      if options.local
-        runtime.deploy.run!
-        return
-      end
+      return unless valid_action?(:deploy) and valid_namespace?
 
-      deploy_git_tag
+      # Local deploy is a deployment direct to the cluster from the local machine
+      # The default is to push a tag to the repo which triggers a deploy via CI/CD
+      if options.local
+        runtime.deploy # .run!
+      else
+        deploy_git_tag
+      end
     end
 
     def deploy_git_tag

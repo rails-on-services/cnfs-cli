@@ -4,27 +4,28 @@ class Application < ApplicationRecord
   has_many :deployments
   has_many :targets, through: :deployments
 
-  has_many :application_services
-  has_many :services, through: :application_services
-  has_many :service_tags, through: :services, source: :tags
-
   has_many :application_resources
   has_many :resources, through: :application_resources
   has_many :resource_tags, through: :resources, source: :tags
 
-  # NOTE: All application types can have an endpoint
+  has_many :application_services
+  has_many :services, through: :application_services
+  has_many :service_tags, through: :services, source: :tags
+
+  has_many :source_repos, through: :services, source: :source_repo
+  has_many :image_repos, through: :services, source: :image_repo
+  has_many :chart_repos, through: :services, source: :chart_repo
+
+  def runtime_repositories
+    image_repos.uniq + chart_repos.uniq
+  end
+
+  store :config, accessors: %i[path], coder: YAML
   store :config, accessors: %i[endpoint deploy_tag image_registry], coder: YAML
-  # store :config, accessors: %i[path], coder: YAML
+
+  validates :deploy_tag, presence: true
 
   def to_env; Config::Options.new.merge!(environment).to_hash end
-
-  # NOTE: An application consists of multiple services each of which may have their own:
-  # - container registry
-  # - git repo
-  # - image tag calculation/format
-  # - version
-  # - image prefix
-  validates :deploy_tag, presence: true
 
   # NOTE: These values are used to build, push, pull and deploy images
   # so they need to be available to all controllers

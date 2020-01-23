@@ -8,7 +8,11 @@ module Primary
     end
 
     def method_missing(m, *args)
-      output.puts 'Valid options are ns, contexts, deployments'
+      output.puts 'Valid options are ns, contexts, deployments, applications'
+    end
+
+    def execute_applications
+      output.puts Application.pluck(:name)
     end
 
     def execute_ns

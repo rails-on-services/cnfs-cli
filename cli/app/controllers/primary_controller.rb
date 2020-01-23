@@ -66,8 +66,8 @@ class PrimaryController < CommandsController
   option :clean, type: :boolean, desc: 'Remove existing manifests before generating'
   def generate; run(:generate) end
 
-  desc 'init', 'Initialize a project environment'
-  def init; run(:init) end
+  desc 'init APPLICATION', 'Initialize an application'
+  def init(application_name); run(:init, application_name: application_name) end
 
   desc 'list', 'List configuration objects: deployments, ns, profiles'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'

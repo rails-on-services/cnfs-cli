@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Runtime::Compose < Runtime
+  def supported_commands
+    %w[attach console credentials exec list publish redeploy show stop build copy deploy generate logs
+       pull restart start terminate cmd create destroy init ps push shell status test]
+  end
+
   def attach
     response.add(exec: "docker attach #{project_name}_#{request.last_service_name}_1 --detach-keys='ctrl-f'", pty: true)
   end
@@ -45,10 +50,8 @@ class Runtime::Compose < Runtime
   def before_execute_on_target; switch! end
 
   def switch!
-    Dir.chdir(target.exec_path) do
-      FileUtils.rm_f('.env')
-      FileUtils.ln_s(compose_file, '.env')
-    end
+    FileUtils.rm_f('.env')
+    FileUtils.ln_s(compose_file, '.env') if File.exists?(compose_file)
     # TODO: This is specific to a Cnfs Backend project
     # Dir.chdir("#{target.deployment.root}/services") do
     #   FileUtils.rm_f('.env')

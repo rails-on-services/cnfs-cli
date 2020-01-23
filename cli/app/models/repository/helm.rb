@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+class Repository::Helm < Repository
+  store :config, accessors: %i[url], coder: YAML
+
+  def deploy_commands(runtime)
+    runtime.response.add(exec: "helm repo add #{name} #{url}", pty: true)
+    runtime.response.add(exec: 'helm repo update', pty: true)
+  end
+end

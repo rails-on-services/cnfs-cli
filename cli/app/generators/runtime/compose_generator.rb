@@ -21,10 +21,6 @@ class Runtime::ComposeGenerator < RuntimeGenerator
 
   def excluded_files; ["#{target.write_path(path_type)}/nginx.conf"] end
 
-  def nginx_services
-    services.select{ |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }.map(&:name)
-  end
-
   def mount; target.mount end
 
   def expose_ports(port)

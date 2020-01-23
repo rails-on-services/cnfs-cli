@@ -13,6 +13,10 @@ class Runtime < ApplicationRecord
   # method inherited from A/R base interferes with controller#destroy
   undef_method :destroy
 
+  def supported_commands
+    raise NotImplementedError, 'To implement: returns an array of commans names supported by this runtime'
+  end
+
   # Sub-classes, e.g. compose, skaffold override to implement, e.g. switch!
   def before_execute_on_target
     raise NotImplementedError, 'this needs to be done'
