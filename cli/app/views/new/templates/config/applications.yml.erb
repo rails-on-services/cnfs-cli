@@ -1,7 +1,10 @@
-# applications.yml
+# <%= name %> applications.yml
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
+  config:
+    endpoint: 'api.{domain}'
+    deploy_tag: 'enable-api.'
 
 frontend: &frontend
   <<: *DEFAULTS

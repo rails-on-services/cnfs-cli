@@ -6,7 +6,7 @@ class RuntimeGenerator < ApplicationGenerator
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
   def generate_application_environment
-    return unless (application_environment = application.to_env(target))
+    return unless (application_environment = deployment.to_env)
 
     generated_files << template('../env.erb',
                                 target.write_path(path_type).join('application.env'),
@@ -29,6 +29,11 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   private
+
+  def proxy_services
+    # services.select { |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }
+    services.select { |svc| svc.config.dig(:profiles) && svc.config.dig(:profiles).include?('server') }
+  end
 
   # Is a given service enabled?
   def service_enabled?(name)

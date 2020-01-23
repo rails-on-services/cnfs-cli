@@ -15,7 +15,7 @@ class ApplicationController
   def valid_action?(action)
     return true if runtime.respond_to?(action)
 
-    output.puts "#{runtime.type} does not support namespaces"
+    output.puts "#{runtime.type} does not support this command"
   end
 
   def valid_namespace?
@@ -53,7 +53,7 @@ class ApplicationController
     @cli_args = args
 
     Cnfs.config.context = args.context_name if args.context_name
-    @args = Config::Options.new(Cnfs.context&.config(args) || args)
+    @args = Config::Options.new(Cnfs.context&.config(args.compact) || args.compact)
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
@@ -66,7 +66,7 @@ class ApplicationController
 
   def each_target
     deployments.each do |deployment|
-      Cnfs.key_name = deployment.key&.name
+      Cnfs.key = deployment.key&.name
       if Cnfs.key
         output.puts "encryption key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
       else
@@ -77,7 +77,7 @@ class ApplicationController
       Dir.chdir(target.exec_path) do
         yield target
       end
-      configure_target
+      clean_target
     end
   end
 
@@ -92,15 +92,14 @@ class ApplicationController
     result
   end
 
-  def configure_target(deployment = nil)
-    if deployment.nil?
-      @target = nil
-      @request = nil
-      @response = nil
-      @runtime = nil
-      return
-    end
+  def clean_target
+    @target = nil
+    @request = nil
+    @response = nil
+    @runtime = nil
+  end
 
+  def configure_target(deployment = nil)
     @target = deployment.target
     @target.deployment = deployment
     @target.application = deployment.application
@@ -109,6 +108,8 @@ class ApplicationController
     output.puts "selected services: #{request.service_names_to_s}" if options.debug
 
     @response = Response.new(command_name, options, output, command(command_options), errors)
+    Cnfs.request = @request
+    Cnfs.response = @response
 
     # Set runtime object to an instance of compose or skaffold
     return unless (@runtime = current_runtime)
@@ -164,6 +165,12 @@ class ApplicationController
   end
 
   def before_execute_on_target
+    # TODO: validate all necessary models
+    unless target.application.valid?
+      # TODO: Add the model type to the message
+      raise Cnfs::Error.new(target.application.errors.full_messages)
+    end
+
     runtime.before_execute_on_target
     maybe_regenerate_config!
   end

@@ -1,5 +1,5 @@
 ---
-apiVersion: <%= @service.skaffold_version %>
+apiVersion: <%= version %>
 kind: Config
 deploy:
   helm:
@@ -9,17 +9,18 @@ deploy:
         remote: true
         overrides:
           labels:
-            # app.kubernetes.io/name: <%= @service.name %>
+            <%= labels(12) %>
             app.kubernetes.io/component: routing
             app.kubernetes.io/part-of: cluster-services
-            # stack.name: <%= @service.stack_name %>
+            # app.kubernetes.io/name: <%# service.name %>
+            # stack.name: <%# @service.stack_name %>
             # stack.component: be
             # be.component: application
             # application.component: services
-            # platform.feature_set: <%= @service.current_feature_set %>
+            # platform.feature_set: <%# @service.current_feature_set %>
           hosts:
-            - <%= @service.api_hostname %>
-          services:<% platform_service_names.each do |service| %>
-            - name: <%= service.to_s.gsub('_', '-') %>
+            - <%= application_hostname %>
+          services:<% proxy_services.each do |service| %>
+            - name: <%= service.name.gsub('_', '-') %>
               port: 80
-              prefix: /<%= service %><% end %>
+              prefix: /<%= service.name %><% end %>

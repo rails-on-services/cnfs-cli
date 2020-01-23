@@ -8,6 +8,7 @@ class Provider::Aws < Provider
     }).to_array
   end
 
+  # NOTE: These are not currently used anywhere other than in this class
   def aws_access_key_id; environment['aws_access_key_id'] || config['aws_access_key_id'] end
   def aws_secret_access_key; environment['aws_secret_access_key'] || config['aws_secret_access_key'] end
   def aws_region; environment['aws_region'] || config['aws_region'] end

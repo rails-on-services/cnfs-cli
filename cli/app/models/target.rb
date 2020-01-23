@@ -21,7 +21,7 @@ class Target < ApplicationRecord
   # Set by controler#configure_target
   attr_accessor :deployment, :application
 
-  store :config, accessors: %i[dns_root_domain dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
+  store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
   store :config, accessors: %i[application_environment]
   store :tf_config, accessors: %i[tags], coder: YAML
 
@@ -36,10 +36,8 @@ class Target < ApplicationRecord
   def valid_namespace?(namespace_name); namespace_names.include? namespace_name end
 
   def to_env
-    a = { platform: { infra: { provider: provider_type_to_s } } }
-    b = Config::Options.new.merge!(environment).to_hash
-    c = Config::Options.new.merge!(provider.environment).to_hash
-    Config::Options.new.merge!(a).merge!(b).merge!(c).to_hash
+    infra_env = { platform: { infra: { provider: provider_type_to_s } } }
+    Config::Options.new.merge_many!(infra_env, environment, provider.environment).to_hash
   end
 
   def provider_type_to_s

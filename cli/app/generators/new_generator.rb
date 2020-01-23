@@ -6,11 +6,13 @@ class NewGenerator < Thor::Group
 
   def generate_project_files
     directory('files', '.')
-    template('cnfs.yml', '.cnfs.yml')
+    template('cnfs.yml.erb', 'cnfs.yml')
+    template('cnfs.erb', '.cnfs')
   end
 
   def setup_project
     Cnfs.setup_paths(destination_root)
+    Cnfs.load_project_config
   end
 
   def generate_encryption_keys
@@ -23,10 +25,8 @@ class NewGenerator < Thor::Group
 
   private
 
-  def box_keys; @box_keys ||= set_box_keys end
-
-  def set_box_keys
-    {
+  def box_keys
+    @box_keys ||= {
       development: Lockbox.generate_key,
       test: Lockbox.generate_key,
       production: Lockbox.generate_key
@@ -35,7 +35,9 @@ class NewGenerator < Thor::Group
 
   def environments; %w[development test production] end
 
-  def configs; %w[deployments targets runtimes providers resources applications services tags] end
+  def configs
+    Dir[views_path.join('templates/config/*.erb')].map{ |f| File.basename(f).delete_suffix('.yml.erb') } - %w[keys]
+  end
 
   def source_paths; [views_path, views_path.join('templates')] end
 

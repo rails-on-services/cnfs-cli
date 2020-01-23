@@ -1,8 +1,6 @@
 # compose/nginx.yml.erb
 <%-
 def volume
-  # "../../target/#{layer.name}/nginx.conf:/etc/nginx/conf.d/default.conf"
-  # "#{target.write_path(:deployment)}/nginx.conf:/etc/nginx/conf.d/default.conf"
   "./nginx.conf:/etc/nginx/conf.d/default.conf"
 end
 -%>

@@ -1,9 +1,9 @@
-# deployments.yml
+# <%= name %> deployments.yml
 ---
 DEFAULTS: &DEFAULTS
   name: $LABEL
   config:
-    base_path: cnfs_tmp
+    base_path: tmp/cnfs
 
 frontend_development: &frontend_development
   <<: *DEFAULTS
@@ -24,6 +24,7 @@ backend_development: &backend_development
   <<: *DEFAULTS
   application: backend
   target: development
+  key: development
 <% if options.type&.eql?('cnfs') %>
   <% Cnfs.key = :development %>
   environment:
@@ -40,6 +41,7 @@ backend_test: &backend_test
   <<: *DEFAULTS
   application: backend
   target: test
+  key: test
 <% if options.type&.eql?('cnfs') %>
   <% Cnfs.key = :test %>
   environment:
@@ -56,6 +58,7 @@ backend_production: &backend_production
   <<: *DEFAULTS
   application: backend
   target: production
+  key: production
 <% if options.type&.eql?('cnfs') %>
   <% Cnfs.key = :production %>
   environment:
