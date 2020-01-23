@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# require 'open3'
 
 class Runtime < ApplicationRecord
   has_many :targets
@@ -39,6 +38,10 @@ class Runtime < ApplicationRecord
     { remote_file: "/home/rails/services/app/tmp/#{'mounted'}/credentials.json",
       local_file: "#{runtime_path}/target/credentials.json",
       local_path: "#{runtime_path}/target" }
+  end
+
+  def deployment_path
+    @deployment_path ||= target.write_path(:deployment)
   end
 
   def runtime_path; @runtime_path ||= target.write_path(:runtime) end

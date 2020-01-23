@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -eEuo pipefail
+
+if command -v podman-compose >/dev/null; then
+  while true; do
+    exec podman stats
+  done
+else
+  echo "podman is not available..."
+  sleep 9999d
+fi

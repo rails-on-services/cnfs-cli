@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -eEuo pipefail
+IFS=$'\n\t'
+
+redis-server --dir $REDIS_DIR

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -eEuo pipefail
+
+STATS_DIR=${DATA_DIR}/stats
+
+test -d $STATS_DIR || mkdir -p $STATS_DIR
+
+declare -A projects
+projects=(
+  [native]=.
+  [ros]=perx/ros
+  [whistler]=perx/whistler-services
+  [cli]=perx/ros-tools/cli
+  [cnfs]=perx/ros-tools/cnfs-cli
+)
+
+for key in "${!projects[@]}"; do
+  dir=${projects[$key]}
+  if [ "$(realpath .mailmap)" != "$(realpath ${dir}/.mailmap)" ]; then
+    cp .mailmap $dir
+  fi
+
+  gitstats $dir $STATS_DIR/$key
+
+  if [ "$(realpath .mailmap)" != "$(realpath ${dir}/.mailmap)" ]; then
+    rm $dir/.mailmap
+  fi
+done
