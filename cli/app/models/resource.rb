@@ -6,5 +6,7 @@ class Resource < ApplicationRecord
 
   store :config, accessors: %i[tf_version], coder: YAML
 
-  def resources; YAML.load(self[:resources] || '') || {} end
+  def resources
+    YAML.safe_load(self[:resources] || '') || {}
+  end
 end

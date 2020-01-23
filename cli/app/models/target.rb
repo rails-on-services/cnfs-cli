@@ -16,7 +16,6 @@ class Target < ApplicationRecord
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
 
-
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
   attr_accessor :deployment, :application
@@ -31,9 +30,13 @@ class Target < ApplicationRecord
   # Default intitialze of target is to do nothing
   def init(options); end
 
-  def namespace_names; namespaces ? namespaces.split(',').map(&:strip) : [] end
+  def namespace_names
+    namespaces ? namespaces.split(',').map(&:strip) : []
+  end
 
-  def valid_namespace?(namespace_name); namespace_names.include? namespace_name end
+  def valid_namespace?(namespace_name)
+    namespace_names.include? namespace_name
+  end
 
   def to_env
     infra_env = { platform: { infra: { provider: provider_type_to_s } } }
@@ -48,7 +51,9 @@ class Target < ApplicationRecord
     Pathname.new([deployment.base_path, path_for(type), "#{name}_#{application.name}"].join('/'))
   end
 
-  def exec_path; File.expand_path(application.path || '.') end
+  def exec_path
+    File.expand_path(application.path || '.')
+  end
 
   def path_for(type)
     case type

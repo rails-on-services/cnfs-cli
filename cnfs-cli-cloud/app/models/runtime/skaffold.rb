@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 
 class Runtime::Skaffold < Runtime
@@ -15,14 +16,18 @@ class Runtime::Skaffold < Runtime
     run("config use-context #{requested_context}").run!
   end
 
-  def requested_context; target.provider.kubectl_context(target) end
+  def requested_context
+    target.provider.kubectl_context(target)
+  end
 
   def current_context
     run('config current-context').run!
     response.results.shift.chomp
   end
 
-  def run(cmd, pty: false); response.add(env: kube_env, exec: kubectl(cmd), pty: pty) end
+  def run(cmd, pty: false)
+    response.add(env: kube_env, exec: kubectl(cmd), pty: pty)
+  end
 
   def attach
     # binding.pry
@@ -77,7 +82,9 @@ class Runtime::Skaffold < Runtime
     end
   end
 
-  def env_files; Dir[target.write_path(:deployment).join('*.env')] end
+  def env_files
+    Dir[target.write_path(:deployment).join('*.env')]
+  end
 
   def secrets_content(name, file, type)
     unless type.eql?(:cluster)
@@ -88,11 +95,11 @@ class Runtime::Skaffold < Runtime
     result = response.command.run!(cmd)
     return {} if result.failure?
 
-    yml = YAML.load(result.out)
+    yml = YAML.safe_load(result.out)
     yml['data'].each_with_object({}) { |a, h| h[a[0]] = Base64.decode64(a[1]) }
   end
 
-  def sync_secret(name, file)
+  def sync_secret(_name, file)
     response.output.puts "NOTICE: Updating cluster with new contents from #{file}"
     if request.options.verbose
       response.output.puts local
@@ -157,27 +164,27 @@ class Runtime::Skaffold < Runtime
     response.add(exec: kubectl("exec -it #{pod} -c #{service_name} #{command}"), env: kube_env, pty: pty)
   end
 
-
   # Utility Methods
   def labels(base_labels, space_count)
     space_count ||= 12
-    base_labels.select { |k, v| v }.map { |key, value| "#{label_base}/#{key.to_s.gsub('_', '-')}: #{value}" }.join("\n#{' ' * space_count}")
+    base_labels.select { |_k, v| v }.map { |key, value| "#{label_base}/#{key.to_s.gsub('_', '-')}: #{value}" }.join("\n#{' ' * space_count}")
   end
 
   # This is the method ps command will call
-  def services(format: '{{.Names}}', status: :running, **filters)
-  end
+  def services(format: '{{.Names}}', status: :running, **filters); end
 
   # TODO: status is ignored for now
   def service_names(status: :running)
     services = query_cluster(:pods, component: :server)
-    services.map{|m| m.split('-')[0] }.uniq
+    services.map { |m| m.split('-')[0] }.uniq
   end
 
   # TODO: replace with self.class.type
-  def deploy_type; :kubernetes end
+  def deploy_type
+    :kubernetes
+  end
 
-  def kubectl(command, service_name = nil)
+  def kubectl(command, _service_name = nil)
     cmd = ['kubectl']
     cmd.append('-n', namespace) if namespace
     # cmd.append(service_names.include?(service_name) ? 'exec' : 'run --rm').append(service_name) if service_name
@@ -193,7 +200,7 @@ class Runtime::Skaffold < Runtime
   end
 
   def query_cluster(asset_type, labels = {})
-    label_string = labels.map{ |k, v| "app.kubernetes.io/#{k}=#{v}" }.join(',')
+    label_string = labels.map { |k, v| "app.kubernetes.io/#{k}=#{v}" }.join(',')
     cmd = kubectl("get #{asset_type} -l #{label_string} -o yaml")
     out, err = response.run(cmd)
     return [] unless (result = YAML.safe_load(out))
@@ -206,7 +213,7 @@ class Runtime::Skaffold < Runtime
   #   system_cmd("skaffold -n #{namespace} #{cmd}", skaffold_env.merge(envs))
   # end
 
-  def skaffold(command) #, service_name = nil)
+  def skaffold(command) # , service_name = nil)
     cmd = ["skaffold -n #{namespace} #{command}"]
   end
 
@@ -221,15 +228,26 @@ class Runtime::Skaffold < Runtime
   # This method just creates a name of a secrets file in which to store the repo secret on k8s
   # def registry_secret_name; "registry-#{target.application.image_registry}" end
 
-  def kube_env; @kube_env ||= { 'KUBECONFIG' => kubeconfig, 'TILLER_NAMESPACE' => namespace } end
+  def kube_env
+    @kube_env ||= { 'KUBECONFIG' => kubeconfig, 'TILLER_NAMESPACE' => namespace }
+  end
 
-  def check; File.file?(kubeconfig) end
+  def check
+    File.file?(kubeconfig)
+  end
 
-  def kubeconfig; @kubeconfig ||= "#{Dir.home}/.kube/config" end
+  def kubeconfig
+    @kubeconfig ||= "#{Dir.home}/.kube/config"
+  end
 
   # def show_command_output; request.options.verbose || request.options.debug end
 
-  def namespace; @namespace ||= [request.args.namespace_name, request.args.application_name].compact.join('-') end
+  def namespace
+    @namespace ||= [request.args.namespace_name, request.args.application_name].compact.join('-')
+  end
 
-  def label_base; 'app.kubernetes.io' end # 'cnfs.io'
+  # 'cnfs.io'
+  def label_base
+    'app.kubernetes.io'
+  end
 end

@@ -25,7 +25,9 @@ class Application < ApplicationRecord
 
   validates :deploy_tag, presence: true
 
-  def to_env; Config::Options.new.merge!(environment).to_hash end
+  def to_env
+    Config::Options.new.merge!(environment).to_hash
+  end
 
   # NOTE: These values are used to build, push, pull and deploy images
   # so they need to be available to all controllers
@@ -34,10 +36,14 @@ class Application < ApplicationRecord
 
   # TODO: Bump should probably move to the rails plugin
   # def version; Dir.chdir(Ros.root) { Bump::Bump.current } end
-  def version; '0.99' end
+  def version
+    '0.99'
+  end
 
   # NOTE: image_prefix is specific to the resource so the default implementation is to return nil
   def image_prefix(target); end
 
-  def git; @git ||= Cnfs.git_details end
+  def git
+    @git ||= Cnfs.git_details
+  end
 end

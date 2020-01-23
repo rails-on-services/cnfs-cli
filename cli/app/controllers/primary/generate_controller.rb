@@ -3,7 +3,7 @@
 module Primary
   class GenerateController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do |_target|
         execute_on_target
       end
     end
@@ -18,6 +18,8 @@ module Primary
       generator.invoke_all
     end
 
-    def generator_class; "Runtime::#{target.runtime.type.demodulize}Generator".safe_constantize end
+    def generator_class
+      "Runtime::#{target.runtime.type.demodulize}Generator".safe_constantize
+    end
   end
 end

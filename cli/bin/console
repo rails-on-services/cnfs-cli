@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 # NOTE: if config is not required before 'bundler/setup' it doesn't work properly
 require 'config'
@@ -9,10 +10,10 @@ require 'pry'
 
 Cnfs.setup
 
-Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|
+Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*_args|
   output.puts Cnfs.reload
 end
 
 Pry.start
 
-ENV['YAML_VAULT_PASSPHRASE'] = "66560efd23c2aca731c5af6520179287"
+ENV['YAML_VAULT_PASSPHRASE'] = '66560efd23c2aca731c5af6520179287'

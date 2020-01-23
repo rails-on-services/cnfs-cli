@@ -5,13 +5,15 @@ module Rails
   class ServiceGenerator < ApplicationGenerator
     argument :name
 
-    def self.source_paths; ["#{File.dirname(__FILE__)}/templates", File.dirname(__FILE__)] end
+    def self.source_paths
+      ["#{File.dirname(__FILE__)}/templates", File.dirname(__FILE__)]
+    end
 
     # TODO: db and dummy path are set from config values
     def generate
-      return unless self.behavior.eql? :invoke
+      return unless behavior.eql? :invoke
 
-      return if Dir.exists?("services/#{name}")
+      return if Dir.exist?("services/#{name}")
 
       rails_generator = is_ros? ? 'plugin' : 'app'
       plugin = is_ros? ? 'plugin' : ''
@@ -63,10 +65,21 @@ module Rails
     end
 
     private
-    def is_ros?; true end
 
-    def platform_name; File.basename(Dir["#{lib_path.join('sdk')}/*.gemspec"].first).gsub('_sdk.gemspec', '') end
-    def lib_path; Pathname(destination_root).join('lib') end
-    def sdk_lib_path; lib_path.join("sdk/lib/#{platform_name}_sdk") end
+    def is_ros?
+      true
+    end
+
+    def platform_name
+      File.basename(Dir["#{lib_path.join('sdk')}/*.gemspec"].first).gsub('_sdk.gemspec', '')
+    end
+
+    def lib_path
+      Pathname(destination_root).join('lib')
+    end
+
+    def sdk_lib_path
+      lib_path.join("sdk/lib/#{platform_name}_sdk")
+    end
   end
 end

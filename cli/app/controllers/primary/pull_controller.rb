@@ -2,10 +2,8 @@
 
 module App::Backend
   class PullController < Cnfs::Command
-
     on_execute :execute_command
 
-    def execute_command
-    end
+    def execute_command; end
   end
 end

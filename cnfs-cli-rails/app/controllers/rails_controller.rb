@@ -9,10 +9,14 @@ class RailsController < CommandsController
   class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
 
   desc 'new [NAME]', 'Generate a new cnfs rails project'
-  def new(project_name); run(:new, project_name: project_name) end
+  def new(project_name)
+    run(:new, project_name: project_name)
+  end
 
   desc 'generate [TYPE] [NAME]', 'Generate a rails service'
-  def generate(type, service_name); run(:generate, type: type, service_name: service_name) end
+  def generate(type, service_name)
+    run(:generate, type: type, service_name: service_name)
+  end
 
   desc 'exec SERVICE COMMAND', 'Execute a rails command on a service'
   def exec(service, cmd)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # core/rails/gems.rb
 
 comment_lines 'Gemfile', "gem 'tzinfo-data'"
@@ -7,12 +9,12 @@ gem_group :production do
   gem 'puma'
 end
 
-gem 'pry-rails'
 gem 'awesome_print'
+gem 'pry-rails'
 
 gem_group :development, :test do
   gem 'brakeman', require: false
+  gem 'faker'
   gem 'pry-byebug'
   gem 'pry-stack_explorer'
-  gem 'faker'
 end

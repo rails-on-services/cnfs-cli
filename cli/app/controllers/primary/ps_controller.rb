@@ -3,7 +3,7 @@
 module Primary
   class PsController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do |_target|
         before_execute_on_target
         execute_on_target
       end
@@ -17,9 +17,7 @@ module Primary
     def format
       return nil unless options.format
 
-      if options.format.eql?('mounts')
-        "table {{.ID}}\t{{.Mounts}}"
-      end
+      "table {{.ID}}\t{{.Mounts}}" if options.format.eql?('mounts')
     end
 
     def status

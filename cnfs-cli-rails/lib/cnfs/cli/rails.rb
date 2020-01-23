@@ -6,7 +6,9 @@ module Cnfs
   module Cli
     module Rails
       class << self
-        def gem_root; @gem_root ||= Pathname.new(__dir__).join('../../..') end
+        def gem_root
+          @gem_root ||= Pathname.new(__dir__).join('../../..')
+        end
 
         def setup
           puts "Initializing plugin rails from #{gem_root}" if Cnfs.debug > 0

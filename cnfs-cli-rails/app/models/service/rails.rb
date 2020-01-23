@@ -7,15 +7,21 @@ class Service::Rails < Service
     ['bundle exec rubocop', "rails #{prefix}db:test:prepare", "#{exec_dir}bin/spring rspec #{rspec_options}"]
   end
 
-  def console_command; 'rails console' end
+  def console_command
+    'rails console'
+  end
 
   def database_seed_commands
     ["rails #{prefix}ros:db:reset:seed"]
   end
 
-  def prefix; is_cnfs_service ? 'app:' : '' end
+  def prefix
+    is_cnfs_service ? 'app:' : ''
+  end
 
-  def exec_dir; is_cnfs_service ? 'spec/dummy/' : '' end
+  def exec_dir
+    is_cnfs_service ? 'spec/dummy/' : ''
+  end
   # def image_prefix; config.dig(:image, :build_args, :rails_env) end
 
   def build_args(target)
@@ -23,7 +29,7 @@ class Service::Rails < Service
   end
 
   def context_path(relative_path)
-    (!Cnfs.services_project? and is_cnfs_service) ? relative_path.join('ros') : relative_path
+    !Cnfs.services_project? && is_cnfs_service ? relative_path.join('ros') : relative_path
   end
 
   def command(profile)
@@ -37,7 +43,7 @@ class Service::Rails < Service
     when 'sqs_worker'
       %w[bundle exec shoryuken -r ./app/workers/aws -C config/shoryuken.yml]
     when 'scheduler'
-     %w[bundle exec rails runner ./lib/scheduler.rb]
+      %w[bundle exec rails runner ./lib/scheduler.rb]
     end
   end
 end

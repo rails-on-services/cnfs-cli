@@ -2,17 +2,28 @@
 
 class Provider::Aws < Provider
   def credentials
-    Config::Options.new({
+    Config::Options.new(
       aws_access_key_id: aws_access_key_id,
-      aws_secret_access_key: aws_secret_access_key,
-    }).to_array
+      aws_secret_access_key: aws_secret_access_key
+    ).to_array
   end
 
   # NOTE: These are not currently used anywhere other than in this class
-  def aws_access_key_id; environment['aws_access_key_id'] || config['aws_access_key_id'] end
-  def aws_secret_access_key; environment['aws_secret_access_key'] || config['aws_secret_access_key'] end
-  def aws_region; environment['aws_region'] || config['aws_region'] end
-  def aws_account_id; environment['aws_account_id'] || config['aws_account_id'] end
+  def aws_access_key_id
+    environment['aws_access_key_id'] || config['aws_access_key_id']
+  end
+
+  def aws_secret_access_key
+    environment['aws_secret_access_key'] || config['aws_secret_access_key']
+  end
+
+  def aws_region
+    environment['aws_region'] || config['aws_region']
+  end
+
+  def aws_account_id
+    environment['aws_account_id'] || config['aws_account_id']
+  end
 
   def resource_to_terraform_template_map
     {
@@ -32,7 +43,7 @@ class Provider::Aws < Provider
   def init_cluster(target, options)
     credentials_file = "#{Dir.home}/.aws/credentials"
 
-    unless (File.exist?(credentials_file) or ENV['AWS_ACCESS_KEY_ID'])
+    unless File.exist?(credentials_file) || ENV['AWS_ACCESS_KEY_ID']
       STDOUT.puts "missing #{credentials_file}"
       return
     end
@@ -46,7 +57,9 @@ class Provider::Aws < Provider
     # end
 
     # role_name = controller.options.role_name || provider.cluster.role_name
-    cmd_string = "#{cmd_string} --role-arn arn:aws:iam::#{account_id}:role/#{target.role_name}" if options.long || target.role_name
+    if options.long || target.role_name
+      cmd_string = "#{cmd_string} --role-arn arn:aws:iam::#{account_id}:role/#{target.role_name}"
+    end
     binding.pry
     cmd_string
   end

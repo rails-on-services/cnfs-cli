@@ -6,7 +6,11 @@ class Tag < ApplicationRecord
   has_many :service_tags
   has_many :services, through: :service_tags
 
-  def entities; resources + services end
+  def entities
+    resources + services
+  end
 
-  def config; YAML.load(self[:config] || '') || {} end
+  def config
+    YAML.safe_load(self[:config] || '') || {}
+  end
 end

@@ -3,14 +3,14 @@
 module Primary
   class DeployController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do |_target|
         before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      return unless valid_action?(:deploy) and valid_namespace?
+      return unless valid_action?(:deploy) && valid_namespace?
 
       # Local deploy is a deployment direct to the cluster from the local machine
       # The default is to push a tag to the repo which triggers a deploy via CI/CD
@@ -30,16 +30,24 @@ module Primary
       # command.run("git push origin #{new_tag}")
     end
 
-    def versions; tags.each_with_object([]) { |tag, versions| versions.push(tag[/\d+$/].to_i) }.sort.reverse end
+    def versions
+      tags.each_with_object([]) { |tag, versions| versions.push(tag[/\d+$/].to_i) }.sort.reverse
+    end
 
-    def tags; (local_tags + remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) } end
+    def tags
+      (local_tags + remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) }
+    end
 
-    def api_tag_name; "#{target.application.deploy_tag}#{args.namespace_name}" end
+    def api_tag_name
+      "#{target.application.deploy_tag}#{args.namespace_name}"
+    end
 
-    def local_tags; %x(git tag).split end
+    def local_tags
+      `git tag`.split
+    end
 
     def remote_tags
-      %x(git ls-remote --tags).split("\n").map { |tag| tag.split("\t").last.gsub('refs/tags/', '') }
+      `git ls-remote --tags`.split("\n").map { |tag| tag.split("\t").last.gsub('refs/tags/', '') }
     end
   end
 end

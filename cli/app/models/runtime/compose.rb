@@ -31,7 +31,11 @@ class Runtime::Compose < Runtime
     response.add(exec: "docker logs #{compose_options} #{project_name}_#{service_name}_1", pty: request.options.tail)
   end
 
-  def restart; stop.run!; refresh_services; start end
+  def restart
+    stop.run!
+    refresh_services
+    start
+  end
 
   def start
     database_check
@@ -43,15 +47,20 @@ class Runtime::Compose < Runtime
     response.add(exec: compose("stop #{request.service_names_to_s}"))
   end
 
-  def terminate; stop; clean end
+  def terminate
+    stop
+    clean
+  end
 
   #### Support Methods
 
-  def before_execute_on_target; switch! end
+  def before_execute_on_target
+    switch!
+  end
 
   def switch!
     FileUtils.rm_f('.env')
-    FileUtils.ln_s(compose_file, '.env') if File.exists?(compose_file)
+    FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
     # TODO: This is specific to a Cnfs Backend project
     # Dir.chdir("#{target.deployment.root}/services") do
     #   FileUtils.rm_f('.env')
@@ -65,9 +74,13 @@ class Runtime::Compose < Runtime
     # end
   end
 
-  def compose_file; @compose_file ||= "#{runtime_path}/compose.env" end
+  def compose_file
+    @compose_file ||= "#{runtime_path}/compose.env"
+  end
 
-  def service_id(service_name); `docker-compose ps -q #{service_name}`.chomp end
+  def service_id(service_name)
+    `docker-compose ps -q #{service_name}`.chomp
+  end
 
   # See: https://docs.docker.com/engine/reference/commandline/ps
   def services(format: '{{.Names}}', status: :running, **filters)
@@ -80,16 +93,18 @@ class Runtime::Compose < Runtime
 
   def labels(base_labels, space_count)
     space_count ||= 6
-    base_labels.select { |k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
+    base_labels.select { |_k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
   end
 
   private
 
-  def refresh_services; @services = nil end
+  def refresh_services
+    @services = nil
+  end
 
   def compose_env
     hash = {}
-    hash.merge!({ 'GEM_SERVER' => "http://#{gem_cache_server}:9292" }) if gem_cache_server
+    hash.merge!('GEM_SERVER' => "http://#{gem_cache_server}:9292") if gem_cache_server
     hash
   end
 
@@ -98,13 +113,15 @@ class Runtime::Compose < Runtime
     # clean_cache(request)
   end
 
-  def deploy_type; :instance end
+  def deploy_type
+    :instance
+  end
 
   # Generate
   # TODO: taken from deploy command; is it needed/appropriate here?
   def set_compose_options
     @compose_options = ''
-    if request.options.daemon or request.options.console or request.options.shell or request.options.attach
+    if request.options.daemon || request.options.console || request.options.shell || request.options.attach
       @compose_options = '-d'
     end
     output.puts "compose options set to #{compose_options}" if request.options.verbose
@@ -122,15 +139,14 @@ class Runtime::Compose < Runtime
     result.split("\n").size > 1 ? result.split("\n") : []
   end
 
-
   def gem_cache_server
-    return unless %x(docker ps).index('gem_server')
+    return unless `docker ps`.index('gem_server')
 
     host = RbConfig::CONFIG['host_os']
     # TODO: Make this configurable per user
-    return %x(ifconfig vboxnet1).split[7] if host =~ /darwin/
+    return `ifconfig vboxnet1`.split[7] if host =~ /darwin/
 
-    %x(ip -o -4 addr show dev docker0).split[3].split('/')[0]
+    `ip -o -4 addr show dev docker0`.split[3].split('/')[0]
   end
 
   def database_check
@@ -138,7 +154,7 @@ class Runtime::Compose < Runtime
       next unless service.respond_to?(:database_seed_commands)
 
       migration_file = "#{runtime_path}/#{service.name}-migrated"
-      next unless !File.exist?(migration_file) or request.options.seed
+      next unless !File.exist?(migration_file) || request.options.seed
 
       FileUtils.rm(migration_file) if File.exist?(migration_file)
       service.database_seed_commands.each do |command|

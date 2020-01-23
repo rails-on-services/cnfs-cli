@@ -7,9 +7,17 @@ def source_paths
    service_path, core_path] + Array(super)
 end
 
-def user_path; Pathname.new(destination_root).join('../../lib/generators/service') end
-def service_path; __dir__ end
-def core_path; Pathname.new(File.dirname(__FILE__)).join('../../rails/core') end
+def user_path
+  Pathname.new(destination_root).join('../../lib/generators/service')
+end
+
+def service_path
+  __dir__
+end
+
+def core_path
+  Pathname.new(File.dirname(__FILE__)).join('../../rails/core')
+end
 
 require_relative '../../rails/core/profile'
 @profile = Profile.new(@app_name || name, self, options.dup)

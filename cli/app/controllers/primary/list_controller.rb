@@ -7,7 +7,7 @@ module Primary
       send("execute_#{args.what}")
     end
 
-    def method_missing(m, *args)
+    def method_missing(_m, *_args)
       output.puts 'Valid options are ns, contexts, deployments, applications'
     end
 
@@ -36,7 +36,7 @@ module Primary
         item.append("namespace: #{profile.namespace}") if profile.namespace
         item.append("application: #{profile.application.name}") if profile.application
         %w[resources services].each do |attribute|
-          item.append("#{attribute}: #{YAML.load(profile.send(attribute)).join(', ')}") if profile.send(attribute)
+          item.append("#{attribute}: #{YAML.safe_load(profile.send(attribute)).join(', ')}") if profile.send(attribute)
         end
         hash[profile.name] = item unless item.empty?
       end
@@ -53,7 +53,9 @@ module Primary
 
     def deploy_hash(deployment)
       result = {}
-      result["target (#{deployment.target.provider.type})"] = ta_hash(deployment.target) unless ta_hash(deployment.target).empty?
+      unless ta_hash(deployment.target).empty?
+        result["target (#{deployment.target.provider.type})"] = ta_hash(deployment.target)
+      end
       result[:application] = ta_hash(deployment.application) unless ta_hash(deployment.application).empty?
       result
     end

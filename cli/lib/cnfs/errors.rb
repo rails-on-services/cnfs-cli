@@ -14,6 +14,8 @@ module Cnfs
       @details[attribute] = options
     end
 
-    def size; @messages.size end
+    def size
+      @messages.size
+    end
   end
 end

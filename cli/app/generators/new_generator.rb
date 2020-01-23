@@ -33,15 +33,23 @@ class NewGenerator < Thor::Group
     }
   end
 
-  def environments; %w[development test production] end
-
-  def configs
-    Dir[views_path.join('templates/config/*.erb')].map{ |f| File.basename(f).delete_suffix('.yml.erb') } - %w[keys]
+  def environments
+    %w[development test production]
   end
 
-  def source_paths; [views_path, views_path.join('templates')] end
+  def configs
+    Dir[views_path.join('templates/config/*.erb')].map { |f| File.basename(f).delete_suffix('.yml.erb') } - %w[keys]
+  end
 
-  def views_path; @views_path ||= internal_path.join('../views/new') end
+  def source_paths
+    [views_path, views_path.join('templates')]
+  end
 
-  def internal_path; Pathname.new(__dir__) end
+  def views_path
+    @views_path ||= internal_path.join('../views/new')
+  end
+
+  def internal_path
+    Pathname.new(__dir__)
+  end
 end

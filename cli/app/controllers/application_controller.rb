@@ -27,9 +27,9 @@ class ApplicationController
   # TODO: Integrate this method into standard flow
   def publish_results
     require 'tty-table'
-    table = TTY::Table.new(['Commands', 'Errors'], errors.messages.to_a)
+    table = TTY::Table.new(%w[Commands Errors], errors.messages.to_a)
     output.puts "\n"
-    output.puts table.render(:basic, alignments: [:left, :left], padding: [0, 4, 0, 0])
+    output.puts table.render(:basic, alignments: %i[left left], padding: [0, 4, 0, 0])
   end
 
   # TODO: Test
@@ -57,7 +57,7 @@ class ApplicationController
     @options = options
     @errors = Cnfs::Errors.new
     if options.debug
-      output.puts "ENVs: #{ENV.select { |env| env.start_with? 'CNFS_'}}\n" \
+      output.puts "ENVs: #{ENV.select { |env| env.start_with? 'CNFS_' }}\n" \
         "cli options: #{options}\ncli args: #{cli_args}\n" \
         "context: #{Cnfs.context_name}\ncontext args: #{Cnfs.context&.to_args}\n" \
         "command args: #{@args.to_h}"
@@ -68,7 +68,7 @@ class ApplicationController
     deployments.each do |deployment|
       Cnfs.key = deployment.key&.name
       if Cnfs.key
-        output.puts "encryption key set to '#{Cnfs.key_name}'" if options.verbose or options.debug
+        output.puts "encryption key set to '#{Cnfs.key_name}'" if options.verbose || options.debug
       else
         output.puts "WARN: encryption key not found for key name '#{Cnfs.key_name}'"
       end
@@ -81,12 +81,16 @@ class ApplicationController
     end
   end
 
-  def deployments(query_args = nil); @deployments ||= configure_deployments(query_args) end
+  def deployments(query_args = nil)
+    @deployments ||= configure_deployments(query_args)
+  end
 
   def configure_deployments(query_args)
     query_args ||= args
     result = Deployment.all
-    result = result.joins(:application).where(applications: { name: query_args.application_name }) if query_args.application_name
+    if query_args.application_name
+      result = result.joins(:application).where(applications: { name: query_args.application_name })
+    end
     result = result.joins(:target).where(targets: { name: query_args.target_name }) if query_args.target_name
     output.puts "selected deployments: #{result.pluck(:name).join(', ')}" if options.debug
     result
@@ -123,11 +127,14 @@ class ApplicationController
     @runtime.target = target
   end
 
-  def command_name; self.class.name.demodulize.underscore.delete_suffix('_controller') end
+  def command_name
+    self.class.name.demodulize.underscore.delete_suffix('_controller')
+  end
 
   def current_runtime
     mod = self.class.name.underscore.split('/').first
     return target.infra_runtime if mod.eql?('infra')
+
     target.runtime
   end
 
@@ -168,7 +175,7 @@ class ApplicationController
     # TODO: validate all necessary models
     unless target.application.valid?
       # TODO: Add the model type to the message
-      raise Cnfs::Error.new(target.application.errors.full_messages)
+      raise Cnfs::Error, target.application.errors.full_messages
     end
 
     runtime.before_execute_on_target
@@ -208,9 +215,13 @@ class ApplicationController
     find_earliest_latest(manifest_files, :min)
   end
 
-  def config_files; Dir[Cnfs.config_path.join('**/*.yml')] end
+  def config_files
+    Dir[Cnfs.config_path.join('**/*.yml')]
+  end
 
-  def manifest_files; Dir[target.write_path.join('**/*')] end
+  def manifest_files
+    Dir[target.write_path.join('**/*')]
+  end
 
   def find_earliest_latest(list, method)
     list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }.send(method)

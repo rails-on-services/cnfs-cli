@@ -30,12 +30,12 @@ class Runtime < ApplicationRecord
     request.services.each do |service|
       migration_file = "#{runtime_path}/#{service.name}-migrated"
       FileUtils.rm(migration_file) if File.exist?(migration_file)
-      FileUtils.rm(credentials[:local_file]) if service.name.eql?('iam') and File.exist?(credentials[:local_file])
+      FileUtils.rm(credentials[:local_file]) if service.name.eql?('iam') && File.exist?(credentials[:local_file])
     end
   end
 
   def credentials
-    { remote_file: "/home/rails/services/app/tmp/#{'mounted'}/credentials.json",
+    { remote_file: '/home/rails/services/app/tmp/mounted/credentials.json',
       local_file: "#{runtime_path}/target/credentials.json",
       local_path: "#{runtime_path}/target" }
   end
@@ -44,7 +44,11 @@ class Runtime < ApplicationRecord
     @deployment_path ||= target.write_path(:deployment)
   end
 
-  def runtime_path; @runtime_path ||= target.write_path(:runtime) end
+  def runtime_path
+    @runtime_path ||= target.write_path(:runtime)
+  end
 
-  def project_name; [Cnfs.project_name, target.name, target.application.name].join('_') end
+  def project_name
+    [Cnfs.project_name, target.name, target.application.name].join('_')
+  end
 end

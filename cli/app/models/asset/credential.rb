@@ -10,7 +10,11 @@ class Asset::Credential < Asset
     runtime.kubectl("create secret generic #{name} --from-literal=#{FIXED_FILE}=#{secret}")
   end
 
-  def secret; Cnfs.decrypt_file(full_path) end
+  def secret
+    Cnfs.decrypt_file(full_path)
+  end
 
-  def full_path; Cnfs.root.join(path) end
+  def full_path
+    Cnfs.root.join(path)
+  end
 end

@@ -3,7 +3,6 @@
 require 'yaml'
 
 class Runtime::Native < Runtime
-
   def before_execute_on_target
     switch!
   end
@@ -25,7 +24,7 @@ class Runtime::Native < Runtime
     cmd = [
       'overmind',
       command,
-      socket(type),
+      socket(type)
     ].flatten.compact.join(' ')
 
     system(@env, cmd)
@@ -52,7 +51,7 @@ class Runtime::Native < Runtime
   end
 
   def runtime_dir
-    %w[ XDG_RUNTIME_DIR TMPDIR TMP TEMP . ].each do |v|
+    %w[XDG_RUNTIME_DIR TMPDIR TMP TEMP .].each do |v|
       dir = ENV.fetch(v, nil)
 
       return Pathname.new(dir) if dir

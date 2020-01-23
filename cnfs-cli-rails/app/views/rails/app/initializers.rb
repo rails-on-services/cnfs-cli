@@ -6,12 +6,14 @@ application "require 'rails-html-sanitizer'"
 remove_file 'config/master.key'
 remove_file 'config/credentials.yml.enc'
 
-insert_into_file 'config/application.rb', before: "\n# Require the gems" do <<-RUBY
-require 'ros/core'
-RUBY
+insert_into_file 'config/application.rb', before: "\n# Require the gems" do
+  <<~RUBY
+    require 'ros/core'
+  RUBY
 end
 
-inject_into_file 'config/application.rb', after: ".api_only = true\n" do <<-RUBY
+inject_into_file 'config/application.rb', after: ".api_only = true\n" do
+  <<-RUBY
   config.generators do |g|
     g.test_framework :rspec, fixture: true
     g.fixture_replacement :factory_bot, dir: 'spec/factories'
@@ -33,5 +35,5 @@ inject_into_file 'config/application.rb', after: ".api_only = true\n" do <<-RUBY
       Ros.config.factory_paths += Dir[Pathname.new(__FILE__).join('../../../../spec/factories')]
     end
   end
-RUBY
+  RUBY
 end

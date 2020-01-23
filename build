@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-
-{ 'cli' => 'cnfs-cli', 'cnfs-cli-cloud' => nil, 'cnfs-cli-rails' => nil}.each_pair do |dir, name|
-  name ||= dir  
+{ 'cli' => 'cnfs-cli', 'cnfs-cli-cloud' => nil, 'cnfs-cli-rails' => nil }.each_pair do |dir, name|
+  name ||= dir
   Dir.chdir(dir) do
     puts "gem build #{name}.gemspec"
     puts "gem install ./#{name}-0.1.0.gem" if ARGV.include?('-i')

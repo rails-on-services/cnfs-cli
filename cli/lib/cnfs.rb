@@ -63,7 +63,7 @@ module Cnfs
           fname = File.basename(file).delete_suffix('.rb')
           plugin_module = "cnfs/cli/#{fname}"
           lib_path = File.expand_path(dir.join('lib'))
-          $:.unshift(lib_path) if !$:.include?(lib_path)
+          $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
           require plugin_module
           next unless (klass = plugin_module.camelize.safe_constantize)
 
@@ -93,23 +93,39 @@ module Cnfs
       end
     end
 
-    def config; Settings end
+    def config
+      Settings
+    end
 
-    def context; Context.find_by(name: config.context) end
+    def context
+      Context.find_by(name: config.context)
+    end
 
-    def project?; File.exist?(project_file) end
+    def project?
+      File.exist?(project_file)
+    end
 
     # NTOE: Dir.pwd is the current application's root (switched into)
     # TODO: This should probably move out to rails or some other place
-    def services_project?; File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb')) end
+    def services_project?
+      File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
+    end
 
-    def gem_config_path; @gem_config_path ||= gem_root.join('config') end
+    def gem_config_path
+      @gem_config_path ||= gem_root.join('config')
+    end
 
-    def gem_root; @gem_root ||= Pathname.new(__dir__).join('..') end
+    def gem_root
+      @gem_root ||= Pathname.new(__dir__).join('..')
+    end
 
-    def xdg; @xdg ||= XDG::Environment.new end
+    def xdg
+      @xdg ||= XDG::Environment.new
+    end
 
-    def debug; ARGV.include?('-d') ? ARGV[ARGV.index('-d') + 1].to_i : 0 end
+    def debug
+      ARGV.include?('-d') ? ARGV[ARGV.index('-d') + 1].to_i : 0
+    end
 
     # Zeitwerk based class loader methods
     def setup_loader
@@ -125,9 +141,13 @@ module Cnfs
       loader.reload
     end
 
-    def loader; @loader ||= Zeitwerk::Loader.new end
+    def loader
+      @loader ||= Zeitwerk::Loader.new
+    end
 
-    def autoload_dirs; @autoload_dirs ||= autoload_all(gem_root) end
+    def autoload_dirs
+      @autoload_dirs ||= autoload_all(gem_root)
+    end
 
     def autoload_all(path)
       %w[controllers models generators].each_with_object([]) { |type, ary| ary << path.join('app').join(type) }
@@ -140,7 +160,9 @@ module Cnfs
       config_dirs.each_with_object([]) { |path, ary| ary << load_config(file, path) }.join("\n")
     end
 
-    def config_dirs; @config_dirs ||= [config_path, user_config_path] end
+    def config_dirs
+      @config_dirs ||= [config_path, user_config_path]
+    end
 
     def load_config(file, path)
       fixture_file = path.join(File.basename(file))
@@ -150,10 +172,14 @@ module Cnfs
       ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
     end
 
-    def controllers; @controllers ||= [] end
+    def controllers
+      @controllers ||= []
+    end
 
     # Lockbox encryption methods
-    def box; @box ||= Lockbox.new(key: key&.value) end
+    def box
+      @box ||= Lockbox.new(key: key&.value)
+    end
 
     def key=(name)
       @box = nil
@@ -171,11 +197,10 @@ module Cnfs
       box.decrypt(ciphertext).chomp
     end
 
-
     # OS methods
     def gid
       ext_info = OpenStruct.new
-      if (RbConfig::CONFIG['host_os'] =~ /linux/ and Etc.getlogin)
+      if RbConfig::CONFIG['host_os'] =~ /linux/ && Etc.getlogin
         shell_info = Etc.getpwnam(Etc.getlogin)
         ext_info.puid = shell_info.uid
         ext_info.pgid = shell_info.gid
@@ -187,9 +212,9 @@ module Cnfs
       return Config::Options.new unless system('git rev-parse --git-dir > /dev/null 2>&1')
 
       Config::Options.new(
-        tag_name: %x(git tag --points-at HEAD).chomp,
-        branch_name: %x(git rev-parse --abbrev-ref HEAD).strip.gsub(/[^A-Za-z0-9-]/, '-'),
-        sha: %x(git rev-parse --short HEAD).chomp
+        tag_name: `git tag --points-at HEAD`.chomp,
+        branch_name: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),
+        sha: `git rev-parse --short HEAD`.chomp
       )
     end
 

@@ -10,7 +10,7 @@ module Primary
     end
 
     def execute_on_target
-      return unless valid_action?(:destroy) and valid_namespace?
+      return unless valid_action?(:destroy) && valid_namespace?
 
       runtime.destroy.run!
     end

@@ -7,22 +7,34 @@ class ApplicationGenerator < Thor::Group
 
   private
 
-  def source_paths; [user_views_path, views_path] end
+  def source_paths
+    [user_views_path, views_path]
+  end
 
-  def user_views_path; Cnfs.root.join(views_path.to_s.gsub("#{Cnfs.gem_root}/app", 'app')) end
+  def user_views_path
+    Cnfs.root.join(views_path.to_s.gsub("#{Cnfs.gem_root}/app", 'app'))
+  end
 
   def views_path
     @views_path ||= internal_path.join('../views')
-      .join(self.class.name.demodulize.delete_suffix('Generator').underscore)
+                                 .join(self.class.name.demodulize.delete_suffix('Generator').underscore)
   end
 
-  def internal_path; Pathname.new(__dir__) end
+  def internal_path
+    Pathname.new(__dir__)
+  end
 
-  def path_type; nil end
+  def path_type
+    nil
+  end
 
-  def services; @services ||= (target.services + application.services) end
+  def services
+    @services ||= (target.services + application.services)
+  end
 
-  def resources; @resources ||= (target.resources + application.resources) end
+  def resources
+    @resources ||= (target.resources + application.resources)
+  end
 
   def entity_to_template(entity = nil)
     entity ||= instance_variable_get("@#{entity_name}")
@@ -30,7 +42,9 @@ class ApplicationGenerator < Thor::Group
     entity_template_map[key.to_sym] || key
   end
 
-  def entity_template_map; {} end
+  def entity_template_map
+    {}
+  end
 
   def generate_entity_manifests
     entities.each do |entity|
@@ -40,7 +54,7 @@ class ApplicationGenerator < Thor::Group
   rescue StandardError => e
     # TODO: add to errors array and have controller output the result
     error_on = instance_variable_get("@#{entity_name}")
-    puts "\nError generating #{entity_name} #{error_on.name}: #{e.to_s}"
+    puts "\nError generating #{entity_name} #{error_on.name}: #{e}"
     puts "\n#{error_on.to_json}"
     exit
   end
@@ -51,9 +65,15 @@ class ApplicationGenerator < Thor::Group
     end
   end
 
-  def all_files; Dir[target.write_path(path_type).join('**/*')] end
+  def all_files
+    Dir[target.write_path(path_type).join('**/*')]
+  end
 
-  def excluded_files; [] end
+  def excluded_files
+    []
+  end
 
-  def generated_files; @generated_files ||= [] end
+  def generated_files
+    @generated_files ||= []
+  end
 end

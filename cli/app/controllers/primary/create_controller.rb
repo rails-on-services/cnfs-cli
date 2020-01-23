@@ -3,14 +3,14 @@
 module Primary
   class CreateController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do |_target|
         before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      return unless valid_action?(:create) and valid_namespace?
+      return unless valid_action?(:create) && valid_namespace?
 
       runtime.create.run!
     end

@@ -4,4 +4,3 @@ class ApplicationService < ApplicationRecord
   belongs_to :application
   belongs_to :service
 end
-
