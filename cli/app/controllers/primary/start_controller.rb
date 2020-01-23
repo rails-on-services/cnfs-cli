@@ -13,7 +13,7 @@ module Primary
 
     def execute_on_target
       runtime.clean if options.clean
-        # binding.pry
+      # binding.pry
       runtime.start.run!
     end
   end

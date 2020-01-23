@@ -32,7 +32,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def proxy_services
     # services.select { |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }
-    services.select { |svc| svc.config.dig(:profiles) && svc.config.dig(:profiles).include?('server') }
+    services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
   end
 
   # Is a given service enabled?

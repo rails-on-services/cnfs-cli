@@ -10,7 +10,7 @@ module Config
         end
       else
         if value.is_a? Array
-          ary.append("#{key.upcase}=#{value.join(",")}")
+          ary.append("#{key.upcase}=#{value.join(',')}")
         else
           value = value.plaintext.cnfs_sub(target) if value.is_a? String
           ary.append("#{key.upcase}=#{value}") unless value.nil?

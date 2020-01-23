@@ -29,16 +29,26 @@ module Primary
       end
     end
 
-    def remote_file; runtime.credentials[:remote_file] end
-    def local_file; runtime.credentials[:local_file] end
-    def local_path; runtime.credentials[:local_path] end
+    def remote_file
+      runtime.credentials[:remote_file]
+    end
+
+    def local_file
+      runtime.credentials[:local_file]
+    end
+
+    def local_path
+      runtime.credentials[:local_path]
+    end
     # def remote_file; "/home/rails/services/app/tmp/#{'mounted'}/credentials.json" end
 
     # def local_file; "#{local_path}/credentials.json" end
 
     # def local_path; "#{target.write_path(:runtime)}/target" end
 
-    def json; File.exist?(local_file) ? JSON.parse(File.read(local_file)) : [] end
+    def json
+      File.exist?(local_file) ? JSON.parse(File.read(local_file)) : []
+    end
   end
 
   class Credential
@@ -55,17 +65,17 @@ module Primary
     end
 
     def to_env
-      Config::Options.new.merge!({
+      Config::Options.new.merge!(
         'platform' => {
           'tenant' => {
-            "#{tenant['id']}" => {
-              "#{type}" => {
-                "#{owner['id']}" => "Basic #{credential['access_key_id']}:#{secret}"
+            tenant['id'].to_s => {
+              type.to_s => {
+                owner['id'].to_s => "Basic #{credential['access_key_id']}:#{secret}"
               }
             }
           }
         }
-      }).to_array
+      ).to_array
     end
 
     def to_cli
@@ -90,14 +100,24 @@ module Primary
       }
     end
 
-    def identifier; "#{tenant_account_id}-#{cred_uid}" end
+    def identifier
+      "#{tenant_account_id}-#{cred_uid}"
+    end
 
-    def uid; type.eql?('root') ? 'email' : 'username' end
+    def uid
+      type.eql?('root') ? 'email' : 'username'
+    end
 
-    def cred_uid; type.eql?('root') ? owner['email'].split('@').first : owner['username'] end
+    def cred_uid
+      type.eql?('root') ? owner['email'].split('@').first : owner['username']
+    end
 
-    def part_name; application.partition_name(target.application_environment) end
+    def part_name
+      application.partition_name(target.application_environment)
+    end
 
-    def tenant_account_id; tenant['urn'].split('/').last end
+    def tenant_account_id
+      tenant['urn'].split('/').last
+    end
   end
 end

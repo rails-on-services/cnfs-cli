@@ -11,13 +11,21 @@ class Request
     @options = options
   end
 
-  def last_service_name; args.service_names&.last end
+  def last_service_name
+    args.service_names&.last
+  end
 
-  def service_names_to_s; service_names.join(' ') end
+  def service_names_to_s
+    service_names.join(' ')
+  end
 
-  def service_names; services.pluck(:name) end
+  def service_names
+    services.pluck(:name)
+  end
 
-  def services; @services ||= application_services + target_services end
+  def services
+    @services ||= application_services + target_services
+  end
 
   def application_services
     result = application.services

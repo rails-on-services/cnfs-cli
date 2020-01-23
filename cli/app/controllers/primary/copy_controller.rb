@@ -14,8 +14,8 @@ module Primary
       dest = args.dest
       src_service = src.include?(':')
       dest_service = dest.include?(':')
-      raise ArgumentError.new('only one of source or destination can be a service') if src_service and dest_service
-      raise ArgumentError.new('one of source or destination must be a service') unless src_service or dest_service
+      raise ArgumentError, 'only one of source or destination can be a service' if src_service && dest_service
+      raise ArgumentError, 'one of source or destination must be a service' unless src_service || dest_service
 
       runtime.copy(src, dest)
       response.run!

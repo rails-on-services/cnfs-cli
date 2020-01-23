@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'tty-table'
 
 module Primary
@@ -15,7 +16,7 @@ module Primary
       table = TTY::Table.new(header: header, rows: rows)
 
       output.puts "\nServices:"
-      output.puts table.render(:basic, alignments: [:left, :left], padding: [0, 4, 0, 0])
+      output.puts table.render(:basic, alignments: %i[left left], padding: [0, 4, 0, 0])
 
       # output.puts "\nResources:"
       # stuff = [target.application, target].each.map(&:resources).flatten.compact.map { |svc| [svc.type, svc.name, svc.config.to_s] }

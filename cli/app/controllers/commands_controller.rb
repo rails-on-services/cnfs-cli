@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 class CommandsController < Thor
-
   private
 
-  def run(command_name, args = {}, limits = {})
+  def run(command_name, args = {}, _limits = {})
     if options[:help]
       invoke(:help, [command_name.to_s])
       return

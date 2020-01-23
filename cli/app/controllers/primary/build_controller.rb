@@ -3,7 +3,7 @@
 module Primary
   class BuildController < ApplicationController
     def execute
-      each_target do |target|
+      each_target do |_target|
         before_execute_on_target
         execute_on_target
       end

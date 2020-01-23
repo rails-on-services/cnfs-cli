@@ -10,13 +10,23 @@ class InfraRuntimeGenerator < ApplicationGenerator
 
   private
 
-  def entity_name; :resource end
+  def entity_name
+    :resource
+  end
 
-  def entities; resources end
+  def entities
+    resources
+  end
 
-  def internal_path; Pathname.new(__dir__) end
+  def internal_path
+    Pathname.new(__dir__)
+  end
 
-  def views_path; super.join(target.provider.type.demodulize.underscore) end
+  def views_path
+    super.join(target.provider.type.demodulize.underscore)
+  end
 
-  def path_type; :infra end
+  def path_type
+    :infra
+  end
 end

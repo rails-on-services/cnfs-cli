@@ -18,7 +18,9 @@ class Response
     self
   end
 
-  def run(cmd); command.run(cmd, only_output_on_error: !options.debug) end
+  def run(cmd)
+    command.run(cmd, only_output_on_error: !options.debug)
+  end
 
   # Execute enqueued commands
   def run!
@@ -26,7 +28,7 @@ class Response
       break unless (cmd = commands.shift)
 
       if cmd.pty
-        output.puts(cmd.exec) if options.verbose or options.debug
+        output.puts(cmd.exec) if options.verbose || options.debug
         result = system(cmd.exec) unless options.noop
         # TODO: improve error handling and reporting
         unless result
@@ -35,7 +37,7 @@ class Response
         end
         @results << result
       else
-        output.puts(cmd.exec) if (options.verbose or options.debug) and not options.noop
+        output.puts(cmd.exec) if (options.verbose || options.debug) && !options.noop
         command_options = cmd.env.merge(only_output_on_error: !options.debug)
         command_options.merge!(chdir: cmd.dir) if cmd.dir
         # with_spinner('Building...') do end

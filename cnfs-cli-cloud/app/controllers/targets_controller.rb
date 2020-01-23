@@ -16,20 +16,28 @@ class TargetsController < CommandsController
   # def create(*args); run(:create, args) end
 
   desc 'generate', 'Generate target infrastructure'
-  def generate(*args); run(:generate) end
+  def generate(*_args)
+    run(:generate)
+  end
 
   desc 'init', 'Initialize the cluster'
   option :long, type: :boolean, aliases: '-l', desc: 'Run the long form of the command'
   option :role_name, type: :string, aliases: '-r', desc: 'Override the aws iam role to be used'
-  def init; run(:init) end
+  def init
+    run(:init)
+  end
 
   desc 'plan', 'Show the terraform infrastructure plan'
   option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'
-  def plan(*args); run(:plan, args) end
+  def plan(*args)
+    run(:plan, args)
+  end
 
   desc 'apply', 'Apply the terraform infrastructure plan'
   option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'
-  def apply(*args); run(:apply, args) end
+  def apply(*args)
+    run(:apply, args)
+  end
 
   # desc 'show', 'Show infrastructure details'
   # def show(type = 'json')
@@ -47,6 +55,7 @@ class TargetsController < CommandsController
   # end
 
   private
+
   # TODO: this needs to be per provider and region comes from deployment.yml
   def cmd_environment
     { 'AWS_DEFAULT_REGION' => 'ap-southeast-1' }
@@ -58,7 +67,7 @@ class TargetsController < CommandsController
 
   def generate_config
     silence_output do
-      Ros::Be::Infra::Generator.new([], {}, {behavior: :revoke}).invoke_all
+      Ros::Be::Infra::Generator.new([], {}, behavior: :revoke).invoke_all
       Ros::Be::Infra::Generator.new.invoke_all
     end
   end
@@ -73,9 +82,7 @@ class TargetsController < CommandsController
         ip = json['ec2-eip']['value']['public_ip']
         STDOUT.puts "ssh -A admin@#{ip}"
       end
-      if json['lb_route53_record']
-        STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}"
-      end
+      STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
     end
   end
 end

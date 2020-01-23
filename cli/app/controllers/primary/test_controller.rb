@@ -46,6 +46,7 @@ module App::Backend
           # result = command(command_options).run!("docker-compose #{run_string} #{service} #{command}", cmd_options)
           # result = command(command_options).run!({'RAILS_ENV' => 'test'}, "docker-compose #{run_string} #{service} #{command}", cmd_options)
           next unless result.failure?
+
           errors.add("#{service} #{command}", "#{service} failed on #{command}")
           # errors.add("#{service} #{command}", result.err)
           break if options.fail_fast

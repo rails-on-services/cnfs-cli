@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
-
   private
 
   def generate
@@ -9,12 +8,18 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
     template("#{tmpl}.tf.erb", "#{target.write_path(path_type)}/#{[tmpl, resource.name].uniq.join('-')}.tf".cnfs_sub(target))
   end
 
-  def entity_template_map; target.provider.resource_to_terraform_template_map end
+  def entity_template_map
+    target.provider.resource_to_terraform_template_map
+  end
 
-  def excluded_files; Dir[target.write_path(path_type).join('terraform-provider*')] end
+  def excluded_files
+    Dir[target.write_path(path_type).join('terraform-provider*')]
+  end
 
   # def deploy_type; target.runtime.deploy_type end
-  def deploy_type; :kubernetes end
+  def deploy_type
+    :kubernetes
+  end
 
   def output_type
     if deploy_type.eql?(:instance)
@@ -48,7 +53,9 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
       @config = template.merge(target.tf_config.merge(resource.config.merge(@xtra_config)))
     end
 
-    def render; render_attributes(config) end
+    def render
+      render_attributes(config)
+    end
 
     def render_attributes(hash, spacer = 2, ary = [])
       max_key_length = hash.to_h.keys.max_by(&:length).length
@@ -66,7 +73,7 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
         "[#{nary}]"
       elsif value.is_a?(Hash)
         "{\n#{render_attributes(value, spacer + 2).join("\n")}\n#{' ' * spacer}}"
-      elsif value.is_a?(Integer) or [true, false].include?(value)
+      elsif value.is_a?(Integer) || [true, false].include?(value)
         value
       else
         "\"#{value.cnfs_sub(target)}\""

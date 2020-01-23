@@ -4,9 +4,13 @@ module Primary
   class ConsoleController < ApplicationController
     module Commands
       class << self
-        def cache; @cache ||= {} end
+        def cache
+          @cache ||= {}
+        end
 
-        def reset_cache; @cache = nil end
+        def reset_cache
+          @cache = nil
+        end
 
         def load
           shortcuts.each_pair do |key, klass|
@@ -19,8 +23,7 @@ module Primary
 
         def shortcuts
           { a: Application, c: Context, d: Deployment, k: Key, p: Provider, r: Resource, s: Service,
-            t: Target, u: User
-          }
+            t: Target, u: User }
         end
       end
     end
@@ -31,7 +34,7 @@ module Primary
         return
       end
 
-      each_target do |target|
+      each_target do |_target|
         execute_on_target
       end
     end
@@ -48,12 +51,12 @@ module Primary
     end
 
     def start_cnfs_console
-      Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*args|
+      Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*_args|
         Primary::ConsoleController::Commands.reset_cache
         Cnfs.reload
       end
       # TODO: Alias 'r' above to this command
-      Pry::Commands.block_command 'reload!', 'Reload', keep_retval: true do |*args|
+      Pry::Commands.block_command 'reload!', 'Reload', keep_retval: true do |*_args|
         Primary::ConsoleController::Commands.reset_cache
         Cnfs.reload
       end

@@ -16,13 +16,15 @@ class Service < ApplicationRecord
 
   store :config, accessors: %i[path], coder: YAML
 
-  def test_commands(options = nil); [] end
+  def test_commands(_options = nil)
+    []
+  end
 
   # Called by RuntimeGenerator#service_environment
   def to_env(target = nil)
     @target = target
     env = Config::Options.new.merge!(environment)
-    if (deployment_env = target.deployment.service_environments[self.name])
+    if (deployment_env = target.deployment.service_environments[name])
       env.merge!(Config::Options.new.merge!(deployment_env).to_hash)
     end
     env.empty? ? nil : env
