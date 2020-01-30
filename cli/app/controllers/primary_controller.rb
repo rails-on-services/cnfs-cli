@@ -36,9 +36,10 @@ class PrimaryController < CommandsController
     run(:build)
   end
 
-  desc 'cmd', 'Run specified command on service'
-  def cmd(*args)
-    run(:cmd, args)
+  desc 'command COMMAND', 'Run specified command on cluster'
+  map %w[cmd] => :command
+  def command(*args)
+    run(:command, command: args)
   end
 
   desc 'console [SERVICE]', 'Start a cnfs or service console'
@@ -93,10 +94,10 @@ class PrimaryController < CommandsController
     run(:init, application_name: application_name)
   end
 
-  desc 'list', 'List configuration objects: deployments, ns, profiles'
+  desc 'list', 'List configuration objects: config, ns, contexts, deployments, applications'
   option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
   map %w[ls] => :list
-  def list(what = :deployments)
+  def list(what = :config)
     run(:list, what: what)
   end
 

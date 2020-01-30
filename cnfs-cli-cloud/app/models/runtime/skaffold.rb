@@ -60,20 +60,20 @@ class Runtime::Skaffold < Runtime
   # Deploy services based on tags
   def deploy
     update_repositories
-    # sync_env_files
-    deploy_services
+    sync_service_environment_files
+    #deploy_services
     response
   end
 
   def update_repositories
     # NOTE: currently helm and dockerhub
-    target.application.repositories.each do |repo|
-      repo.deploy_commands(self)
+    target.application.runtime_repositories.each do |repo|
+      repo.add_deploy_commands(self)
       response.run!
     end
   end
 
-  def sync_env_files
+  def sync_service_environment_files
     env_files.each do |file|
       name = File.basename(file, '.env')
       local = secrets_content(name, file, :local)
@@ -92,11 +92,11 @@ class Runtime::Skaffold < Runtime
     end
 
     cmd = kubectl("get secret #{name} -o yaml")
-    result = response.command.run!(cmd)
+    result = response.command.run!(cmd, printer: null)
     return {} if result.failure?
 
     yml = YAML.safe_load(result.out)
-    yml['data'].each_with_object({}) { |a, h| h[a[0]] = Base64.decode64(a[1]) }
+    yml['data'].each_with_object({}) { |(key, value), hash| hash[key] = Base64.decode64(value) }
   end
 
   def sync_secret(_name, file)

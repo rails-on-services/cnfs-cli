@@ -1,5 +1,5 @@
 ---
-apiVersion: <%= @service.skaffold_version %>
+apiVersion: <%= version %>
 kind: Config
 deploy:
   helm:
@@ -12,8 +12,8 @@ deploy:
           image: railsonservices/kafka-connect
           imageTag: latest
           nameOverride: kafka-connect
-          fullnameOverride: kafka-connect-<%= @service.current_feature_set %>
-          overrideGroupId: kafka-connect-<%= @service.current_feature_set %>
+          fullnameOverride: kafka-connect-<%= service.namespace_name %>
+          overrideGroupId: kafka-connect-<%= service.namespace_name %>
           podLabels:
             app.kubernetes.io/name: kafka-connect
             app.kubernetes.io/part-of: application-services
@@ -43,36 +43,36 @@ deploy:
             consumer.retry.backoff.ms: 500
             producer.request.timeout.ms: 20000
             producer.retry.backoff.ms: 500
-            <%- if @service.kafka.security_protocol == "SASL_SSL" -%>
+            <%- if service.security_protocol == "SASL_SSL" -%>
             security.protocol: SASL_SSL
             consumer.security.protocol: SASL_SSL
             producer.security.protocol: SASL_SSL
             ssl.endpoint.identification.algorithm: https
             consumer.ssl.endpoint.identification.algorithm: https
             producer.ssl.endpoint.identification.algorithm: https
-            sasl.mechanism: <%= @service.kafka.sasl_mechanism %>
-            producer.sasl.mechanism: <%= @service.kafka.sasl_mechanism %>
-            consumer.sasl.mechanism: <%= @service.kafka.sasl_mechanism %>
-            <%- if @service.kafka.sasl_mechanism == "PLAIN" -%>
-            sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= @service.kafka.username %>" password="<%= @service.kafka.password %>";
-            consumer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= @service.kafka.username %>" password="<%= @service.kafka.password %>";
-            producer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= @service.kafka.username %>" password="<%= @service.kafka.password %>";
+            sasl.mechanism: <%= service.sasl_mechanism %>
+            producer.sasl.mechanism: <%= service.sasl_mechanism %>
+            consumer.sasl.mechanism: <%= service.sasl_mechanism %>
+            <%- if service.sasl_mechanism == "PLAIN" -%>
+            sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= service.username %>" password="<%= service.password %>";
+            consumer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= service.username %>" password="<%= service.password %>";
+            producer.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= service.username %>" password="<%= service.password %>";
             <%- end -%>
             <%- end -%>
-            <%- @service.kafka_connect.configuration_overrides&.reject{ |k, v| v.nil? }&.each do |k, v| -%>
-            <%= k %>: <%= v %>
+            <%- service.configuration_overrides.compact.each do |key, value| -%>
+            <%= key %>: <%= value %>
             <%- end -%>
 
           kafka:
-            <%- if @service.kafka.security_protocol == "SASL_SSL" -%>
-            bootstrapServers: "SASL_SSL://<%= @service.kafka.bootstrap_servers %>"
+            <%- if service.security_protocol == "SASL_SSL" -%>
+            bootstrapServers: "SASL_SSL://<%= service.bootstrap_servers %>"
             <%- else -%>
-            bootstrapServers: "PLAINTEXT://<%= @service.kafka.bootstrap_servers %>"
+            bootstrapServers: "PLAINTEXT://<%= service.bootstrap_servers %>"
             <%- end -%>
 
           cp-schema-registry:
             url: "http://kafka-schema-registry:8081"
-      <%- if @service.kafka_connect.ui -%>
+      <%- if service.ui -%>
       - name: kafka-connect-ui
         chartPath: ros/basic
         remote: true
@@ -83,7 +83,7 @@ deploy:
           containerPort: 8000
           env:
             PORT: "8000"
-            CONNECT_URL: "http://kafka-connect-<%= @service.current_feature_set %>:8083;default"
+            CONNECT_URL: "http://kafka-connect-<%= service.namespace_name %>:8083;default"
             PROXY: "true"
           resources:
             limits:

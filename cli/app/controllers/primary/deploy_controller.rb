@@ -3,7 +3,7 @@
 module Primary
   class DeployController < ApplicationController
     def execute
-      each_target do |_target|
+      each_target do
         before_execute_on_target
         execute_on_target
       end
@@ -22,7 +22,7 @@ module Primary
     end
 
     def deploy_git_tag
-      new_tag = "#{api_tag_name}.v#{versions.shift + 1}"
+      new_tag = "#{api_tag_name}.v#{(versions.shift || 0) + 1}"
       output.puts new_tag
       # retag local
       # command.run("git tag -a -m #{new_tag} #{new_tag}")

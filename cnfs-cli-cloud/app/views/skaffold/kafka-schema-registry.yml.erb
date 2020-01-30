@@ -1,5 +1,5 @@
 ---
-apiVersion: <%= @service.skaffold_version %>
+apiVersion: <%= version %>
 kind: Config
 deploy:
   helm:
@@ -11,28 +11,28 @@ deploy:
           imageTag: 5.3.1
           replicaCount: 1
           fullnameOverride: kafka-schema-registry
-          overrideGroupId: kafka-schema-registry-<%= @service.current_feature_set %>
+          overrideGroupId: kafka-schema-registry-<%= service.namespace_name %>
           customEnv:
             SCHEMA_REGISTRY_DEBUG: true
-            SCHEMA_REGISTRY_SCHEMA_REGISTRY_GROUP_ID: schema-registry-<%= @service.current_feature_set %>
+            SCHEMA_REGISTRY_SCHEMA_REGISTRY_GROUP_ID: schema-registry-<%= service.namespace_name %>
           podLabels:
             app.kubernetes.io/name: kafka-schema-registry
             app.kubernetes.io/part-of: application-services
           kafka:
-            <%- if @service.kafka.security_protocol == "SASL_SSL" -%>
-            bootstrapServers: "SASL_SSL://<%= @service.kafka.bootstrap_servers %>"
+            <%- if service.security_protocol == "SASL_SSL" -%>
+            bootstrapServers: "SASL_SSL://<%= service.bootstrap_servers %>"
             <%- else -%>
-            bootstrapServers: "PLAINTEXT://<%= @service.kafka.bootstrap_servers %>"
+            bootstrapServers: "PLAINTEXT://<%= service.bootstrap_servers %>"
             <%- end -%>
           configurationOverrides:
-            <%- if @service.kafka.security_protocol == "SASL_SSL" -%>
+            <%- if service.security_protocol == "SASL_SSL" -%>
             kafkastore.security.protocol: SASL_SSL
-            <%- if @service.kafka.sasl_mechanism == "PLAIN" -%>
+            <%- if service.sasl_mechanism == "PLAIN" -%>
             kafkastore.sasl.mechanism: PLAIN
-            kafkastore.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= @service.kafka.username %>" password="<%= @service.kafka.password %>";
+            kafkastore.sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<%= service.username %>" password="<%= service.password %>";
             <%- end -%>
             <%- end -%>
-            kafkastore.topic: _schemas_<%= @service.current_feature_set %>
+            kafkastore.topic: _schemas_<%= service.namespace_name %>
           heapOptions: "-Xms1024M -Xmx1024M"
           resources:
             limits:
@@ -41,7 +41,7 @@ deploy:
             requests:
               cpu: 200m
               memory: 1Gi
-      <%- if @service.kafka_schema_registry&.ui -%>
+      <%- if service.ui -%>
       - name: kafka-schema-registry-ui
         chartPath: ros/basic
         remote: true

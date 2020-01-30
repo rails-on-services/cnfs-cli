@@ -8,7 +8,11 @@ module Primary
     end
 
     def method_missing(_m, *_args)
-      output.puts 'Valid options are ns, contexts, deployments, applications'
+      output.puts 'Valid options are: config, ns, contexts, deployments, applications'
+    end
+
+    def execute_config
+      output.puts Cnfs.config.map { |key, value| "#{key}: #{value}\n"}
     end
 
     def execute_applications
