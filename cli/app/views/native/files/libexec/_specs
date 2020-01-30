@@ -2,9 +2,10 @@
 
 set -eEuo pipefail
 
+# needed to make the definitions in lib.sh available to parallel
 set -a
 
-. "${BASE_DIR}/libexec/lib.sh"
+. libexec/lib.sh
 
 cleanup() {
   rm -f $LOG_DIR/*_test.txt
