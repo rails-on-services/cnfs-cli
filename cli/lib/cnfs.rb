@@ -40,7 +40,7 @@ module Cnfs
     attr_reader :project_file, :project_name
     attr_accessor :autoload_dirs, :context_name, :skip_schema
     attr_reader :root, :config_path, :user_root, :user_config_path
-    attr_accessor :request, :response
+    attr_accessor :request, :response, :key
 
     def setup(lite = false)
       project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/#{PROJECT_FILE}") }
@@ -169,6 +169,7 @@ module Cnfs
       return unless File.exist?(fixture_file)
 
       STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
+
       ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
     end
 
@@ -181,18 +182,10 @@ module Cnfs
       @box ||= Lockbox.new(key: key&.value)
     end
 
-    def key(name = key_name)
-      Key.find_by(name: name)
-    end
-
     def key=(name)
       @box = nil
-      @key = key(name)
+      @key = Key.find_by(name: name)
       STDOUT.puts "WARN: Invalid Key. Valid keys: #{Key.pluck(:name).join(', ')}" if @key.nil?
-    end
-
-    def key_name
-      'development'
     end
 
     def encrypt_file(file_name)

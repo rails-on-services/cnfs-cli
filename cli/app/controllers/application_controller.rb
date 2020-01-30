@@ -158,6 +158,14 @@ class ApplicationController
   #
   # @api public
   def execute
+    each_target do |target|
+      before_execute_on_target
+      execute_on_target target
+      after_execute_on_target
+    end
+  end
+
+  def execute_on_target(_target)
     raise NotImplementedError
   end
 
@@ -180,6 +188,10 @@ class ApplicationController
 
     runtime.before_execute_on_target
     maybe_regenerate_config!
+  end
+
+  def after_execute_on_target
+    true
   end
 
   # Regenerate config if needed

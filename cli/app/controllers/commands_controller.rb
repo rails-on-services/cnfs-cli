@@ -9,8 +9,7 @@ class CommandsController < Thor
       return
     end
 
-    controller_class = "#{self.class.name.gsub('Controller', '')}::#{command_name.to_s.camelize}Controller"
-    unless (controller = controller_class.safe_constantize)
+    unless (controller = controller_class(command_name))
       raise Error, set_color("Class not found: #{controller_class} (this is a bug. please report)", :red)
     end
 
@@ -18,6 +17,10 @@ class CommandsController < Thor
     opts = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(*options_to_args))
     Cnfs.context_name = args.context_name
     controller.new(args, opts).call
+  end
+
+  def controller_class(command)
+    "#{self.class.name.gsub('Controller', '')}::#{command.to_s.camelize}Controller".safe_constantize
   end
 
   def options_to_args
