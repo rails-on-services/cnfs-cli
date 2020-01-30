@@ -86,6 +86,14 @@ module Cnfs
         end
         Key.reset_column_information
 
+        create_table :namespaces, force: true do |t|
+          t.references :target
+          t.string :name
+          t.string :config
+          t.string :environment
+        end
+        Namespace.reset_column_information
+
         create_table :providers, force: true do |t|
           t.string :name
           t.string :config

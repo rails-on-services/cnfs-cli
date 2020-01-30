@@ -1,5 +1,4 @@
-# compose/wait.yml.erb
-<%-
+<% # compose/wait.yml.erb
 def depends_on
   configured_services.map { |key| "- #{key}" }.join("\n      ")
 end
@@ -20,8 +19,7 @@ def dependency_ports
     localstack: '4572'
   }
 end
--%>
----
+%>---
 version: '<%= version %>'
 services:
   wait:

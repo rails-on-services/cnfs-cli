@@ -5,14 +5,6 @@ class Runtime::ComposeGenerator < RuntimeGenerator
     template('nginx.conf.erb', "#{target.write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
   end
 
-  def create_fluentd_log_dir
-    return unless behavior.eql?(:invoke) && template_types.include?(:fluentd)
-
-    fluentd_dir = "#{target.write_path(:runtime)}/fluentd"
-    empty_directory("#{fluentd_dir}/log")
-    FileUtils.chmod('+w', "#{fluentd_dir}/log")
-  end
-
   def generate_compose_environment
     template('../env.erb', target.runtime.compose_file, env: compose_environment)
   end

@@ -1,10 +1,8 @@
-# compose/nginx.yml.erb
-<%-
+<% # compose/nginx.yml.erb
 def volume
-  "./nginx.conf:/etc/nginx/conf.d/default.conf"
+  './nginx.conf:/etc/nginx/conf.d/default.conf'
 end
--%>
----
+%>---
 version: '<%= version %>'
 services:
   nginx:
