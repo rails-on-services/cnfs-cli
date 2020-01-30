@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'dotenv'
 require 'yaml'
 
 class Runtime::Native < Runtime
