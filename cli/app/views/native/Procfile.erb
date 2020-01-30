@@ -1,4 +1,13 @@
 # <%= Time.now %>
+<% conditional_infra_services_map.each_pair do |k,v| -%>
+<% if service_enabled?(k) -%>
+<%= [ k, v ].join(': ') %>
+<% end -%>
+<% end -%>
+<% infra_services_map.each_pair do |k,v| -%>
+<%= [ k, v ].join(': ') %>
+<% end -%>
+
 <% port = web_port -%>
 <% services.select { |s| s.type.eql?('Service::Rails') }.each do |service| -%>
 <% profiles = (service.profiles || []) << "spring" -%>

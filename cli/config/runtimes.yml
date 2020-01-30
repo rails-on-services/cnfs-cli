@@ -3,14 +3,16 @@
 DEFAULTS: &DEFAULTS
   name: $LABEL
 
-compose:
+compose: &compose
   <<: *DEFAULTS
   type: Runtime::Compose
   config:
     version: 3.2
 
-native:
+native: &native
   <<: *DEFAULTS
   type: Runtime::Native
+  config:
+    version: 1
 
 <%= Cnfs.load_configs(__FILE__) %>

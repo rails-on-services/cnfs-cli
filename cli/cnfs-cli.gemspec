@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli'
   spec.version       = Cnfs::VERSION
   spec.authors       = ['Robert Roach']
-  spec.email         = ['rjayroach@gmail.com']
+  spec.email         = ['rob@perxtech.com']
 
   spec.summary       = 'Write a short summary, because RubyGems requires one.'
   spec.description   = 'Write a longer description or delete this line.'
