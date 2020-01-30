@@ -107,6 +107,7 @@ class ApplicationController
     @target = deployment.target
     @target.deployment = deployment
     @target.application = deployment.application
+    @target.namespace = @target.namespaces.find_by(name: args.namespace_name) if args.namespace_name
 
     @request = Request.new(deployment, args, options)
     output.puts "selected services: #{request.service_names_to_s}" if options.debug

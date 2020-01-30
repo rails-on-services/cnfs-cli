@@ -1,4 +1,8 @@
----
+<% # compose/fluentd.yml.erb
+fluentd_dir = "#{target.write_path(:runtime)}/fluentd"
+empty_directory("#{fluentd_dir}/log")
+FileUtils.chmod('+w', "#{fluentd_dir}/log")
+%>---
 version: '<%= version %>'
 services:
   fluentd:

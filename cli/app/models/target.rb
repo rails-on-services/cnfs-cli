@@ -3,6 +3,7 @@
 class Target < ApplicationRecord
   has_many :deployments
   has_many :applications, through: :deployments
+  has_many :namespaces
 
   has_many :target_services
   has_many :services, through: :target_services
@@ -18,7 +19,7 @@ class Target < ApplicationRecord
 
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
-  attr_accessor :deployment, :application
+  attr_accessor :deployment, :application, :namespace
 
   store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
   store :config, accessors: %i[application_environment]
@@ -31,7 +32,7 @@ class Target < ApplicationRecord
   def init(options); end
 
   def namespace_names
-    namespaces ? namespaces.split(',').map(&:strip) : []
+    namespaces.pluck(:name)
   end
 
   def valid_namespace?(namespace_name)
@@ -40,7 +41,7 @@ class Target < ApplicationRecord
 
   def to_env
     infra_env = { platform: { infra: { provider: provider_type_to_s } } }
-    Config::Options.new.merge_many!(infra_env, environment, provider.environment).to_hash
+    Config::Options.new.merge_many!(infra_env, environment, provider.environment, namespace&.environment || {}).to_hash
   end
 
   def provider_type_to_s
