@@ -25,8 +25,8 @@ backend_development: &backend_development
   application: backend
   target: development
   key: development
-<% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key = :development %>
+<% if options.type&.eql?('cnfs')
+  Cnfs.key = :development -%>
   environment:
     rails_env: development
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -35,15 +35,15 @@ backend_development: &backend_development
       jwt:
         encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
       partition_name: <%= name %>
-<% end %>
+<% end -%>
 
 backend_test: &backend_test
   <<: *DEFAULTS
   application: backend
   target: test
   key: test
-<% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key = :test %>
+<% if options.type&.eql?('cnfs')
+  Cnfs.key = :test -%>
   environment:
     rails_env: test
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -52,15 +52,15 @@ backend_test: &backend_test
       jwt:
         encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
       partition_name: <%= name %>
-<% end %>
+<% end -%>
 
 backend_production: &backend_production
   <<: *DEFAULTS
   application: backend
   target: production
   key: production
-<% if options.type&.eql?('cnfs') %>
-  <% Cnfs.key = :production %>
+<% if options.type&.eql?('cnfs')
+  Cnfs.key = :production -%>
   environment:
     rails_env: production
     secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
@@ -84,7 +84,7 @@ backend_production: &backend_production
           host: fluentd
           port: 24224
           schema_registry_url: http://kafkastack:8081
-<% end %>
+<% end -%>
 
 pipeline_development: &pipeline_development
   <<: *DEFAULTS

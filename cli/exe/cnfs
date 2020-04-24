@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 
 require 'cnfs'
 
-lite_setup = %w[version help new].include?(ARGV[0])
+lite_setup =  ARGV[0].blank? || %w[version help new].include?(ARGV[0])
 Cnfs.setup(lite_setup)
 
 unless Cnfs.project? || lite_setup

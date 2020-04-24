@@ -17,6 +17,7 @@ class NewGenerator < Thor::Group
 
   def generate_encryption_keys
     template('config/keys.yml.erb', Cnfs.user_config_path.join('keys.yml'))
+    Cnfs::Schema.setup
   end
 
   def generate_default_configs

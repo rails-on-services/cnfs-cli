@@ -105,7 +105,7 @@ module Cnfs
       File.exist?(project_file)
     end
 
-    # NTOE: Dir.pwd is the current application's root (switched into)
+    # NOTE: Dir.pwd is the current application's root (switched into)
     # TODO: This should probably move out to rails or some other place
     def services_project?
       File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
