@@ -8,11 +8,14 @@ port=${3:-0}
 
 app=$(basename "$0" .sh)
 
-. "${BASE_DIR}/libexec/lib.sh"
-
-# source_service_env $name
+. libexec/lib.sh
 
 cd "$dir"
+if [ -d spec/dummy ]; then
+  app_dir=spec/dummy
+else
+  app_dir=.
+fi
 
 if [ -e Gemfile ]; then
   export BUNDLE_GEMFILE=$(pwd)/Gemfile
@@ -25,15 +28,14 @@ case $app in
     migrate_and_seed_db_maybe $(db_name_for_service $name)
     exec bundle exec rails s -p "$port"
     ;;
+  _scheduler)
+    exec sleep 9999d
+    ;;
   _sidekiq)
-    if [ -d spec/dummy ]; then
-      dir=spec/dummy
-    else
-      dir=.
-    fi
-    exec bundle exec sidekiq -r $dir -C config/sidekiq.yml
+    exec bundle exec sidekiq -r $app_dir -C config/sidekiq.yml
     ;;
   _spring)
+    bundle exec spring stop || true
     if [ ${VERBOSE_SPRING:-0} -eq 1 ]; then
       exec bundle exec spring server
     else

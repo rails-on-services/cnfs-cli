@@ -3,21 +3,17 @@
 # Runtime for running native processes on host
 class Runtime::NativeGenerator < RuntimeGenerator
   def generate_project_files
-    outdir = target.write_path(:deployment)
-
     directory('files', outdir)
 
     symlink_map.each_pair do |dir, links|
       Dir.chdir(outdir.join(dir.to_s)) do
         links.each_pair do |src, dest|
-          FileUtils.ln_s(dest, src.to_s)
+          FileUtils.ln_sf(dest, src.to_s)
         end
       end
     end
 
-    template('router.conf.erb', "#{outdir}/router.conf")
-    template('Procfile.infra.erb', "#{outdir}/Procfile.infra")
-    template('Procfile.erb', "#{outdir}/Procfile")
+    templates %w[router.conf Procfile]
   end
 
   private
@@ -25,11 +21,11 @@ class Runtime::NativeGenerator < RuntimeGenerator
   # Determine the path to a given service
   # TODO: does not belong here as it should not know anything about cnfs services
   def service_path(service)
-    service&.config&.dig(:is_cnfs_service) ? '$CORE_PATH' : '$PLATFORM_PATH'
+    ENV.fetch(service.is_cnfs_service ? 'CORE_PATH' : 'PLATFORM_PATH')
   end
 
   # Add spring to the list of profiles
-  # TODO: does not belong here
+  # TODO: belongs in the rails plugin
   def service_profiles(service)
     (service.profiles || []) << 'spring'
   end
@@ -46,28 +42,30 @@ class Runtime::NativeGenerator < RuntimeGenerator
 
     [
       [name, profile].join('_') + ':',
-      server_name_map[profile.to_sym],
+      'bash',
+      './libexec/' + server_name_map[profile.to_sym].to_s,
       name,
       service_path(service),
-      port
+      port.to_s
     ].compact.join ' '
   end
 
   # Infrastructure services that may not be enabled
   def conditional_infra_services_map
     {
-      postgres: '_postgres',
-      fluentd: 'bundle exec fluentd --config ./fluent.conf',
-      kafka: '_kafka',
-      mail: '_mailcatcher',
-      redis: '_redis'
+      fluentd: 'bundle exec fluentd --config ./fluentd.conf',
+      haproxy: 'haproxy -- ./router.conf',
+      kafka: 'bash ./libexec/_kafka',
+      localstack: 'bash ./libexec/_localstack',
+      mail: 'bash ./libexec/_mailcatcher',
+      postgres: 'bash ./libexec/_postgres',
+      redis: 'bash ./libexec/_redis'
     }
   end
 
   # Infrastructure services that are always enabled
   def infra_services_map
     {
-      web: 'haproxy -- ./router.conf',
       yard: 'yard server --gems'
     }
   end
@@ -76,8 +74,11 @@ class Runtime::NativeGenerator < RuntimeGenerator
   def symlink_map
     {
       libexec: {
+        _elasticsearch: '_docker',
         _kafka: '_docker',
         _localstack: '_docker',
+        _rabbitmq: '_docker',
+        _scheduler: '_rails',
         _sidekiq: '_rails',
         _spring: '_rails'
       }
@@ -85,7 +86,13 @@ class Runtime::NativeGenerator < RuntimeGenerator
   end
 
   def server_name_map
-    { server: '_rails', worker: '_sidekiq', scheduler: '_scheduler', sqs_worker: '_sqs' }.freeze
+    {
+      scheduler: '_scheduler',
+      server: '_rails',
+      spring: '_spring',
+      sqs_worker: '_sqs',
+      worker: '_sidekiq'
+    }
   end
 
   # The starting port for application services

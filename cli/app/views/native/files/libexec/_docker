@@ -9,9 +9,10 @@ name=$(basename $0 | cut -f2 -d '_')
 
 _docker() {
   local cmd=$1
+  local file=${name}.yml
 
   docker-compose \
-    -f docker-compose.yml \
+    -f $file \
     $cmd
 }
 
@@ -21,18 +22,12 @@ fi
 
 _podman() {
   local cmd=$1
-  local file
+  local file=${name}.yml
 
-  if [ -e podman-compose.yml ]; then
-    file=podman-compose.yml
-  else
-    file=docker-compose.yml
-  fi
-
-  # for reasons unknown localstack/eleasticsearch doesn't come up without -t hostnet
-  # although the other services are fine. Additionally, with systemd 243 the
-  # perms on /dev/net/tun are wrong, so we would have to manually set them to
-  # 666 first (fixed in systemd 244)
+  # for reasons unknown localstack and eleasticsearch do not come up without -t
+  # hostnet although the other services are fine. Additionally, with systemd 243
+  # the perms on /dev/net/tun are wrong, so we would have to manually set them
+  # to 666 first (fixed in systemd 244)
   podman-compose \
     -t hostnet \
     -f $file \
@@ -40,8 +35,6 @@ _podman() {
 }
 
 install -dm777 $TMPDIR/$name
-
-cd infra/$name
 
 if command -v podman-compose >/dev/null; then
   _podman up || true

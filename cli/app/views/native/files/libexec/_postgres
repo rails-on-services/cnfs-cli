@@ -2,4 +2,34 @@
 
 set -eEuo pipefail
 
-postgres -D $DB_DIR
+. libexec/lib.sh
+
+CFG=$DB_DIR/postgresql.conf
+
+if [ ! -e $CFG ]; then
+  rm -rf $DB_DIR
+
+  initdb $DB_DIR
+
+  _sed -i $CFG \
+       -e "s@^#*unix_socket_directories .*@unix_socket_directories = '.'@" \
+       -e "s@^#*port .*@port = ${DB_PORT}@"
+
+  postgres -D $DB_DIR &
+
+  wait_db_socket
+
+  createuser \
+    --host $DB_DIR \
+    --createdb \
+    --login \
+    --superuser \
+    $RAILS_DATABASE_USER
+
+  killall postgres
+
+  # wait for postgres to exit
+  sleep 5
+fi
+
+exec postgres -D $DB_DIR

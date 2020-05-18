@@ -9,7 +9,7 @@ class RuntimeGenerator < ApplicationGenerator
     return unless (application_environment = deployment.to_env)
 
     generated_files << template('../env.erb',
-                                target.write_path(path_type).join('application.env'),
+                                outdir.join('application.env'),
                                 env: application_environment)
   end
 
@@ -18,7 +18,7 @@ class RuntimeGenerator < ApplicationGenerator
       next unless (service_environment = service.to_env(target))
 
       generated_files << template('../env.erb',
-                                  target.write_path(path_type).join("#{service.name}.env"),
+                                  outdir.join("#{service.name}.env"),
                                   env: service_environment)
     end
   end
@@ -35,6 +35,17 @@ class RuntimeGenerator < ApplicationGenerator
     services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
   end
 
+  def expose_ports(start_port, _end_port = nil)
+    port, proto = start_port.to_s.split('/')
+    host_port = map_ports_to_host ? "#{port}:" : ''
+    proto = proto ? "/#{proto}" : ''
+    "\"#{host_port}#{port}#{proto}\""
+  end
+
+  def map_ports_to_host
+    false
+  end
+
   # Is a given service enabled?
   def service_enabled?(name)
     services.pluck(:name).include? name.to_s
@@ -48,9 +59,19 @@ class RuntimeGenerator < ApplicationGenerator
     services
   end
 
+  def outdir
+    target.write_path path_type
+  end
+
+  def templates(list)
+    list.each do |temp|
+      template(temp + '.erb', File.join(outdir, temp))
+    end
+  end
+
   # Render template
   def generate
-    template("#{entity_to_template}.yml.erb", "#{target.write_path(path_type)}/#{service.name}.yml")
+    template("#{entity_to_template}.yml.erb", "#{outdir}/#{service.name}.yml")
   end
 
   def path_type
@@ -59,7 +80,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   # Methods for all runtime templates
   def relative_path
-    @relative_path ||= Pathname.new('../' * target.write_path(path_type).to_s.split('/').size)
+    @relative_path ||= Pathname.new('../' * outdir.to_s.split('/').size)
   end
 
   def template_types
@@ -87,8 +108,8 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    files << './application.env' if File.exist?(target.write_path(path_type).join('application.env'))
-    files << "./#{service.name}.env" if File.exist?(target.write_path(path_type).join("#{service.name}.env"))
+    files << './application.env' if File.exist?(outdir.join('application.env'))
+    files << "./#{service.name}.env" if File.exist?(outdir.join("#{service.name}.env"))
     files
   end
 end

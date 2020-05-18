@@ -2,13 +2,7 @@
 
 module Primary
   class GenerateController < ApplicationController
-    def execute
-      each_target do |_target|
-        execute_on_target
-      end
-    end
-
-    def execute_on_target
+    def execute_on_target(target)
       FileUtils.rm(manifest_files) if options.clean
       generator = generator_class.new([], options)
       generator.deployment = target.deployment

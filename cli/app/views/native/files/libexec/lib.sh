@@ -28,8 +28,8 @@ _sed() {
 
 install_gems_maybe() {
   if ! bundle check >/dev/null 2>&1; then
-    bundle config set no-prune 'true'
     bundle install --jobs="${BUNDLE_JOBS:-4}"
+    bundle config set no-prune 'true'
   fi
 }
 

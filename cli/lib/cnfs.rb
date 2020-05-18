@@ -169,6 +169,7 @@ module Cnfs
       return unless File.exist?(fixture_file)
 
       STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
+
       ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
     end
 

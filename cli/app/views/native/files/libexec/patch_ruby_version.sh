@@ -2,7 +2,7 @@
 
 set -eEuo pipefail
 
-. ${BASE_DIR}/libexec/lib.sh
+. libexec/lib.sh
 
 gemfile=$PLATFORM_PATH/Gemfile
 version=$(echo $RUBY_VERSION | sed -e 's/^ruby-//')

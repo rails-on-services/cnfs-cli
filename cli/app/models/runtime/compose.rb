@@ -93,7 +93,9 @@ class Runtime::Compose < Runtime
 
   def labels(base_labels, space_count)
     space_count ||= 6
-    base_labels.select { |_k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
+    base_labels.select { |_k, v| v }
+      .map { |key, value| "#{key}: #{value}" }
+      .join("\n#{' ' * space_count}")
   end
 
   private
