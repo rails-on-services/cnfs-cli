@@ -4,14 +4,20 @@
 lib_path = File.expand_path('../lib', __dir__)
 $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 
+ENV['CNFS_DEV'] = '1' if ARGV.delete('--dev')
+
 require 'cnfs'
 
-lite_setup =  ARGV[0].blank? || %w[version help new].include?(ARGV[0])
-Cnfs.setup(lite_setup)
-
-unless Cnfs.project? || lite_setup
-  STDOUT.puts('WARN: not a cnfs project')
-  return
+if ARGV[0].blank? || %w[version help new init].include?(ARGV[0])
+  Cnfs.lite_setup
+else
+  Cnfs.setup
+  if Cnfs.application
+    Cnfs.application.initialize!
+  else
+    STDOUT.puts('WARN: not a cnfs project')
+    return
+  end
 end
 
 Signal.trap('INT') do

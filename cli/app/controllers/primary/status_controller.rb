@@ -4,8 +4,10 @@ require 'tty-table'
 
 module Primary
   class StatusController < ApplicationController
+    cattr_reader :command_group, default: :cluster_runtime
+
     def execute
-      each_target do
+      context.each_target do
         before_execute_on_target
         execute_on_target
       end
@@ -22,14 +24,14 @@ module Primary
       # stuff = [target.application, target].each.map(&:resources).flatten.compact.map { |svc| [svc.type, svc.name, svc.config.to_s] }
       # output.puts TTY::Table.new(header: ['type', 'name', 'config'], rows: stuff).render(:basic, padding: [0, 4, 0, 0])
 
-      output.puts "\nContext:\ndeployment\t#{target.deployment.name}\nkey\t\t#{Cnfs.key.name}\ntarget\t\t#{target.name} (#{args.namespace_name})\napplication\t#{target.application.name}"
+      output.puts "\nContext:\ndeployment\t#{context.deployment&.name}\nkey\t\t#{Cnfs.key&.name}\ntarget\t\t#{context.target&.name} (#{context.namespace&.name})\napplication\t#{context.application&.name}"
       show_endpoint
     end
 
     def show_endpoint
       # output.puts "\n*** Services available at #{target.application.endpoints['api'].cnfs_sub(target)} ***"
       # TODO: Get the endpoint(s) from the application+target
-      output.puts "endpoint\t#{target.application.endpoint.cnfs_sub(target)}"
+      output.puts "endpoint\t#{context.application.endpoint.cnfs_sub(context.target)}"
       output.puts "docs\t\t[TO IMPLEMENT]\n\n"
     end
 
@@ -46,8 +48,8 @@ module Primary
     end
 
     def compile_services
-      service_names = target.runtime.service_names(status: args.status)
-      [target.application, target].each_with_object({}) do |layer, hash|
+      service_names = context.runtime.service_names(status: context.args.status)
+      [context.application, context.target].each_with_object({}) do |layer, hash|
         hash[layer.name] = []
         layer.services.order(:name).each do |service|
           profiles = service.respond_to?(:profiles) ? service.profiles.sort : %w[server]

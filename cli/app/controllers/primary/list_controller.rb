@@ -12,7 +12,7 @@ module Primary
     end
 
     def execute_config
-      output.puts Cnfs.config.map { |key, value| "#{key}: #{value}\n"}
+      output.puts Cnfs.application.config.map { |key, value| "#{key}: #{value}\n"}
     end
 
     def execute_applications

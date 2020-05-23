@@ -23,7 +23,7 @@ class String
     end
     # puts a
     # binding.pry if a.index('{project_name}')
-    a.gsub!('{project_name}', Cnfs.config.name)
+    a.gsub!('{project_name}', Cnfs.application.class.name.underscore.split('/').shift)
     begin
       if Cnfs.request
         a.gsub!('{application_name}', Cnfs.request.args.application_name) if a.index('{application_name}')

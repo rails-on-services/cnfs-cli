@@ -1,0 +1,8 @@
+# providers.yml
+# Providers are define in the cli config because
+# they are fixed to what is available as TF templates
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+<%# Cnfs.load_configs(__FILE__) %>

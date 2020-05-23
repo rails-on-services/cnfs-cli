@@ -2,17 +2,16 @@
 
 module Primary
   class AttachController < ApplicationController
+    cattr_reader :command_group, default: :service_runtime
+
     def execute
-      # with_selected_target do
-      each_target do
-        # before_execute_on_target
-        call(:build) if options.build
-        execute_on_target
-      end
+      before_execute_on_target
+      call(:build, context.target) if context.options.build
+      execute_on_target
     end
 
     def execute_on_target
-      runtime.attach.run!
+      context.runtime.attach.run!
     end
   end
 end

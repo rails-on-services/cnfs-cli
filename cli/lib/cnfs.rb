@@ -16,6 +16,7 @@ require 'thor'
 require 'xdg'
 require 'zeitwerk'
 
+require_relative 'cnfs/application'
 require_relative 'cnfs/errors'
 require_relative 'cnfs/version'
 require_relative 'cnfs/schema'
@@ -34,24 +35,35 @@ module Cnfs
 
   class Error < StandardError; end
 
+    CNFS_DIR = '.cnfs'
   class << self
-    PROJECT_FILE = '.cnfs'
-    CONFIG_FILE = 'cnfs.yml'
-    attr_reader :project_file, :project_name
-    attr_accessor :autoload_dirs, :context_name, :skip_schema
-    attr_reader :root, :config_path, :user_root, :user_config_path
+    attr_accessor :autoload_dirs, :context_name # , :skip_schema
     attr_accessor :request, :response, :key
+    attr_reader :application
 
-    def setup(lite = false)
-      project_dir = Pathname.new(Dir.pwd).ascend { |dir| break dir if File.exist?("#{dir}/#{PROJECT_FILE}") }
-      lite = true if project_dir.nil?
-      @skip_schema = lite # for plugins. necessary?
-      ENV['CNFS_DEV'] = '1' if ARGV.delete('--dev')
-      setup_paths(project_dir || Dir.pwd)
-      load_project_config
-      config.dev ? initialize_dev_plugins : initialize_plugins
+    def lite_setup
+      ENV['CNFS_DEV'] ? initialize_dev_plugins : initialize_plugins
       setup_loader
-      Schema.setup unless lite
+    end
+
+    def setup
+      app_file = app_path.join(CNFS_DIR).join('config/application.rb')
+      require app_file if File.exists? app_file
+      return unless (@application = Cnfs::Application.descendants.shift&.new(app_path))
+
+      # Modify priority of db and app/views paths by inserting gem and plugin paths before application and user paths
+      current_paths = application.paths.dup
+      application.paths['db'] = [gem_root.join('db')]
+      application.paths['app/views'] = [gem_root.join('app/views')]
+      application.config.dev ? initialize_dev_plugins : initialize_plugins
+      application.paths['db'] += current_paths['db']
+      application.paths['app/views'] += current_paths['app/views']
+
+      setup_loader
+    end
+
+    def app_path
+      @app_path ||= Pathname.new(Dir.pwd).ascend { |path| break path if path.join(CNFS_DIR).directory? }
     end
 
     def initialize_dev_plugins
@@ -72,37 +84,8 @@ module Cnfs
       end
     end
 
-    def setup_paths(project_path)
-      @root = Pathname.new(project_path)
-      @config_path = root.join('config')
-
-      @project_file = root.join(PROJECT_FILE)
-      return unless File.exist? @project_file
-
-      @project_name = File.read(@project_file).chomp
-
-      @user_root = xdg.config_home.join('cnfs').join(project_name)
-      @user_config_path = user_root.join('config')
-    end
-
-    def load_project_config
-      if File.exist? project_file
-        Config.load_and_set_settings(root.join(CONFIG_FILE), user_root.join(CONFIG_FILE))
-      else
-        Config.load_and_set_settings('')
-      end
-    end
-
-    def config
-      Settings
-    end
-
     def context
-      Context.find_by(name: config.context)
-    end
-
-    def project?
-      File.exist?(project_file)
+      Context.find_by(name: application.config.context)
     end
 
     # NOTE: Dir.pwd is the current application's root (switched into)
@@ -111,16 +94,12 @@ module Cnfs
       File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
     end
 
-    def gem_config_path
-      @gem_config_path ||= gem_root.join('config')
-    end
+    # def gem_db_path
+    #   @gem_db_path ||= gem_root.join('db')
+    # end
 
     def gem_root
       @gem_root ||= Pathname.new(__dir__).join('..')
-    end
-
-    def xdg
-      @xdg ||= XDG::Environment.new
     end
 
     def debug
@@ -137,7 +116,7 @@ module Cnfs
     end
 
     def reload
-      Schema.reload
+      application.reload
       loader.reload
     end
 
@@ -153,24 +132,6 @@ module Cnfs
       %w[controllers models generators].each_with_object([]) { |type, ary| ary << path.join('app').join(type) }
     end
 
-    # Utility methods
-    # Configuration fixture file loading methods
-    def load_configs(file)
-      STDOUT.puts "Loading config file #{file}" if Cnfs.debug > 0
-      config_dirs.each_with_object([]) { |path, ary| ary << load_config(file, path) }.join("\n")
-    end
-
-    def config_dirs
-      @config_dirs ||= [config_path, user_config_path]
-    end
-
-    def load_config(file, path)
-      fixture_file = path.join(File.basename(file))
-      return unless File.exist?(fixture_file)
-
-      STDOUT.puts "Loading config file #{fixture_file}" if debug > 0
-      ERB.new(IO.read(fixture_file)).result.gsub("---\n", '')
-    end
 
     def controllers
       @controllers ||= []
@@ -206,6 +167,15 @@ module Cnfs
         ext_info.pgid = shell_info.gid
       end
       ext_info
+    end
+
+    def platform
+      case RbConfig::CONFIG['host_os']
+      when /linux/
+        'linux'
+      when /darwin/
+        'darwin'
+      end
     end
 
     def git_details

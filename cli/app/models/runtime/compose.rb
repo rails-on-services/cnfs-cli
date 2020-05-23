@@ -2,20 +2,81 @@
 
 class Runtime::Compose < Runtime
   def supported_commands
-    %w[attach console credentials exec list publish redeploy show stop build copy deploy generate logs
-       pull restart start terminate cmd create destroy init ps push shell status test]
+    %w[build test push pull publish
+       destroy 
+       deploy redeploy ps status 
+       start restart stop terminate 
+       attach command console copy credentials exec logs shell]
+    # list show generate
   end
 
-  def attach
-    response.add(exec: "docker attach #{project_name}_#{request.last_service_name}_1 --detach-keys='ctrl-f'", pty: true)
-  end
-
+  ###
+  # Image Operations
+  ###
   def build
-    response.add(exec: compose("build --parallel #{request.service_names_to_s}"), env: compose_env)
+    response.add(exec: compose("build --parallel #{context.selected_services.pluck(:name).join(' ')}"), env: compose_env)
+  end
+
+  ###
+  # Cluster Admin
+  ###
+  def destroy
+    response.add(exec: compose(:down), env: compose_env)
+  end
+
+  ###
+  # Cluster Runtime
+  ###
+  def deploy
+    response.add(exec: compose(:up), env: compose_env)
+  end
+
+  def redeploy
+    response.add(exec: compose(:down), env: compose_env)
+    response.add(exec: compose(:up), env: compose_env)
+  end
+
+  def ps
+  end
+
+  def status
+  end
+
+  ###
+  # Service Runtime
+  ###
+  def start
+    binding.pry
+    # database_check
+    compose_options = context.options.foreground ? '' : '-d'
+    response.add(exec: compose("up #{compose_options} #{context.services.pluck(:name).join(' ')}"), env: compose_env)
+  end
+
+  def restart
+    # stop.run!
+    # refresh_services
+    stop
+    start
+  end
+
+  def stop
+    response.add(exec: compose("stop #{context.services.pluck(:name).join(' ')}"), env: compose_env)
+  end
+
+  def terminate
+    stop
+    clean
   end
 
   # TODO: Get the command string to execute on the container from the service
   # def console; exec(request.last_service_name, :bash, true) end
+
+  ###
+  # Service Runtime
+  ###
+  def attach
+    response.add(exec: "docker attach #{project_name}_#{context.service.name}_1 --detach-keys='ctrl-f'", pty: true)
+  end
 
   def copy(src, dest)
     service_name = src.index(':') ? src.split(':')[0] : dest.split(':')[0]
@@ -27,29 +88,8 @@ class Runtime::Compose < Runtime
   end
 
   def logs(service_name)
-    compose_options = request.options.tail ? '-f' : ''
-    response.add(exec: "docker logs #{compose_options} #{project_name}_#{service_name}_1", pty: request.options.tail)
-  end
-
-  def restart
-    stop.run!
-    refresh_services
-    start
-  end
-
-  def start
-    database_check
-    compose_options = request.options.foreground ? '' : '-d'
-    response.add(exec: compose("up #{compose_options} #{request.service_names_to_s}"), env: compose_env)
-  end
-
-  def stop
-    response.add(exec: compose("stop #{request.service_names_to_s}"))
-  end
-
-  def terminate
-    stop
-    clean
+    compose_options = context.options.tail ? '-f' : ''
+    response.add(exec: "docker logs #{compose_options} #{project_name}_#{service_name}_1", pty: context.options.tail)
   end
 
   #### Support Methods
@@ -62,12 +102,12 @@ class Runtime::Compose < Runtime
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
     # TODO: This is specific to a Cnfs Backend project
-    # Dir.chdir("#{target.deployment.root}/services") do
+    # Dir.chdir("#{Cnfs.application.root}/services") do
     #   FileUtils.rm_f('.env')
     #   FileUtils.ln_s("../#{target.write_path}", '.env')
     # end
     # unless config.platform.is_cnfs?
-    #   Dir.chdir("#{deployment.root}/ros/services") do
+    #   Dir.chdir("#{Cnfs.application.root}/ros/services") do
     #     FileUtils.rm_f('.env')
     #     FileUtils.ln_s("../../#{write_path}", '.env')
     #   end
@@ -109,8 +149,7 @@ class Runtime::Compose < Runtime
   end
 
   def clean
-    response.add(exec: compose("rm -f #{request.service_names_to_s}"))
-    # clean_cache(request)
+    response.add(exec: compose("rm -f #{context.services.pluck(:name).join(' ')}"))
   end
 
   def deploy_type
@@ -135,7 +174,7 @@ class Runtime::Compose < Runtime
 
     command_string = "docker ps #{filter.join(' ')}"
     result = `#{command_string}`
-    response.output.puts command_string if request.options.verbose
+    response.output.puts command_string if context.options.verbose
     result.split("\n").size > 1 ? result.split("\n") : []
   end
 
@@ -150,7 +189,7 @@ class Runtime::Compose < Runtime
   end
 
   def database_check
-    request.services.each do |service|
+    context.services.each do |service|
       next unless service.respond_to?(:database_seed_commands)
 
       migration_file = "#{runtime_path}/#{service.name}-migrated"
@@ -174,5 +213,11 @@ class Runtime::Compose < Runtime
     cmd.append(service_names.include?(service_name) ? 'exec' : 'run --rm').append(service_name) if service_name
     cmd.append(command)
     cmd.join(' ')
+  end
+
+  def x_method_missing(method, *args)
+    binding.pry
+    # response.output.puts('command not supported in compose runtime')
+    raise Cnfs::Error, 'command not supported in compose runtime'
   end
 end

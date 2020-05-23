@@ -2,17 +2,17 @@
 
 module Primary
   class LogsController < ApplicationController
+    cattr_reader :command_group, default: :service_runtime
+
     def execute
-      trap('SIGINT') { throw StandardError } if options.tail
-      each_target do
-        before_execute_on_target
-        execute_on_target
-      end
+      trap('SIGINT') { throw StandardError } if context.options.tail
+      before_execute_on_target
+      execute_on_target
     rescue StandardError
     end
 
     def execute_on_target
-      runtime.logs(request.last_service_name).run!
+      context.runtime.logs(context.service.name).run!
     end
   end
 end

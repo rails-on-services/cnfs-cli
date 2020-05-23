@@ -2,7 +2,7 @@
 
 class Deployment < ApplicationRecord
   belongs_to :application
-  belongs_to :target
+  belongs_to :namespace
   belongs_to :key
 
   has_many :assets, as: :owner
@@ -16,6 +16,7 @@ class Deployment < ApplicationRecord
   # Combine application, target and deployment environments into one config
   # which can be converted into an array of env values
   def to_env
-    Config::Options.new.merge_many!(application.to_env, target.to_env, environment)
+    # Config::Options.new.merge_many!(application.to_env, target.to_env, environment)
+    Config::Options.new.merge_many!(application.to_env, environment)
   end
 end

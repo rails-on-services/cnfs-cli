@@ -2,7 +2,8 @@
 
 class Application < ApplicationRecord
   has_many :deployments
-  has_many :targets, through: :deployments
+  has_many :namespaces, through: :deployments
+  has_many :targets, through: :namespaces
 
   has_many :application_resources
   has_many :resources, through: :application_resources

@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Target < ApplicationRecord
-  has_many :deployments
+  has_many :target_namespaces
+  has_many :namespaces, through: :target_namespaces
+  has_many :deployments, through: :namespaces
   has_many :applications, through: :deployments
-  has_many :namespaces
 
   has_many :target_services
   has_many :services, through: :target_services
@@ -17,9 +18,13 @@ class Target < ApplicationRecord
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
 
+  has_many :context_targets
+  has_many :contexts, through: :context_targets
+
   # Used by controllers to set the deployment when running a command
   # Set by controler#configure_target
-  attr_accessor :deployment, :application, :namespace
+  # attr_accessor :deployment, :application, :namespace
+  attr_accessor :context
 
   store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
   store :config, accessors: %i[application_environment]
@@ -28,16 +33,12 @@ class Target < ApplicationRecord
   validates :runtime, presence: true
   validates :provider, presence: true
 
+  after_initialize do
+    self.lb_dns_hostnames ||= []
+  end
+
   # Default intitialze of target is to do nothing
   def init(options); end
-
-  def namespace_names
-    namespaces.pluck(:name)
-  end
-
-  def valid_namespace?(namespace_name)
-    namespace_names.include? namespace_name
-  end
 
   def to_env
     infra_env = { platform: { infra: { provider: provider_type_to_s } } }
@@ -48,23 +49,9 @@ class Target < ApplicationRecord
     provider.type.demodulize.underscore
   end
 
-  def write_path(type = :deployment)
-    Pathname.new([deployment.base_path, path_for(type), "#{name}_#{application.name}"].join('/'))
-  end
-
   def exec_path
-    File.expand_path(application.path || '.')
-  end
-
-  def path_for(type)
-    case type
-    when :deployment
-      'cache/deployment'
-    when :infra
-      'data/infra'
-    when :runtime
-      'runtime'
-    end
+    # NOTE: if the context has not defined an application, e.g. cluster_admin#create
+    File.expand_path(context.application&.path || '.')
   end
 
   def domain_slug

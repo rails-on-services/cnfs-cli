@@ -10,6 +10,12 @@ class Service < ApplicationRecord
   has_many :service_tags
   has_many :tags, through: :service_tags
 
+  has_many :application_services
+  has_many :applications, through: :application_services
+
+  has_many :context_services
+  has_many :contexts, through: :context_services
+
   # def runtime_repositories
   #   [image_repo, chart_repo].compact
   # end
@@ -21,10 +27,10 @@ class Service < ApplicationRecord
   end
 
   # Called by RuntimeGenerator#service_environment
-  def to_env(target = nil)
-    @target = target
+  def to_env(context = nil)
+    @target = context.target
     env = Config::Options.new.merge!(environment)
-    if (deployment_env = target.deployment.service_environments[name])
+    if (deployment_env = context.deployment.service_environments[name])
       env.merge!(Config::Options.new.merge!(deployment_env).to_hash)
     end
     env.empty? ? nil : env

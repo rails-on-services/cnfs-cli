@@ -2,23 +2,24 @@
 
 module Primary
   class DeployController < ApplicationController
+    cattr_reader :command_group, default: :cluster_runtime
+
     def execute
-      each_target do
+      context.each_target do
         before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      return unless valid_action?(:deploy) && valid_namespace?
-
       # Local deploy is a deployment direct to the cluster from the local machine
       # The default is to push a tag to the repo which triggers a deploy via CI/CD
-      if options.local
-        runtime.deploy # .run!
-      else
-        deploy_git_tag
-      end
+      # TODO: This should not be a cli option but a configuration of the target; CI/CD is a target
+      # if options.local
+      context.runtime.deploy.run!
+      # else
+      #   deploy_git_tag
+      # end
     end
 
     def deploy_git_tag

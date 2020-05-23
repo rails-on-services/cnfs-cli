@@ -7,7 +7,8 @@ class Runtime < ApplicationRecord
 
   # Attributes configured by the controller
   # attr_accessor :controller, :target
-  attr_accessor :target, :request, :response
+  # attr_accessor :context, :target, :response
+  attr_accessor :context, :response
 
   # method inherited from A/R base interferes with controller#destroy
   undef_method :destroy
@@ -22,12 +23,12 @@ class Runtime < ApplicationRecord
   end
 
   def clean_cache
-    if request.services.empty?
+    if context.selected_services.empty?
       FileUtils.rm_rf(runtime_path)
       return
     end
 
-    request.services.each do |service|
+    context.selected_services.each do |service|
       migration_file = "#{runtime_path}/#{service.name}-migrated"
       FileUtils.rm(migration_file) if File.exist?(migration_file)
       FileUtils.rm(credentials[:local_file]) if service.name.eql?('iam') && File.exist?(credentials[:local_file])
@@ -41,14 +42,19 @@ class Runtime < ApplicationRecord
   end
 
   def deployment_path
-    @deployment_path ||= target.write_path(:deployment)
+    @deployment_path ||= context.write_path(:deployment)
   end
 
   def runtime_path
-    @runtime_path ||= target.write_path(:runtime)
+    @runtime_path ||= context.write_path(:runtime)
+  end
+
+  def generator_class
+    "Runtime::#{type.demodulize}Generator".safe_constantize
   end
 
   def project_name
-    [Cnfs.project_name, target.name, target.application.name].join('_')
+    # [Cnfs.application.class.name.underscore.split('/').shift, context.target.name, context.target.application.name].join('_')
+    context.project_name
   end
 end

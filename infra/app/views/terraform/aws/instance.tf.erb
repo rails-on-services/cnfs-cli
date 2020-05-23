@@ -1,0 +1,36 @@
+# EC2 Instance
+<%-
+@module_name = :ec2
+def defaults
+  binding.pry
+  {
+    source: 'rails-on-services/ec2/aws',
+    lb_dns_hostnames: @context.target.lb_dns_hostnames.map { |m| "#{m}.#{@context.target.domain_name}" }
+  }
+end
+-%>
+
+module "<%= title %>" {
+<%= resource_config(@context.target, resource, defaults).render.join("\n") %>
+
+  aws_cert_arn     = module.acm.this.arn
+  route53_zone_id  = module.route53.this.zone_id
+  subnet_ids       = module.vpc.this.public_subnets
+  vpc_id           = module.vpc.this.vpc_id
+}
+
+output "<%= title %>" {
+  value = module.ec2.this
+}
+
+output "<%= title :eip %>" {
+  value = module.ec2.eip
+}
+
+output "<%= title :lb %>" {
+  value = module.ec2.lb
+}
+
+output "<%= title :lb_route53_record %>" {
+  value = module.ec2.lb_route53_record
+}

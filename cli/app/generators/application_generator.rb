@@ -2,43 +2,36 @@
 
 class ApplicationGenerator < Thor::Group
   include Thor::Actions
-  attr_accessor :deployment, :target, :application, :write_path
+  attr_accessor :context, :write_path
   attr_accessor :environment, :name
 
   private
 
   def source_paths
-    [user_views_path, views_path]
+    Cnfs.application.paths['app/views'].reverse.map { |path| path.join(generator_type) }
   end
 
-  def user_views_path
-    Cnfs.root.join(views_path.to_s.gsub("#{Cnfs.gem_root}/app", 'app'))
-  end
-
-  def views_path
-    @views_path ||= internal_path.join('../views')
-                                 .join(self.class.name.demodulize.delete_suffix('Generator').underscore)
-  end
-
-  def internal_path
-    Pathname.new(__dir__)
+  def generator_type
+    self.class.name.demodulize.delete_suffix('Generator').underscore
   end
 
   def path_type
     nil
   end
 
-  def services
-    @services ||= (target.services + application.services)
-  end
+  # def services; context.selected_services end
+  # def resources; context.selected_resources end
+  # def services
+  #   @services ||= (target.services + application.services)
+  # end
 
-  def resources
-    @resources ||= (target.resources + application.resources)
-  end
+  # def resources
+  #   @resources ||= (target.resources + application.resources)
+  # end
 
   def entity_to_template(entity = nil)
     entity ||= instance_variable_get("@#{entity_name}")
-    key = entity.template || (entity.type ? entity.type.demodulize.underscore : entity.name)
+    key = entity.template || entity.type&.demodulize&.underscore || entity.name
     entity_template_map[key.to_sym] || key
   end
 
@@ -66,7 +59,7 @@ class ApplicationGenerator < Thor::Group
   end
 
   def all_files
-    Dir[target.write_path(path_type).join('**/*')]
+    Dir[context.write_path(path_type).join('**/*')]
   end
 
   def excluded_files

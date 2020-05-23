@@ -1,0 +1,87 @@
+# <%= name %> services.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+kafka:
+  <<: *DEFAULTS
+
+wait:
+  <<: *DEFAULTS
+
+localstack:
+  <<: *DEFAULTS
+  tags: infra, storage
+  environment:
+    all:
+      self:
+        services: s3:4572,lambda:4574,sns:4575,sqs:4576
+        port_web_ui: 8080
+        debug: s3
+        hostname: localstack
+        hostname_external: localstack
+
+nginx:
+  tags: infra, storage
+  <<: *DEFAULTS
+
+postgres:
+  <<: *DEFAULTS
+  tags: service_db, storage
+  environment:
+    postgres_user: admin
+    postgres_password: admin
+    postgres_db: postgres
+
+redis:
+  <<: *DEFAULTS
+  tags: service_db, storage
+
+sftp:
+  <<: *DEFAULTS
+  tags: core, storage
+
+cognito: &core_rails_services
+  <<: *DEFAULTS
+  type: Service::Rails
+  tags: core
+  config:
+    profiles: ['scheduler', 'server', 'worker']
+    is_cnfs_service: yes
+    images: &core_rails_images
+      static_gems:
+        bundler: 2.0.1
+        eventmachine: 1.2.7
+        ffi: 1.10.0
+        mini_portile2: 2.4.0
+        msgpack: 1.2.10
+        nio4r: 2.3.1
+        nokogiri: 1.10.4
+        pg: 1.1.4
+        puma: 3.12.1
+      development:
+        build_args:
+          rails_env: development
+          bundle_string: --without production
+          os_packages: ['libpq5', 'tree', 'curl', 'git', 'sudo', 'vim', 'less', 'tcpdump', 'net-tools', 'iputils-ping', 'graphviz']
+
+comm:
+  <<: *core_rails_services
+
+iam:
+  <<: *core_rails_services
+  environment:
+    platform:
+      salt: 'salty value'
+
+organization:
+  <<: *core_rails_services
+
+storage:
+  <<: *core_rails_services
+  tags: core, storage
+  config:
+    profiles: ['scheduler', 'server', 'sqs_worker', 'worker']
+    is_cnfs_service: yes
+    images:
+      <<: *core_rails_images

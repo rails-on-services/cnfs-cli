@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 class Response
+  include ActiveModel::Model
   attr_accessor :command_name, :options, :output, :command, :errors, :commands, :results
 
-  def initialize(command_name, options, output, command, errors)
-    @command_name = command_name
-    @options = options
-    @output = output
-    @command = command
-    @errors = errors
+  def initialize(attributes = {})
+    super
+  # def initialize(command_name, options, output, command, errors)
+  #   @command_name = command_name
+  #   @options = options
+  #   @output = output
+  #   @command = command
+  #   @errors = errors
     @commands = []
     @results = []
   end

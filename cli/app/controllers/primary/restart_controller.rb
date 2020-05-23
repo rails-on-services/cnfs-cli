@@ -2,17 +2,19 @@
 
 module Primary
   class RestartController < ApplicationController
+    cattr_reader :command_group, default: :service_admin
+
     def execute
-      each_target do
+      context.each_target do
         before_execute_on_target
-        call(:build) if options.build
+        # call(:build) if options.build
         execute_on_target
         post_start_options
       end
     end
 
     def execute_on_target
-      runtime.restart.run!
+      context.runtime.restart.run!
     end
   end
 end

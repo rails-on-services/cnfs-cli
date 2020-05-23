@@ -1,9 +1,18 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class RedeployController < Cnfs::Command
-    on_execute :execute_command
+module Primary
+  class RedeployController < ApplicationController
+    cattr_reader :command_group, default: :cluster_runtime
 
-    def execute_command; end
+    def execute
+      context.each_target do
+        before_execute_on_target
+        execute_on_target
+      end
+    end
+
+    def execute_on_target
+      context.runtime.redeploy.run!
+    end
   end
 end

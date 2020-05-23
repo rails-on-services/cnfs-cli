@@ -8,7 +8,7 @@ def targets
 end
 
 def configured_services
-  dependency_ports.stringify_keys.keys & target.services.pluck(:name)
+  dependency_ports.stringify_keys.keys & @context.target.services.pluck(:name)
 end
 
 def dependency_ports
@@ -23,8 +23,8 @@ end
 version: '<%= version %>'
 services:
   wait:
-    image: waisbrot/wait
+    image: waisbrot/wait<% unless depends_on.blank? %>
     depends_on:
-      <%= depends_on %>
+      <%= depends_on %><% end %><% unless targets.blank? %>
     environment:
-      TARGETS: "<%= targets %>"
+      TARGETS: "<%= targets %>"<% end %>

@@ -2,19 +2,20 @@
 
 module Primary
   class StartController < ApplicationController
+    cattr_reader :command_group, default: :service_admin
+
     def execute
-      each_target do
+      context.each_target do
         before_execute_on_target
-        call(:build) if options.build
+        call(:build, target) if context.options.build
         execute_on_target
         post_start_options
       end
     end
 
     def execute_on_target
-      runtime.clean if options.clean
-      # binding.pry
-      runtime.start.run!
+      context.runtime.clean if context.options.clean
+      context.runtime.start.run!
     end
   end
 end

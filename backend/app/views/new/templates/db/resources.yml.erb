@@ -1,0 +1,192 @@
+# <%= name %> resources.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+# Start - Backend Application
+backend_storage:
+  <<: *DEFAULTS
+  template: object_storage
+  # tags: storage
+  resources:
+    app:
+      name: app-{domain_slug}
+    image:
+      name: image-{domain_slug}
+
+backend_cdns:
+  <<: *DEFAULTS
+  template: cdn
+  # tags: storage
+  resources:
+    image:
+      bucket: cdn-{domain_slug}
+# End - Backend Application
+
+# Start - Backend Instance
+# TODO: This should probably move to target Instance type
+backend_instance:
+  <<: *DEFAULTS
+  type: Resource::Instance
+  tags: dev_cluster
+  config:
+    name_prefix: dev
+    ec2_key_pair: perx_admin
+
+backend_instance_endpoints:
+  <<: *DEFAULTS
+  template: dns
+  # tags: networking
+  resources:
+    api:
+    sftp:
+    grafana:
+
+backend_instance_cert:
+  <<: *DEFAULTS
+  # type: Resource::Cert
+  template: cert
+  # tags: dev_cluster
+  config:
+    subject_alternative_names: [api, sftp, grafana]
+    domain_name: '{domain}'
+# End - Backend Instance
+
+
+# Start - Kubernetes
+kubernetes:
+  <<: *DEFAULTS
+  # NOTE: Can't switch to template due to certain settings on resource
+  type: Resource::Kubernetes
+  # template: kubernetes
+  tags: cluster
+  config:
+    name: 'whistler-{domain_slug}'
+    # name: whistler-staging
+    aws_profile: perx-whistler
+    admins: [kostya, duan]
+    worker_groups:
+      - name: default_pool
+        instance_type: r5.2xlarge
+        asg_max_size: 20
+        asg_min_size: 1
+    worker_groups_launch_template:
+      - name: spot_pool
+        override_instance_types: [r5.2xlarge, m5.2xlarge, r5.xlarge, m5.xlarge]
+        spot_instance_pools: 4
+        asg_max_size: 15
+        asg_min_size: 5
+        asg_desired_capacity: 5
+        kubelet_extra_args: --node-labels=kubernetes.io/lifecycle=spot --register-with-taints=spotInstance=true:NoSchedule
+
+# terraform-k8s-eks-resource
+eks-resources:
+  <<: *DEFAULTS
+  # tags: cluster
+  template: eks-resource
+  config:
+    name: whistler-staging
+    extra_namespaces: ['monitor', 'cert-manager']
+    cert_manager_namespace: cert-manager
+    enable_external_dns: yes
+    enable_fluentd_gcp_logging: yes
+    cluster_logging_provider: big_query
+    # TODO: this is going to come from provider: fluentd_gcp_logging_service_account_json_key
+    # helm_configuration_overrides: {}
+    istio:
+      version: '1.3.5'
+      configuration_overrides:
+        prometheus:
+          enabled: no
+        gateways:
+          istio-ingressgateway:
+            externalTrafficPolicy: Cluster
+            type: LoadBalancer
+            serviceAnnotations:
+              service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: 900
+              service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: true
+              external-dns.alpha.kubernetes.io/hostname: 'ingressgateway.{domain}'
+            sds:
+              enabled: true
+
+# terraform-k8s-eks-monitor
+eks-monitor:
+  <<: *DEFAULTS
+  # tags: cluster
+  template: eks-monitor
+  config:
+    namespace: monitor
+    grafana_user: admin
+    grafana_password: encrypted_password
+    helm_configuration_overrides:
+      grafana.ini:
+        database:
+          type: sqlite3
+        auth.google:
+          enabled: true
+          scopes: https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+          auth_url: https://accounts.google.com/o/oauth2/auth
+          token_url: https://accounts.google.com/o/oauth2/token
+          allowed_domains: perxtech.com,getperx.com
+          allow_sign_up: true
+        panels:
+          disable_sanitize_html: true
+        server:
+          root_url: 'https://grafana.{domain}'
+
+globalaccelerator:
+  <<: *DEFAULTS
+  template: globalaccelerator
+  config:
+    hostname: '*.{domain}'
+
+cert-manager:
+  <<: *DEFAULTS
+  tags: cluster
+
+iam:
+  <<: *DEFAULTS
+  tags: cluster
+
+ses:
+  <<: *DEFAULTS
+  tags: cluster
+# End - Kubernetes
+
+# Start - Databases
+postgres:
+  <<: *DEFAULTS
+  template: postgres
+  tags: db
+  resources:
+    default:
+      name: '{domain_slug}-default'
+      instance_type: db.r5.large
+      replica_count: 1
+  environment:
+    database_url: postgres://{url-to-rds-postgres}:5432
+
+redis:
+  <<: *DEFAULTS
+  template: redis
+  tags: db
+  # config:
+  resources:
+    default:
+      name: 'whistler-default'
+      node_type: cache.r5.large
+      number_cache_clusters: 1
+  environment:
+    redis_url: redis://{url-to-elasticache-redis}:6379
+# End - Databases
+
+vpc_with_db:
+  <<: *DEFAULTS
+  template: vpc
+  tags: networking
+  name: 'whistler-{domain_slug}'
+  config:
+    cidr: 10.6.0.0/16
+    create_database_subnet_group: true
+    create_elasticache_subnet_group: true
+    name: 'whistler-{domain_slug}'

@@ -2,16 +2,16 @@
 
 module Primary
   class ShellController < ApplicationController
+    cattr_reader :command_group, default: :service_runtime
+
     def execute
-      each_target do
-        before_execute_on_target
-        call(:build) if options.build
-        execute_on_target
-      end
+      before_execute_on_target
+      call(:build, context.target) if context.options.build
+      execute_on_target
     end
 
     def execute_on_target
-      runtime.exec(request.last_service_name, :bash, true).run!
+      context.runtime.exec(context.service.name, :bash, true).run!
     end
   end
 end

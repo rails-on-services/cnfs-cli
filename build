@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-{ 'cli' => 'cnfs-cli', 'cnfs-cli-cloud' => nil, 'cnfs-cli-rails' => nil }.each_pair do |dir, name|
+{ 'cli' => 'cnfs-cli', 'infra' => 'cnfs-cli-infra', 'backend' => 'cnfs-cli-backend' }.each_pair do |dir, name|
   name ||= dir
   Dir.chdir(dir) do
     puts "gem build #{name}.gemspec"

@@ -1,16 +1,18 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class TerminateController < Cnfs::Command
+module Primary
+  class TerminateController < ApplicationController
+    cattr_reader :command_group, default: :service_admin
+
     def execute
-      with_selected_target do
+      context.each_target do
         before_execute_on_target
         execute_on_target
       end
     end
 
     def execute_on_target
-      runtime.terminate(request)
+      context.runtime.terminate.run!
     end
   end
 end

@@ -2,6 +2,8 @@
 
 module Primary
   class ConsoleController < ApplicationController
+    cattr_reader :command_group, default: :service_runtime
+
     module Commands
       class << self
         def cache
@@ -22,32 +24,25 @@ module Primary
         end
 
         def shortcuts
-          { a: Application, c: Context, d: Deployment, k: Key, p: Provider, r: Resource, s: Service,
+          { a: Application, c: Context, d: Deployment, k: Key, n: Namespace, p: Provider, r: Resource, s: Service,
             t: Target, u: User }
         end
       end
     end
 
     def execute
-      if args.service_names.empty?
+      if context.service.nil?
         start_cnfs_console
         return
-      end
-
-      each_target do |_target|
-        execute_on_target
-      end
-    end
-
-    def execute_on_target
-      unless request.services.last.respond_to?(:console_command)
-        output.puts "#{request.services.last.name} does not implement the console command"
+      elsif not context.service.respond_to?(:console_command)
+        output.puts "#{context.service.name} does not implement the console command"
         return
       end
 
+      # TODO: This is broken
       before_execute_on_target
-      runtime.exec(request.last_service_name, request.services.last.console_command, true)
-      response.run!
+      context.runtime.exec(context.service.name, context.service.console_command, true).run!
+      # context.response.run!
     end
 
     def start_cnfs_console

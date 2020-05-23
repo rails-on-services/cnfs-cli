@@ -20,10 +20,30 @@ module Cnfs
     def self.load_data
       show_output = Cnfs.debug > 0
       Cnfs.silence_output(!show_output) { create_schema }
-      dir = Cnfs.gem_config_path
-      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }
+      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
+    # rescue ActiveRecord::Fixture::FixtureError => err
+    #   raise Cnfs::Error, err
+    rescue Psych::BadAlias => a
+      failing_fixture = nil
+      begin
+        fixtures.each do |fixture|
+          failing_fixture = fixture
+          ActiveRecord::FixtureSet.create_fixtures(dir, fixture)
+        end
+      rescue Psych::BadAlias => b
+        fixture_contents = File.read(dir.join("#{failing_fixture}.yml"))
+        c = StandardError.new "Error parsing configuration in #{failing_fixture}.yml\n#{fixture_contents}"
+        [a, b, c].map { |exception| exception.set_backtrace([]) }
+        raise c
+      end
+    ensure
+      # TODO Maybe this should be a setting to disable auto remove for debugging purposes
+      FileUtils.rm_rf(dir)
     end
+
+    # TODO: This is not DRY and requires knowledge from outside the class
+    def self.dir; Cnfs.application.root.join(Cnfs.application.config.temp_dir).join('dump') end
 
     # Set up database tables and columns
     def self.create_schema
@@ -35,7 +55,7 @@ module Cnfs
           t.string :type
           t.string :path
         end
-        Application.reset_column_information
+        ::Application.reset_column_information
 
         create_table :application_resources, force: true do |t|
           t.references :application
@@ -59,9 +79,10 @@ module Cnfs
         Asset.reset_column_information
 
         create_table :contexts, force: true do |t|
+          # t.references :target
+          t.references :namespace
+          t.references :deployment
           t.references :application
-          t.references :target
-          t.string :namespace
           t.string :name
           t.string :services
           t.string :resources
@@ -69,9 +90,21 @@ module Cnfs
         end
         Context.reset_column_information
 
+        create_table :context_services, force: true do |t|
+          t.references :context
+          t.references :service
+        end
+        ContextService.reset_column_information
+
+        create_table :context_targets, force: true do |t|
+          t.references :context
+          t.references :target
+        end
+        ContextTarget.reset_column_information
+
         create_table :deployments, force: true do |t|
           t.references :application
-          t.references :target
+          t.references :namespace
           t.references :key
           t.string :name
           t.string :config
@@ -175,17 +208,23 @@ module Cnfs
         end
         Target.reset_column_information
 
-        create_table :target_services, force: true do |t|
+        create_table :target_namespaces, force: true do |t|
           t.references :target
-          t.references :service
+          t.references :namespace
         end
-        TargetService.reset_column_information
+        TargetResource.reset_column_information
 
         create_table :target_resources, force: true do |t|
           t.references :target
           t.references :resource
         end
         TargetResource.reset_column_information
+
+        create_table :target_services, force: true do |t|
+          t.references :target
+          t.references :service
+        end
+        TargetService.reset_column_information
 
         create_table :users, force: true do |t|
           t.string :name
