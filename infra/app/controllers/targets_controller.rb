@@ -73,16 +73,16 @@ class TargetsController < CommandsController
   end
 
   def show_json
-    if File.exist?('output.json')
-      json = JSON.parse(File.read('output.json'))
-      # TODO: This will need to change for two things:
-      # 1. when deploying to cluster these values will be different
-      # 2. when deploying to another provider these keys will be different
-      if json['ec2-eip']
-        ip = json['ec2-eip']['value']['public_ip']
-        STDOUT.puts "ssh -A admin@#{ip}"
-      end
-      STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
+    return unless File.exist?('output.json')
+
+    json = JSON.parse(File.read('output.json'))
+    # TODO: This will need to change for two things:
+    # 1. when deploying to cluster these values will be different
+    # 2. when deploying to another provider these keys will be different
+    if json['ec2-eip']
+      ip = json['ec2-eip']['value']['public_ip']
+      STDOUT.puts "ssh -A admin@#{ip}"
     end
+    STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
   end
 end

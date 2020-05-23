@@ -5,7 +5,7 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
 
   def generate
     tmpl = entity_to_template.to_s
-    template("#{tmpl}.tf.erb", "#{context.write_path(path_type)}/#{[tmpl, resource.name].uniq.join('-')}.tf".cnfs_sub(context.target))
+    template("#{tmpl}.tf.erb", "#{context.write_path(path_type)}/#{[tmpl, resource.name].uniq.join('-')}.tf")
   end
 
   def entity_template_map
@@ -57,15 +57,17 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
       render_attributes(config)
     end
 
+    # rubocop:disable Metrics/AbcSize
     def render_attributes(hash, spacer = 2, ary = [])
       max_key_length = hash.to_h.keys.max_by(&:length).length
-      hash.transform_keys!(&:to_s).sort.to_h.each_with_object(ary) do |(key, value), ary|
+      hash.transform_keys!(&:to_s).sort.to_h.each_with_object(ary) do |(key, value), cary|
         binding.pry if value.nil?
         val = compute_val(value, spacer)
         key_join = ' ' * (max_key_length - key.length) + ' = '
-        ary << ["#{' ' * spacer}#{key}", val].join(key_join)
+        cary << ["#{' ' * spacer}#{key}", val].join(key_join)
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     def compute_val(value, spacer)
       if value.is_a?(Array)

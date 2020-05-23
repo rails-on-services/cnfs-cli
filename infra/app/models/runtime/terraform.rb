@@ -24,6 +24,8 @@ class Runtime::Terraform < Runtime
     response.add(exec: 'terraform plan', env: cmd_environment, pty: true)
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   def fetch_custom_providers
     return if custom_providers.empty?
 
@@ -48,9 +50,9 @@ class Runtime::Terraform < Runtime
     end
   end
 
-  def download_provider(f, url)
+  def download_provider(provider, url)
     bytes_total = nil
-    STDOUT.puts "Downloading terraform provider #{f}..."
+    STDOUT.puts "Downloading terraform provider #{provider}..."
     open(url, 'rb', 'Accept' => 'application/vnd.github.v4.raw',
                     :content_length_proc => lambda { |content_length|
                                               bytes_total = content_length
@@ -62,14 +64,15 @@ class Runtime::Terraform < Runtime
                                           print("\r#{bytes_transferred / 1024 / 1024}MB (total size unknown)")
                                         end
                                       }) do |page|
-      File.open(f, 'wb') do |file|
-        while chunk = page.read(1024)
+      File.open(provider, 'wb') do |file|
+        while (chunk = page.read(1024))
           file.write(chunk)
         end
-        File.chmod(0o755, f)
+        File.chmod(0o755, file)
       end
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
   def fetch_data_repo
     STDOUT.puts "Fetching data source v#{data.config.data_version}..."
@@ -80,4 +83,5 @@ class Runtime::Terraform < Runtime
     end
     `tar xzf "data.tar.gz"`
   end
+  # rubocop:enable Metrics/AbcSize
 end

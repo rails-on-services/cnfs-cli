@@ -39,6 +39,8 @@ class Provider::Aws < Provider
     "arn:aws:eks:#{aws_region}:#{aws_account_id}:cluster/#{target.cluster_name.cnfs_sub}"
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   # NOTE: This will work with a cluster on any target since the provider instance, ie credentials, is per target
   def init_cluster(target, options)
     credentials_file = "#{Dir.home}/.aws/credentials"
@@ -63,4 +65,6 @@ class Provider::Aws < Provider
     binding.pry
     cmd_string
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 end

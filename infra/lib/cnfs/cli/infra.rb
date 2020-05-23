@@ -10,8 +10,9 @@ module Cnfs
           @gem_root ||= Pathname.new(__dir__).join('../../..')
         end
 
+        # rubocop:disable Metrics/AbcSize
         def setup
-          puts "Initializing plugin infra from #{gem_root}" if Cnfs.debug > 0
+          puts "Initializing plugin infra from #{gem_root}" if Cnfs.debug.positive?
           # puts Cnfs.skip_schema
           # binding.pry # if Cnfs.debug > 1
           Cnfs.application.paths['db'].append(gem_root.join('db')) if Cnfs.application
@@ -19,8 +20,10 @@ module Cnfs
           # Cnfs.autoload_dirs << gem_root.join('app/controllers')
           # Cnfs.autoload_dirs << gem_root.join('app/models')
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
-          Cnfs.controllers << { klass: 'TargetsController', title: 'infra', help: 'infra [SUBCOMMAND]', description: 'Manage target infrastructure: k8s clusters, storage, etc' }
+          Cnfs.controllers << { klass: 'TargetsController', title: 'infra', help: 'infra [SUBCOMMAND]',
+                                description: 'Manage target infrastructure: k8s clusters, storage, etc' }
         end
+        # rubocop:enable Metrics/AbcSize
       end
     end
   end
