@@ -61,7 +61,7 @@ class Runtime::Skaffold < Runtime
   def deploy
     update_repositories
     sync_service_environment_files
-    #deploy_services
+    # deploy_services
     response
   end
 

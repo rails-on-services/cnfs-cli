@@ -1,4 +1,4 @@
-Metrics/LineLength:
+Layout/LineLength:
   Max: 120
 Metrics/ClassLength:
   Exclude:
@@ -13,4 +13,6 @@ Metrics/AbcSize:
   Exclude:
     - 'cnfs-core/lib/cnfs/core/schema.rb'
 Style/ClassAndModuleChildren:
+  Enabled: false
+Style/Documentation:
   Enabled: false

@@ -14,7 +14,7 @@ module Cnfs
       Config.load_and_set_settings(paths['config'].map { |path| path.join(CONFIG_FILE) })
     end
 
-    # TODO This would include any dirs from the project directory
+    # TODO: This would include any dirs from the project directory
     def initialize!
       compile_fixtures
       Cnfs::Schema.setup
@@ -40,7 +40,9 @@ module Cnfs
       end
     end
 
-    def config; Settings end
+    def config
+      Settings
+    end
 
     def compile_fixtures
       FileUtils.mkdir_p("#{config.temp_dir}/dump")

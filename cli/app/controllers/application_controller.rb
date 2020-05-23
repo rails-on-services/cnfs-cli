@@ -61,9 +61,13 @@ class ApplicationController
     end
   end
 
-  def error_messages; context.errors.full_messages.join("\n") end
+  def error_messages
+    context.errors.full_messages.join("\n")
+  end
 
-  def valid?; context.valid? end
+  def valid?
+    context.valid?
+  end
 
   def command_module
     self.class.name.underscore.split('/').first

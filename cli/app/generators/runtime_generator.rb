@@ -85,7 +85,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def base_labels
     # %i[deployment application target service].each_with_object({}) do |type, hash|
-    %i[target namespace application ].each_with_object({}) do |type, hash|
+    %i[target namespace application].each_with_object({}) do |type, hash|
       hash[type] = context.send(type).name
     end
   end

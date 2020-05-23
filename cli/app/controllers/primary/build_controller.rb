@@ -6,8 +6,8 @@ module Primary
 
     def execute
       # context.each_target do |_target|
-        before_execute_on_target
-        execute_on_target
+      before_execute_on_target
+      execute_on_target
     end
 
     def blah

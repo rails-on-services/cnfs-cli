@@ -3,9 +3,9 @@
 class Runtime::Compose < Runtime
   def supported_commands
     %w[build test push pull publish
-       destroy 
-       deploy redeploy ps status 
-       start restart stop terminate 
+       destroy
+       deploy redeploy ps status
+       start restart stop terminate
        attach command console copy credentials exec logs shell]
     # list show generate
   end
@@ -36,11 +36,9 @@ class Runtime::Compose < Runtime
     response.add(exec: compose(:up), env: compose_env)
   end
 
-  def ps
-  end
+  def ps; end
 
-  def status
-  end
+  def status; end
 
   ###
   # Service Runtime

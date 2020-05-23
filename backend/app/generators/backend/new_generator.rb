@@ -94,7 +94,7 @@ module Backend
       return unless ENV['CNFS_DEV']
 
       in_root do
-        %x(git clone https://github.com/rails-on-services/ros.git)
+        `git clone https://github.com/rails-on-services/ros.git`
       end
     end
 

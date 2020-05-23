@@ -34,7 +34,7 @@ module Primary
       if context.service.nil?
         start_cnfs_console
         return
-      elsif not context.service.respond_to?(:console_command)
+      elsif !context.service.respond_to?(:console_command)
         output.puts "#{context.service.name} does not implement the console command"
         return
       end

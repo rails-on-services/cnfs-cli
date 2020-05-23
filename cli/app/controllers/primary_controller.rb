@@ -25,7 +25,6 @@ class PrimaryController < CommandsController
   # class_option :profile_names, type: :array, aliases: '-p'
   # class_option :tag_names, type: :array, aliases: '--tags'
 
-
   # Application Management
   desc 'new TYPE NAME', 'Create a new CNFS application of TYPE backend, frontend or pipeline with name NAME'
   def new(type, name)
@@ -62,7 +61,6 @@ class PrimaryController < CommandsController
     run(:list, what: what)
   end
 
-
   # Deployment Manifests
   desc 'generate', 'Generate manifests for application deployment'
   option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
@@ -81,7 +79,6 @@ class PrimaryController < CommandsController
     run(:show, deployment_name: deployment_name, service_names: service_names)
   end
 
-
   # Image Opertions
   desc 'build NAMESPACE [SERVICES]', 'Build all or specific application images'
   option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
@@ -95,7 +92,7 @@ class PrimaryController < CommandsController
   # so namespace would declare the environment, e.g. production, etc
   # def build(namespace_name, *service_names)
   def build(*args)
-  # def build(n = @context&.namespace&.name)
+    # def build(n = @context&.namespace&.name)
     # binding.pry
     run(:build, args) # namespace_name: namespace_name, service_names: service_names)
   end
@@ -135,7 +132,6 @@ class PrimaryController < CommandsController
     raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
   end
 
-
   # Cluster Admin
   desc 'create TARGET NAMESPACE', 'Create a new NAMESPACE in TARGET'
   option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
@@ -152,7 +148,6 @@ class PrimaryController < CommandsController
   def destroy
     run(:destroy) if options.yes || yes?("\nWARNING!!! Destroy cannot be undone!\n\nAre you sure?")
   end
-
 
   # Cluster Runtime
   desc 'deploy', 'Deploy application to NAMESPACE on TARGET infrastructure'
@@ -184,7 +179,6 @@ class PrimaryController < CommandsController
   def status(status = :running)
     run(:status, status: status)
   end
-
 
   # Service Admin
   desc 'start', 'Start one or more services'
@@ -232,7 +226,6 @@ class PrimaryController < CommandsController
   def terminate(*service_names)
     run(:terminate, service_names: service_names)
   end
-
 
   # Service Runtime
   desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
@@ -304,7 +297,6 @@ class PrimaryController < CommandsController
   def sh(service_name)
     run(:shell, service_name: service_name)
   end
-
 
   # Utility
   desc 'version', 'Show cnfs version'

@@ -38,12 +38,14 @@ module Cnfs
         raise c
       end
     ensure
-      # TODO Maybe this should be a setting to disable auto remove for debugging purposes
+      # TODO: Maybe this should be a setting to disable auto remove for debugging purposes
       FileUtils.rm_rf(dir)
     end
 
     # TODO: This is not DRY and requires knowledge from outside the class
-    def self.dir; Cnfs.application.root.join(Cnfs.application.config.temp_dir).join('dump') end
+    def self.dir
+      Cnfs.application.root.join(Cnfs.application.config.temp_dir).join('dump')
+    end
 
     # Set up database tables and columns
     def self.create_schema

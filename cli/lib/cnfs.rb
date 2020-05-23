@@ -35,7 +35,7 @@ module Cnfs
 
   class Error < StandardError; end
 
-    CNFS_DIR = '.cnfs'
+  CNFS_DIR = '.cnfs'
   class << self
     attr_accessor :autoload_dirs, :context_name # , :skip_schema
     attr_accessor :request, :response, :key
@@ -48,7 +48,7 @@ module Cnfs
 
     def setup
       app_file = app_path.join(CNFS_DIR).join('config/application.rb')
-      require app_file if File.exists? app_file
+      require app_file if File.exist? app_file
       return unless (@application = Cnfs::Application.descendants.shift&.new(app_path))
 
       # Modify priority of db and app/views paths by inserting gem and plugin paths before application and user paths
@@ -131,7 +131,6 @@ module Cnfs
     def autoload_all(path)
       %w[controllers models generators].each_with_object([]) { |type, ary| ary << path.join('app').join(type) }
     end
-
 
     def controllers
       @controllers ||= []

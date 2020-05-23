@@ -9,7 +9,9 @@ module Cnfs
           mod.setup
         end
 
-        def mod; Cnfs::Cli::Backend end
+        def mod
+          Cnfs::Cli::Backend
+        end
       end
     end
   end

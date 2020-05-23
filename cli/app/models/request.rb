@@ -6,7 +6,7 @@ class Request
 
   # Attributes set on initialization
   attr_accessor :args, :options, :output, :command, :response
-   # :command_module :command_group, :command_name, :command_object
+  # :command_module :command_group, :command_name, :command_object
 
   # Attributes derived from base + args
   attr_accessor :targets, :services, :resources
@@ -36,10 +36,10 @@ class Request
     @targets = args.target_names ? Target.where(name: args.target_names) : base.targets
     @namespace = args.namespace_name ? Namespace.find_by(name: args.namespace_name) : base.namespace
     @application = args.application_name ? Application.find_by(name: args.application_name) : base.application
-    return unless namespace and application
+    return unless namespace && application
 
     @deployment = Deployment.find_by(application: application, namespace: namespace)
-  end 
+  end
 
   def validate_service_manifest
     errors.add(:namespace, 'Invalid') unless namespace
@@ -48,7 +48,7 @@ class Request
     errors.add(:targets, 'Invalid') unless targets.any?
 
     targets.each do |target|
-      errors.add(:target, 'Invalid or missing') unless namespace and namespace.targets.include?(target)
+      errors.add(:target, 'Invalid or missing') unless namespace&.targets&.include?(target)
     end
   end
 
@@ -65,7 +65,7 @@ class Request
   def validate_image_operations
     errors.add(:namespace, 'Invalid') unless namespace
     errors.add(:application, 'Invalid') unless application
-    errors.add(:target, 'Invalid or missing') unless target and namespace.targets.include?(target)
+    errors.add(:target, 'Invalid or missing') unless target && namespace.targets.include?(target)
     return unless errors.empty?
 
     configure_target(target)
@@ -88,7 +88,7 @@ class Request
     errors.add(:application, 'Invalid') unless application
 
     targets.each do |target|
-      errors.add(:target, 'Invalid or missing') unless namespace and namespace.targets.include?(target)
+      errors.add(:target, 'Invalid or missing') unless namespace&.targets&.include?(target)
     end
   end
 
@@ -107,7 +107,7 @@ class Request
     errors.add(:application, 'Invalid') unless application
 
     targets.each do |target|
-      errors.add(:target, 'Invalid or missing') unless namespace and namespace.targets.include?(target)
+      errors.add(:target, 'Invalid or missing') unless namespace&.targets&.include?(target)
     end
   end
 
@@ -128,7 +128,7 @@ class Request
     # errors.add(:target, 'Invalid or missing') unless target and namespace.targets.include?(target)
 
     targets.each do |target|
-      errors.add(:target, 'Invalid or missing') unless namespace and namespace.targets.include?(target)
+      errors.add(:target, 'Invalid or missing') unless namespace&.targets&.include?(target)
     end
     return unless errors.empty?
 
@@ -141,7 +141,7 @@ class Request
   # Service Runtime
   ###
   def initialize_service_runtime
-    return if command.name.eql?(:console) and args.service_name.nil?
+    return if command.name.eql?(:console) && args.service_name.nil?
 
     @target = args.target_name ? Target.find_by(name: args.target_name) : base.targets.first
     @namespace = args.namespace_name ? Namespace.find_by(name: args.namespace_name) : base.namespace
@@ -150,10 +150,10 @@ class Request
   end
 
   def validate_service_runtime
-    return if command.name.eql?(:console) and args.service_name.nil?
+    return if command.name.eql?(:console) && args.service_name.nil?
 
     errors.add(:namespace, 'Invalid') unless namespace
-    errors.add(:target, 'Invalid or missing') unless target and namespace.targets.include?(target)
+    errors.add(:target, 'Invalid or missing') unless target && namespace.targets.include?(target)
     errors.add(:application, 'Invalid') unless application
     errors.add(:service, 'Invalid') unless service
     return if errors.any?
@@ -266,48 +266,13 @@ class Request
   end
 end
 
-=begin
-  def initialize(context, target, args, options)
-    @context = context
-    @target = target
-    @deployment = context.deployment
-    @application = context.application
-    @args = args
-    @options = options
-  end
+#   def target_services
+#     result = target.services
+#     result = result.where(name: args.service_names) unless args.service_names.empty?
+#     result = result.joins(:tags).where(tags: { name: args.tag_names }) unless args.tag_names.empty?
+#     result
+#   end
 
-  def last_service_name
-    args.service_names&.last
-  end
-
-  def service_names_to_s
-    service_names.join(' ')
-  end
-
-  def service_names
-    services.pluck(:name)
-  end
-
-  def services
-    @services ||= application_services + target_services
-  end
-
-  def application_services
-    binding.pry
-    result = application.services
-    result = result.where(name: args.service_names) unless args.service_names.empty?
-    result = result.joins(:tags).where(tags: { name: args.tag_names }) unless args.tag_names.empty?
-    result
-  end
-
-  def target_services
-    result = target.services
-    result = result.where(name: args.service_names) unless args.service_names.empty?
-    result = result.joins(:tags).where(tags: { name: args.tag_names }) unless args.tag_names.empty?
-    result
-  end
-=end
-
-  # def resources
-  #   application.resources.where(name: args.service_names) + target.resources.where(name: args.service_names)
-  # end
+# def resources
+#   application.resources.where(name: args.service_names) + target.resources.where(name: args.service_names)
+# end

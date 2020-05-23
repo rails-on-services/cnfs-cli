@@ -6,12 +6,12 @@ class Response
 
   def initialize(attributes = {})
     super
-  # def initialize(command_name, options, output, command, errors)
-  #   @command_name = command_name
-  #   @options = options
-  #   @output = output
-  #   @command = command
-  #   @errors = errors
+    # def initialize(command_name, options, output, command, errors)
+    #   @command_name = command_name
+    #   @options = options
+    #   @output = output
+    #   @command = command
+    #   @errors = errors
     @commands = []
     @results = []
   end
