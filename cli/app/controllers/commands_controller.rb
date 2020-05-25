@@ -28,7 +28,7 @@ class CommandsController < Thor
 
     conn = controller.new(args, opts)
     raise Cnfs::Error, conn.error_messages unless conn.valid?
-
+    Cnfs.context = conn.context
     conn.execute
   end
 

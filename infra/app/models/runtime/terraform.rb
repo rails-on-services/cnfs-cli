@@ -24,6 +24,14 @@ class Runtime::Terraform < Runtime
     response.add(exec: 'terraform plan', env: cmd_environment, pty: true)
   end
 
+  def apply
+    response.add(exec: 'terraform apply', env: cmd_environment, pty: true)
+  end
+
+  def destroy
+    response.add(exec: 'terraform destroy', env: cmd_environment, pty: true)
+  end
+
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
   def fetch_custom_providers

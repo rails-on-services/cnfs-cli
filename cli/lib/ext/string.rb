@@ -15,27 +15,26 @@ class String
     start_with?(YAML_STRING)
   end
 
-  def cnfs_sub(target = nil)
+  def cnfs_sub
+    return self unless (context = Cnfs.context)
+
     a = dup
-    if target
+    if (target = context.target)
       a.gsub!('{domain}', target.domain_name)
       a.gsub!('{domain_slug}', target.domain_slug)
     end
-    # puts a
-    # binding.pry if a.index('{project_name}')
-    a.gsub!('{project_name}', Cnfs.application.class.name.underscore.split('/').shift)
-    begin
-      if Cnfs.request
-        a.gsub!('{application_name}', Cnfs.request.args.application_name) if a.index('{application_name}')
-        # binding.pry if a.index('{namespace}')
-        if a.index('{namespace}') && Cnfs.request.args.namespace_name
-          a.gsub!('{namespace}', Cnfs.request.args.namespace_name)
-        end
+    # bind = a.index('{project_name}')
+    a.gsub!('{project_name}', context.project_name_attrs.join('-'))
+    # binding.pry if bind
+    # begin
+      if a.index('{application_name}') && context.application&.name
+        a.gsub!('{application_name}', context.application.name)
+      elsif a.index('{namespace}') && context.namespace&.name
+        a.gsub!('{namespace}', context.namespace.name)
       end
-    rescue TypeError => e
-      binding.pry
-    end
-
+    # rescue TypeError => e
+    #   binding.pry
+    # end
     a
   end
 

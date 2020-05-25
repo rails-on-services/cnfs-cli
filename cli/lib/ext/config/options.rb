@@ -3,16 +3,16 @@
 module Config
   class Options
     # Return an array representation of the Config hash
-    def to_array(target = nil, key = '', value = self, ary = [])
+    def to_array(key = '', value = self, ary = [])
       if value.is_a?(Config::Options)
         value.each_pair do |skey, value|
-          to_array(target, "#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
+          to_array("#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
         end
       else
         if value.is_a? Array
           ary.append("#{key.upcase}=#{value.join(',')}")
         else
-          value = value.plaintext.cnfs_sub(target) if value.is_a? String
+          value = value.plaintext.cnfs_sub if value.is_a? String
           ary.append("#{key.upcase}=#{value}") unless value.nil?
         end
       end

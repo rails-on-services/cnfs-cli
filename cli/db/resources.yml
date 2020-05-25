@@ -1,4 +1,2 @@
 # resources.yml
 ---
-
-<%# Cnfs.load_configs(__FILE__) %>

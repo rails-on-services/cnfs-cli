@@ -12,10 +12,8 @@ module Targets
     end
 
     def execute_on_target
-      # binding.pry
-      # generate_config if stale_config
       Dir.chdir(context.write_path(:infra)) do
-        context.runtime.init.run!
+        context.runtime.init.run! if context.options.init
         context.runtime.plan.run!
       end
     end

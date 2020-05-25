@@ -29,6 +29,7 @@ class TargetsController < CommandsController
 
   desc 'plan', 'Show the terraform infrastructure plan'
   option :clean, type: :boolean, desc: 'Clean local modules cache. Force to download latest modules from TF registry'
+  option :init, type: :boolean, desc: 'Force to download latest modules from TF registry'
   def plan(*args)
     run(:plan, args)
   end
@@ -46,13 +47,10 @@ class TargetsController < CommandsController
   #   end
   # end
 
-  # desc 'destory', 'Destroy infrastructure'
-  # def destroy
-  #   Dir.chdir(infra.deploy_path) do
-  #     fetch_terraform_custom_providers(infra.config.custom_tf_providers, options.cl)
-  #     system_cmd('terraform destroy', {})
-  #   end
-  # end
+  desc 'destroy', 'Destroy infrastructure'
+  def destroy
+    run(:destroy)
+  end
 
   private
 

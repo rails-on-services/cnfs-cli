@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Targets
-  class ApplyController < ApplicationController
+  class DestroyController < ApplicationController
     cattr_reader :command_group, default: :service_manifest
 
     def execute
@@ -14,10 +14,7 @@ module Targets
     def execute_on_target
       Dir.chdir(context.write_path(:infra)) do
         context.runtime.init.run! if context.options.init
-        # system_cmd('rm -f .terraform/terraform.tfstate')
-        context.runtime.apply.run!
-        # system_cmd('terraform output -json > output.json', cmd_environment)
-        # show_json
+        context.runtime.destroy.run!
       end
     end
   end

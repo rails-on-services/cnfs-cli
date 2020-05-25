@@ -49,7 +49,7 @@ class ApplicationGenerator < Thor::Group
     error_on = instance_variable_get("@#{entity_name}")
     puts "\nError generating #{entity_name} #{error_on.name}: #{e}"
     puts "\n#{error_on.to_json}"
-    exit
+    exit 1
   end
 
   def remove_stale_files

@@ -204,40 +204,6 @@ class Request
     end
   end
 
-  # def configure_target # (target)
-  #   target.context = self
-  #   # @target = target
-  #   # target.deployment = deployment
-  #   # target.application = application
-  #   # target.namespace = namespace
-
-  #   # binding.pry
-  #   # @request = Request.new(deployment, args, options)
-  #   # @request = Request.new(context, target, args, options)
-  #   # output.puts "selected services: #{request.service_names_to_s}" if options.debug
-  #   output.puts "selected services: #{selected_services.pluck(:name)}" if options.debug
-
-  #   # @response = Response.new(command_name, options, output, command(command_options), errors)
-  #   # Cnfs.request = @request
-  #   # Cnfs.response = @response
-
-  #   binding.pry
-  #   # Set runtime object to an instance of compose or skaffold
-  #   return unless (@runtime = current_runtime)
-
-  #   # Set the runtime's request and response virtual attributes
-  #   @runtime.context = self # context # request
-  #   # @runtime.response = response
-
-  #   # Set the runtime's target virtual attribute to the current target
-  #   # Runtime methods are called directly and some values are dependent upon the current target
-  #   # @runtime.target = target
-  # end
-
-  # def current_runtime
-  #   command.module.eql?('infra') ? target.infra_runtime : target.runtime
-  # end
-
   def runtime_generator_class
     runtime.generator_class
   end

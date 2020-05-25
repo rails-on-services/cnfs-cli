@@ -11,11 +11,11 @@ class InfraRuntimeGenerator < ApplicationGenerator
   private
 
   def entity_name
-    :resource
+    :blueprint
   end
 
   def entities
-    context.target.resources + context.application.resources
+    [context.target.blueprint]
   end
 
   def internal_path

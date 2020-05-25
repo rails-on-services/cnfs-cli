@@ -5,7 +5,7 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
 
   def generate
     tmpl = entity_to_template.to_s
-    template("#{tmpl}.tf.erb", "#{context.write_path(path_type)}/#{[tmpl, resource.name].uniq.join('-')}.tf")
+    template("#{tmpl}.tf.json.erb", "#{context.write_path(path_type)}/#{tmpl}.tf.json") if @blueprint.valid?
   end
 
   def entity_template_map
@@ -13,9 +13,11 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
   end
 
   def excluded_files
-    Dir[context.write_path(path_type).join('terraform-provider*')]
+    Dir[context.write_path(path_type).join('terraform-provider*')] +
+      Dir[context.write_path(path_type).join('terraform.tfstate*')]
   end
 
+=begin
   # def deploy_type; target.runtime.deploy_type end
   def deploy_type
     :kubernetes
@@ -78,8 +80,9 @@ class InfraRuntime::TerraformGenerator < InfraRuntimeGenerator
       elsif value.is_a?(Integer) || [true, false].include?(value)
         value
       else
-        "\"#{value.cnfs_sub(target)}\""
+        "\"#{value.cnfs_sub}\""
       end
     end
   end
+=end
 end

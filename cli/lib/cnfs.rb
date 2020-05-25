@@ -38,7 +38,7 @@ module Cnfs
   CNFS_DIR = '.cnfs'
   class << self
     attr_accessor :autoload_dirs, :context_name # , :skip_schema
-    attr_accessor :request, :response, :key
+    attr_accessor :context, :key
     attr_reader :application
 
     def lite_setup
@@ -82,10 +82,6 @@ module Cnfs
           klass.setup
         end
       end
-    end
-
-    def context
-      Context.find_by(name: application.config.context)
     end
 
     # NOTE: Dir.pwd is the current application's root (switched into)

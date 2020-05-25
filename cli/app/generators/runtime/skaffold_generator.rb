@@ -13,7 +13,7 @@ class Runtime::SkaffoldGenerator < RuntimeGenerator
 
   # TODO: needs to have namespace into api
   def application_hostname
-    target.application.endpoint.cnfs_sub(target)
+    context.target.application.endpoint.cnfs_sub
   end
 
   # TODO: get the pull secret sorted

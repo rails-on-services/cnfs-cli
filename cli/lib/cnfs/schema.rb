@@ -80,6 +80,16 @@ module Cnfs
         end
         Asset.reset_column_information
 
+        create_table :blueprints, force: true do |t|
+          t.string :name
+          t.string :type
+          t.string :source
+          t.string :version
+          t.string :config
+          t.string :environment
+        end
+        Blueprint.reset_column_information
+
         create_table :contexts, force: true do |t|
           # t.references :target
           t.references :namespace
@@ -200,6 +210,7 @@ module Cnfs
           t.references :runtime
           t.references :infra_runtime
           t.references :provider
+          t.references :blueprint
           t.string :name
           t.string :config
           t.string :tf_config

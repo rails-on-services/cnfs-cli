@@ -29,9 +29,9 @@ module Primary
     end
 
     def show_endpoint
-      # output.puts "\n*** Services available at #{target.application.endpoints['api'].cnfs_sub(target)} ***"
+      # output.puts "\n*** Services available at #{target.application.endpoints['api'].cnfs_sub} ***"
       # TODO: Get the endpoint(s) from the application+target
-      output.puts "endpoint\t#{context.application.endpoint.cnfs_sub(context.target)}"
+      output.puts "endpoint\t#{context.application.endpoint.cnfs_sub}"
       output.puts "docs\t\t[TO IMPLEMENT]\n\n"
     end
 

@@ -15,6 +15,7 @@ class Target < ApplicationRecord
   has_many :resource_tags, through: :resources, source: :tags
 
   belongs_to :provider
+  belongs_to :blueprint
   belongs_to :runtime
   belongs_to :infra_runtime, class_name: 'Runtime'
 
