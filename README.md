@@ -18,5 +18,5 @@ cd cnfs-cli
 ./build
 
 export PATH=$PATH:`pwd`/cli/exe
-export CNFS_DEV=1
+export CNFS_CLI_DEV=1
 ```

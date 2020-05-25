@@ -13,6 +13,7 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Write a short summary, because RubyGems requires one.'
   spec.description   = 'Write a longer description or delete this line.'
   spec.homepage      = 'https://cnfs.io'
+  spec.license       = 'MIT'
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
@@ -29,15 +30,15 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'activerecord'
-  spec.add_dependency 'activesupport'
-  spec.add_dependency 'config'
-  spec.add_dependency 'json_schemer'
-  spec.add_dependency 'little-plugger'
-  spec.add_dependency 'lockbox'
+  spec.add_dependency 'activerecord', '~> 6.0.0'
+  spec.add_dependency 'activesupport', '~> 6.0.0'
+  spec.add_dependency 'config', '~> 1.7.1'
+  # spec.add_dependency 'json_schemer'
+  spec.add_dependency 'little-plugger', '~> 1.1.4'
+  spec.add_dependency 'lockbox', '~> 0.2.4'
   spec.add_dependency 'pastel', '~> 0.7.2'
-  spec.add_dependency 'pry'
-  spec.add_dependency 'sqlite3'
+  spec.add_dependency 'pry', '~> 0.12.2'
+  spec.add_dependency 'sqlite3', '~> 1.4.1'
   spec.add_dependency 'thor', '~> 1.0'
 
   # spec.add_dependency "tty-box", "~> 0.4.1"
@@ -61,8 +62,8 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "tty-tree", "~> 0.3"
   # spec.add_dependency "tty-which", "~> 0.4"
 
-  spec.add_dependency 'xdg'
-  spec.add_dependency 'zeitwerk'
+  spec.add_dependency 'xdg', '~> 3.1.1'
+  spec.add_dependency 'zeitwerk', '~> 2.2.2'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 12.0'

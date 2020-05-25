@@ -85,12 +85,7 @@ module Backend
       end
     end
 
-    # TODO: for each ros service gem, generate a rails application in ./services that includes that gem and core gem
-    def production
-      return if ENV['CNFS_DEV']
-    end
-
-    def development
+    def cnfs_gems_repo
       return unless ENV['CNFS_DEV']
 
       in_root do
@@ -98,7 +93,21 @@ module Backend
       end
     end
 
+    # for each service gem, generate a rails application in ./services
+    def cnfs_service_apps
+      cnfs_service_names.each do |service_name|
+        generator = Backend::ServiceGenerator.new([service_name], options)
+        generator.destination_root = destination_root
+        generator.cnfs_app = true
+        generator.invoke_all
+      end
+    end
+
     private
+
+    def cnfs_service_names
+      %w[cognito comm iam organization storage]
+    end
 
     def source_paths
       [views_path, views_path.join('templates')]

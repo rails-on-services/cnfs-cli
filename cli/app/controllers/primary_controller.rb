@@ -27,7 +27,9 @@ class PrimaryController < CommandsController
 
   # Application Management
   desc 'new TYPE NAME', 'Create a new CNFS application of TYPE backend, frontend or pipeline with name NAME'
+  option :local, type: :boolean, desc: 'Reference local gems in services'
   def new(type, name)
+    # TODO: Project::NewController does not exist. Implement it
     "#{type.classify}::NewController".safe_constantize&.new(name, options)&.execute
     InitController.new(name, options.merge(type: type.to_sym)).execute
   end

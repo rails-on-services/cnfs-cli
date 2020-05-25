@@ -4,6 +4,7 @@
 module Backend
   class ServiceGenerator < Thor::Group
     include Thor::Actions
+    attr_accessor :cnfs_app
     argument :name
 
     # TODO: db and dummy path are set from config values
@@ -15,12 +16,11 @@ module Backend
 
       return if Dir.exist?("services/#{name}")
 
-      plugin = is_dev? ? 'plugin' : ''
-      plugin_options = is_dev? ? '--full --dummy-path=spec/dummy' : ''
+      plugin = is_plugin? ? 'plugin' : ''
+      plugin_options = is_plugin? ? '--full --dummy-path=spec/dummy' : ''
       rails_options = '--api -G -S -J -C -T -M --skip-turbolinks --database=postgresql --skip-active-storage'
 
-      generator_type = is_dev? ? 'plugin' : 'app'
-      # template_file = internal_path.join("../../views/rails/#{rails_generator}/#{rails_generator}_generator.rb")
+      generator_type = is_plugin? ? 'plugin' : 'app'
       template_file = internal_path.join("../rails/#{generator_type}_generator.rb")
 
       exec_string = "rails #{plugin} new #{plugin_options} #{rails_options} -m #{template_file} #{name}"
@@ -29,13 +29,15 @@ module Backend
     end
 
     def gemspec_content
-      return unless is_dev?
+      return unless is_plugin?
 
       gemspec = "services/#{name}/#{name}.gemspec"
       gsub_file gemspec, '  spec.name        = "', '  spec.name        = "ros-'
     end
 
     def sdk_content
+      return if cnfs_app
+
       create_file "#{sdk_lib_path}/models/#{name}.rb", <<~RUBY
         # frozen_string_literal: true
 
@@ -54,10 +56,17 @@ module Backend
       RUBY
     end
 
+    def service_app_dependencies
+      return unless cnfs_app
+
+      # TODO: Sed the Gemfile so that it includes the corresponding cnfs service gem
+      # TODO: if ENV['CNFS_DEV'] then sed the service Gemfiles so they get the gem from the path
+    end
+
     private
 
-    def is_dev?
-      !Cnfs.application.config.dev
+    def is_plugin?
+      ENV['CNFS_PLUGIN']
     end
 
     def platform_name

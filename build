@@ -1,10 +1,21 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-{ 'cli' => 'cnfs-cli', 'infra' => 'cnfs-cli-infra', 'backend' => 'cnfs-cli-backend' }.each_pair do |dir, name|
-  name ||= dir
+Dir['*/'].each do |dir|
   Dir.chdir(dir) do
-    puts "gem build #{name}.gemspec"
-    puts "gem install ./#{name}-0.1.0.gem" if ARGV.include?('-i')
+    next unless (gemspec = Dir['*.gemspec'].shift)
+    cmd = "gem build #{gemspec}"
+    if ARGV.include?('-d')
+      puts cmd
+    else
+      `#{cmd}`
+    end
+    next unless ARGV.include?('-i')
+    cmd = "gem install ./#{gemspec.delete_suffix('.gemspec')}-0.1.0.gem"
+    if ARGV.include?('-d')
+      puts cmd
+    else
+      `#{cmd}`
+    end
   end
 end

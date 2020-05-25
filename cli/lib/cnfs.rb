@@ -42,7 +42,7 @@ module Cnfs
     attr_reader :application
 
     def lite_setup
-      ENV['CNFS_DEV'] ? initialize_dev_plugins : initialize_plugins
+      ENV['CNFS_CLI_DEV'] ? initialize_dev_plugins : initialize_plugins
       setup_loader
     end
 
@@ -63,7 +63,7 @@ module Cnfs
     end
 
     def app_path
-      @app_path ||= Pathname.new(Dir.pwd).ascend { |path| break path if path.join(CNFS_DIR).directory? }
+      @app_path ||= Pathname.new(Dir.pwd).ascend { |path| break path if path.join(CNFS_DIR).directory? } || Pathname.new(Dir.pwd)
     end
 
     def initialize_dev_plugins
