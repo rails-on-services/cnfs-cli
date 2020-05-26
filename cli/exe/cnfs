@@ -9,26 +9,35 @@ ENV['CNFS_DEV'] = '1' if ARGV.delete('--dev')
 
 require 'cnfs'
 
-if ARGV[0].blank? || %w[version help new init].include?(ARGV[0])
-  Cnfs.lite_setup
-else
-  Cnfs.setup
-  if Cnfs.application
-    Cnfs.application.initialize!
+def do_it
+  if ARGV[0].blank? || %w[version help new init].include?(ARGV[0])
+    Cnfs.lite_setup
   else
-    STDOUT.puts('WARN: not a cnfs project')
-    return
+    Cnfs.setup
+    if Cnfs.application
+      Cnfs.application.initialize!
+    else
+      STDOUT.puts('WARN: not a cnfs project')
+      exit 1
+    end
+  end
+
+  Signal.trap('INT') do
+    warn("\n#{caller.join("\n")}: interrupted")
+    exit 1
+  end
+
+  begin
+    PrimaryController.start
+  rescue Cnfs::Error => e
+    puts "ERROR: #{e.message}"
+    exit 1
   end
 end
 
-Signal.trap('INT') do
-  warn("\n#{caller.join("\n")}: interrupted")
-  exit(1)
-end
-
-begin
-  PrimaryController.start
-rescue Cnfs::Error => e
-  puts "ERROR: #{e.message}"
-  exit 1
+if Dir.exist?("#{ARGV[0]}/.cnfs")
+  # If we are in the project directory and the first arg is the name of an app then switch to that dir
+  Dir.chdir(ARGV.shift) { do_it }
+else
+  do_it
 end
