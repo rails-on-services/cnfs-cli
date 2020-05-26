@@ -55,7 +55,7 @@ module Cnfs
       current_paths = application.paths.dup
       application.paths['db'] = [gem_root.join('db')]
       application.paths['app/views'] = [gem_root.join('app/views')]
-      application.config.dev ? initialize_dev_plugins : initialize_plugins
+      application.config.cli.dev && Cnfs.plugins.empty? ? initialize_dev_plugins : initialize_plugins
       application.paths['db'] += current_paths['db']
       application.paths['app/views'] += current_paths['app/views']
 
@@ -86,12 +86,8 @@ module Cnfs
 
     # NOTE: Dir.pwd is the current application's root (switched into)
     # TODO: This should probably move out to rails or some other place
-    def services_project?
-      File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
-    end
-
-    # def gem_db_path
-    #   @gem_db_path ||= gem_root.join('db')
+    # def services_project?
+    #   File.exist?(Pathname.new(Dir.pwd).join('lib/core/lib/ros/core.rb'))
     # end
 
     def gem_root

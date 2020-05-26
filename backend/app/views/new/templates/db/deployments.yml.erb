@@ -1,0 +1,64 @@
+# <%= name %> deployments.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+<% Cnfs.key = :development -%>
+<%= "#{name}_development: &#{name}_development" %>
+  <<: *DEFAULTS
+  application: <%= name %>
+  namespace: development
+  key: development
+  environment:
+    rails_env: development
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+
+<% Cnfs.key = :test -%>
+<%= "#{name}_test: &#{name}_test" %>
+  <<: *DEFAULTS
+  application: <%= name %>
+  namespace: test
+  key: test
+  environment:
+    rails_env: test
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+
+<% Cnfs.key = :production -%>
+<%= "#{name}_production: &#{name}_production" %>
+  <<: *DEFAULTS
+  application: <%= name %>
+  namespace: production
+  key: production
+  environment:
+    rails_env: production
+    secret_key_base: "<%= SecureRandom.hex(64).ciphertext.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      jwt:
+        encryption_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+      partition_name: <%= name %>
+      metrics:
+        enabled: yes
+        process_stats_enabled: yes
+      request_logging:
+        enabled: yes
+        config:
+          host: fluentd
+          port: 24224
+      event_logging:
+        enabled: yes
+        config:
+          name: events-log
+          host: fluentd
+          port: 24224
+          schema_registry_url: http://kafkastack:8081

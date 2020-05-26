@@ -18,7 +18,6 @@ module Backend
     def generate_core
       rails_options = '--api -G -S -J -C -T -M --database=postgresql --skip-active-storage'
       plugin_options = '--full --dummy-path=spec/dummy'
-      # generator = internal_path.join('../../views/rails/core/core_generator.rb')
       generator = internal_path.join('../rails/core_generator.rb')
       exec_system = "rails plugin new #{rails_options} #{plugin_options} -m #{generator} #{name}-core"
       puts exec_system
@@ -107,6 +106,8 @@ module Backend
 
     def cnfs_service_names
       %w[cognito comm iam organization storage]
+      binding.pry
+      %w[]
     end
 
     def source_paths

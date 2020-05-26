@@ -20,7 +20,7 @@ class InitGenerator < Thor::Group
   end
 
   def generate_fixtures
-    fixture_names.sort.each { |type| template("db/#{type}.yml.erb", ".cnfs/db/#{type}.yml") }
+    fixture_names.uniq.sort.each { |type| template("db/#{type}.yml.erb", ".cnfs/db/#{type}.yml") }
   end
 
   private
@@ -37,14 +37,23 @@ class InitGenerator < Thor::Group
     %w[development test production]
   end
 
-  def fixture_names
-    Dir[views_path.join('templates/db/*.erb')].map { |f| File.basename(f).delete_suffix('.yml.erb') } - %w[keys]
+  def source_paths
+    # How to get the rails gem's template to be the one chosen
+    return app_paths.each_with_object([]) {|p, a| a.append(p.join('new'), p.join('new/templates')) } if Cnfs.application
+
+    [views_path, views_path.join('templates')]
   end
 
-  def source_paths
-    # binding.pry if Cnfs.application
-    # How to get the rails gem's template to be the one chosen
-    [views_path, views_path.join('templates')]
+  # Only referenced after Cnfs.appliation is initialized
+  def fixture_names
+    Dir[*app_paths.map{ |p| p.join('new/templates/db/*.erb') }].map { |f| File.basename(f).delete_suffix('.yml.erb') } - %w[keys]
+  end
+
+  def app_paths
+    @app_paths ||= (
+      p = Cnfs.application.paths['app/views'].reverse
+      p.slice(0..1) + p.slice(2..).select { |path| [options.type.to_s, 'cli'].include? path.parent.parent.basename.to_s }
+    )
   end
 
   def views_path

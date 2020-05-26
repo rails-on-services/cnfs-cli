@@ -1,0 +1,12 @@
+# <%= name %> namespaces.yml
+---
+DEFAULTS: &DEFAULTS
+  name: $LABEL
+
+mounted:
+  <<: *DEFAULTS
+  targets: development
+  config:
+    mount: true
+  environment:
+    some_var: some_value
