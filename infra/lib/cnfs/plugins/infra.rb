@@ -3,9 +3,15 @@
 module Cnfs
   module Plugins
     class Infra
-      def self.initialize_infra
-        require 'cnfs/cli/infra'
-        Cnfs::Cli::Infra.setup
+      class << self
+        def initialize_infra
+          require 'cnfs/cli/infra'
+          plugin_lib.initialize
+        end
+
+        def plugin_lib
+          Cnfs::Cli::Infra
+        end
       end
     end
   end

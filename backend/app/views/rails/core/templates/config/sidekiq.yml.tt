@@ -1,3 +1,0 @@
----
-:queues:
-  - <%= @profile.service_name %>_default

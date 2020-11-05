@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class PushController < Cnfs::Command
-    on_execute :execute_command
+module Primary
+  class PushController < ApplicationController
+    cattr_reader :command_group, default: :image_operations
 
-    def execute_command; end
+    def execute; end
   end
 end

@@ -1,0 +1,9 @@
+---
+environment: development
+namespace: main
+paths:
+  config: config
+  data: data
+  lib: lib
+  src: src
+  tmp: tmp

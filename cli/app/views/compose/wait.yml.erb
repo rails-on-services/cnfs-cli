@@ -1,30 +1,32 @@
 <% # compose/wait.yml.erb
 def depends_on
-  configured_services.map { |key| "- #{key}" }.join("\n      ")
+  service_names.map { |service| "\n      - #{service}" }.join
+end
+
+def service_names
+  configured_services.map{ |s| s[:service] }.uniq
 end
 
 def targets
-  configured_services.map { |key| "#{key}:#{dependency_ports[key.to_sym]}" }.join(',')
+  configured_services.map { |s| "#{s[:service]}:#{s[:port]}" }.join(',')
 end
 
 def configured_services
-  dependency_ports.stringify_keys.keys & @context.target.services.pluck(:name)
+  @configures_services ||= Service.all.select { |s| s.ports }.each_with_object([]) do |service, ary|
+    service.ports.each do |port|
+      next unless port['wait']
+
+      ary.append(service: service.name, port: port['port'])
+    end
+  end
 end
 
-def dependency_ports
-  {
-    postgres: '5432',
-    redis: '6379',
-    fluentd: '24224',
-    localstack: '4572'
-  }
-end
+if configured_services.any?
 %>---
 version: '<%= version %>'
 services:
   wait:
-    image: waisbrot/wait<% unless depends_on.blank? %>
-    depends_on:
-      <%= depends_on %><% end %><% unless targets.blank? %>
+    image: waisbrot/wait
+    depends_on:<%= depends_on %>
     environment:
       TARGETS: "<%= targets %>"<% end %>

@@ -2,15 +2,9 @@
 
 module Primary
   class ExecController < ApplicationController
-    cattr_reader :command_group, default: :service_runtime
-
+    # cnfs exec iam ls -l -R
     def execute
-      before_execute_on_target
-      execute_on_target
-    end
-
-    def execute_on_target
-      context.runtime.exec(context.service.name, context.args.command_args.join(' '), true).run!
+      application.exec(application.service, application.arguments.command_args.join(' '), true)
     end
   end
 end

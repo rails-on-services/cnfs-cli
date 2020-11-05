@@ -2,28 +2,19 @@
 
 module Primary
   class PsController < ApplicationController
-    cattr_reader :command_group, default: :cluster_runtime
-
     def execute
-      context.each_target do |_target|
-        before_execute_on_target
-        execute_on_target
-      end
-    end
-
-    def execute_on_target
-      context.output.puts context.runtime.services(format: format, status: status)
+      response.output.puts application.runtime_services(format: format, status: status)
     end
 
     # TODO: format and status are specific to the runtime so refactor when implementing skaffold
     def format
-      return nil unless context.options.format
+      return nil unless options.format
 
-      "table {{.ID}}\t{{.Mounts}}" if context.options.format.eql?('mounts')
+      "table {{.ID}}\t{{.Mounts}}" if options.format.eql?('mounts')
     end
 
     def status
-      context.options.status || :running
+      options.status || :running
     end
   end
 end

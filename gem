@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+require 'fileutils'
+
+def exec(cmd)
+  if ENV['DEBUG']
+    puts cmd
+    return
+  end
+  `#{cmd}`
+end
+
+def install
+  return unless (gemspec = Dir['*.gemspec'].shift)
+
+  exec("gem build #{gemspec}")
+  return unless (gem = Dir['*.gem'].shift)
+
+  exec("gem install ./#{gem}")
+  FileUtils.rm(gem)
+end
+
+def uninstall
+  return unless (gemspec = Dir['*.gemspec'].shift)
+
+  exec("gem uninstall -a -x #{gemspec.delete_suffix('.gemspec')}")
+end
+
+ENV['DEBUG'] = ARGV.delete('-d')
+exit 1 unless (cmd = ARGV[0])
+
+Dir['*/'].each do |dir|
+  Dir.chdir(dir) do
+    if cmd.start_with?('i')
+      install
+    elsif cmd.start_with?('u')
+      uninstall
+    end
+  end
+end

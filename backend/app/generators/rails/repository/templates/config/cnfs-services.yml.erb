@@ -1,0 +1,80 @@
+# services.yml
+---
+sftp:
+  tags: core, storage
+
+cognito: &base_service
+  type: Service::Rails
+  config: &base_config
+    image_repository: railsonservices
+    # TODO: read image_tag version from somewhere
+    # like File.read('path to version file')
+    # image_tag: '0.1.0-{service.git.branch_name}-{service.git.sha}'
+    image_tag: '0.1.0-{service.git.sha}-{service.git.sha}'
+    console_command: rails console
+    database_seed_commands:
+      - rails ros:db:reset:seed # non cnfs services
+    test_commands:
+      - bundle exec rubocop
+      - rails db:test:prepare
+      - bin/spring rspec # NOTE: missing options
+    profiles: &base_profiles
+      server: '["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]'
+      scheduler: '["bundle", "exec", "rails", "runner", "./lib/scheduler.rb"]'
+      worker: '["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]' # for non cnfs services
+    image_gems:
+      bundler: 2.0.1
+      eventmachine: 1.2.7
+      ffi: 1.10.0
+      mini_portile2: 2.4.0
+      msgpack: 1.2.10
+      nio4r: 2.3.1
+      nokogiri: 1.10.4
+      pg: 1.1.4
+      puma: 3.12.1
+    build_args:
+      rails_env: development
+      bundle_string: --without production
+      os_packages: ['libpq5', 'tree', 'curl', 'git', 'sudo', 'vim', 'less', 'tcpdump', 'net-tools', 'iputils-ping', 'graphviz']
+      source_path: cnfs-backend
+      # target_path: ../..
+
+  environment: &base_environment
+    platform:
+      api_docs:
+        server:
+          host: 'https://api.{domain}'
+      connection:
+        type: host
+        external_connection_type: path
+        # feature_set: mounted
+        hosts: 'api.{domain}'
+      jwt:
+        aud: 'https://api.{domain}'
+        iss: 'https://iam.api.{domain}'
+      partition_name: what
+      postman:
+        workspace: 'api.{domain}'
+      storage:
+        image:
+          services: ['images']
+        app:
+          services: ['documents', 'reports', 'sftp']
+
+comm:
+  <<: *base_service
+
+iam:
+  <<: *base_service
+
+organization:
+  <<: *base_service
+
+storage:
+  <<: *base_service
+  tags: core, storage
+  config:
+    <<: *base_config
+    profiles:
+      <<: *base_profiles
+      sqs_worker:  '["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]'

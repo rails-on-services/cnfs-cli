@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activerecord', '~> 6.0.0'
   spec.add_dependency 'activesupport', '~> 6.0.0'
-  spec.add_dependency 'config', '~> 1.7.1'
+  spec.add_dependency 'config', '~> 2.2.1'
   # spec.add_dependency 'json_schemer'
   spec.add_dependency 'little-plugger', '~> 1.1.4'
   spec.add_dependency 'lockbox', '~> 0.2.4'

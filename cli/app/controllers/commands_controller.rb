@@ -3,41 +3,51 @@
 class CommandsController < Thor
   private
 
-  def run(command_name, args = {})
-    if options[:help]
+  # NOTE: Any command using run to invoke must require the full project
+  # i.e. this is not for %w[version help new init]
+  def run(command_name, arguments = {})
+    if options.help
       invoke(:help, [command_name.to_s])
       return
     end
 
-    controller_class = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".camelize
-
-    unless (controller = controller_class.safe_constantize)
-      raise Error, set_color("Class not found: #{controller_class} (this is a bug. please report)", :red)
+    Cnfs.require_deps
+    arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
+    response = Response.new(command_name: command_name, options: options, output: $stdout, input: $stdin)
+    if not Cnfs.require_project!(arguments: arguments, options: options, response: response)
+      # binding.pry
+      raise Cnfs::Error, set_color('Not a cnfs project', :red)
     end
 
-    args = ::HashWithIndifferentAccess[args]
-    # args = ::HashWithIndifferentAccess.new(options.slice(*options_to_args).merge(args))
-    args = Thor::CoreExt::HashWithIndifferentAccess.new(options.slice(*options_to_args).merge(args))
-    opts = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(*options_to_args))
+    Cnfs.project.initialize!
+    puts Cnfs.config.to_hash if options.debug.positive?
+    # TODO: Some way to filter out the services that need to be built rather than all services (pg, nginx, etc)
+    # NOTE: This could also apply to resources or anything else that uses -a
+    if options.all
+      arguments[:services] = Service.pluck(:name) if arguments.key?(:services) and arguments[:services].empty?
+      arguments[:service] = arguments[:services].last if arguments.key?(:service) and arguments[:service].nil?
+      Cnfs.project.initialize!
+    end
+    raise Cnfs::Error, Cnfs.project.errors.full_messages.join("\n") unless Cnfs.project.valid?
 
-    # new_args = args.slice(*one_to_many)
-    # new_args.transform_keys! { |key| "#{key}s" }
-    # new_args.transform_values! { |value| [value] }
-    # new_args = args.except(*one_to_many).merge(new_args)
-    # args = Thor::CoreExt::HashWithIndifferentAccess.new(new_args)
+    controller_name = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".camelize
 
-    conn = controller.new(args, opts)
-    raise Cnfs::Error, conn.error_messages unless conn.valid?
-    Cnfs.context = conn.context
-    conn.execute
+    unless (controller_class = controller_name.safe_constantize)
+      raise Cnfs::Error, set_color("Class not found: #{controller_name} (this is a bug. please report)", :red)
+    end
+
+    controller = controller_class.new(application: Cnfs.project, options: options, response: response)
+    controller.execute
+
+    if options.attach
+      controller.run(:attach)
+    elsif options.shell
+      controller.run(:shell)
+    elsif options.console
+      controller.run(:console)
+    end
+
+    response.run!(:all)
+    raise Cnfs::Error, set_color(response.messages, :red) if response.errors.size.positive?
   end
-
-  def options_to_args
-    %w[target_names target_name namespace_name application_name service_names service_name]
-    # %w[context_name key_name target_name namespace_name application_name service_names profile_names tag_names]
-  end
-
-  # def one_to_many
-  #   %w[target_name service_name]
-  # end
 end

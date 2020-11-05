@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+module <%= cnfs.module_name %>
+  class ApplicationPolicy < ::ApplicationPolicy
+  end
+end

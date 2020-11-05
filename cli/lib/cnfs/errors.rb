@@ -2,20 +2,22 @@
 
 module Cnfs
   class Errors
-    attr_reader :messages, :details
+    attr_reader :messages
 
     def initialize
-      @messages = {}
-      @details = {}
+      @messages = []
     end
 
     def add(attribute, message = :invalid, options = {})
-      @messages[attribute] = message
-      @details[attribute] = options
+      @messages.append({ command: attribute, message: message, options: options })
     end
 
     def size
       @messages.size
+    end
+    
+    def full_messages
+      messages.map{ |error| "#{error[:command]}: #{error[:message]}" }.join("\n")
     end
   end
 end

@@ -2,7 +2,9 @@
 
 module Cnfs
   class Schema
-    def self.setup
+    cattr_accessor :dir
+
+    def self.initialize!
       # Set up in-memory database
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
       ActiveSupport::Inflector.inflections do |inflect|
@@ -18,7 +20,7 @@ module Cnfs
     end
 
     def self.load_data
-      show_output = Cnfs.debug > 0
+      show_output = Cnfs.config.debug.positive?
       Cnfs.silence_output(!show_output) { create_schema }
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
@@ -39,37 +41,31 @@ module Cnfs
       end
     ensure
       # TODO: Maybe this should be a setting to disable auto remove for debugging purposes
-      FileUtils.rm_rf(dir)
-    end
-
-    # TODO: This is not DRY and requires knowledge from outside the class
-    def self.dir
-      Cnfs.application.root.join(Cnfs.application.config.temp_dir).join('dump')
+      # FileUtils.rm_rf(dir)
     end
 
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
-        create_table :applications, force: true do |t|
-          t.string :name
-          t.string :config
-          t.string :environment
-          t.string :type
-          t.string :path
-        end
-        ::Application.reset_column_information
+        # create_table :applications, force: true do |t|
+        #   t.string :name
+        #   t.string :config
+        #   t.string :environment
+        #   t.string :type
+        # end
+        # ::Application.reset_column_information
 
-        create_table :application_resources, force: true do |t|
-          t.references :application
-          t.references :resource
-        end
-        ApplicationResource.reset_column_information
+        # create_table :application_resources, force: true do |t|
+        #   t.references :application
+        #   t.references :resource
+        # end
+        # ApplicationResource.reset_column_information
 
-        create_table :application_services, force: true do |t|
-          t.references :application
-          t.references :service
-        end
-        ApplicationService.reset_column_information
+        # create_table :application_services, force: true do |t|
+        #   t.references :application
+        #   t.references :service
+        # end
+        # ApplicationService.reset_column_information
 
         create_table :assets, force: true do |t|
           t.string :name
@@ -90,40 +86,40 @@ module Cnfs
         end
         Blueprint.reset_column_information
 
-        create_table :contexts, force: true do |t|
-          # t.references :target
-          t.references :namespace
-          t.references :deployment
-          t.references :application
-          t.string :name
-          t.string :services
-          t.string :resources
-          t.string :tags
-        end
-        Context.reset_column_information
+        # create_table :contexts, force: true do |t|
+        #   # t.references :target
+        #   t.references :namespace
+        #   t.references :deployment
+        #   t.references :application
+        #   t.string :name
+        #   t.string :services
+        #   t.string :resources
+        #   t.string :tags
+        # end
+        # Context.reset_column_information
 
-        create_table :context_services, force: true do |t|
-          t.references :context
-          t.references :service
-        end
-        ContextService.reset_column_information
+        # create_table :context_services, force: true do |t|
+        #   t.references :context
+        #   t.references :service
+        # end
+        # ContextService.reset_column_information
 
-        create_table :context_targets, force: true do |t|
-          t.references :context
-          t.references :target
-        end
-        ContextTarget.reset_column_information
+        # create_table :context_targets, force: true do |t|
+        #   t.references :context
+        #   t.references :target
+        # end
+        # ContextTarget.reset_column_information
 
-        create_table :deployments, force: true do |t|
-          t.references :application
-          t.references :namespace
-          t.references :key
-          t.string :name
-          t.string :config
-          t.string :environment
-          t.string :service_environments
-        end
-        Deployment.reset_column_information
+        # create_table :deployments, force: true do |t|
+        #   t.references :application
+        #   t.references :namespace
+        #   t.references :key
+        #   t.string :name
+        #   t.string :config
+        #   t.string :environment
+        #   t.string :service_environments
+        # end
+        # Deployment.reset_column_information
 
         create_table :keys, force: true do |t|
           t.string :name
@@ -133,6 +129,7 @@ module Cnfs
 
         create_table :namespaces, force: true do |t|
           t.references :target
+          t.references :key
           t.string :name
           t.string :config
           t.string :environment
@@ -148,10 +145,16 @@ module Cnfs
         end
         Provider.reset_column_information
 
+        # create_table :registries, force: true do |t|
+        #   t.string :name
+        #   t.string :config
+        #   t.string :type
+        # end
+        # Registry.reset_column_information
+
         create_table :repositories, force: true do |t|
           t.string :name
           t.string :config
-          t.string :type
         end
         Repository.reset_column_information
 
@@ -163,27 +166,29 @@ module Cnfs
         end
         Runtime.reset_column_information
 
-        create_table :resources, force: true do |t|
-          t.string :name
-          t.string :config
-          t.string :environment
-          t.string :resources
-          t.string :type
-          t.string :template
-        end
-        Resource.reset_column_information
+        # create_table :resources, force: true do |t|
+        #   t.string :name
+        #   t.string :config
+        #   t.string :environment
+        #   t.string :resources
+        #   t.string :type
+        #   t.string :template
+        # end
+        # Resource.reset_column_information
 
-        create_table :resource_tags, force: true do |t|
-          t.references :resource
-          t.references :tag
-        end
-        ResourceTag.reset_column_information
+        # create_table :resource_tags, force: true do |t|
+        #   t.references :resource
+        #   t.references :tag
+        # end
+        # ResourceTag.reset_column_information
 
         create_table :services, force: true do |t|
+          # TODO: Perhaps these are better as strings that can be inherited
           t.references :source_repo
           t.references :image_repo
           t.references :chart_repo
           t.string :name
+          t.string :tags
           t.string :config
           t.string :environment
           t.string :type
@@ -192,21 +197,22 @@ module Cnfs
         end
         Service.reset_column_information
 
-        create_table :service_tags, force: true do |t|
-          t.references :service
-          t.references :tag
-        end
-        ServiceTag.reset_column_information
+        # create_table :service_tags, force: true do |t|
+        #   t.references :service
+        #   t.references :tag
+        # end
+        # ServiceTag.reset_column_information
 
-        create_table :tags, force: true do |t|
-          t.string :name
-          t.string :description
-          t.string :config
-          t.string :environment
-        end
-        Tag.reset_column_information
+        # create_table :tags, force: true do |t|
+        #   t.string :name
+        #   t.string :description
+        #   t.string :config
+        #   t.string :environment
+        # end
+        # Tag.reset_column_information
 
         create_table :targets, force: true do |t|
+          t.references :key
           t.references :runtime
           t.references :infra_runtime
           t.references :provider
@@ -221,23 +227,23 @@ module Cnfs
         end
         Target.reset_column_information
 
-        create_table :target_namespaces, force: true do |t|
-          t.references :target
-          t.references :namespace
-        end
-        TargetResource.reset_column_information
+        # create_table :target_namespaces, force: true do |t|
+        #   t.references :target
+        #   t.references :namespace
+        # end
+        # TargetResource.reset_column_information
 
-        create_table :target_resources, force: true do |t|
-          t.references :target
-          t.references :resource
-        end
-        TargetResource.reset_column_information
+        # create_table :target_resources, force: true do |t|
+        #   t.references :target
+        #   t.references :resource
+        # end
+        # TargetResource.reset_column_information
 
-        create_table :target_services, force: true do |t|
-          t.references :target
-          t.references :service
-        end
-        TargetService.reset_column_information
+        # create_table :target_services, force: true do |t|
+        #   t.references :target
+        #   t.references :service
+        # end
+        # TargetService.reset_column_information
 
         create_table :users, force: true do |t|
           t.string :name

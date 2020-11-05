@@ -10,13 +10,26 @@ module Cnfs
           @gem_root ||= Pathname.new(__dir__).join('../../..')
         end
 
-        def setup
-          puts "Initializing plugin backend from #{gem_root}" if Cnfs.debug > 0
-          # puts Cnfs.skip_schema
-          Cnfs.application.paths['db'].append(gem_root.join('db')) if Cnfs.application
-          Cnfs.application.paths['app/views'].append(gem_root.join('app/views')) if Cnfs.application
+        def initialize
+          puts "Initializing plugin backend from #{gem_root}" if Cnfs.config.debug.positive?
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
-          Cnfs.controllers << { klass: 'BackendController', title: 'backend', help: 'backend [SUBCOMMAND]', description: 'Manage backend projects' }
+        end
+
+        def on_project_initialize
+          return unless Cnfs.project
+
+          Cnfs.project.paths['config'].unshift(gem_root.join('config'))
+          Cnfs.project.paths['app/views'].unshift(gem_root.join('app/views'))
+        end
+
+        def customize
+          src = gem_root.join('app/generators/rails')
+          dest = Cnfs.paths.lib.join('generators/rails')
+          FileUtils.rm_rf(dest)
+          FileUtils.mkdir_p(dest)
+          %w[service lib].each do |node|
+            FileUtils.cp_r(src.join(node), dest)
+          end
         end
       end
     end

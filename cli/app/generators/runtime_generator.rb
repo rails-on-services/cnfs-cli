@@ -5,26 +5,12 @@ class RuntimeGenerator < ApplicationGenerator
 
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
-  def generate_application_environment
-    return unless (application_environment = context.deployment.to_env)
-
-    generated_files << template('../env.erb',
-                                context.write_path(path_type).join('application.env'),
-                                env: application_environment)
-  end
-
   def generate_service_environments
-    selected_services.each do |service|
-      next unless (service_environment = service.to_env(context))
-
-      generated_files << template('../env.erb',
-                                  context.write_path(path_type).join("#{service.name}.env"),
-                                  env: service_environment)
+    Service.all.reject { |service| service.environment.empty? }.each do |service|
+      file_name = application.write_path(path_type).join("#{service.name}.env")
+      environment = Config::Options.new.merge!(service.environment)
+      generated_files << template('../env.erb', file_name, env: environment)
     end
-  end
-
-  def selected_services
-    context.application.services + context.target.services
   end
 
   def invoke_parent_methods
@@ -36,26 +22,25 @@ class RuntimeGenerator < ApplicationGenerator
 
   def proxy_services
     # services.select { |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }
-    selected_services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
+    application.selected_services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
   end
 
   # Is a given service enabled?
-  def service_enabled?(name)
-    selected_services.pluck(:name).include? name.to_s
-  end
+  # def service_enabled?(name)
+  #   application.selected_services.pluck(:name).include? name.to_s
+  # end
 
   def entity_name
     :service
   end
 
   def entities
-    selected_services
+    application.selected_services
   end
 
   # Render template
   def generate
-    # binding.pry
-    template("#{entity_to_template}.yml.erb", "#{context.write_path(path_type)}/#{service.name}.yml")
+    template("#{entity_to_template}.yml.erb", "#{application.write_path(path_type)}/#{service.name}.yml")
   end
 
   def path_type
@@ -64,30 +49,23 @@ class RuntimeGenerator < ApplicationGenerator
 
   # Methods for all runtime templates
   def relative_path
-    @relative_path ||= Pathname.new('../' * relative_dirs_to_application_root)
-  end
-
-  def relative_dirs_to_application_root
-    context.write_path(path_type).to_s.gsub(Cnfs.application.root.to_s, '').split('/').size - 1
+    application.relative_path(path_type)
   end
 
   def template_types
-    @template_types ||= selected_services.map { |service| entity_to_template(service).to_sym }.uniq
+    @template_types ||= application.selected_services.map { |service| entity_to_template(service).to_sym }.uniq
   end
 
   def version
-    context.target.runtime.version
+    application.runtime.version
   end
 
-  def labels(space_count = nil)
-    context.target.runtime.labels(base_labels, space_count)
-  end
-
-  def base_labels
-    # %i[deployment application target service].each_with_object({}) do |type, hash|
-    %i[target namespace application].each_with_object({}) do |type, hash|
-      hash[type] = context.send(type).name
-    end
+  # Default space_count is for compose
+  # Template is expected to pass in a hash for example for profile
+  def labels(labels: {}, space_count: 6)
+    application.runtime.labels(labels.merge(service: service.name)).map do |key, value|
+      "\n#{' ' * space_count}#{key}: #{value}"
+    end.join
   end
 
   def env_files(space_count = 6)
@@ -97,8 +75,8 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    files << './application.env' if File.exist?(context.write_path(path_type).join('application.env'))
-    files << "./#{service.name}.env" if File.exist?(context.write_path(path_type).join("#{service.name}.env"))
+    # files << './application.env' if File.exist?(application.write_path(path_type).join('application.env'))
+    files << "./#{service.name}.env" if File.exist?(application.write_path(path_type).join("#{service.name}.env"))
     files
   end
 end

@@ -3,10 +3,8 @@
 version: '<%= version %>'
 services:
   redis:
-    labels:
-      <%= labels %>
-    image: redis:5-alpine
-    ports:
-      - <%= expose_ports(6379) %><% if env_files.size.positive? %>
+    labels:<%= labels %>
+    image: <%= service.image || 'redis:5-alpine' %>
+    ports:<%= expose_ports %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>

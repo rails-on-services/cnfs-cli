@@ -1,12 +1,10 @@
-# postgres/compose.yml.erb
+# compose/postgres.yml.erb
 ---
 version: '<%= version %>'
 services:
-  postgres:
-    labels:
-      <%= labels %>
-    image: mdillon/postgis:9.6
-    ports:
-      - <%= expose_ports(5432) %><% if env_files.size.positive? %>
+  <%= service.name %>:
+    labels:<%= labels %>
+    image: <%= service.image || 'mdillon/postgis:latest' %>
+    ports:<%= expose_ports %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>

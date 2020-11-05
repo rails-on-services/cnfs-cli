@@ -6,10 +6,10 @@ module Cnfs
       class << self
         def initialize_backend
           require 'cnfs/cli/backend'
-          mod.setup
+          plugin_lib.initialize
         end
 
-        def mod
+        def plugin_lib
           Cnfs::Cli::Backend
         end
       end

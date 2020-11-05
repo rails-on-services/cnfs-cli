@@ -1,0 +1,3 @@
+---
+:queues:
+  - <%= cnfs.service_name %>_default

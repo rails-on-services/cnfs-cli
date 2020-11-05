@@ -165,11 +165,6 @@ class Runtime::Skaffold < Runtime
   end
 
   # Utility Methods
-  def labels(base_labels, space_count)
-    space_count ||= 12
-    base_labels.select { |_k, v| v }.map { |key, value| "#{label_base}/#{key.to_s.gsub('_', '-')}: #{value}" }.join("\n#{' ' * space_count}")
-  end
-
   # This is the method ps command will call
   def services(format: '{{.Names}}', status: :running, **filters); end
 
@@ -246,7 +241,13 @@ class Runtime::Skaffold < Runtime
     @namespace ||= [request.args.namespace_name, request.args.application_name].compact.join('-')
   end
 
-  # 'cnfs.io'
+  # TODO: move to base runtime including label_base ?
+  def labels(labels)
+    super.transform_keys { |key| "#{label_base}/#{key}" }
+  end
+
+  # TODO: Get this from configuration files
+  # 'cnfs.io' ?
   def label_base
     'app.kubernetes.io'
   end

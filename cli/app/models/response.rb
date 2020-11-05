@@ -1,57 +1,88 @@
 # frozen_string_literal: true
+require 'tty-command'
 
 class Response
   include ActiveModel::Model
-  attr_accessor :command_name, :options, :output, :command, :errors, :commands, :results
+  attr_accessor :command_name, :options, :output, :input
+  attr_accessor :command, :errors, :commands, :results
 
   def initialize(attributes = {})
     super
-    # def initialize(command_name, options, output, command, errors)
-    #   @command_name = command_name
-    #   @options = options
-    #   @output = output
-    #   @command = command
-    #   @errors = errors
+    @command = TTY::Command.new(command_options)
+    @errors = Cnfs::Errors.new
     @commands = []
     @results = []
   end
 
-  def add(exec:, env: {}, pty: false, dir: nil)
-    commands << OpenStruct.new(exec: exec, env: env, pty: pty, dir: dir)
+  def messages
+    errors.full_messages
+  end
+
+  def add(exec:, pty: false, env: {}, dir: nil)
+    commands << OpenStruct.new(caller: command_name, exec: exec, env: env, pty: pty, dir: dir)
     self
   end
 
-  def run(cmd)
-    command.run(cmd, only_output_on_error: !options.debug)
+  # Execute enqueued commands - default is to pop the last added command
+  # :all will run all commands from the first command added
+  # :first will run just the first command
+  def run!(type = nil)
+    return if errors.size.positive? and options.fail_fast
+
+    while (cmd = commands_to_run(type).shift)
+      output.puts(cmd.exec) unless suppress_output
+      cmd.pty ? execute_pty(cmd) : execute(cmd)
+      break if errors.size.positive? and options.fail_fast
+    end
   end
 
-  # Execute enqueued commands
-  def run!
-    loop do
-      break unless (cmd = commands.shift)
+  def commands_to_run(type)
+    return [commands.pop] if type.nil?
+    return [commands.shift] if type.eql?(:first)
+    return commands if type.eql?(:all)
+    []
+  end
 
-      if cmd.pty
-        output.puts(cmd.exec) if options.verbose || options.debug
-        result = system(cmd.exec) unless options.noop
-        # TODO: improve error handling and reporting
-        unless result
-          errors.add(command_name, cmd.exec)
-          break
-        end
-        @results << result
-      else
-        output.puts(cmd.exec) if (options.verbose || options.debug) && !options.noop
-        command_options = cmd.env.merge(only_output_on_error: !options.debug)
-        command_options.merge!(chdir: cmd.dir) if cmd.dir
-        # with_spinner('Building...') do end
-        result = command.run!(cmd.exec, command_options)
-        if result.failure?
-          errors.add(command_name, result.err.chomp)
-          break
-        end
-        @results << result.out
+  def execute_pty(cmd)
+    result = system(cmd.env, cmd.exec) unless options.noop
+    # TODO: improve error handling and reporting
+    errors.add(cmd.caller, cmd.exec) unless result
+    @results << result
+  end
+
+  def execute(cmd)
+    begin
+      # with_spinner('Building...') do end
+      result = command.run(cmd.exec, cmd_options(cmd))
+      if result.failure?
+        errors.add(cmd.caller, result.err.chomp)
       end
+      @results << result.out
+    rescue StandardError => e # TTY::Command::ExitError => e
+      errors.add(cmd.caller, e.message)
     end
+  end
+
+  # Specific running command
+  def cmd_options(cmd)
+    cmd_options = { pty: cmd.pty }
+    cmd_options.merge!(env: cmd.env) unless cmd.env.empty?
+    cmd_options.merge!(chdir: cmd.dir) if cmd.dir
+    cmd_options
+  end
+
+  def command_options
+    cmd_options = { uuid: false }
+    cmd_options.merge!(dry_run: true) if options.noop
+    # cmd_options.merge!(only_output_on_error: !options.debug)
+    cmd_options.merge!(printer: :null) if suppress_output
+    cmd_options
+  end
+
+  def suppress_output
+    return false if options.key?(:quiet) and not options.quiet
+    return false if (options.verbose || options.debug || options.noop )
+    true
   end
 
   # run command with output captured to variables

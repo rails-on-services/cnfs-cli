@@ -4,12 +4,21 @@ class Manifest
   include ActiveModel::Model
   # include ActiveModel::Validations
 
-  attr_accessor :config_files_paths, :manifests_path
+  attr_accessor :config_files_paths, :manifests_path, :purged
 
-  def regenerate?
+  def was_purged?
+    @purged
+  end
+
+  def outdated?
     return false if config_files.empty?
 
     manifest_files.empty? || (youngest_config_file_updated_at > oldest_manifest_file_generated_at)
+  end
+
+  def purge!
+    @purged = true
+    FileUtils.rm_rf(manifest_files)
   end
 
   # @return [DateTime]

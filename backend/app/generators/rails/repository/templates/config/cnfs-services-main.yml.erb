@@ -1,0 +1,68 @@
+# local/main/services.yml
+# This is emulating CNFS dev mode
+# If there are other rails services in services.yml they will work as normal
+# image will be 'standard' dev mode
+---
+game: &whistler_service
+  type: Service::Rails
+  config: &whistler_config
+    image_repository: perxtech
+    # image_tag: '0.1.0-{service.git.branch_name}-{service.git.sha}'
+    image_tag: '0.1.0-{service.git.sha}-{service.git.sha}'
+    profiles:
+      server: '["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]'
+    volumes:
+      - { source: 'services/{service.name}', target: services/app }
+      - { source: lib, target: lib }
+      - { source: sre, target: sre }
+      - { source: ../ros/lib, target: ../ros/lib }
+    project_path: whistler
+    dockerfile: whistler/Dockerfile.dev
+    build_args:
+      rails_env: development
+      bundle_string: --without production
+      os_packages: ['libpq5', 'tree', 'curl', 'git', 'sudo', 'vim', 'less', 'tcpdump', 'net-tools', 'iputils-ping', 'graphviz']
+      source_path: whistler
+      cnfs_source_path: cnfs-backend
+      # target_path: ../..
+      # cnfs_target_path: ../../../ros
+
+cognito: &base_service
+  config: &base_config
+    profiles:
+      worker: '["bundle", "exec", "sidekiq", "-r", "spec/dummy", "-C", "config/sidekiq.yml"]'
+    volumes:
+      - { source: 'services/{service.name}', target: services/app }
+      - { source: lib, target: lib }
+      - { source: sre, target: sre }
+    project_path: cnfs-backend
+    dockerfile: cnfs-backend/Dockerfile.dev
+    database_seed_commands:
+      - rails app:ros:db:reset:seed
+    test_commands:
+      - bundle exec rubocop
+      - rails app:db:test:prepare
+      - spec/dummy/bin/spring rspec # NOTE: missing options
+  environment: &base_environment
+    secret_key_base: "--- !binary |-\n  loGYa1tnzDLOuZo42n4FfaZrGcaJLc6sG531pb64lbkvoCATdxsQEZ1N7lq/Za5+/mI+3UhyMTx5gRNaTStPkGrJqPq+bZ0yUM95jDgV3Eptk7Bvq0fgAs82c6/H4sq7OU1ywJndqh1n93uCD7myfSaq2p9jDXHrkl/yZwrLGMQMMXbHiY4G7THVatByhN5swdjAVsxCmtnfH0Yo\n"
+    rails_master_key: "--- !binary |-\n  3eomOa/qTP9xe+7eUcG3Q2iNPboF466XDpgNnSa3BX8INJt0QlpXd8xBrx5tjfysnsVWisSTzIMuzkmF\n"
+    platform: &base_platform
+      jwt:
+        encryption_key: "--- !binary |-\n  vMC1vXzg6bA+RsaFV89Nn0luaaQUyk4+fGvLe/rmwGzTaD/fk4rBOU+sUtFaoAql3NHhmnwmKl3WAllX\n"
+
+comm:
+  <<: *base_service
+
+iam:
+  <<: *base_service
+
+organization:
+  <<: *base_service
+
+storage:
+  <<: *base_service
+  environment:
+    <<: *base_environment
+    platform:
+      <<: *base_platform
+      salty: value

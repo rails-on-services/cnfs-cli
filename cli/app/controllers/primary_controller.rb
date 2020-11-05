@@ -6,175 +6,192 @@ class PrimaryController < CommandsController
     register controller.klass.safe_constantize, controller.title, controller.help, controller.description
   end
 
+  register ComponentAddController, 'add', 'add COMPONENT [options]', 'Add a project component' #: blueprint, environment, namespace, repository or service'
+  map %w[rm] => :remove
+  register ComponentRemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component' # : environment, namespace, repository or service. (short-cut: rm)'
+
+  register ConfigController, 'config', 'config SUBCOMMAND', 'Get and set project configuration values'
+  map %w[ls] => :list
+  register ListController, 'list', 'list COMPONENT', 'List configuration objects (short-cut: ls)'
+
+  map %w[i] => :infra
+  register InfraController, 'infra', 'infra SUBCOMMAND [options]', 'Manage target infrastructure: k8s clusters, storage, etc'
+
   def self.exit_on_failure?
     true
   end
 
-  class_option :debug, type: :numeric, aliases: '-d'
-  class_option :help, aliases: '-h', type: :boolean, desc: 'Display usage information'
-  class_option :noop, type: :boolean, aliases: '--no'
-  class_option :quiet, type: :boolean, aliases: '-q'
-  class_option :verbose, type: :boolean, aliases: '-v'
-
-  class_option :context_name, type: :string, default: 'default', aliases: '-c', desc: 'The context in which to run the command'
-  # class_option :key_name, type: :string, aliases: '-k'
-  # class_option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  # class_option :namespace_name, type: :string, aliases: '-n'
-  # class_option :application_name, type: :string, aliases: '-a'
-  # class_option :service_names, type: :array, aliases: '-s'
-  # class_option :profile_names, type: :array, aliases: '-p'
-  # class_option :tag_names, type: :array, aliases: '--tags'
-
-  # Application Management
-  desc 'new TYPE NAME', 'Create a new CNFS application of TYPE backend, frontend or pipeline with name NAME'
-  option :local, type: :boolean, desc: 'Reference local gems in services'
-  def new(type, name)
-    # TODO: Project::NewController does not exist. Implement it
-    "#{type.classify}::NewController".safe_constantize&.new(name, options)&.execute
-    InitController.new(name, options.merge(type: type.to_sym)).execute
+  unless %w[dev new version].include?(ARGV[0])
+    class_option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, required: true, default: Cnfs.config.environment
+    class_option :namespace, desc: 'Target namespace',
+      aliases: '-n', type: :string, required: true, default: Cnfs.config.namespace
+    class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
+      aliases: '--ff', type: :boolean
   end
 
-  desc 'init TYPE NAME', 'Initialize the application in current directory with name NAME'
-  def init(type, name)
-    InitController.new(name, options.merge(type: type.to_sym, init: true)).execute
+  class_option :debug, desc: 'Display deugging information with degree of verbosity',
+    aliases: '-d', type: :numeric, default: Cnfs.config.debug
+  # class_option :help, desc: 'Display usage information',
+  #   aliases: '-h', type: :boolean
+  class_option :noop, desc: 'Do not execute commands',
+    type: :boolean, default: Cnfs.config.noop
+  class_option :quiet, desc: 'Suppress status output',
+    aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+  # class_option :tag, type: :string
+  class_option :verbose, desc: 'Display extra information from command',
+    aliases: '-v', type: :boolean, default: Cnfs.config.verbose
+
+  desc 'dev', 'A placeholder command for development of new commands'
+  def dev
+    # binding.pry
+    run(:dev)
   end
 
-  # desc 'init APPLICATION', 'Initialize an application'
-  # def init(application_name)
-  #   run(:init, application_name: application_name)
+  # Project Management
+  desc 'new NAME', 'Create a new CNFS project'
+  option :force, desc: 'Force creation even if project aready exists',
+    aliases: '-f', type: :boolean
+  # option :backend, desc: 'Generate the CNFS Backend Core Repository and Services',
+  #   aliases: '-b', type: :boolean
+  # option :dev, desc: 'Clone CNFS repositories for local development',
+  #   type: :boolean
+  def new(name)
+    if Dir.exist?(name)
+      if options.force || yes?('Directory already exists. Destroy and recreate?')
+        FileUtils.rm_rf(name)
+      else
+        raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
+      end
+    end
+    NewController.new(name, options).execute
+  end
+
+  desc 'init', 'Initialize the CNFS project: clone configured repositories; check for dependencies'
+  option :customize, desc: 'Copy generators from gem to project',
+    aliases: '-c', type: :boolean
+  def init
+    run(:init)
+  end
+
+  # TODO: This is like Amplify status
+  # desc 'list', 'List configuration objects: config, environments, namespaces, repositories, services and blueprints'
+  # option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
+  # map %w[ls] => :list
+  # def list(*filters)
+  #   run(:list, filters: filters)
   # end
-
-  desc 'add TYPE NAME', 'Add a new component to the CNFS application'
-  def add(type, name)
-    application_type = Cnfs.application.config.type
-    "#{application_type.classify}::AddController".safe_constantize&.new(type, name, options)&.execute
-  end
-
-  desc 'remove TYPE NAME', 'Remove a component from the CNFS application'
-  def remove(type, name)
-    application_type = Cnfs.application.config.type
-    "#{application_type.classify}::AddController".safe_constantize&.new(type, name, options.merge(revoke: true))&.execute
-  end
-
-  desc 'list', 'List configuration objects: config, ns, contexts, deployments, applications'
-  option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
-  map %w[ls] => :list
-  def list(what = :config)
-    run(:list, what: what)
-  end
 
   # Deployment Manifests
   desc 'generate', 'Generate manifests for application deployment'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  # option :deployment_name, type: :string, aliases: '-d'
-  option :clean, type: :boolean, desc: 'Remove existing manifests before generating'
-  def generate # (deployment_name)
-    run(:generate) # , deployment_name: deployment_name)
+  option :clean, desc: 'Delete all existing manifests before generating',
+    aliases: '-c', type: :boolean
+  def generate
+    run(:generate)
   end
 
   desc 'show', 'Show service manifest'
-  # option :service_names, type: :array, aliases: '-s'
-  option :modifier, type: :string, aliases: '-m'
-  def show(deployment_name, *service_names)
-    run(:show, deployment_name: deployment_name, service_names: service_names)
+  option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
+    aliases: '-m', type: :string
+  def show(*services)
+    run(:show, services: services)
   end
 
   # Image Opertions
-  desc 'build NAMESPACE [SERVICES]', 'Build all or specific application images'
-  option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after building'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  option :service_name, type: :string, aliases: '-s'
-  # option :service_names, type: :array, aliases: '-s'
+  desc 'build SERVICES', 'Build all or specific service images'
+  # NOTE: build and connect is really only valid for local otherwise need to deploy first
+  option :shell, desc: 'Connect to service shell after building',
+    aliases: '--sh', type: :boolean
   # TODO: Take an environment for which to build; target is just infra like a k8s cluster
   # application is just the colleciton of services; namespace is where it's deployed
   # so namespace would declare the environment, e.g. production, etc
   # def build(namespace_name, *service_names)
-  def build(*args)
-    # def build(n = @context&.namespace&.name)
-    # binding.pry
-    run(:build, args) # namespace_name: namespace_name, service_names: service_names)
+  # TODO: Things like the image naming convention should be part of the service.config with a store accessor
+  # so that each image and within an environment/namespace _could_ have its own naming pattern
+  option :all,
+    aliases: '-a', type: :boolean
+  def build(*services)
+    run(:build, services: services, service: services.last)
   end
 
-  # def initialize(one, cli_args, three)
-  #   context_name = cli_args.index('-c') ? cli_args[cli_args.index('-c') +1] : nil
-  #   # binding.pry
-  #   @context = Context.find_by(name: context_name)
-  #   super
-  # end
-
-  desc 'test IMAGE', 'Run tests on image(s)'
-  option :build, type: :boolean, aliases: '-b', desc: 'Build image before testing'
-  option :fail_all, type: :boolean, aliases: '--fa', desc: 'Skip any remaining services after a test fails'
-  option :fail_fast, type: :boolean, aliases: '--ff', desc: 'Skip any remaining tests for a service after a test fails'
-  option :push, type: :boolean, desc: 'Push image after successful testing'
+  desc 'test SERVICES', 'Run test commands on service(s)'
+  option :build, desc: 'Build image before testing',
+    aliases: '-b', type: :boolean
+  option :fail_all, desc: 'Skip any remaining services after a test fails',
+    aliases: '--fa', type: :boolean
+  option :fail_fast, desc: 'Skip any remaining tests for a service after a test fails',
+    aliases: '--ff', type: :boolean
+  option :push, desc: 'Push image after successful testing',
+    aliases: '-p', type: :boolean
+  # TODO: How to handle service names?
   def test(*args)
     run(:test, args)
   end
 
-  desc 'push IMAGE', 'Push one or all images'
-  # TODO: refactor
-  def push(*args)
-    run(:push, args)
+  desc 'push IMAGES', 'Push one or all images'
+  def push(*services)
+    run(:push, services: services)
   end
 
-  desc 'pull IMAGE', 'Pull one or all images'
-  # TODO: refactor
-  def pull(*args)
-    run(:pull, args)
+  desc 'pull IMAGES', 'Pull one or all images'
+  def pull(*services)
+    run(:pull, services: services)
   end
 
   desc 'publish', 'Publish API documentation to Postman'
-  option :force, type: :boolean, aliases: '-f', desc: 'Force generation of new documentation'
+  option :force, desc: 'Force generation of new documentation',
+    aliases: '-f', type: :boolean
   # TODO: refactor
+  # Maybe in the service configuration is an attribute commands which is an array of hashes:
+  # { command: 'publish erd', exec: 'rails g erd' }
+  # Maybe publish is not a full command but there is a command method which then parses the array of hashes
+  # In that case test could be put into this array as well
   def publish(type, *_services)
-    raise Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
+    raise Cnfs::Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
   end
 
   # Cluster Admin
-  desc 'create TARGET NAMESPACE', 'Create a new NAMESPACE in TARGET'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n'
-  def create # (target_name = 'default', namespace_name = 'default')
-    run(:create) # , target_name: target_name, namespace_name: namespace_name)
+  desc 'create NAMESPACE', 'Create a new NAMESPACE'
+  # NOTE: this creates the namespace in the cluster; To add a new namespace that is the add command
+  def create
+    run(:create)
   end
 
-  desc 'destroy [NAMESPACE]', 'Remove application from target infrastructure'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  option :yes, type: :boolean, desc: 'Do not prompt for confirmation'
+  desc 'destroy', 'Remove namespace from current environment'
+  option :force, desc: 'Do not prompt for confirmation', type: :boolean
+  # TODO: Test this by taking down a compose cluster
   def destroy
-    run(:destroy) if options.yes || yes?("\nWARNING!!! Destroy cannot be undone!\n\nAre you sure?")
+    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
+                                      "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
+    run(:destroy)
   end
 
   # Cluster Runtime
-  desc 'deploy', 'Deploy application to NAMESPACE on TARGET infrastructure'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
+  desc 'deploy', 'Deploy services to NAMESPACE in target ENVIRONMENT'
   # option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
-  def deploy
-    run(:deploy)
+  def deploy(*services)
+    services = Service.pluck(:name) if services.empty?
+    run(:deploy, services: services)
   end
 
   desc 'redeploy', 'Create and Start'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  option :yes, type: :boolean, desc: 'Do not prompt for confirmation'
-  def redeploy
-    run(:redeploy) if options.yes || yes?("\nWARNING!!! Destroy cannot be undone!\n\nAre you sure?")
+  option :force, desc: 'Do not prompt for confirmation', type: :boolean
+  # TODO: validate that supplied services are correct and fail if they are not
+  def redeploy(*services)
+    services = Service.pluck(:name) if services.empty?
+    return unless options.force || yes?("\nAbout to *restart* #{services.join(' ')} \n\nAre you sure?")
+
+    run(:redeploy, services: services)
   end
 
   desc 'ps', 'List running services'
-  option :format, type: :string, aliases: '-f', desc: ''
-  option :status, type: :string, desc: 'created, restarting, running, removing, paused, exited, or dead'
-  def ps(*args)
-    run(:ps, args: args)
+  option :format, desc: '',
+    type: :string, aliases: '-f'
+  option :status, desc: 'created, restarting, running, removing, paused, exited, or dead',
+    type: :string
+  def ps # (*args)
+    binding.pry
+    run(:ps) # , args: args)
   end
 
   desc 'status', 'Show platform services status: created, restarting, running, removing, paused, exited, or dead'
@@ -183,121 +200,118 @@ class PrimaryController < CommandsController
   end
 
   # Service Admin
-  desc 'start', 'Start one or more services'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  # option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
+  desc 'start', 'Start one or more services (short-cut: s)'
+  option :attach, desc: 'Attach to service after starting',
+    aliases: '-a', type: :boolean
   # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
   # option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
+  option :profiles, desc: 'List of profiles to start',
+    aliases: '-p', type: :array
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-  # option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-  def start(*service_names)
-    run(:start, service_names: service_names)
+  option :shell, desc: 'Connect to service shell after starting',
+    aliases: '--sh', type: :boolean
+  # TODO: Take a profile array also. The config should define a default profile
+  map %w[s] => :start
+  def start(*services)
+    run(:start, services: services)
   end
 
   desc 'restart SERVICE', 'Stop and start one or more services'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  # option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after executing command'
-  # option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing command'
-  # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
+  # TODO: When taking array of services but attach only uses the last one
+  # Add default: '' so if -a is passed and value is blank then it's the last one
+  option :attach, desc: 'Attach to service after executing command',
+    aliases: '-a', type: :boolean
+  option :build, desc: 'Build image before executing command',
+    aliases: '-b', type: :boolean
+  # NOTE: Seed the database before executing command
+  option :clean, desc: 'Perform a clean restart equivalent to terminate and start',
+    aliases: '--clean', type: :boolean
+  option :profiles, desc: 'List of profiles to start',
+    aliases: '-p', type: :array
   # option :console, type: :boolean, aliases: '-c', desc: 'Connect to service console after executing command'
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   # option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after executing command'
-  def restart(*service_names)
-    run(:restart, service_names: service_names)
+  def restart(*services)
+    run(:restart, services: services)
   end
 
   desc 'stop SERVICE', 'Stop one or more services'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  def stop(*service_names)
-    run(:stop, service_names: service_names)
+  option :profiles, desc: 'List of profiles to stop',
+    aliases: '-p', type: :array
+  def stop(*services)
+    run(:stop, services: services)
   end
 
   desc 'terminate SERVICE', 'Terminate one or more services'
-  option :target_names, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  def terminate(*service_names)
-    run(:terminate, service_names: service_names)
+  option :profiles, desc: 'List of profiles to terminate',
+    aliases: '-p', type: :array
+  def terminate(*services)
+    run(:terminate, services: services)
   end
 
   # Service Runtime
-  desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n', desc: 'Namespace in the target infrastructure where the service is running'
-  def attach(service_name)
-    # binding.pry
-    run(:attach, service_name: service_name)
+  desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service (short-cut: a)'
+  map %w[a] => :attach
+  option :build, desc: 'Build image before executing command',
+    aliases: '-b', type: :boolean
+  option :profile, desc: 'Service profiles',
+    aliases: '-p', type: :string
+  def attach(service)
+    run(:attach, service: service)
   end
 
   # NOTE: This is a test to run a command with multiple arguments; different from exec
-  desc 'command COMMAND', 'Run specified command on a service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure to locate the namespace'
-  option :namespace_name, type: :string, aliases: '-n', desc: 'Namespace in the target infrastructure where the service is running'
-  map %w[cmd] => :command
-  def command(service_name, *args)
-    run(:command, service_name: service_name, command: args)
-  end
+  # desc 'command COMMAND', 'Run specified command on a service'
+  # map %w[cmd] => :command
+  # def command(service, *args)
+  #   run(:command, service: service, command: args)
+  # end
 
-  desc 'console [SERVICE]', 'Start a cnfs or service console'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  def console(service_name = nil)
-    service_name ? run(:console, service_name: service_name) : run(:console)
+  desc 'console [SERVICE]', 'Start a cnfs or service console (short-cut: c)'
+  map %w[c] => :console
+  def console(service = nil)
+    service ? run(:console, service: service) : run(:console)
   end
 
   desc 'copy SRC DEST', 'Copy a file to or from a running service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
   map %w[cp] => :copy
   def copy(src, dest)
     run(:copy, src: src, dest: dest)
   end
 
+  # TODO: This should be a custom command
+  # part of the services.yml mapping of a name to a command
+  # then this runs a rake task which takes an option of display format
+  # then remove all this code from the CNFS cli
   desc 'credentials', 'Display IAM credentials'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  option :format, type: :string, aliases: '-f', desc: 'Options: sdk, cli, postman'
+  option :format, desc: 'Options: sdk, cli, postman',
+    aliases: '-f', type: :string
   def credentials
     run(:credentials)
   end
 
   desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  def exec(service_name, *command_args)
-    run(:exec, service_name: service_name, command_args: command_args)
+  def exec(service, *command_args)
+    run(:exec, service: service, command_args: command_args)
   end
 
   desc 'logs', 'Tail logs of a running service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  option :tail, type: :boolean, aliases: '-f'
-  def logs(service_name)
-    run(:logs, service_name: service_name)
+  option :tail, aliases: '-f', type: :boolean
+  def logs(service)
+    run(:logs, service: service)
   end
 
   desc 'sh SERVICE', 'Execute an interactive shell on a service'
-  option :target_name, type: :string, aliases: '-t', desc: 'Target infrastructure on which to run'
-  option :namespace_name, type: :string, aliases: '-n'
-  option :application_name, type: :string, aliases: '-a'
-  # option :build, type: :boolean, aliases: '-b', desc: 'Build image before executing shell'
+  option :build, desc: 'Build image before executing shell',
+    aliases: '-b', type: :boolean
   # NOTE: shell is a reserved word in Thor so it can't be used
-  def sh(service_name)
-    run(:shell, service_name: service_name)
+  def sh(service)
+    arguments = { service: service }
+    arguments.merge!(services: [service]) if options.build
+    run(:shell, arguments)
   end
 
   # Utility
@@ -307,7 +321,7 @@ class PrimaryController < CommandsController
   end
 
   # desc 'up SERVICE', 'bring up service(s)'
-  # option :attach, type: :boolean, aliases: '--at', desc: 'Attach to service after starting'
+  # option :attach, type: :boolean, aliases: '-a', desc: 'Attach to service after starting'
   # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
   # option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
   # option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background'

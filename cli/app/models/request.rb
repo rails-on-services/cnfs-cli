@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Request
+=begin
   include ActiveModel::Model
   include ActiveModel::Validations
 
@@ -66,6 +67,7 @@ class Request
     errors.add(:namespace, 'Invalid') unless namespace
     errors.add(:application, 'Invalid') unless application
     errors.add(:target, 'Invalid or missing') unless target && namespace.targets.include?(target)
+    errors.add(:deployment, 'Invalid or missing') unless deployment
     return unless errors.empty?
 
     configure_target(target)
@@ -230,6 +232,7 @@ class Request
   def project_name_attrs
     [target.name, namespace.name, application.name]
   end
+=end
 end
 
 #   def target_services

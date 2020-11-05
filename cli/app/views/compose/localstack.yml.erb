@@ -2,10 +2,9 @@
 ---
 version: '<%= version %>'
 services:
-  localstack:
-    labels:
-      <%= labels %>
-    image: localstack/localstack<% if env_files.size.positive? %>
+  <%= service.name %>:
+    labels:<%= labels %>
+    image: <%= service.image || 'localstack/localstack' %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>
     ports:

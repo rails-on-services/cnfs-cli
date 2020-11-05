@@ -10,11 +10,19 @@ class Runtime::Compose < Runtime
     # list show generate
   end
 
+  def services_to_string(services)
+    services.pluck(:name).join(' ')
+  end
+
   ###
   # Image Operations
   ###
-  def build
-    response.add(exec: compose("build --parallel #{context.selected_services.pluck(:name).join(' ')}"), env: compose_env)
+  def build(services)
+    response.add(exec: compose("build --parallel #{services_to_string(services)}"), env: compose_env)
+  end
+
+  def pull(services)
+    response.add(exec: compose("pull #{services_to_string(services)}"), env: compose_env)
   end
 
   ###
@@ -44,21 +52,21 @@ class Runtime::Compose < Runtime
   # Service Runtime
   ###
   def start
-    binding.pry
-    # database_check
-    compose_options = context.options.foreground ? '' : '-d'
-    response.add(exec: compose("up #{compose_options} #{context.services.pluck(:name).join(' ')}"), env: compose_env)
+    compose_options = options.foreground ? '' : '-d'
+    response.add(exec: compose("up #{compose_options} #{exec_string}"), env: compose_env)
   end
 
   def restart
-    # stop.run!
-    # refresh_services
     stop
+    if options.clean
+      clean
+      database_check
+    end
     start
   end
 
   def stop
-    response.add(exec: compose("stop #{context.services.pluck(:name).join(' ')}"), env: compose_env)
+    response.add(exec: compose("stop #{exec_string}"), env: compose_env)
   end
 
   def terminate
@@ -66,14 +74,24 @@ class Runtime::Compose < Runtime
     clean
   end
 
-  # TODO: Get the command string to execute on the container from the service
-  # def console; exec(request.last_service_name, :bash, true) end
+  def exec_string
+    application.services.each_with_object([]) do |service, ary|
+      (options.profiles || service.profiles.keys).each do |profile|
+        profile = profile.eql?(default_profile) ? '' : "_#{profile}"
+        ary.append("#{service.name}#{profile}")
+      end
+    end.join(' ')
+  end
+
+  # TODO: make this a configuration option
+  def default_profile; 'server' end
 
   ###
   # Service Runtime
   ###
-  def attach
-    response.add(exec: "docker attach #{project_name}_#{context.service.name}_1 --detach-keys='ctrl-f'", pty: true)
+  # TODO: add support for profile
+  def attach(service)
+    response.add(exec: "docker attach #{application.full_project_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true)
   end
 
   def copy(src, dest)
@@ -81,18 +99,24 @@ class Runtime::Compose < Runtime
     response.add(exec: "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:"))
   end
 
-  def exec(service_name, command, pty)
-    response.add(exec: compose(command, service_name), pty: pty)
+  # TODO: Needs filter for profile and adjust for 'server'
+  def exec(service, command, pty)
+    filters = { project: application.full_project_name, service: service.name }
+    # filters.merge!(profile: profile_name) if profile_name
+    running_services = runtime_services(filters)
+    modifier = running_services.empty? ? 'run --rm' : 'exec'
+    response.add(exec: compose(command, modifier, service.name), pty: pty)
   end
 
-  def logs(service_name)
-    compose_options = context.options.tail ? '-f' : ''
-    response.add(exec: "docker logs #{compose_options} #{project_name}_#{service_name}_1", pty: context.options.tail)
+  def logs(service)
+    compose_options = options.tail ? '-f' : ''
+    # TODO: Query running services to get the name
+    response.add(exec: "docker logs #{compose_options} #{application.full_project_name}_#{service.name}_1", pty: options.tail)
   end
 
   #### Support Methods
 
-  def before_execute_on_target
+  def before_execute
     switch!
   end
 
@@ -113,31 +137,34 @@ class Runtime::Compose < Runtime
   end
 
   def compose_file
-    @compose_file ||= "#{runtime_path}/compose.env"
+    # binding.pry
+    # @compose_file ||= "#{runtime_path}/compose.env"
+    @compose_file ||= runtime_path + 'compose.env'
+    # @compose_file ||= runtime_path.join('compose.env')
   end
 
   def service_id(service_name)
     `docker-compose ps -q #{service_name}`.chomp
   end
 
-  # See: https://docs.docker.com/engine/reference/commandline/ps
-  def services(format: '{{.Names}}', status: :running, **filters)
-    @services ||= list_services(format: format, status: status, **filters)
-  end
-
   def service_names(status: :running)
-    services(status: status).map { |a| a.gsub("#{project_name}_", '').chomp('_1') }
+    runtime_services(status: status).map { |a| a.gsub("#{application.project_name}_", '').chomp('_1') }
   end
 
-  def labels(base_labels, space_count)
-    space_count ||= 6
-    base_labels.select { |_k, v| v }.map { |key, value| "#{key}: #{value}" }.join("\n#{' ' * space_count}")
+  # See: https://docs.docker.com/engine/reference/commandline/ps
+  def runtime_services(format: '{{.Names}}', status: :running, **filters)
+    @runtime_services ||= runtime_services_query(format: format, status: status, **filters)
   end
+
 
   private
 
-  def refresh_services
-    @services = nil
+  def compose(command, *modifiers)
+    modifiers.unshift('docker-compose').append(command).join(' ')
+  end
+
+  def runtime_service_names_to_service_names(runtime_services_list)
+    runtime_services_list.map { |a| a.gsub("#{application.full_project_name}_", '')[0...-2] }
   end
 
   def compose_env
@@ -146,38 +173,37 @@ class Runtime::Compose < Runtime
     hash
   end
 
+  def runtime_services_query(format:, status:, **filters)
+    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
+    filter.append("--filter 'status=#{status}'") if status
+    filter.append("--format '#{format}'") if format
+
+    command_string = "docker ps #{filter.join(' ')}"
+    result = `#{command_string}`
+    response.output.puts command_string if options.verbose
+    rsplit = result.split("\n")
+    rsplit.size.positive? ? rsplit : []
+  end
+
+  # TODO: taken from deploy command; is it needed/appropriate here?
+  # def set_compose_options
+  #   @compose_options = ''
+  #   if options.daemon || options.console || options.shell || options.attach
+  #     @compose_options = '-d'
+  #   end
+  #   output.puts "compose options set to #{compose_options}" if options.verbose
+  # end
+
   def clean
-    response.add(exec: compose("rm -f #{context.services.pluck(:name).join(' ')}"))
+    response.add(exec: compose("rm -f #{exec_string}"))
   end
 
   def deploy_type
     :instance
   end
 
-  # Generate
-  # TODO: taken from deploy command; is it needed/appropriate here?
-  def set_compose_options
-    @compose_options = ''
-    if request.options.daemon || request.options.console || request.options.shell || request.options.attach
-      @compose_options = '-d'
-    end
-    output.puts "compose options set to #{compose_options}" if request.options.verbose
-  end
-
-  def list_services(format:, status:, **filters)
-    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
-    filter.append("--filter 'status=#{status}'") if status
-    filter.append("--filter 'name=#{project_name}'")
-    filter.append("--format '#{format}'") if format
-
-    command_string = "docker ps #{filter.join(' ')}"
-    result = `#{command_string}`
-    response.output.puts command_string if context.options.verbose
-    result.split("\n").size > 1 ? result.split("\n") : []
-  end
-
   def gem_cache_server
-    return unless `docker ps`.index('gem_server')
+    return unless Cnfs.capabilities.include?(:docker) and `docker ps`.index('gem_server')
 
     host = RbConfig::CONFIG['host_os']
     # TODO: Make this configurable per user
@@ -187,15 +213,15 @@ class Runtime::Compose < Runtime
   end
 
   def database_check
-    context.services.each do |service|
+    application.services.each do |service|
       next unless service.respond_to?(:database_seed_commands)
 
       migration_file = "#{runtime_path}/#{service.name}-migrated"
-      next unless !File.exist?(migration_file) || request.options.seed
+      next unless !File.exist?(migration_file) || options.seed || options.clean
 
       FileUtils.rm(migration_file) if File.exist?(migration_file)
       service.database_seed_commands.each do |command|
-        response.add(exec: compose(command, service.name)).run!
+        response.add(exec: compose(command, service.name)) # .run!
         # TODO: refactor; this knows too much about what's going on in the response object
         if response.errors.size.zero?
           FileUtils.touch(migration_file)
@@ -204,13 +230,6 @@ class Runtime::Compose < Runtime
         end
       end
     end
-  end
-
-  def compose(command, service_name = nil)
-    cmd = ['docker-compose']
-    cmd.append(service_names.include?(service_name) ? 'exec' : 'run --rm').append(service_name) if service_name
-    cmd.append(command)
-    cmd.join(' ')
   end
 
   def x_method_missing(method, *args)

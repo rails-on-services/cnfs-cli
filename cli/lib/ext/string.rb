@@ -15,38 +15,30 @@ class String
     start_with?(YAML_STRING)
   end
 
-  def cnfs_sub
-    return self unless (context = Cnfs.context)
+  def cnfs_sub(*objs)
+    return self unless objs.any? and (replace_ary = scan(/\${(.*?)}/).flatten)
 
-    a = dup
-    if (target = context.target)
-      a.gsub!('{domain}', target.domain_name)
-      a.gsub!('{domain_slug}', target.domain_slug)
-    end
-    # bind = a.index('{project_name}')
-    a.gsub!('{project_name}', context.project_name_attrs.join('-'))
-    # binding.pry if bind
-    # begin
-      if a.index('{application_name}') && context.application&.name
-        a.gsub!('{application_name}', context.application.name)
-      elsif a.index('{namespace}') && context.namespace&.name
-        a.gsub!('{namespace}', context.namespace.name)
+    str = self
+    replace_ary.each do |replace_string|
+      ac = replace_string.split('.')
+      obj = objs.shift
+      while (cmd = ac.shift)
+        obj = obj.send(cmd)
       end
-    # rescue TypeError => e
-    #   binding.pry
-    # end
-    a
+      str = str.gsub("${#{replace_string}}", obj)
+    end
+    str
   end
 
   private
 
   # to_yaml converts from hex to string
-  def encrypt(plaintext)
-    Cnfs.box.encrypt(plaintext).to_yaml
+  def encrypt(plaintext, scope = :namespace)
+    Cnfs.application.encrypt(plaintext, scope).to_yaml
   end
 
   # YAML.load converts from string to hex
   def decrypt(ciphertext)
-    Cnfs.box.decrypt(YAML.safe_load(ciphertext))
+    Cnfs.application.decrypt(YAML.safe_load(ciphertext))
   end
 end

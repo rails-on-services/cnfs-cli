@@ -1,15 +1,11 @@
-# sftp/compose.yml.erb
-<%-
-def depends_on; %w[localstack] end
--%>
+<%- # compose/sftp.yml.erb -%>
 ---
 version: '<%= version %>'
 services:
   sftp:
-    labels:
-      <%= labels %>
-    image: railsonservices/sftp<% if depends_on.size.positive? %>
-    depends_on:<% depends_on.each do |dependency| %>
+    labels:<%= labels %>
+    image: <%= service.image || 'railsonservices/sftp' %><% if service.depends_on.any? %>
+    depends_on:<% service.depends_on.each do |dependency| %>
       - <%= dependency %><% end %><% end %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>

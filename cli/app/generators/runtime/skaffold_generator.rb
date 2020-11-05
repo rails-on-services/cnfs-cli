@@ -7,6 +7,11 @@ class Runtime::SkaffoldGenerator < RuntimeGenerator
 
   private
 
+  # Override spacing
+  def labels(labels: {}, space_count: 12)
+    super
+  end
+
   def internal_path
     Pathname.new(__dir__).join('..')
   end

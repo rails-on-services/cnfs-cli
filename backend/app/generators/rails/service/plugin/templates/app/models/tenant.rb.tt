@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+
+class Tenant < <%= cnfs.module_string %>::ApplicationRecord
+  include Ros::TenantConcern
+end

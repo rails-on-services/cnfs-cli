@@ -2,29 +2,35 @@
 
 class Runtime::ComposeGenerator < RuntimeGenerator
   def generate_nginx_conf
-    template('nginx.conf.erb', "#{context.write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
+    template('nginx.conf.erb', "#{application.write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
   end
 
   def generate_compose_environment
-    template('../env.erb', context.target.runtime.compose_file, env: compose_environment)
+    template('../env.erb', application.runtime.compose_file, env: compose_environment)
   end
 
   private
 
   def excluded_files
-    ["#{context.write_path(path_type)}/nginx.conf"]
+    ["#{application.write_path(path_type)}/nginx.conf"]
   end
 
-  def mount
-    # TODO: move to namespace
-    context.target.mount
-  end
+  def expose_ports(port = nil)
+    return port unless port.nil?
 
-  def expose_ports(port)
-    port, proto = port.to_s.split('/')
-    host_port = map_ports_to_host ? "#{port}:" : ''
-    proto = proto ? "/#{proto}" : ''
-    "\"#{host_port}#{port}#{proto}\""
+    space_count = 6
+    service.ports.each_with_object([]) do |entry, ary|
+      if entry.is_a?(Integer) or entry.is_a?(String)
+        ary.append("\n#{' ' * space_count}- #{entry}")
+      elsif entry.is_a? Hash
+        ary.append("\n#{' ' * space_count}- #{entry[:port]}")
+      end
+    end.join
+    # 24222/udp
+    # port, proto = port.to_s.split('/')
+    # host_port = map_ports_to_host ? "#{port}:" : ''
+    # proto = proto ? "/#{proto}" : ''
+    # "\"#{host_port}#{port}#{proto}\""
   end
 
   def map_ports_to_host
@@ -32,13 +38,14 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   end
 
   def compose_environment
+    # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
-      compose_file: Dir["#{context.write_path}/**/*.yml"].join(':'),
-      compose_project_name: context.project_name,
-      context_dir: '../../../../../../..',
-      ros_context_dir: '../../../../../../../ros',
-      image_repository: 'railsonservices',
-      image_tag: '0.1.0-development-e7f7c0b',
+      compose_file: Dir["#{application.write_path}/**/*.yml"].map{ |f| f.gsub("#{application.root}/", '') }.join(':'),
+      compose_project_name: application.full_project_name,
+      # context_dir: '../../../../../../..',
+      # ros_context_dir: '../../../../../../../ros',
+      # image_repository: 'railsonservices',
+      # image_tag: '0.1.0-development-e7f7c0b',
       puid: '1001',
       pgid: '1002'
     )

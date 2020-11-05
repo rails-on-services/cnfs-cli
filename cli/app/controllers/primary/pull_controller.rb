@@ -1,9 +1,16 @@
 # frozen_string_literal: true
 
-module App::Backend
-  class PullController < Cnfs::Command
-    on_execute :execute_command
+module Primary
+  class PullController < ApplicationController
+    cattr_reader :command_group, default: :image_operations
 
-    def execute_command; end
+    def execute
+      before_execute_on_target
+      execute_on_target
+    end
+
+    def execute_on_target
+      context.runtime.pull.run!
+    end
   end
 end
