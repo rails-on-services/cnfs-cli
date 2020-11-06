@@ -20,11 +20,10 @@ module Rails
 
       raise Cnfs::Error, "service #{name} already exists" if Dir.exist?("#{destination_root}/services/#{name}")
 
-      exec_string = [:rails]
-      exec_string.append(:plugin) if options.type.eql?('plugin')
-      exec_string.append(:new)
+      exec_string = ['rails new']
+      exec_string = ['rails plugin new', '--full --dummy-path=spec/dummy'] if options.type.eql?('plugin')  
       # TODO: These strings should be external configuration values
-      exec_string.append('--full --dummy-path=spec/dummy') if options.type.eql?('plugin')
+      # exec_string.append('--full --dummy-path=spec/dummy') if options.type.eql?('plugin')
       exec_string.append('--api -G -S -J -C -T -M --skip-turbolinks --database=postgresql --skip-active-storage')
 
       # If the project has a service generator then prefer that over the internal generator
@@ -34,30 +33,9 @@ module Rails
       exec_path = user_path.join(generator_name).exist? ? user_path : internal_path
       exec_string.append('-m', exec_path.join(generator_name), name)
 
-      env = {
-        repository_name: options.repository, # Cnfs.repository_root.split.last.to_s,
-        code_type: 'service',
-        service_name: name,
-        service_type: options.type, # plugin ? 'plugin' : 'application',
-        app_dir: options.type.eql?('plugin') ? 'spec/dummy/' : '.'
-      }
-      if options.gem_source
-        gem_repo, gem_path, gem_name = options.gem_source.split('/')
-        gem_path ||= 'services'
-        gem_name ||= name
-        path = [gem_repo, gem_path, gem_name].join('/')
-
-        # env[:wrapped_repository_path] = '../../..'
-        # env[:wrapped_repository_name] = gem_repo
-        # env[:wrapped_service_name] = gem_name
-        env[:gem_repository_path] = '../../..'
-        env[:gem_repo] = gem_repo
-        env[:gem_name] = gem_name
-      end
-      env.transform_keys!{ |key| "cnfs_#{key}".upcase }
+      env = base_env.merge(gem_env).transform_keys!{ |key| "cnfs_#{key}".upcase }
       puts env
       puts exec_string.join(' ')
-      binding.pry
       # inside('services') { system(env, exec_string.join(' ')) }
     end
 
@@ -90,6 +68,34 @@ module Rails
     end
 
     private
+
+    def base_env
+      {
+        repository_name: options.repository, # Cnfs.repository_root.split.last.to_s,
+        code_type: 'service',
+        service_name: name,
+        service_type: options.type, # plugin ? 'plugin' : 'application',
+        app_dir: options.type.eql?('plugin') ? 'spec/dummy/' : '.'
+      }
+    end
+
+    def gem_env
+      return {} unless options.gem_source
+
+      gem_repo, gem_path, gem_name = options.gem_source.split('/')
+      gem_path ||= 'services'
+      gem_name ||= name
+      path = [gem_repo, gem_path, gem_name].join('/')
+
+      # env[:wrapped_repository_path] = '../../..'
+      # env[:wrapped_repository_name] = gem_repo
+      # env[:wrapped_service_name] = gem_name
+      {
+        gem_repository_path: '../../..',
+        gem_repo: gem_repo,
+        gem_name: gem_name
+      }
+    end
 
     def rails
       "cognito: &base_service\n  type: Service::Rails\n  config:\n    depends_on:\n      - wait\n"

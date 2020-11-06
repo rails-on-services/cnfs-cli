@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class PsController < ApplicationController
     def execute
       response.output.puts application.runtime_services(format: format, status: status)

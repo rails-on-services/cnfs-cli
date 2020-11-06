@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class LogsController < ApplicationController
     cattr_reader :command_group, default: :service_runtime
 

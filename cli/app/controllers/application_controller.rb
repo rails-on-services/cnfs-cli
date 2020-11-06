@@ -24,6 +24,7 @@ class ApplicationController
     current_command = self.class.name.demodulize
     called_command = "#{command}_controller".camelize
     controller_class = self.class.name.gsub(current_command, called_command).safe_constantize
+binding.pry
     controller = controller_class.new(application: application, options: options, response: response)
     response.command_name = controller.name
     controller.execute

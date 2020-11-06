@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
+module Primary
 class InfraController < CommandsController
-  namespace :infra
+  # namespace :infra
 
   # desc 'create', 'Create target infrastructure'
   # def create(*args); run(:create, args) end
@@ -9,15 +10,6 @@ class InfraController < CommandsController
   desc 'generate', 'Generate target infrastructure'
   def generate(*_args)
     run(:generate)
-  end
-
-  desc 'init', 'Initialize the cluster'
-  option :long, desc: 'Run the long form of the command',
-    aliases: '-l', type: :boolean
-  option :role_name, desc: 'Override the aws iam role to be used',
-    aliases: '-r', type: :string
-  def init
-    run(:init)
   end
 
   desc 'plan', 'Show the terraform infrastructure plan'
@@ -79,4 +71,5 @@ class InfraController < CommandsController
     end
     STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
   end
+end
 end

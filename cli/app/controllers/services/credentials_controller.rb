@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class CredentialsController < ApplicationController
     def execute
       each_target do

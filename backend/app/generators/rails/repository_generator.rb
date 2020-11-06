@@ -25,13 +25,13 @@ module Rails
     end
 
     def core_gem
-      gem_name = "#{project_name}_#{name}_core"
+      gem_name = "#{project_name}-#{name}_core"
       exec_string = ['rails plugin new']
-      exec_string.append('--api -G -S -J -C -T -M --database=postgresql --skip-active-storage')
+      exec_string.append('--api -G -S -J -C -T -M --skip-turbolinks --database=postgresql --skip-active-storage')
       exec_string.append('--full --dummy-path=spec/dummy')
       exec_string.append('-m', internal_path.join('repository/core_generator.rb'), gem_name)
 
-      env = {}
+      env = base_env.transform_keys!{ |key| "cnfs_#{key}".upcase }
       puts env if options.debug
       puts exec_string.join(' ') if options.debug
       gemspec = "#{gem_name}.gemspec"
@@ -82,10 +82,10 @@ module Rails
 
     def sdk_lib_file_content
       inside 'lib/sdk/lib' do
-        create_file "#{sdk_name}/models.rb"
-        append_to_file "#{sdk_name}.rb", after: "version\"\n" do
+        create_file "#{sdk_path}/models.rb"
+        append_to_file "#{sdk_path}.rb", after: "version\"\n" do
           <<~HEREDOC
-            require '#{sdk_name}/models'
+            require '#{sdk_path}/models'
           HEREDOC
         end
       end
@@ -93,11 +93,10 @@ module Rails
 
     def sdk_gemspec_content
       gemspec = "#{sdk_name}.gemspec"
-      klass = sdk_name.split('_').collect(&:capitalize).join
       inside 'lib/sdk' do
         comment_lines(gemspec, 'require ')
         comment_lines(gemspec, 'require_relative ')
-        gsub_file(gemspec, "#{klass}::VERSION", "'0.1.0'")
+        gsub_file(gemspec, "#{sdk_path.classify}::VERSION", "'0.1.0'")
         gsub_file(gemspec, 'TODO: ', '')
         gsub_file(gemspec, '~> 10.0', '~> 12.0')
         comment_lines(gemspec, /spec\.homepage/)
@@ -115,8 +114,22 @@ module Rails
 
     private
 
+    def base_env
+      {
+        repository_name: options.repository, # Cnfs.repository_root.split.last.to_s,
+        code_type: 'service',
+        service_name: name,
+        service_type: options.type, # plugin ? 'plugin' : 'application',
+        app_dir: options.type.eql?('plugin') ? 'spec/dummy/' : '.'
+      }
+    end
+
+    def sdk_path
+      sdk_name.gsub('-', '/')
+    end
+
     def sdk_name
-      "#{project_name}_#{name}_sdk"
+      "#{project_name}-#{name}_sdk"
     end
 
     def source_paths

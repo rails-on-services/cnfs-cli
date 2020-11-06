@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+module Primary
 class ComponentRemoveController < ComponentAddController
   desc 'blueprint PROVIDER NAME', 'Remove blueprint from environment or namespace'
   def blueprint(provider, name)
@@ -39,4 +40,5 @@ class ComponentRemoveController < ComponentAddController
 
     run(:service, name: name, action: :revoke)
   end
+end
 end

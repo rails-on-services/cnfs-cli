@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class BuildController < ApplicationController
     def execute
       application.build

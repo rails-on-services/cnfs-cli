@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class ExecController < ApplicationController
     # cnfs exec iam ls -l -R
     def execute

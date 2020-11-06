@@ -23,6 +23,10 @@
 module Primary
   class DevController < ApplicationController
     def execute
+      binding.pry
+    end
+
+    def git_test
       Repository::Git.all.each do |repo|
         next if Dir.exist?(repo.full_path)
 

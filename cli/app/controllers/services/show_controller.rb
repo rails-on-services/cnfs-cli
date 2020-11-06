@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class ShowController < ApplicationController
     def execute
       application.arguments.services.each do |service_name|

@@ -29,16 +29,6 @@ module Primary
     end
 
     def execute
-      if application.service.nil?
-        start_cnfs_console
-      elsif !application.service.respond_to?(:console_command)
-        raise Cnfs::Error, "#{application.service.name} does not implement the console command"
-      else
-        application.runtime.exec(application.service, application.service.console_command, true).run!
-      end
-    end
-
-    def start_cnfs_console
       require 'pry'
       Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*_args|
         Primary::ConsoleController::Commands.reset_cache

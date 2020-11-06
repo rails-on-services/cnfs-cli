@@ -26,6 +26,8 @@ module Cnfs
 
     def initialize!
       @pwd = Pathname.new(Dir.pwd)
+      # Cause help for new to be displayed when no argument is passed 
+      ARGV.unshift('help', 'new') if ARGV.size.zero? and project_root.nil?
       raise Cnfs::Error, 'Not a cnfs project' unless project_root
       s = Time.now
       Dir.chdir(project_root) do
@@ -38,7 +40,7 @@ module Cnfs
           initialize_plugins
         end
         setup_loader
-        PrimaryController.start
+        Primary::Controller.start
       end
       puts "Wall time: #{Time.now - s}" if config.debug.positive?
     end
@@ -46,6 +48,7 @@ module Cnfs
     def require_minimum_deps
       require 'active_support/inflector'
       require 'active_support/core_ext/hash/keys'
+      require 'active_support/core_ext/enumerable'
       require 'config'
       require 'fileutils'
       require 'thor'

@@ -1,94 +1,6 @@
 # frozen_string_literal: true
 
-class PrimaryController < CommandsController
-  Cnfs.controllers.each do |controller|
-    controller = OpenStruct.new(controller)
-    register controller.klass.safe_constantize, controller.title, controller.help, controller.description
-  end
-
-  register ComponentAddController, 'add', 'add COMPONENT [options]', 'Add a project component' #: blueprint, environment, namespace, repository or service'
-  map %w[rm] => :remove
-  register ComponentRemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component' # : environment, namespace, repository or service. (short-cut: rm)'
-
-  register ConfigController, 'config', 'config SUBCOMMAND', 'Get and set project configuration values'
-  map %w[ls] => :list
-  register ListController, 'list', 'list COMPONENT', 'List configuration objects (short-cut: ls)'
-
-  map %w[i] => :infra
-  register InfraController, 'infra', 'infra SUBCOMMAND [options]', 'Manage target infrastructure: k8s clusters, storage, etc'
-
-  def self.exit_on_failure?
-    true
-  end
-
-  unless %w[dev new version].include?(ARGV[0])
-    class_option :environment, desc: 'Target environment',
-      aliases: '-e', type: :string, required: true, default: Cnfs.config.environment
-    class_option :namespace, desc: 'Target namespace',
-      aliases: '-n', type: :string, required: true, default: Cnfs.config.namespace
-    class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
-      aliases: '--ff', type: :boolean
-  end
-
-  class_option :debug, desc: 'Display deugging information with degree of verbosity',
-    aliases: '-d', type: :numeric, default: Cnfs.config.debug
-  # class_option :help, desc: 'Display usage information',
-  #   aliases: '-h', type: :boolean
-  class_option :noop, desc: 'Do not execute commands',
-    type: :boolean, default: Cnfs.config.noop
-  class_option :quiet, desc: 'Suppress status output',
-    aliases: '-q', type: :boolean, default: Cnfs.config.quiet
-  # class_option :tag, type: :string
-  class_option :verbose, desc: 'Display extra information from command',
-    aliases: '-v', type: :boolean, default: Cnfs.config.verbose
-
-  desc 'dev', 'A placeholder command for development of new commands'
-  def dev
-    # binding.pry
-    run(:dev)
-  end
-
-  # Project Management
-  desc 'new NAME', 'Create a new CNFS project'
-  option :force, desc: 'Force creation even if project aready exists',
-    aliases: '-f', type: :boolean
-  # option :backend, desc: 'Generate the CNFS Backend Core Repository and Services',
-  #   aliases: '-b', type: :boolean
-  # option :dev, desc: 'Clone CNFS repositories for local development',
-  #   type: :boolean
-  def new(name)
-    if Dir.exist?(name)
-      if options.force || yes?('Directory already exists. Destroy and recreate?')
-        FileUtils.rm_rf(name)
-      else
-        raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
-      end
-    end
-    NewController.new(name, options).execute
-  end
-
-  desc 'init', 'Initialize the CNFS project: clone configured repositories; check for dependencies'
-  option :customize, desc: 'Copy generators from gem to project',
-    aliases: '-c', type: :boolean
-  def init
-    run(:init)
-  end
-
-  # TODO: This is like Amplify status
-  # desc 'list', 'List configuration objects: config, environments, namespaces, repositories, services and blueprints'
-  # option :show_enabled, type: :boolean, aliases: '--enabled', desc: 'Only show services enabled in current config file'
-  # map %w[ls] => :list
-  # def list(*filters)
-  #   run(:list, filters: filters)
-  # end
-
-  # Deployment Manifests
-  desc 'generate', 'Generate manifests for application deployment'
-  option :clean, desc: 'Delete all existing manifests before generating',
-    aliases: '-c', type: :boolean
-  def generate
-    run(:generate)
-  end
+class ServicesController < CommandsController
 
   desc 'show', 'Show service manifest'
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
@@ -136,52 +48,6 @@ class PrimaryController < CommandsController
   desc 'pull IMAGES', 'Pull one or all images'
   def pull(*services)
     run(:pull, services: services)
-  end
-
-  desc 'publish', 'Publish API documentation to Postman'
-  option :force, desc: 'Force generation of new documentation',
-    aliases: '-f', type: :boolean
-  # TODO: refactor
-  # Maybe in the service configuration is an attribute commands which is an array of hashes:
-  # { command: 'publish erd', exec: 'rails g erd' }
-  # Maybe publish is not a full command but there is a command method which then parses the array of hashes
-  # In that case test could be put into this array as well
-  def publish(type, *_services)
-    raise Cnfs::Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
-  end
-
-  # Cluster Admin
-  desc 'create NAMESPACE', 'Create a new NAMESPACE'
-  # NOTE: this creates the namespace in the cluster; To add a new namespace that is the add command
-  def create
-    run(:create)
-  end
-
-  desc 'destroy', 'Remove namespace from current environment'
-  option :force, desc: 'Do not prompt for confirmation', type: :boolean
-  # TODO: Test this by taking down a compose cluster
-  def destroy
-    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
-                                      "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
-    run(:destroy)
-  end
-
-  # Cluster Runtime
-  desc 'deploy', 'Deploy services to NAMESPACE in target ENVIRONMENT'
-  # option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
-  def deploy(*services)
-    services = Service.pluck(:name) if services.empty?
-    run(:deploy, services: services)
-  end
-
-  desc 'redeploy', 'Create and Start'
-  option :force, desc: 'Do not prompt for confirmation', type: :boolean
-  # TODO: validate that supplied services are correct and fail if they are not
-  def redeploy(*services)
-    services = Service.pluck(:name) if services.empty?
-    return unless options.force || yes?("\nAbout to *restart* #{services.join(' ')} \n\nAre you sure?")
-
-    run(:redeploy, services: services)
   end
 
   desc 'ps', 'List running services'
@@ -282,17 +148,6 @@ class PrimaryController < CommandsController
     run(:copy, src: src, dest: dest)
   end
 
-  # TODO: This should be a custom command
-  # part of the services.yml mapping of a name to a command
-  # then this runs a rake task which takes an option of display format
-  # then remove all this code from the CNFS cli
-  desc 'credentials', 'Display IAM credentials'
-  option :format, desc: 'Options: sdk, cli, postman',
-    aliases: '-f', type: :string
-  def credentials
-    run(:credentials)
-  end
-
   desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
   def exec(service, *command_args)
     run(:exec, service: service, command_args: command_args)
@@ -314,10 +169,28 @@ class PrimaryController < CommandsController
     run(:shell, arguments)
   end
 
-  # Utility
-  desc 'version', 'Show cnfs version'
-  def version
-    puts "v#{Cnfs::VERSION}"
+  # Commands ot refactor
+  desc 'publish', 'Publish API documentation to Postman'
+  option :force, desc: 'Force generation of new documentation',
+    aliases: '-f', type: :boolean
+  # TODO: refactor
+  # Maybe in the service configuration is an attribute commands which is an array of hashes:
+  # { command: 'publish erd', exec: 'rails g erd' }
+  # Maybe publish is not a full command but there is a command method which then parses the array of hashes
+  # In that case test could be put into this array as well
+  def publish(type, *_services)
+    raise Cnfs::Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
+  end
+
+  # TODO: This should be a custom command
+  # part of the services.yml mapping of a name to a command
+  # then this runs a rake task which takes an option of display format
+  # then remove all this code from the CNFS cli
+  desc 'credentials', 'Display IAM credentials'
+  option :format, desc: 'Options: sdk, cli, postman',
+    aliases: '-f', type: :string
+  def credentials
+    run(:credentials)
   end
 
   # desc 'up SERVICE', 'bring up service(s)'

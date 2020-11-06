@@ -1,0 +1,3 @@
+# Use to access cnfs cli in development mode
+
+PATH=`pwd`/cli/exe:$PATH

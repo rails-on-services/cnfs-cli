@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class PushController < ApplicationController
     cattr_reader :command_group, default: :image_operations
 

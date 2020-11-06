@@ -2,7 +2,7 @@
 
 require 'tty-table'
 
-module Primary
+module Services
   class StatusController < ApplicationController
     def execute(entry)
       super

@@ -18,12 +18,7 @@ def internal_path
   Pathname.new(__dir__)
 end
 
-require "#{lib_path}/profile"
-@service_name = @name
-@profile = Profile.new(@service_name, self, options.dup)
-
-require 'pry'
-binding.pry
+apply('cnfs.rb')
 
 apply('gemspec.rb')
 apply('gems.rb')

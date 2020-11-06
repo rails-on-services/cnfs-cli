@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Services
   class ShellController < ApplicationController
     def execute
       run(:build) if options.build

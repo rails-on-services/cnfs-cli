@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Targets
+module Environment
   class InitController < ApplicationController
     def execute
       each_target do |_target|
@@ -9,6 +9,7 @@ module Targets
       end
     end
 
+    # Init the cluster
     def execute_on_target
       response.add(exec: target.init(options), pty: true).run!
       response.add(exec: 'kubectl cluster-info', pty: true).run!
