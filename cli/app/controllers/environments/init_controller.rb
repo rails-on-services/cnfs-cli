@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Environment
+module Environments
   class InitController < ApplicationController
     def execute
       each_target do |_target|

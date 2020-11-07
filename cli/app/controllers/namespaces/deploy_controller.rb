@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Namespaces
   class DeployController < ApplicationController
     cattr_reader :command_group, default: :cluster_runtime
 

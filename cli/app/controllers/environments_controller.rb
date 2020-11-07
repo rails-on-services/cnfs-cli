@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-class EnvironmentsController < InfraController
+class EnvironmentsController < CommandsController
+
+  map %w[i] => :infra
+  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure'
 
   # NOTE: It may be that run command will not understand the namespace of the Infra commands
   desc 'init', 'Initialize the cluster'

@@ -16,6 +16,8 @@ module Primary
 
     register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
     register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
+    map %w[i] => :image
+    register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images (short-cut: i)'
     register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
 
     def self.exit_on_failure?

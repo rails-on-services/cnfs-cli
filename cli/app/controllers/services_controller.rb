@@ -2,52 +2,11 @@
 
 class ServicesController < CommandsController
 
-  desc 'show', 'Show service manifest'
+  desc 'show SERVICE', 'Show service manifest'
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
     aliases: '-m', type: :string
   def show(*services)
     run(:show, services: services)
-  end
-
-  # Image Opertions
-  desc 'build SERVICES', 'Build all or specific service images'
-  # NOTE: build and connect is really only valid for local otherwise need to deploy first
-  option :shell, desc: 'Connect to service shell after building',
-    aliases: '--sh', type: :boolean
-  # TODO: Take an environment for which to build; target is just infra like a k8s cluster
-  # application is just the colleciton of services; namespace is where it's deployed
-  # so namespace would declare the environment, e.g. production, etc
-  # def build(namespace_name, *service_names)
-  # TODO: Things like the image naming convention should be part of the service.config with a store accessor
-  # so that each image and within an environment/namespace _could_ have its own naming pattern
-  option :all,
-    aliases: '-a', type: :boolean
-  def build(*services)
-    run(:build, services: services, service: services.last)
-  end
-
-  desc 'test SERVICES', 'Run test commands on service(s)'
-  option :build, desc: 'Build image before testing',
-    aliases: '-b', type: :boolean
-  option :fail_all, desc: 'Skip any remaining services after a test fails',
-    aliases: '--fa', type: :boolean
-  option :fail_fast, desc: 'Skip any remaining tests for a service after a test fails',
-    aliases: '--ff', type: :boolean
-  option :push, desc: 'Push image after successful testing',
-    aliases: '-p', type: :boolean
-  # TODO: How to handle service names?
-  def test(*args)
-    run(:test, args)
-  end
-
-  desc 'push IMAGES', 'Push one or all images'
-  def push(*services)
-    run(:push, services: services)
-  end
-
-  desc 'pull IMAGES', 'Pull one or all images'
-  def pull(*services)
-    run(:pull, services: services)
   end
 
   desc 'ps', 'List running services'
@@ -60,13 +19,8 @@ class ServicesController < CommandsController
     run(:ps) # , args: args)
   end
 
-  desc 'status', 'Show platform services status: created, restarting, running, removing, paused, exited, or dead'
-  def status(status = :running)
-    run(:status, status: status)
-  end
-
   # Service Admin
-  desc 'start', 'Start one or more services (short-cut: s)'
+  desc 'start [SERVICES]', 'Start one or more services (short-cut: s)'
   option :attach, desc: 'Attach to service after starting',
     aliases: '-a', type: :boolean
   # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
@@ -84,7 +38,7 @@ class ServicesController < CommandsController
     run(:start, services: services)
   end
 
-  desc 'restart SERVICE', 'Stop and start one or more services'
+  desc 'restart [SERVICES]', 'Stop and start one or more services'
   # TODO: When taking array of services but attach only uses the last one
   # Add default: '' so if -a is passed and value is blank then it's the last one
   option :attach, desc: 'Attach to service after executing command',
@@ -104,14 +58,14 @@ class ServicesController < CommandsController
     run(:restart, services: services)
   end
 
-  desc 'stop SERVICE', 'Stop one or more services'
+  desc 'stop [SERVICES]', 'Stop one or more services'
   option :profiles, desc: 'List of profiles to stop',
     aliases: '-p', type: :array
   def stop(*services)
     run(:stop, services: services)
   end
 
-  desc 'terminate SERVICE', 'Terminate one or more services'
+  desc 'terminate [SERVICES]', 'Terminate one or more services'
   option :profiles, desc: 'List of profiles to terminate',
     aliases: '-p', type: :array
   def terminate(*services)
@@ -119,7 +73,13 @@ class ServicesController < CommandsController
   end
 
   # Service Runtime
-  desc 'attach SERVICE', 'Attach to a running service; ctrl-f to detach; ctrl-c to stop/kill the service (short-cut: a)'
+  desc 'attach SERVICE', 'Attach to the process of a running service (short-cut: a)'
+    long_desc <<-DESC.gsub("\n", "\x5")
+
+    The 'cnfs attach' command attaches to the process of a running service
+
+    ctrl-f to detach; ctrl-c to stop/kill the service
+    DESC
   map %w[a] => :attach
   option :build, desc: 'Build image before executing command',
     aliases: '-b', type: :boolean
@@ -136,7 +96,7 @@ class ServicesController < CommandsController
   #   run(:command, service: service, command: args)
   # end
 
-  desc 'console [SERVICE]', 'Start a cnfs or service console (short-cut: c)'
+  desc 'console SERVICE', 'Start a cnfs or service console (short-cut: c)'
   map %w[c] => :console
   def console(service = nil)
     service ? run(:console, service: service) : run(:console)
@@ -153,7 +113,7 @@ class ServicesController < CommandsController
     run(:exec, service: service, command_args: command_args)
   end
 
-  desc 'logs', 'Tail logs of a running service'
+  desc 'logs SERVICE', 'Tail logs of a running service'
   option :tail, aliases: '-f', type: :boolean
   def logs(service)
     run(:logs, service: service)
@@ -170,7 +130,7 @@ class ServicesController < CommandsController
   end
 
   # Commands ot refactor
-  desc 'publish', 'Publish API documentation to Postman'
+  desc 'publish SERVICE', 'Publish API documentation to Postman'
   option :force, desc: 'Force generation of new documentation',
     aliases: '-f', type: :boolean
   # TODO: refactor
