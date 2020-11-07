@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EnvironmentsController < CommandsController
+  OPTS = %i[env noop quiet verbose]
+  include Cnfs::Options
 
   map %w[i] => :infra
   register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure'

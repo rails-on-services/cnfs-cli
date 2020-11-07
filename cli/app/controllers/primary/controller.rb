@@ -2,6 +2,9 @@
 
 module Primary
   class Controller < CommandsController
+    OPTS = []
+    OPTS.append(:debug) if Cnfs.config.dig(:cli, :dev)
+
     Cnfs.controllers.each do |controller|
       controller = OpenStruct.new(controller)
       register controller.klass.safe_constantize, controller.title, controller.help, controller.description
@@ -19,33 +22,15 @@ module Primary
     map %w[i] => :image
     register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images (short-cut: i)'
     register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
+    register ProjectController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
 
     def self.exit_on_failure?
       true
     end
 
-    unless %w[new version].include?(ARGV[0]) or (ARGV[0]&.eql?('help') and %w[new version].include?(ARGV[1]))
-      class_option :environment, desc: 'Target environment',
-        aliases: '-e', type: :string, required: true, default: Cnfs.config.environment
-      class_option :namespace, desc: 'Target namespace',
-        aliases: '-n', type: :string, required: true, default: Cnfs.config.namespace
-      class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
-        aliases: '--ff', type: :boolean
-    end
-
-    class_option :debug, desc: 'Display deugging information with degree of verbosity',
-      aliases: '-d', type: :numeric, default: Cnfs.config.debug
-    # class_option :help, desc: 'Display usage information',
-    #   aliases: '-h', type: :boolean
-    class_option :noop, desc: 'Do not execute commands',
-      type: :boolean, default: Cnfs.config.noop
-    class_option :quiet, desc: 'Suppress status output',
-      aliases: '-q', type: :boolean, default: Cnfs.config.quiet
-    # class_option :tag, type: :string
-    class_option :verbose, desc: 'Display extra information from command',
-      aliases: '-v', type: :boolean, default: Cnfs.config.verbose
-
     if Cnfs.config.dig(:cli, :dev)
+      # OPTS.unshift(:env, :ns, :fail_fast)
+      # OPTS.append(:noop, :quiet, :verbose)
       desc 'dev', 'Placeholder command for development of new commands'
       def dev
         run(:dev)
@@ -85,36 +70,11 @@ module Primary
       end
     end
 
-    desc 'init', 'Initialize the project'
-    long_desc <<-DESC.gsub("\n", "\x5")
-
-    The 'cnfs init' command initializes a newly cloned CNFS project with the following operations:
-
-    Clone repositories
-    Check for dependencies
-    DESC
-    def init
-      run(:init)
-    end
-
-    desc 'console', 'Start a CNFS project console (short-cut: c)'
-    map %w[c] => :console
-    def console
-      run(:console)
-    end
-
-    # Deployment Manifests
-    desc 'generate', 'Generate manifests for application deployment'
-    option :clean, desc: 'Delete all existing manifests before generating',
-      aliases: '-c', type: :boolean
-    def generate
-      run(:generate)
-    end
-
     # Utility
     desc 'version', 'Show cnfs version'
     def version
       puts "v#{Cnfs::VERSION}"
     end
+    include Cnfs::Options
   end
 end

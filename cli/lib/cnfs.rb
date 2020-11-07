@@ -46,6 +46,7 @@ module Cnfs
     end
 
     def require_minimum_deps
+      require 'active_support/concern'
       require 'active_support/inflector'
       require 'active_support/core_ext/hash/keys'
       require 'active_support/core_ext/enumerable'
@@ -56,6 +57,7 @@ module Cnfs
       require 'zeitwerk'
 
       require_relative 'cnfs/errors'
+      require_relative 'cnfs/options'
       require_relative 'cnfs/version'
       require_relative 'ext/config/options'
       require_relative 'ext/string'

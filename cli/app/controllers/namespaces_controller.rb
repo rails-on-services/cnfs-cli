@@ -1,9 +1,29 @@
 # frozen_string_literal: true
 
-# Cluster namespace administration
 class NamespacesController < CommandsController
+  OPTS = %i[env ns noop quiet verbose]
+  include Cnfs::Options
 
   register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure'
+
+  # Deployment Manifests
+  desc 'generate', 'Generate service manifests'
+  option :clean, desc: 'Delete all existing manifests before generating',
+    aliases: '-c', type: :boolean
+  def generate
+    run(:generate)
+  end
+
+  # TODO: This should be a custom command
+  # part of the services.yml mapping of a name to a command
+  # then this runs a rake task which takes an option of display format
+  # then remove all this code from the CNFS cli
+  desc 'credentials', 'Display IAM credentials'
+  option :format, desc: 'Options: sdk, cli, postman',
+    aliases: '-f', type: :string
+  def credentials
+    run(:credentials)
+  end
 
   desc 'create', 'Provision the namespace in the environment'
   def create
@@ -28,7 +48,7 @@ class NamespacesController < CommandsController
     run(:deploy, services: services)
   end
 
-  desc 'redeploy', 'Create and Start all services in namespace'
+  desc 'redeploy', 'Terminate and restart all services in namespace'
   option :force, desc: 'Do not prompt for confirmation',
     type: :boolean
   # TODO: validate that supplied services are correct and fail if they are not

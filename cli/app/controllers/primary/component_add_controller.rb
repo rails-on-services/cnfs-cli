@@ -5,20 +5,19 @@ require 'lockbox'
 
 module Primary
   class ComponentAddController < Thor
+    OPTS = %i[force noop quiet verbose]
+    include Cnfs::Options
+
     register Component::RepositoryController, 'repository', 'repository TYPE NAME', 'add a repository of TYPE: rails, angular or url'
 
-    class_option :force, desc: 'Do not prompt for confirmation',
-      aliases: '-f', type: :boolean
-
     desc 'blueprint PROVIDER NAME', 'Add blueprint to environment or namespace'
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, default: Cnfs.config.environment
+    option :namespace, desc: 'Target namespace',
+      aliases: '-n', type: :string
     def blueprint(provider, name)
-      reset_options
+      binding.pry
       run(:blueprint, provider: provider, name: name)
-    end
-
-    desc 'plugins', 'Copy plugins to project'
-    def plugins
-      Cnfs.invoke_plugins_wtih(:customize)
     end
 
     desc 'environment NAME', 'Add environment to project'
@@ -27,6 +26,8 @@ module Primary
     end
 
     desc 'namespace NAME', 'Add namespace to environment'
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, default: Cnfs.config.environment
     def namespace(name)
       run(:namespace, name: name, action: :invoke)
     end
@@ -56,6 +57,11 @@ module Primary
 
     repo_options = read_repo_options
 
+    desc 'service NAME', 'Add a service to a repository'
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, default: Cnfs.config.environment
+    option :namespace, desc: 'Target namespace',
+      aliases: '-n', type: :string, default: Cnfs.config.namespace
     option :repository, desc: 'The repository in which to generate the service',
       aliases: '-r', type: :string
     option :repository_type, type: :string, default: repo_options.repository_type
@@ -69,11 +75,10 @@ module Primary
           aliases: '-s', type: :string
       end
     end
-    desc 'service NAME', 'Add a service to a repository'
     def service(name)
       # environment and namespace need to be specified on the command line which determines which
       # services.yml file will be updated with the new service definition
-      reset_options
+      # reset_options
       run(:service, name: name, action: :invoke)
     end
 
@@ -92,15 +97,15 @@ module Primary
     end
 
     # Ensure that environment and namespace were passed on the cli and not just default values
-    def reset_options
-      opts = options.except('environment', 'namespace')
-      if (env = ARGV.index('-e') || ARGV.index('--environment'))
-        opts['environment'] = ARGV[env + 1]
-      end
-      if (ns = ARGV.index('-n') || ARGV.index('--namespace'))
-        opts['namespace'] = ARGV[ns + 1]
-      end
-      @options = Thor::CoreExt::HashWithIndifferentAccess.new(opts)
-    end
+    # def reset_options
+    #   opts = options.except('environment', 'namespace')
+    #   if (env = ARGV.index('-e') || ARGV.index('--environment'))
+    #     opts['environment'] = ARGV[env + 1]
+    #   end
+    #   if (ns = ARGV.index('-n') || ARGV.index('--namespace'))
+    #     opts['namespace'] = ARGV[ns + 1]
+    #   end
+    #   @options = Thor::CoreExt::HashWithIndifferentAccess.new(opts)
+    # end
   end
 end

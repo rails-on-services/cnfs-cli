@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class ImagesController < CommandsController
+  OPTS = %i[env ns noop quiet verbose]
+  include Cnfs::Options
 
-  # Image Opertions
   desc 'build [IMAGES]', 'Build all or specific service images'
   # NOTE: build and connect is really only valid for local otherwise need to deploy first
   option :shell, desc: 'Connect to service shell after building',

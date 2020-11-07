@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ServicesController < CommandsController
+  OPTS = %i[env ns noop quiet verbose]
+  include Cnfs::Options
 
   desc 'show SERVICE', 'Show service manifest'
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
@@ -140,17 +142,6 @@ class ServicesController < CommandsController
   # In that case test could be put into this array as well
   def publish(type, *_services)
     raise Cnfs::Error, set_color("types are 'postman' and 'erd'", :red) unless %w[postman erd].include?(type)
-  end
-
-  # TODO: This should be a custom command
-  # part of the services.yml mapping of a name to a command
-  # then this runs a rake task which takes an option of display format
-  # then remove all this code from the CNFS cli
-  desc 'credentials', 'Display IAM credentials'
-  option :format, desc: 'Options: sdk, cli, postman',
-    aliases: '-f', type: :string
-  def credentials
-    run(:credentials)
   end
 
   # desc 'up SERVICE', 'bring up service(s)'
