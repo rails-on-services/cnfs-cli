@@ -16,6 +16,11 @@ module Primary
       run(:blueprint, provider: provider, name: name)
     end
 
+    desc 'plugins', 'Copy plugins to project'
+    def plugins
+      Cnfs.invoke_plugins_wtih(:customize)
+    end
+
     desc 'environment NAME', 'Add environment to project'
     def environment(name)
       run(:environment, name: name, action: :invoke)

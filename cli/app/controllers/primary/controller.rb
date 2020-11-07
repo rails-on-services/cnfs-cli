@@ -7,19 +7,15 @@ module Primary
       register controller.klass.safe_constantize, controller.title, controller.help, controller.description
     end
 
-    register ComponentAddController, 'add', 'add COMPONENT [options]', 'Add a project component' #: blueprint, environment, namespace, repository or service'
-    # map %w[rm] => :remove
-    register ComponentRemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component' # : environment, namespace, repository or service. (short-cut: rm)'
+    register ComponentAddController, 'add', 'add COMPONENT [options]', 'Add a project component'
+    register ComponentRemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
 
     register ConfigController, 'config', 'config SUBCOMMAND', 'Get and set project configuration values'
-    # map %w[ls] => :list
     # NOTE: This is like Amplify status
-    register ListController, 'list', 'list COMPONENT', 'List configuration objects' # (short-cut: ls)'
+    register ListController, 'list', 'list COMPONENT', 'List configuration components'
 
-    register EnvironmentController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure: k8s clusters, storage, etc'
-    # map %w[ns] => :namespace
-    register NamespaceController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services' # . (short-cut: ns)'
-    # TODO: Move ServicesController to Primary namespace
+    register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
+    register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
     register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
 
     def self.exit_on_failure?
@@ -87,14 +83,19 @@ module Primary
       end
     end
 
-    desc 'init', 'Initialize the CNFS project: clone configured repositories; check for dependencies'
-    option :customize, desc: 'Copy generators from gem to project',
-      aliases: '-c', type: :boolean
+    desc 'init', 'Initialize the project'
+    long_desc <<-DESC.gsub("\n", "\x5")
+
+    The 'cnfs init' command initializes a newly cloned CNFS project with the following operations:
+
+    Clone repositories
+    Check for dependencies
+    DESC
     def init
       run(:init)
     end
 
-    desc 'console [SERVICE]', 'Start a cnfs console (short-cut: c)'
+    desc 'console', 'Start a CNFS project console (short-cut: c)'
     map %w[c] => :console
     def console
       run(:console)

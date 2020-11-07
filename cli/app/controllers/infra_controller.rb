@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-module Primary
 class InfraController < CommandsController
   # namespace :infra
 
@@ -71,5 +70,4 @@ class InfraController < CommandsController
     end
     STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
   end
-end
 end
