@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Config
+module Project
   class SetController < Thor
 
     class_option :local, desc: 'Manage local configuration',

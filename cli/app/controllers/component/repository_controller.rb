@@ -2,8 +2,10 @@
 
 module Component
   class RepositoryController < Thor
+    OPTS = %i[force noop quiet verbose]
+    include Cnfs::Options
 
-    desc 'rails', 'Add a CNFS compatible backend services repository based on the Ruby on Rails Framework'
+    desc 'rails', 'Add a CNFS compatible services repository based on the Ruby on Rails Framework'
     option :database, desc: 'Preconfigure for selected database (options: postgresql)',
       aliases: '-D', type: :string, default: 'postgresql'
     # TODO: Add options that carry over to the rails plugin new command
@@ -13,14 +15,14 @@ module Component
       end
     end
 
-    desc 'angular', 'Add a CNFS compatible frontend client repository based on the Angular Framework'
+    desc 'angular', 'Add a CNFS compatible services repository based on the Angular Framework'
     def angular(name)
       with_context(name) do
         create_repository(:angular, name)
       end
     end
 
-    desc 'url', 'Add a CNFS compatible repository (used for development)'
+    desc 'url', 'Add a CNFS compatible services repository (used for local development)'
     def url(url, name = nil)
       # Shortcut for CNFS backend repo 
       url = 'git@github.com:rails-on-services/ros.git' if url.eql?('ros')

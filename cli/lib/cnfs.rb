@@ -40,7 +40,7 @@ module Cnfs
           initialize_plugins
         end
         setup_loader
-        Primary::Controller.start
+        PrimaryController.start
       end
       puts "Wall time: #{Time.now - s}" if config.debug.positive?
     end
