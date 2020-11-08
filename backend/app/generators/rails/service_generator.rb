@@ -1,18 +1,25 @@
 # frozen_string_literal: true
 
 # Creates a new service in a CNFS Rails repository
+# 1. Modifies the services.yml file at project, env or ns level depending on the options passed in
+# 2. Invoke 'rails [plugin] new' to create the service (a template is invoked to modify generated files)
+# 3. Add a model class to the SDK to expose this service's models
 module Rails
   class ServiceGenerator < Thor::Group
     include Thor::Actions
+    include CommonConcern
+    argument :project_name
     argument :name
 
-    def generate_service_file
+    def services_file
       FileUtils.touch(options.services_file)
       # TODO: update the service definition; rails is just boilerplate
       append_to_file(options.services_file, rails)
     end
 
-    def generate
+    def service_gem
+      return unless options.reposistory
+
       if behavior.eql? :revoke
         inside('services') { empty_directory(name) }
         return
@@ -20,35 +27,23 @@ module Rails
 
       raise Cnfs::Error, "service #{name} already exists" if Dir.exist?("#{destination_root}/services/#{name}")
 
-      exec_string = ['rails new']
-      exec_string = ['rails plugin new', '--full --dummy-path=spec/dummy'] if options.type.eql?('plugin')  
-      # TODO: These strings should be external configuration values
-      # exec_string.append('--full --dummy-path=spec/dummy') if options.type.eql?('plugin')
-      exec_string.append('--api -G -S -J -C -T -M --skip-turbolinks --database=postgresql --skip-active-storage')
-
-      # If the project has a service generator then prefer that over the internal generator
-      generator_name = 'service/generator.rb'
-      relative_path = internal_path.to_s.delete_prefix("#{Cnfs::Cli::Backend.gem_root}/app/")
-      user_path = Cnfs.project_root.join(Cnfs.paths.lib).join(relative_path)
-      exec_path = user_path.join(generator_name).exist? ? user_path : internal_path
-      exec_string.append('-m', exec_path.join(generator_name), name)
-
-      env = base_env.merge(gem_env).transform_keys!{ |key| "cnfs_#{key}".upcase }
-      puts env
-      puts exec_string.join(' ')
-      # inside('services') { system(env, exec_string.join(' ')) }
+      # with_context('service/generator.rb', "#{project_name}-#{name}", 'services') do |env, exec_ary|
+      #   system(env, exec_ary.join(' '))
+      # end
     end
 
     # TODO: This should not be necessary
     # Figure out how to name the SDK and Core gems appropriately
-    def gemspec_content
-      return unless options.plugin
+    # def gemspec_content
+    #   return unless options.type.eql?('plugin')
 
-      gemspec = "services/#{name}/#{name}.gemspec"
-      gsub_file gemspec, '  spec.name        = "', '  spec.name        = "cnfs-'
-    end
+    #   gemspec = "services/#{name}/#{name}.gemspec"
+    #   gsub_file gemspec, '  spec.name        = "', '  spec.name        = "cnfs-'
+    # end
 
-    def sdk_content
+    def sdk_service_model
+      return unless options.reposistory
+
       create_file "#{sdk_lib_path}/models/#{name}.rb", <<~RUBY
         # frozen_string_literal: true
 
@@ -68,34 +63,6 @@ module Rails
     end
 
     private
-
-    def base_env
-      {
-        repository_name: options.repository, # Cnfs.repository_root.split.last.to_s,
-        code_type: 'service',
-        service_name: name,
-        service_type: options.type, # plugin ? 'plugin' : 'application',
-        app_dir: options.type.eql?('plugin') ? 'spec/dummy/' : '.'
-      }
-    end
-
-    def gem_env
-      return {} unless options.gem_source
-
-      gem_repo, gem_path, gem_name = options.gem_source.split('/')
-      gem_path ||= 'services'
-      gem_name ||= name
-      path = [gem_repo, gem_path, gem_name].join('/')
-
-      # env[:wrapped_repository_path] = '../../..'
-      # env[:wrapped_repository_name] = gem_repo
-      # env[:wrapped_service_name] = gem_name
-      {
-        gem_repository_path: '../../..',
-        gem_repo: gem_repo,
-        gem_name: gem_name
-      }
-    end
 
     def rails
       "cognito: &base_service\n  type: Service::Rails\n  config:\n    depends_on:\n      - wait\n"

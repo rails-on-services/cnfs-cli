@@ -20,9 +20,12 @@ end
 
 apply('cnfs.rb')
 
-apply('gemspec.rb')
+# apply('gemspec.rb')
+binding.pry
 apply('gems.rb')
+binding.pry
 apply('postgres.rb')
+binding.pry
 apply('readme.rb')
 
-gem 'ros-core', path: "#{@profile.ros_lib_path}/core"
+# gem 'ros-core', path: "#{cnfs.ros_lib_path}/core"

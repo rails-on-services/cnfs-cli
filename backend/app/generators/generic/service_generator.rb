@@ -4,11 +4,13 @@
 module Generic
   class ServiceGenerator < Thor::Group
     include Thor::Actions
+    argument :project_name
     argument :name
+    argument :type
 
     def generate
       FileUtils.touch(options.services_file)
-      append_to_file(options.services_file, send(options.type))
+      append_to_file(options.services_file, send(type))
     end
 
     private

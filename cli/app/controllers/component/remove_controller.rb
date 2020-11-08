@@ -2,6 +2,10 @@
 
 module Component
   class RemoveController < ComponentController
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, default: Cnfs.config.environment
+    option :namespace, desc: 'Target namespace',
+      aliases: '-n', type: :string
     desc 'blueprint PROVIDER NAME', 'Remove blueprint from environment or namespace'
     def blueprint(provider, name)
       run(:blueprint, provider: provider, name: name, action: :revoke)
@@ -15,6 +19,8 @@ module Component
     end
 
     desc 'namespace NAME', 'Remove namespace from environment'
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string, default: Cnfs.config.environment
     def namespace(name)
       return unless (options.force || yes?('Are you sure?'))
 
@@ -32,19 +38,19 @@ module Component
       repo.delete
     end
 
-    desc 'service NAME', 'Remove a service from the repository'
-    option :type, desc: 'The service type to generate',
-      aliases: '-t', type: :string # , required: :true
+    desc 'service NAME', 'Remove a service from the project'
+    option :environment, desc: 'Target environment',
+      aliases: '-e', type: :string # , default: Cnfs.config.environment
+    option :namespace, desc: 'Target namespace',
+      aliases: '-n', type: :string
+    option :repository, desc: 'The repository from which to remove the service',
+      aliases: '-r', type: :string # , default: default_repository
     def service(name)
-      return unless (options.force || yes?('Are you sure?'))
+      return unless (options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?"))
 
       run(:service, name: name, action: :revoke)
     end
 
     private
-
-    def action
-      :remove
-    end
   end
 end

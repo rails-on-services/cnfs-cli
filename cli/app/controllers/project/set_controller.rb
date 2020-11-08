@@ -6,17 +6,17 @@ module Project
     class_option :local, desc: 'Manage local configuration',
       aliases: '-l', type: :boolean
 
-    desc 'environment VALUE', 'set default environment'
+    desc 'environment VALUE', 'Set default environment'
     def environment(value)
       config_set(:environment, value)
     end
 
-    desc 'namespace VALUE', 'set default namespace'
+    desc 'namespace VALUE', 'Set default namespace'
     def namespace(value)
       config_set(:namespace, value)
     end
 
-    desc 'repository VALUE', 'set default repository'
+    desc 'repository VALUE', 'Set default repository'
     def repository(value)
       config_set(:repository, value)
     end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # gemspec.rb
-binding.pry
 
 gemspec = "#{cnfs.service_name}.gemspec"
 klass = cnfs.service_name.split('-').collect(&:capitalize).join('::')

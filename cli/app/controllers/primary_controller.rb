@@ -54,6 +54,10 @@ class PrimaryController < CommandsController
     DESC
     option :force, desc: 'Force creation even if the project directory already exists',
       aliases: '-f', type: :boolean
+    option :backend, desc: 'Create the project with a set of typical backend services',
+      aliases: '-b', type: :boolean
+    option :cnfs, desc: 'Create CNFS service configurations for development mode',
+      type: :boolean
     def new(name)
       if Dir.exist?(name)
         if options.force || yes?('Directory already exists. Destroy and recreate?')
@@ -62,7 +66,7 @@ class PrimaryController < CommandsController
           raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
         end
       end
-      NewController.new(name, options).execute
+      Primary::NewController.new(name, options).execute
     end
   end
 

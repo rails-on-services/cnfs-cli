@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 # Creates a new CNFS Rails repository
-# 1. Copies files into the root of the repository
-# 2. Creates a core gem (rails new plugin) for the repository
-# 3. Creates an SDK gem (bundle gem) for the repository
+# 1. Copy files into the root of the repository
+# 2. Invoke 'rails plugin new' to create the repository's core gem (a template is invoked to modify generated files)
+# 3. Invoke 'bundle gem' to create the repository's SDK gem (no template so all modifications are made in this file)
 module Rails
   class RepositoryGenerator < Thor::Group
     include Thor::Actions
+    include CommonConcern
     argument :project_name
     argument :name
 
@@ -15,6 +16,7 @@ module Rails
       in_root do
         # Dockerfile, cnfs.yml, etc
         directory('files', '.')
+        template('cnfs.yml.erb', '.cnfs.yml')
         # ['', '.dev', '.prod'].each do |type|
         #   template("services/Gemfile#{type}.erb", "services/Gemfile#{type}")
         # end
@@ -26,24 +28,16 @@ module Rails
 
     def core_gem
       gem_name = "#{project_name}-#{name}_core"
-      exec_string = ['rails plugin new']
-      exec_string.append('--api -G -S -J -C -T -M --skip-turbolinks --database=postgresql --skip-active-storage')
-      exec_string.append('--full --dummy-path=spec/dummy')
-      exec_string.append('-m', internal_path.join('repository/core_generator.rb'), gem_name)
-
-      env = base_env.transform_keys!{ |key| "cnfs_#{key}".upcase }
-      puts env if options.debug
-      puts exec_string.join(' ') if options.debug
-      gemspec = "#{gem_name}.gemspec"
-
-      inside('lib') do
-        system(env, exec_string.join(' '))
-        inside(gem_name) do
-          gsub_file(gemspec, 'TODO: Write your name', `git config --get user.name`.chomp)
-          gsub_file(gemspec, 'TODO: Write your email address', `git config --get user.email`.chomp)
-          gsub_file(gemspec, '  spec.homepage', '  # spec.homepage')
-          gsub_file(gemspec, 'TODO: ', '')
-        end
+      with_context('repository/core_generator.rb', gem_name, 'lib') do |env, exec_ary|
+        system(env, exec_ary.join(' '))
+        # TODO: These gsubs should happen in the rails template itself
+        # and apply to both service and repo core gem
+        # inside(gem_name) do
+        #   gsub_file(gemspec, 'TODO: Write your name', `git config --get user.name`.chomp)
+        #   gsub_file(gemspec, 'TODO: Write your email address', `git config --get user.email`.chomp)
+        #   gsub_file(gemspec, '  spec.homepage', '  # spec.homepage')
+        #   gsub_file(gemspec, 'TODO: ', '')
+        # end
         FileUtils.mv(gem_name, 'core')
       end
     end
@@ -113,16 +107,6 @@ module Rails
     end
 
     private
-
-    def base_env
-      {
-        repository_name: options.repository, # Cnfs.repository_root.split.last.to_s,
-        code_type: 'service',
-        service_name: name,
-        service_type: options.type, # plugin ? 'plugin' : 'application',
-        app_dir: options.type.eql?('plugin') ? 'spec/dummy/' : '.'
-      }
-    end
 
     def sdk_path
       sdk_name.gsub('-', '/')

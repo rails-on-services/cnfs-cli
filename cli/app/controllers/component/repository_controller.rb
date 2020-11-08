@@ -8,6 +8,8 @@ module Component
     desc 'rails', 'Add a CNFS compatible services repository based on the Ruby on Rails Framework'
     option :database, desc: 'Preconfigure for selected database (options: postgresql)',
       aliases: '-D', type: :string, default: 'postgresql'
+    option :test_with, desc: 'Testing framework',
+      aliases: '-t', type: :string, default: 'rspec'
     # TODO: Add options that carry over to the rails plugin new command
     def rails(name)
       with_context(name) do
@@ -25,7 +27,7 @@ module Component
     desc 'url', 'Add a CNFS compatible services repository (used for local development)'
     def url(url, name = nil)
       # Shortcut for CNFS backend repo 
-      url = 'git@github.com:rails-on-services/ros.git' if url.eql?('ros')
+      url = 'git@github.com:rails-on-services/ros.git' if url.eql?('cnfs')
       # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
       name ||= url.split('/').last&.delete_suffix('.git')
       return unless name

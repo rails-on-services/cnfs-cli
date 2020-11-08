@@ -75,14 +75,13 @@ class ServicesController < CommandsController
   end
 
   # Service Runtime
-  desc 'attach SERVICE', 'Attach to the process of a running service (short-cut: a)'
-    long_desc <<-DESC.gsub("\n", "\x5")
+  desc 'attach SERVICE', 'Attach to the process of a running service'
+  long_desc <<-DESC.gsub("\n", "\x5")
 
-    The 'cnfs attach' command attaches to the process of a running service
+  The 'cnfs attach' command attaches to the process of a running service
 
-    ctrl-f to detach; ctrl-c to stop/kill the service
-    DESC
-  map %w[a] => :attach
+  ctrl-f to detach; ctrl-c to stop/kill the service
+  DESC
   option :build, desc: 'Build image before executing command',
     aliases: '-b', type: :boolean
   option :profile, desc: 'Service profiles',
@@ -98,13 +97,21 @@ class ServicesController < CommandsController
   #   run(:command, service: service, command: args)
   # end
 
-  desc 'console SERVICE', 'Start a cnfs or service console (short-cut: c)'
+  desc 'console SERVICE', 'Start a console on the service (short-cut: c)'
   map %w[c] => :console
-  def console(service = nil)
-    service ? run(:console, service: service) : run(:console)
+  def console(service)
+    run(:console, service: service)
   end
 
-  desc 'copy SRC DEST', 'Copy a file to or from a running service'
+  desc 'copy SRC DEST', 'Copy a file to or from a running service (short-cut: cp)'
+  long_desc <<-DESC.gsub("\n", "\x5")
+
+  The 'cnfs copy' command copies a file from/to a running service to/from the local file system
+
+  To copy from a service: cnfs service copy service_name:path/to/file local/path/to/file
+
+  To copy to a service: cnfs service copy local/path/to/file service_name:path/to/file
+  DESC
   map %w[cp] => :copy
   def copy(src, dest)
     run(:copy, src: src, dest: dest)
@@ -115,8 +122,9 @@ class ServicesController < CommandsController
     run(:exec, service: service, command_args: command_args)
   end
 
-  desc 'logs SERVICE', 'Tail logs of a running service'
-  option :tail, aliases: '-f', type: :boolean
+  desc 'logs SERVICE', 'Display logs of a running service'
+  option :tail, desc: 'Continuous logging',
+    aliases: '-f', type: :boolean
   def logs(service)
     run(:logs, service: service)
   end
