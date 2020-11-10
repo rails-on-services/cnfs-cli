@@ -9,6 +9,7 @@ class ComponentController < Thor
 
   register Component::RepositoryController, 'repository', 'repository TYPE NAME', 'Add a repository of TYPE: rails, angular or url'
   register Component::ServiceController, 'service', 'service TYPE NAME', 'Add a service to the project'
+  register Component::PackageController, 'package', 'package [SUBCOMMAND] [options]', 'Add a package to the project'
 
   desc 'blueprint PROVIDER NAME', 'Add blueprint to environment or namespace'
   option :environment, desc: 'Target environment',
@@ -16,33 +17,39 @@ class ComponentController < Thor
   option :namespace, desc: 'Target namespace',
     aliases: '-n', type: :string
   def blueprint(provider, name)
-    run(:blueprint, provider: provider, name: name, action: :invoke)
+    run(:blueprint, provider: provider, name: name)
   end
 
   desc 'environment NAME', 'Add environment to project'
   def environment(name)
-    run(:environment, name: name, action: :invoke)
+    run(:environment, name: name)
   end
 
   desc 'namespace NAME', 'Add namespace to environment'
   option :environment, desc: 'Target environment',
     aliases: '-e', type: :string, default: Cnfs.config.environment
   def namespace(name)
-    run(:namespace, name: name, action: :invoke)
+    run(:namespace, name: name)
   end
 
   private
 
   def run(command_name, arguments = {})
+    arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments) # .merge(action: action))
+    controller = controller_class(command_name).new(options: options, arguments: arguments)
+    method = self.class.name.demodulize.downcase.delete_prefix('component').delete_suffix('controller')
+    controller.execute(action)
+  end
+
+  def controller_class(command_name)
     controller_name = "component/#{command_name}_controller".camelize
     unless (controller_class = controller_name.safe_constantize)
       raise Cnfs::Error, set_color("Class not found: #{controller_name} (this is a bug. please report)", :red)
     end
+    controller_class
+  end
 
-    arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
-    controller = controller_class.new(options: options, arguments: arguments)
-    method = self.class.name.demodulize.downcase.delete_prefix('component').delete_suffix('controller')
-    method = arguments.action.eql?(:invoke) ? :add : :remove
-    controller.send(method)
+  def action
+    :invoke
   end
 end

@@ -1,13 +1,8 @@
 # frozen_string_literal: true
 
-class PrimaryController < CommandsController
+class PrimaryController < Thor
   OPTS = []
   OPTS.append(:debug) if Cnfs.config.dig(:cli, :dev)
-
-  Cnfs.controllers.each do |controller|
-    controller = OpenStruct.new(controller)
-    register controller.klass.safe_constantize, controller.title, controller.help, controller.description
-  end
 
   register ComponentController, 'add', 'add COMPONENT [options]', 'Add a project component'
   register Component::RemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
@@ -24,14 +19,16 @@ class PrimaryController < CommandsController
     true
   end
 
-  # if Cnfs.config.dig(:cli, :dev)
-  #   OPTS.unshift(:env, :ns, :fail_fast)
-  #   OPTS.append(:noop, :quiet, :verbose)
-  #   desc 'dev', 'Placeholder command for development of new commands'
-  #   def dev
-  #     run(:dev)
-  #   end
-  # end
+  # This command will not show up in a list; the user has to know it exists and call it directly
+  if Cnfs.config.dig(:cli, :dev) and ARGV[0].eql?('dev')
+    OPTS.unshift(:env, :ns, :fail_fast)
+    OPTS.append(:noop, :quiet, :verbose)
+    desc 'dev', 'Placeholder command for development of new commands'
+    def dev
+      binding.pry
+      # run(:dev)
+    end
+  end
 
   # Project Management
   if Cnfs.project_root.eql?('.')
@@ -54,10 +51,6 @@ class PrimaryController < CommandsController
     DESC
     option :force, desc: 'Force creation even if the project directory already exists',
       aliases: '-f', type: :boolean
-    option :backend, desc: 'Create the project with a set of typical backend services',
-      aliases: '-b', type: :boolean
-    option :cnfs, desc: 'Create CNFS service configurations for development mode',
-      type: :boolean
     def new(name)
       if Dir.exist?(name)
         if options.force || yes?('Directory already exists. Destroy and recreate?')

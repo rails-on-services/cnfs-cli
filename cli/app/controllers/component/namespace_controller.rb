@@ -11,14 +11,10 @@ module Component
       @arguments = arguments
     end
 
-    def add
+    def execute(action)
       generator = Component::NamespaceGenerator.new([arguments.name], options)
-      generator.behavior = arguments.action
+      generator.behavior = action
       generator.invoke_all
-    end
-
-    def remove
-      add
     end
   end
 end

@@ -9,11 +9,18 @@ module Generic
     argument :type
 
     def generate
+      binding.pry
       FileUtils.touch(options.services_file)
-      append_to_file(options.services_file, send(type))
+      template("#{type}.yml.erb", "/tmp/#{type}.yml")
+      append_to_file(options.services_file, File.read("/tmp/#{type}.yml"))
+      # append_to_file(options.services_file, send(type))
     end
 
     private
+
+    def source_paths
+      [Pathname.new(__dir__).join('templates')]
+    end
 
     def localstack
       "\n#{name}:\n  template: localstack\n  config:\n    image: localstack/localstack\n" \

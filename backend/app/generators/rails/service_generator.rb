@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Creates a new service in a CNFS Rails repository
+# Add a rails service configuration and optionally create a new service in a CNFS Rails repository
 # 1. Modifies the services.yml file at project, env or ns level depending on the options passed in
 # 2. Invoke 'rails [plugin] new' to create the service (a template is invoked to modify generated files)
 # 3. Add a model class to the SDK to expose this service's models
@@ -11,15 +11,39 @@ module Rails
     argument :project_name
     argument :name
 
+    # TODO: If the base service definition already exists then just add an inherited stanza
+    # TODO: (later) When revoke with -r option then should go through all configs at all levels and remove
+    # the reference(s) to the services
+    # TODO: Maybe this part should be in the cli gem and only the repo creating stuff is in
     def services_file
-      FileUtils.touch(options.services_file)
-      # TODO: update the service definition; rails is just boilerplate
-      append_to_file(options.services_file, rails)
+      content = ERB.new(File.read(template_path)).result(binding)
+      if File.exist?(options.services_file)
+        append_to_file(options.services_file, content)
+        # When revoked, the above line will subtract content; if the file is now empty the next line will remove it
+        create_file(options.services_file) if behavior.eql?(:revoke) and File.size(options.services_file).zero?
+      else
+        create_file(options.services_file, content)
+      end
     end
 
-    def service_gem
-      return unless options.reposistory
+    def repository_service
+      return unless options.repository
 
+      service_gem
+      sdk_service_model
+    end
+
+    private
+
+    def template_path
+      path = options.keys.select { |k| %w[environment namespace].include?(k) }.join('/')
+      "#{views_path}/files/#{path}/services.yml.erb"
+    end
+
+    def repo; 'hello' end
+
+
+    def service_gem
       if behavior.eql? :revoke
         inside('services') { empty_directory(name) }
         return
@@ -42,8 +66,6 @@ module Rails
     # end
 
     def sdk_service_model
-      return unless options.reposistory
-
       create_file "#{sdk_lib_path}/models/#{name}.rb", <<~RUBY
         # frozen_string_literal: true
 
@@ -60,12 +82,6 @@ module Rails
       append_file "#{sdk_lib_path}/models.rb", <<~RUBY
         require '#{platform_name}_sdk/models/#{name}.rb'
       RUBY
-    end
-
-    private
-
-    def rails
-      "cognito: &base_service\n  type: Service::Rails\n  config:\n    depends_on:\n      - wait\n"
     end
 
     def sdk_lib_path

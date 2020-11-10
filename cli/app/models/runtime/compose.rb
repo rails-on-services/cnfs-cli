@@ -76,7 +76,8 @@ class Runtime::Compose < Runtime
 
   def exec_string
     application.services.each_with_object([]) do |service, ary|
-      (options.profiles || service.profiles.keys).each do |profile|
+      binding.pry
+      (options.profiles || service.try(:profiles)&.keys || {}).each do |profile|
         profile = profile.eql?(default_profile) ? '' : "_#{profile}"
         ary.append("#{service.name}#{profile}")
       end

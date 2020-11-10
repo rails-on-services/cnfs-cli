@@ -5,6 +5,14 @@ module Cnfs
     extend ActiveSupport::Concern
 
     included do |base|
+
+      Cnfs.controllers.each do |controller|
+        next unless base.name.eql?(controller[:extension_point])
+
+        controller = OpenStruct.new(controller)
+        register controller.extension.safe_constantize, controller.title, controller.help, controller.description
+      end
+
       class_option :environment, desc: 'Target environment',
         aliases: '-e', type: :string, default: Cnfs.config.environment if base::OPTS.include?(:env)
       class_option :namespace, desc: 'Target namespace',

@@ -4,10 +4,12 @@ module Component
   class ServiceController < Thor
     OPTS = %i[noop quiet verbose]
     include Cnfs::Options
+    attr_accessor :action
 
     def self.default_repository
-      ''
-      # Cnfs.repository_root.split.last.to_s
+      # TODO: This is broken
+      return '' unless ARGV[2]&.eql?('rails')
+      Cnfs.repository_root.split.last.to_s
     end
 
     def self.repo_options(repository = default_repository)
@@ -60,6 +62,11 @@ module Component
       generate(:rails, ['restogy', name])
     end
 
+    desc 'iam', 'Add the IAM service'
+    def iam(name = 'iam')
+      generate(:rails, ['restogy', name])
+    end
+
     desc 'wait', 'Add a Wait service'
     def wait(name = 'wait')
       generate(:generic, ['restogy', name, 'wait'])
@@ -68,7 +75,7 @@ module Component
     private
 
     def action
-      :invoke
+      @action ||= :invoke
     end
 
     def generate(generator_type, arguments)

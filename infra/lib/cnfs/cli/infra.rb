@@ -20,8 +20,6 @@ module Cnfs
 
           Cnfs.project.paths['config'].append(gem_root.join('config'))
           Cnfs.project.paths['app/views'].append(gem_root.join('app/views'))
-          # Cnfs.controllers << { klass: 'TargetsController', title: 'infra', help: 'infra [SUBCOMMAND]',
-          #                       description: 'Manage target infrastructure: k8s clusters, storage, etc' }
         end
 
         # TODO: Copy in blueprints, etc

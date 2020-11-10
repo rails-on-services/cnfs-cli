@@ -27,7 +27,8 @@ class ServicesController < CommandsController
     aliases: '-a', type: :boolean
   # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
-  # option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
+  option :console, desc: "Connect to service's rails console after starting",
+    aliases: '-c', type: :boolean
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   option :profiles, desc: 'List of profiles to start',
     aliases: '-p', type: :array
