@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'cnfs/cli/infra/version'
+require 'cnfs/cli/aws/version'
 
 module Cnfs
   module Cli
-    module Infra
+    module Aws
       class << self
         def gem_root
           @gem_root ||= Pathname.new(__dir__).join('../../..')
         end
 
         def initialize
-          puts "Initializing plugin infra from #{gem_root}" if Cnfs.config.debug.positive?
+          puts "Initializing plugin aws from #{gem_root}" if Cnfs.config.debug.positive?
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
         end
 

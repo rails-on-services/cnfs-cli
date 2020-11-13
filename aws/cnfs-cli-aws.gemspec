@@ -2,18 +2,19 @@
 
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'cnfs/cli/infra/version'
+require 'cnfs/cli/aws/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-cli-infra'
-  spec.version       = Cnfs::Cli::Infra::VERSION
+  spec.name          = 'cnfs-cli-aws'
+  spec.version       = Cnfs::Cli::Aws::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'Write a short summary, because RubyGems requires one.'
-  spec.description   = 'Write a longer description or delete this line.'
-  spec.homepage      = 'https://cfns.io'
-  spec.license        = 'MIT'
+  spec.summary       = 'Create CNFS compatible blueprints for AWS'
+  spec.description   = 'Adds the functionality to create AWS blueprints and access services'
+  spec.homepage      = 'https://cnfs.io'
+  spec.license       = "MIT"
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 

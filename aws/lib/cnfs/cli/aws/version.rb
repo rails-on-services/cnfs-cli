@@ -2,7 +2,7 @@
 
 module Cnfs
   module Cli
-    module Infra
+    module Aws
       VERSION = '0.1.0'
     end
   end
