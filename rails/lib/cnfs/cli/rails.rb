@@ -11,7 +11,7 @@ module Cnfs
         end
 
         def initialize
-          puts "Initializing plugin backend from #{gem_root}" if Cnfs.config.debug.positive?
+          puts "Initializing plugin rails from #{gem_root}" if Cnfs.config.debug.positive?
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
           Cnfs.controllers << {
             extension_point: 'Services::AddController', extension: 'Rails::Services::AddController',
