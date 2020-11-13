@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'cnfs/cli/backend/version'
+require 'cnfs/cli/rails/version'
 
 module Cnfs
   module Cli
-    module Backend
+    module Rails
       class << self
         def gem_root
           @gem_root ||= Pathname.new(__dir__).join('../../..')

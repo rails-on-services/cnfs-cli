@@ -2,16 +2,16 @@
 
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'cnfs/cli/backend/version'
+require 'cnfs/cli/rails/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-cli-backend'
-  spec.version       = Cnfs::Cli::Backend::VERSION
+  spec.name          = 'cnfs-cli-rails'
+  spec.version       = Cnfs::Cli::Rails::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'Write a short summary, because RubyGems requires one.'
-  spec.description   = 'Write a longer description or delete this line.'
+  spec.summary       = 'Create CNFS compatible service repositories with Ruby on Rails'
+  spec.description   = 'Adds the functionality to create RoR repositories and services'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
 
