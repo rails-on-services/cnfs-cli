@@ -4,7 +4,10 @@ class ServicesController < CommandsController
   OPTS = %i[env ns noop quiet verbose]
   include Cnfs::Options
 
-  desc 'show SERVICE', 'Show service manifest'
+  register Component::ServiceController, 'add', 'add TYPE NAME', 'Add a service configuration to the project'
+  register Services::NewController, 'new', 'new SUBCOMMAND [options]', 'Create a new service in the default (or specified) repository'
+
+  desc 'show SERVICE', 'Display the service manifest'
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
     aliases: '-m', type: :string
   def show(*services)
@@ -41,7 +44,7 @@ class ServicesController < CommandsController
     run(:start, services: services)
   end
 
-  desc 'restart [SERVICES]', 'Stop and start one or more services'
+  desc 'restart [SERVICES]', 'Stop and start one or more running services'
   # TODO: When taking array of services but attach only uses the last one
   # Add default: '' so if -a is passed and value is blank then it's the last one
   option :attach, desc: 'Attach to service after executing command',
@@ -61,14 +64,14 @@ class ServicesController < CommandsController
     run(:restart, services: services)
   end
 
-  desc 'stop [SERVICES]', 'Stop one or more services'
+  desc 'stop [SERVICES]', 'Stop one or more running services'
   option :profiles, desc: 'List of profiles to stop',
     aliases: '-p', type: :array
   def stop(*services)
     run(:stop, services: services)
   end
 
-  desc 'terminate [SERVICES]', 'Terminate one or more services'
+  desc 'terminate [SERVICES]', 'Terminate one or more running services'
   option :profiles, desc: 'List of profiles to terminate',
     aliases: '-p', type: :array
   def terminate(*services)
@@ -76,7 +79,7 @@ class ServicesController < CommandsController
   end
 
   # Service Runtime
-  desc 'attach SERVICE', 'Attach to the process of a running service'
+  desc 'attach SERVICE', 'Attach to the process of a running service (short-cut: a)'
   long_desc <<-DESC.gsub("\n", "\x5")
 
   The 'cnfs attach' command attaches to the process of a running service
@@ -87,6 +90,7 @@ class ServicesController < CommandsController
     aliases: '-b', type: :boolean
   option :profile, desc: 'Service profiles',
     aliases: '-p', type: :string
+  map %w[a] => :attach
   def attach(service)
     run(:attach, service: service)
   end
@@ -98,13 +102,13 @@ class ServicesController < CommandsController
   #   run(:command, service: service, command: args)
   # end
 
-  desc 'console SERVICE', 'Start a console on the service (short-cut: c)'
+  desc 'console SERVICE', 'Start a console on a running service (short-cut: c)'
   map %w[c] => :console
   def console(service)
     run(:console, service: service)
   end
 
-  desc 'copy SRC DEST', 'Copy a file to or from a running service (short-cut: cp)'
+  desc 'copy SRC DEST', 'Copy a file to/from a running service (short-cut: cp)'
   long_desc <<-DESC.gsub("\n", "\x5")
 
   The 'cnfs copy' command copies a file from/to a running service to/from the local file system
@@ -123,14 +127,14 @@ class ServicesController < CommandsController
     run(:exec, service: service, command_args: command_args)
   end
 
-  desc 'logs SERVICE', 'Display logs of a running service'
+  desc 'logs SERVICE', 'Display the logs of a running service'
   option :tail, desc: 'Continuous logging',
     aliases: '-f', type: :boolean
   def logs(service)
     run(:logs, service: service)
   end
 
-  desc 'sh SERVICE', 'Execute an interactive shell on a service'
+  desc 'sh SERVICE', 'Execute an interactive shell on a running service'
   option :build, desc: 'Build image before executing shell',
     aliases: '-b', type: :boolean
   # NOTE: shell is a reserved word in Thor so it can't be used

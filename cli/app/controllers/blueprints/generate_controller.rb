@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Component
-  class BlueprintController < ApplicationController
+module Blueprints
+  class GenerateController < ApplicationController
     attr_accessor :options, :arguments
 
     def initialize(options:, arguments:)

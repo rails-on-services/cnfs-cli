@@ -11,18 +11,22 @@ module Rails
     argument :project_name
     argument :name
 
-    # TODO: If the base service definition already exists then just add an inherited stanza
     # TODO: (later) When revoke with -r option then should go through all configs at all levels and remove
     # the reference(s) to the services
     # TODO: Maybe this part should be in the cli gem and only the repo creating stuff is in
     def services_file
       content = ERB.new(File.read(template_path)).result(binding)
       if File.exist?(options.services_file)
+        # Check for base config
+        keys = YAML.load_file(options.services_file).keys
+        append_to_file(options.services_file, default_content) unless keys.include?('DEFAULTS')
+        # Create new stanza
         append_to_file(options.services_file, content)
         # When revoked, the above line will subtract content; if the file is now empty the next line will remove it
         create_file(options.services_file) if behavior.eql?(:revoke) and File.size(options.services_file).zero?
       else
-        create_file(options.services_file, content)
+        create_file(options.services_file, default_content)
+        append_to_file(options.services_file, content)
       end
     end
 
@@ -35,9 +39,20 @@ module Rails
 
     private
 
+    def default_content
+      ERB.new(File.read(x_path.join('default-services.yml.erb'))).result(binding)
+    end
+
     def template_path
+      [options.gem, 'services'].compact.each do |file|
+        file_path = x_path.join("#{file}.yml.erb")
+        break file_path if file_path.exist?
+      end
+    end
+
+    def x_path
       path = options.keys.select { |k| %w[environment namespace].include?(k) }.join('/')
-      "#{views_path}/files/#{path}/services.yml.erb"
+      views_path.join('files', path)
     end
 
     def repo; 'hello' end

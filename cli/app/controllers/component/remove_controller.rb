@@ -27,16 +27,6 @@ module Component
       run(:namespace, name: name) #  , action: :revoke)
     end
 
-    desc 'repository NAME', 'Remove a repository from the project'
-    def repository(name)
-      return unless (options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the repository.\nAre you sure?"))
-
-      Cnfs.require_deps
-      Cnfs.require_project!(arguments: {}, options: options, response: nil)
-      raise Cnfs::Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
-
-      repo.delete
-    end
 
     desc 'service NAME', 'Remove a service from the project'
     option :environment, desc: 'Target environment',

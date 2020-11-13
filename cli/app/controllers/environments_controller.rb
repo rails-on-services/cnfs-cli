@@ -4,6 +4,16 @@ class EnvironmentsController < CommandsController
   OPTS = %i[env noop quiet verbose]
   include Cnfs::Options
 
+  desc 'new NAME', 'Add environment to project'
+  def new(name)
+    run('environments/generate', name: name)
+  end
+
+  desc 'list', 'List configured environments'
+  def list
+    puts Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.map(&:to_s)
+  end
+
   map %w[i] => :infra
   register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
 

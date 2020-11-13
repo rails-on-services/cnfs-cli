@@ -23,7 +23,7 @@ services:<% service.profiles.each_pair do |profile, command| %><% xname = profil
         consistency: consistent<% end %><% end %><% if profile.eql?('server') %>
     build:
       dockerfile: <%= service.dockerfile %>
-      context: "<%= service.build_context_path %>"<% if service.build_args %>
+      context: <%= service.build_context_path %><% if service.build_args %>
       args:<% service.build_args.each_pair do |name, value| %>
         <%= name %>: <%= value.is_a?(Array) ? value.join(' ') : value %><% end %>
         project: <%= service.name %>

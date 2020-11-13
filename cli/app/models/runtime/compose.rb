@@ -25,35 +25,46 @@ class Runtime::Compose < Runtime
     response.add(exec: compose("pull #{services_to_string(services)}"), env: compose_env)
   end
 
+  def push(services)
+    response.add(exec: compose("push #{services_to_string(services)}"), env: compose_env)
+  end
+
   ###
-  # Cluster Admin
+  # Namespace Operations
   ###
+  # TODO: Add support for destrying volumes; https://docs.docker.com/compose/reference/down/
   def destroy
     response.add(exec: compose(:down), env: compose_env)
   end
 
-  ###
-  # Cluster Runtime
-  ###
   def deploy
     response.add(exec: compose(:up), env: compose_env)
   end
 
   def redeploy
-    response.add(exec: compose(:down), env: compose_env)
-    response.add(exec: compose(:up), env: compose_env)
+    destroy
+    deploy
+    # response.add(exec: compose(:down), env: compose_env)
+    # response.add(exec: compose(:up), env: compose_env)
   end
-
-  def ps; end
 
   def status; end
 
   ###
-  # Service Runtime
+  # Service Process Operations
+  ###
+  def ps; end
+
+  ###
+  # Service Admin Operations
   ###
   def start
     compose_options = options.foreground ? '' : '-d'
     response.add(exec: compose("up #{compose_options} #{exec_string}"), env: compose_env)
+  end
+
+  def stop
+    response.add(exec: compose("stop #{exec_string}"), env: compose_env)
   end
 
   def restart
@@ -63,10 +74,6 @@ class Runtime::Compose < Runtime
       database_check
     end
     start
-  end
-
-  def stop
-    response.add(exec: compose("stop #{exec_string}"), env: compose_env)
   end
 
   def terminate

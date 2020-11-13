@@ -7,9 +7,8 @@ class ComponentController < Thor
   OPTS = %i[force noop quiet verbose]
   include Cnfs::Options
 
-  register Component::RepositoryController, 'repository', 'repository TYPE NAME', 'Add a repository of TYPE: rails, angular or url'
-  register Component::ServiceController, 'service', 'service TYPE NAME', 'Add a service to the project'
-  register Component::PackageController, 'package', 'package [SUBCOMMAND] [options]', 'Add a package to the project'
+  # register Component::ServiceController, 'service', 'service TYPE NAME', 'Add a service to the project'
+  # register Component::PackageController, 'package', 'package [SUBCOMMAND] [options]', 'Add a package to the project'
 
   desc 'blueprint PROVIDER NAME', 'Add blueprint to environment or namespace'
   option :environment, desc: 'Target environment',
@@ -18,11 +17,6 @@ class ComponentController < Thor
     aliases: '-n', type: :string
   def blueprint(provider, name)
     run(:blueprint, provider: provider, name: name)
-  end
-
-  desc 'environment NAME', 'Add environment to project'
-  def environment(name)
-    run(:environment, name: name)
   end
 
   desc 'namespace NAME', 'Add namespace to environment'

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'cnfs/cli/backend/version'
+require 'cnfs/cli/angular/version'
 
 module Cnfs
   module Cli
-    module Backend
+    module Angular
       class << self
         def gem_root
           @gem_root ||= Pathname.new(__dir__).join('../../..')
@@ -14,15 +14,7 @@ module Cnfs
           puts "Initializing plugin backend from #{gem_root}" if Cnfs.config.debug.positive?
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
           Cnfs.controllers << {
-            extension_point: 'Component::ServiceController', extension: 'Rails::Component::ServiceController',
-            # title: 'xrails', help: 'xrails [SUBCOMMAND]',
-            # description: 'Add a CNFS service based on the Ruby on Rails Framework'
-          }
-          Cnfs.controllers << {
-            extension_point: 'Services::NewController', extension: 'Rails::Services::NewController',
-          }
-          Cnfs.controllers << {
-            extension_point: 'Repositories::NewController', extension: 'Rails::Repositories::NewController',
+            extension_point: 'Repositories::NewController', extension: 'Angular::Repositories::NewController'
           }
         end
 

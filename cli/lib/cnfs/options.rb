@@ -5,12 +5,19 @@ module Cnfs
     extend ActiveSupport::Concern
 
     included do |base|
-
       Cnfs.controllers.each do |controller|
         next unless base.name.eql?(controller[:extension_point])
 
-        controller = OpenStruct.new(controller)
-        register controller.extension.safe_constantize, controller.title, controller.help, controller.description
+        controller = Thor::CoreExt::HashWithIndifferentAccess.new(controller)
+        unless (obj = controller.extension.safe_constantize)
+          raise Cnfs::Error, "#{base.name} failed to load #{controller.extension}"
+        end
+
+        if obj < Thor
+          register obj, controller.title, controller.help, controller.description
+        else
+          include obj
+        end
       end
 
       class_option :environment, desc: 'Target environment',
@@ -21,8 +28,8 @@ module Cnfs
       #   aliases: '-t', type: :string if base::OPTS.include?(:tag)
       class_option :force, desc: 'Do not prompt for confirmation',
         aliases: '-f', type: :boolean if base::OPTS.include?(:force)
-      class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
-        aliases: '--ff', type: :boolean if base::OPTS.include?(:fail_fast)
+      # class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
+      #   aliases: '--ff', type: :boolean if base::OPTS.include?(:fail_fast)
 
       class_option :debug, desc: 'Display deugging information with degree of verbosity',
         aliases: '-d', type: :numeric, default: Cnfs.config.debug if base::OPTS.include?(:debug)

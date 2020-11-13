@@ -14,7 +14,7 @@ class Service::Rails < Service
     self.profiles ||= {}
     self.volumes ||= []
     self.project_path ||= '.'
-    self.dockerfile ||= 'Dockerfile'
+    self.dockerfile ||= 'ros/Dockerfile.dev'
   end
 
 
@@ -32,8 +32,7 @@ class Service::Rails < Service
   end
 
   def build_context_path
-    Cnfs.paths.src.join(self.build_args['source_path'])
-    # binding.pry
-    # application.relative_path.join(application.apps_path_name)
+    # application.relative_path.join(Cnfs.paths.src, self.build_args['source_path'])
+    application.relative_path.join(Cnfs.paths.src)
   end
 end

@@ -3,20 +3,21 @@
 module Component
   class ServiceController < Thor
     OPTS = %i[noop quiet verbose]
-    include Cnfs::Options
     attr_accessor :action
 
-    def self.default_repository
-      # TODO: This is broken
-      return '' unless ARGV[2]&.eql?('rails')
-      Cnfs.repository_root.split.last.to_s
-    end
+    # def self.default_repository
+    #   # TODO: This is broken
+    #   return '' unless ARGV[2]&.eql?('rails')
+    #   Cnfs.repository_root.split.last.to_s
+    # end
 
-    def self.repo_options(repository = default_repository)
-      path = Cnfs.paths.src.join(repository, '.cnfs.yml')
-      hash = path.exist? ? YAML.load_file(path) : {}
-      Thor::CoreExt::HashWithIndifferentAccess.new(hash)
-    end
+    # def self.repo_options(repository = default_repository)
+    #   path = Cnfs.paths.src.join(repository, '.cnfs.yml')
+    #   hash = path.exist? ? YAML.load_file(path) : {}
+    #   Thor::CoreExt::HashWithIndifferentAccess.new(hash)
+    # end
+
+    include Cnfs::Options
 
     class_option :environment, desc: 'Target environment',
       aliases: '-e', type: :string
@@ -41,30 +42,6 @@ module Component
     desc 'redis', 'Add a Redis service'
     def redis(name = 'redis')
       generate(:generic, ['restogy', name, 'redis'])
-    end
-
-    desc 'rails', 'Add a CNFS service based on the Ruby on Rails Framework'
-    # option :database, desc: 'Preconfigure for selected database (options: postgresql)',
-    #   aliases: '-D', type: :string, default: 'postgresql'
-    # option :test_with, desc: 'Testing framework',
-    #   aliases: '-t', type: :string, default: 'rspec'
-    # TODO: Add options that carry over to the rails plugin new command
-    option :repository, desc: 'The repository in which to generate the service',
-      aliases: '-r', type: :string, default: default_repository
-    option :type, desc: 'The service type to generate, application or plugin',
-      aliases: '-t', type: :string, default: repo_options.service_type || 'application'
-    option :gem, desc: 'Base this service on a CNFS compatible service gem from rubygems, e.g. cnfs-iam',
-      aliases: '-g', type: :string
-    option :gem_source, desc: 'Source path to a gem in the project filesystem, e.g. ros/iam (used for development of source gem)',
-      aliases: '-s', type: :string
-    def rails(name)
-      # TODO: options.gem and options.gem_sourcce are only valid if type is application
-      generate(:rails, ['restogy', name])
-    end
-
-    desc 'iam', 'Add the IAM service'
-    def iam(name = 'iam')
-      generate(:rails, ['restogy', name])
     end
 
     desc 'wait', 'Add a Wait service'

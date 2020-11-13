@@ -6,6 +6,13 @@ class NamespacesController < CommandsController
 
   register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure'
 
+  desc 'list', 'Lists configured namespaces'
+  def list
+    Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.each do |path|
+      puts path.children.select{ |e| e.directory? }.map(&:to_s)
+    end
+  end
+
   # Deployment Manifests
   desc 'generate', 'Generate service manifests'
   option :clean, desc: 'Delete all existing manifests before generating',

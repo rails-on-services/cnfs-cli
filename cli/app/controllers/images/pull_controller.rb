@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module Services
+module Images
   class PullController < ApplicationController
-    cattr_reader :command_group, default: :image_operations
-
     def execute
-      before_execute_on_target
-      execute_on_target
+      binding.pry
+      application.runtime.pull(application.services)
+      # before_execute_on_target
+      # execute_on_target
     end
 
     def execute_on_target

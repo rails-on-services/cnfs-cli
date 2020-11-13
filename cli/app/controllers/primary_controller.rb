@@ -6,10 +6,9 @@ class PrimaryController < Thor
 
   register ComponentController, 'add', 'add COMPONENT [options]', 'Add a project component'
   register Component::RemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
-  # NOTE: This is like Amplify status
-  register Primary::ListController, 'list', 'list COMPONENT', 'List project components'
 
   register ProjectController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
+  register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
   register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
   register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
   register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'

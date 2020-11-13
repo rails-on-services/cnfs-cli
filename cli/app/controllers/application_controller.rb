@@ -15,16 +15,18 @@ class ApplicationController
     @options = options
     @response = response
     @name = self.class.name.demodulize.delete_suffix('Controller').downcase.to_sym
-    run(:generate) if application.manifest.was_purged? and not name.eql?(:generate)
+    run('namespaces/generate') if application.manifest.was_purged? and not name.eql?(:generate)
   end
 
   # NOTE: Don't pass a command from the router; This is for command chaining
   # TODO: make this method private
   def run(command)
-    current_command = self.class.name.demodulize
-    called_command = "#{command}_controller".camelize
-    controller_class = self.class.name.gsub(current_command, called_command).safe_constantize
-binding.pry
+    command_module = command.to_s.index('/') ? '' : "#{self.class.name.module_parent}/"
+    controller_name = "#{command_module}#{command}_controller".camelize
+    unless (controller_class = controller_name.safe_constantize)
+      raise Cnfs::Error, "Class not found: #{controller_name} (this is a bug. please report)"
+    end
+
     controller = controller_class.new(application: application, options: options, response: response)
     response.command_name = controller.name
     controller.execute
