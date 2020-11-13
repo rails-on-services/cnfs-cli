@@ -16,6 +16,9 @@ module Cnfs
           Cnfs.controllers << {
             extension_point: 'Repositories::NewController', extension: 'Angular::Repositories::NewController'
           }
+          Cnfs.controllers << {
+            extension_point: 'Services::NewController', extension: 'Angular::Services::NewController'
+          }
         end
 
         def on_project_initialize
