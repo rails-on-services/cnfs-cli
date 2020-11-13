@@ -4,8 +4,38 @@ class ServicesController < CommandsController
   OPTS = %i[env ns noop quiet verbose]
   include Cnfs::Options
 
-  register Component::ServiceController, 'add', 'add TYPE NAME', 'Add a service configuration to the project'
+  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
   register Services::NewController, 'new', 'new SUBCOMMAND [options]', 'Create a new service in the default (or specified) repository'
+
+  # TODO: Implement list
+  desc 'list', 'Lists services configured in the project'
+  # option :environment, desc: 'Target environment',
+  #   aliases: '-e', type: :string
+  # option :namespace, desc: 'Target namespace',
+  #   aliases: '-n', type: :string
+  map %w[ls] => :list
+  def list
+    binding.pry
+    # run(:list)
+  end
+
+  # TODO: Implement remove
+  desc 'remove NAME', 'Remove a service from the project configuration (short-cut: rm)'
+  option :environment, desc: 'Target environment',
+    aliases: '-e', type: :string
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string
+  option :repository, desc: 'Remove the service from a repository',
+    aliases: '-r', type: :string
+  map %w[rm] => :remove
+  def remove(name)
+    return unless (options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?"))
+
+    # cs = controller_class(:service).new
+    # cs.action = :revoke
+    # cs.send(name)
+    # run(:service, name: name)
+  end
 
   desc 'show SERVICE', 'Display the service manifest'
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",

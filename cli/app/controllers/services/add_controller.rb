@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Component
-  class ServiceController < Thor
+module Services
+  class AddController < Thor
     OPTS = %i[noop quiet verbose]
     attr_accessor :action
 

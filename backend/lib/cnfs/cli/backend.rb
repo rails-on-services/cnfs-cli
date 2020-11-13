@@ -14,7 +14,7 @@ module Cnfs
           puts "Initializing plugin backend from #{gem_root}" if Cnfs.config.debug.positive?
           Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
           Cnfs.controllers << {
-            extension_point: 'Component::ServiceController', extension: 'Rails::Component::ServiceController',
+            extension_point: 'Services::AddController', extension: 'Rails::Services::AddController',
             # title: 'xrails', help: 'xrails [SUBCOMMAND]',
             # description: 'Add a CNFS service based on the Ruby on Rails Framework'
           }

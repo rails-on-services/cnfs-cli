@@ -14,13 +14,16 @@ class NamespacesController < CommandsController
 
   desc 'list', 'Lists configured namespaces'
   def list
+    paths = Cnfs.paths.config.join('environments', options.environment).children.select{ |e| e.directory? }
+    return unless paths.any?
+
     puts options.environment
-    puts Cnfs.paths.config.join('environments', options.environment).children.select{ |e| e.directory? }.map{ |p| "> #{p.split.last}" }
+    puts paths.sort.map{ |path| "> #{path.split.last}" }
   end
 
   desc 'remove NAME', 'Remove namespace from environment configuration'
   def remove(name)
-    Environments::AddRemoveController.new(options: options, arguments: { name: name }).execute(:revoke)
+    Namespaces::AddRemoveController.new(options: options, arguments: { name: name }).execute(:revoke)
   end
 
   # Deployment Manifests

@@ -3,8 +3,8 @@
 # Add a rails service configuration and optionally create a new service in a CNFS Rails repository
 # To make this a registered subcommand class do this: class ServiceController < Thor
 module Rails
-  module Component
-    module ServiceController
+  module Services
+    module AddController
       extend ActiveSupport::Concern
 
       included do

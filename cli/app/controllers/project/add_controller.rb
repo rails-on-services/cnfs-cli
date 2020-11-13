@@ -17,7 +17,7 @@ module Project
 
     desc 'development', 'Customize project for CNFS development'
     def development
-      add_backend_development_services
+      # add_backend_development_services
       add_cnfs_backend_development_services
     end
 
@@ -48,15 +48,15 @@ module Project
       # env = 'development'
       # ns = 'cnfs'
       # Namespaces::AddController.new([], options.merge(project_name: name, environment: env)).namespace(ns)
-      RepositoryController.new([], options).add(cnfs_repo)
+      RepositoriesController.new([], options).add(cnfs_repo)
       # Add all CNFS service configurations to the project
-      ServicesController.new([], options).rails('hmmm')
-      # if not env and no ns then services are created at project scope
-      # This could say to backend/rails service generator to just copy over some service file
-      sc = Services::AddController.new([], options.merge(environment: env, namespace: ns))
-      %w[iam cognito].each do |service|
-        sc.rails(service)
-      end
+      # ServicesController.new([], options).rails('hmmm')
+      # # if not env and no ns then services are created at project scope
+      # # This could say to backend/rails service generator to just copy over some service file
+      # sc = Services::AddController.new([], options.merge(environment: env, namespace: ns))
+      # %w[iam cognito].each do |service|
+      #   sc.rails(service)
+      # end
     end
 
     def this_repo; 'backend' end

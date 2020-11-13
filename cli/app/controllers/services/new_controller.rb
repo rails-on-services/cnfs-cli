@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+# This class is intended to have cli commands added to it by plugins
 module Services
   class NewController < Thor
     OPTS = %i[noop quiet verbose]
-    attr_accessor :action
 
     def self.default_repository
       # TODO: This is broken when calling cnfs new b/c repository_root returns nil

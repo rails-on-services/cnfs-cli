@@ -14,7 +14,7 @@ class EnvironmentsController < CommandsController
 
   desc 'list', 'List configured environments'
   def list
-    puts Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.map(&:to_s)
+    puts Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.sort.map{ |path| path.split.last }
   end
 
   desc 'remove NAME', 'Remove environment from project'
