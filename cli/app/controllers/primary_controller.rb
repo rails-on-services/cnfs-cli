@@ -4,8 +4,8 @@ class PrimaryController < Thor
   OPTS = []
   OPTS.append(:debug) if Cnfs.config.dig(:cli, :dev)
 
-  register ComponentController, 'add', 'add COMPONENT [options]', 'Add a project component'
-  register Component::RemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
+  register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Add a blueprint to environment or namespace'
+  # register Component::RemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
 
   register ProjectController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
   register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'

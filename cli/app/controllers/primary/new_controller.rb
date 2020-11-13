@@ -17,15 +17,13 @@ module Primary
       Dir.chdir(name) do
         Cnfs.reset
         add_environments
-        # add_backend if options.backend
-        # add_cnfs if options.cnfs
       end
     end
 
     def add_environments
       %w[development staging production].each do |env|
-        ComponentController.new([], options.merge(project_name: name)).environment(env)
-        ComponentController.new([], options.merge(project_name: name, environment: env)).namespace('main')
+        EnvironmentsController.new([], options.merge(project_name: name)).add(env)
+        NamespacesController.new([], options.merge(project_name: name, environment: env)).add('main')
       end
     end
   end

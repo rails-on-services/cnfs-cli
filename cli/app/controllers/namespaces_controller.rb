@@ -1,20 +1,32 @@
 # frozen_string_literal: true
 
 class NamespacesController < CommandsController
-  OPTS = %i[env ns noop quiet verbose]
+  OPTS = %i[env noop quiet verbose]
   include Cnfs::Options
 
-  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure'
+  map %w[i] => :infra
+  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure. (short-cut: i)'
+
+  desc 'add NAME', 'Add namespace to environment configuration'
+  def add(name)
+    Namespaces::AddRemoveController.new(options: options, arguments: { name: name }).execute(:invoke)
+  end
 
   desc 'list', 'Lists configured namespaces'
   def list
-    Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.each do |path|
-      puts path.children.select{ |e| e.directory? }.map(&:to_s)
-    end
+    puts options.environment
+    puts Cnfs.paths.config.join('environments', options.environment).children.select{ |e| e.directory? }.map{ |p| "> #{p.split.last}" }
+  end
+
+  desc 'remove NAME', 'Remove namespace from environment configuration'
+  def remove(name)
+    Environments::AddRemoveController.new(options: options, arguments: { name: name }).execute(:revoke)
   end
 
   # Deployment Manifests
   desc 'generate', 'Generate service manifests'
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   option :clean, desc: 'Delete all existing manifests before generating',
     aliases: '-c', type: :boolean
   def generate
@@ -26,18 +38,29 @@ class NamespacesController < CommandsController
   # then this runs a rake task which takes an option of display format
   # then remove all this code from the CNFS cli
   desc 'credentials', 'Display IAM credentials'
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   option :format, desc: 'Options: sdk, cli, postman',
     aliases: '-f', type: :string
   def credentials
     run(:credentials)
   end
 
-  desc 'create', 'Provision the namespace in the environment'
-  def create
-    run(:create)
+  desc 'init', 'Initialize the namespace in the target environment'
+  long_desc <<-DESC.gsub("\n", "\x5")
+
+  Initializes the namespace in a K8s cluster, e.g. EKS, with services
+
+  DESC
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
+  def init
+    run(:init)
   end
 
   desc 'destroy', 'Remove namespace from current environment'
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   option :force, desc: 'Do not prompt for confirmation',
     type: :boolean
   # TODO: Test this by taking down a compose cluster
@@ -49,6 +72,8 @@ class NamespacesController < CommandsController
 
   # Cluster Runtime
   desc 'deploy', 'Deploy all services to namespace'
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   # option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
   def deploy(*services)
     services = Service.pluck(:name) if services.empty?
@@ -56,6 +81,8 @@ class NamespacesController < CommandsController
   end
 
   desc 'redeploy', 'Terminate and restart all services in namespace'
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   option :force, desc: 'Do not prompt for confirmation',
     type: :boolean
   # TODO: validate that supplied services are correct and fail if they are not
@@ -73,6 +100,8 @@ class NamespacesController < CommandsController
 
   created, restarting, running, removing, paused, exited, or dead
   DESC
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string, default: Cnfs.config.namespace
   def status(status = :running)
     run(:status, status: status)
   end

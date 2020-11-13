@@ -6,10 +6,10 @@ module Services
     attr_accessor :action
 
     def self.default_repository
-      # TODO: This is broken
+      # TODO: This is broken when calling cnfs new b/c repository_root returns nil
       # TODO: If there is no repository configured then it returns 'src'
-      # return '' unless ARGV[2]&.eql?('rails')
-      Cnfs.repository_root.split.last.to_s
+      return '' unless ARGV[2]&.eql?('rails')
+      # Cnfs.repository_root.split.last.to_s
     end
 
     def self.repo_options(repository = default_repository)

@@ -5,7 +5,7 @@ class ProjectController < CommandsController
   include Cnfs::Options
 
   register Project::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
-  register Project::PackageController, 'package', 'package [SUBCOMMAND] [options]', 'Add a package to the project'
+  register Project::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'
 
   desc 'config', 'Display project configuration'
   option :local, desc: 'Display local overrides',
