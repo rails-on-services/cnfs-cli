@@ -14,7 +14,7 @@ module Angular
         #   aliases: '-t', type: :string, default: 'rspec'
         # TODO: Add options that carry over to the rails plugin new command
         option :repository, desc: 'The repository in which to generate the service',
-          aliases: '-r', type: :string, default: default_repository
+          aliases: '-r', type: :string # , default: default_repository
         # option :type, desc: 'The service type to generate, application or plugin',
         #   aliases: '-t', type: :string, default: repo_options.service_type || 'application'
         # option :gem, desc: 'Base this service on a CNFS compatible service gem from rubygems, e.g. cnfs-iam',

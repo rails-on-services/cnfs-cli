@@ -1,11 +1,23 @@
 # frozen_string_literal: true
 
 class InfraController < CommandsController
-  # namespace :infra
+  include Cnfs::Options
 
-  # desc 'create', 'Create target infrastructure'
-  # def create(*args); run(:create, args) end
+  # Activate common options
+  cnfs_class_options :environment
+  class_option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string
+  cnfs_class_options :noop, :quiet, :verbose, :debug
 
+  register Infra::AddController, 'add', 'add SUBCOMMAND [options]', 'Add a new infrastructure blueprint'
+  # desc 'add PROVIDER NAME', 'Add a blueprint to the environment or namespace'
+
+  desc 'remove PROVIDER NAME', 'Remove an infrastructure blueprint'
+  def remove(provider, name)
+    # Infra::AddRemoveController.new(options: options.merge(behavior: :revoke), arguments: { provider: provider, name: name }).execute
+  end
+
+  # TODO: Refactor commands
   desc 'generate', 'Generate target infrastructure'
   def generate(*_args)
     run(:generate)

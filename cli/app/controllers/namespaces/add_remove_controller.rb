@@ -11,9 +11,9 @@ module Namespaces
       @arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
     end
 
-    def execute(action)
+    def execute
       generator = NamespaceGenerator.new([arguments.name], options)
-      generator.behavior = action
+      generator.behavior = options.behavior
       generator.invoke_all
     end
   end

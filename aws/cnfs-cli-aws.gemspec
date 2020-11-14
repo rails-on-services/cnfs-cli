@@ -1,20 +1,16 @@
 # frozen_string_literal: true
 
-lib = File.expand_path('lib', __dir__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'cnfs/cli/aws/version'
-
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-aws'
-  spec.version       = Cnfs::Cli::Aws::VERSION
+  spec.version       = File.read('VERSION').strip
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'Create CNFS compatible blueprints for AWS'
-  spec.description   = 'Adds the functionality to create AWS blueprints and access services'
+  spec.summary       = 'CNFS CLI plugin for Amazon Web Services'
+  spec.description   = 'CNFS CLI plugin to create CNFS compatible blueprints for AWS'
   spec.homepage      = 'https://cnfs.io'
-  spec.license       = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.license       = 'MIT'
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
@@ -30,6 +26,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+
+  spec.add_dependency 'cnfs-cli', '~> 0.1.0'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'pry', '~> 0.12'

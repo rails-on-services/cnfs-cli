@@ -4,41 +4,64 @@ module Cnfs
   module Options
     extend ActiveSupport::Concern
 
-    included do |base|
-      Cnfs.controllers.each do |controller|
-        next unless base.name.eql?(controller[:extension_point])
+    class_methods do
+      def add_cnfs_option(name, options = {})
+        @shared_options = {} if @shared_options.nil?
+        @shared_options[name] =  options
+      end
 
-        controller = Thor::CoreExt::HashWithIndifferentAccess.new(controller)
-        unless (obj = controller.extension.safe_constantize)
-          raise Cnfs::Error, "#{base.name} failed to load #{controller.extension}"
-        end
-
-        if obj < Thor
-          register obj, controller.title, controller.help, controller.description
-        else
-          include obj
+      def cnfs_class_options(*option_names)
+        option_names.each do |option_name|
+          opt =  @shared_options[option_name]
+          raise "Tried to access shared option '#{option_name}' but it was not previously defined" if opt.nil?
+          class_option option_name, opt
         end
       end
 
-      class_option :environment, desc: 'Target environment',
-        aliases: '-e', type: :string, default: Cnfs.config.environment if base::OPTS.include?(:env)
-      class_option :namespace, desc: 'Target namespace',
-        aliases: '-n', type: :string, default: Cnfs.config.namespace if base::OPTS.include?(:ns)
-      # class_option :tag, desc: 'Filter services by tag',
-      #   aliases: '-t', type: :string if base::OPTS.include?(:tag)
-      class_option :force, desc: 'Do not prompt for confirmation',
-        aliases: '-f', type: :boolean if base::OPTS.include?(:force)
-      # class_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
-      #   aliases: '--ff', type: :boolean if base::OPTS.include?(:fail_fast)
+      def cnfs_options(*option_names)
+        option_names.each do |option_name|
+          opt =  @shared_options[option_name]
+          raise "Tried to access shared option '#{option_name}' but it was not previously defined" if opt.nil?
+          option option_name, opt
+        end
+      end
+    end
 
-      class_option :debug, desc: 'Display deugging information with degree of verbosity',
-        aliases: '-d', type: :numeric, default: Cnfs.config.debug if base::OPTS.include?(:debug)
-      class_option :noop, desc: 'Do not execute commands',
-        type: :boolean, default: Cnfs.config.noop if base::OPTS.include?(:noop)
-      class_option :quiet, desc: 'Suppress status output',
-        aliases: '-q', type: :boolean, default: Cnfs.config.quiet if base::OPTS.include?(:quiet)
-      class_option :verbose, desc: 'Display extra information from command',
-        aliases: '-v', type: :boolean, default: Cnfs.config.verbose if base::OPTS.include?(:verbose)
+    included do |base|
+      add_cnfs_option :environment, desc: 'Target environment',
+        aliases: '-e', type: :string, default: Cnfs.config.environment
+      add_cnfs_option :namespace, desc: 'Target namespace',
+        aliases: '-n', type: :string, default: Cnfs.config.namespace
+      add_cnfs_option :repository, desc: 'The repository in which to run the command',
+        aliases: '-r', type: :string, default: Cnfs.repository&.namespace
+
+      add_cnfs_option :tag, desc: 'Filter services by tag',
+         aliases: '-t', type: :string
+      add_cnfs_option :force, desc: 'Do not prompt for confirmation',
+        aliases: '-f', type: :boolean
+      add_cnfs_option :fail_fast,  desc: 'Skip any remaining commands after a command fails',
+        aliases: '--ff', type: :boolean
+
+      add_cnfs_option :debug, desc: 'Display deugging information with degree of verbosity',
+        aliases: '-d', type: :numeric, default: Cnfs.config.debug
+      add_cnfs_option :noop, desc: 'Do not execute commands',
+        type: :boolean, default: Cnfs.config.noop
+      add_cnfs_option :quiet, desc: 'Suppress status output',
+        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+      add_cnfs_option :verbose, desc: 'Display extra information from command',
+        aliases: '-v', type: :boolean, default: Cnfs.config.verbose
+
+      Cnfs.extensions.select{ |e| e.extension_point.eql?(self.name) }.each do |extension|
+        unless (klass = extension.extension_class.safe_constantize)
+          raise Cnfs::Error, "#{base.name} failed to load #{extension.extension_class}"
+        end
+
+        if klass < Thor
+          register(klass, extension.title, extension.help, extension.description)
+        else
+          include klass
+        end
+      end
     end
   end
 end

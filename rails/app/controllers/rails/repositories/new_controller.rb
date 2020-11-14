@@ -15,6 +15,7 @@ module Rails
           aliases: '-t', type: :string, default: 'rspec'
         # TODO: Add options that carry over to the rails plugin new command
         def rails(name)
+          binding.pry
           with_context(name) do
             create_repository(:rails, name)
           end
@@ -23,4 +24,3 @@ module Rails
     end
   end
 end
-

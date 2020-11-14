@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class ImagesController < CommandsController
-  OPTS = %i[env ns noop quiet verbose]
   include Cnfs::Options
+
+  # Activate common options
+  cnfs_class_options :environment, :namespace, :noop, :quiet, :verbose, :debug
 
   desc 'pull [IMAGES]', 'Pull one or more or all images'
   def pull(*services)
@@ -11,8 +13,8 @@ class ImagesController < CommandsController
 
   desc 'build [IMAGES]', 'Build all or specific service images'
   # NOTE: build and connect is really only valid for local otherwise need to deploy first
-  option :shell, desc: 'Connect to service shell after building',
-    aliases: '--sh', type: :boolean
+  # option :shell, desc: 'Connect to service shell after building',
+  #   aliases: '--sh', type: :boolean
   # TODO: Things like the image naming convention should be part of the service.config with a store accessor
   # so that each image and within an environment/namespace _could_ have its own naming pattern
   # option :all,

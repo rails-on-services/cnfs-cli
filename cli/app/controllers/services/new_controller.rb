@@ -1,24 +1,21 @@
 # frozen_string_literal: true
 
-# This class is intended to have cli commands added to it by plugins
+# Create a new service from a gem (angular, rails) into a repository
+# To hook into this controller gems need to implement <Namespace>::Services::NewController
 module Services
   class NewController < Thor
-    OPTS = %i[noop quiet verbose]
-
-    def self.default_repository
-      # TODO: This is broken when calling cnfs new b/c repository_root returns nil
-      # TODO: If there is no repository configured then it returns 'src'
-      return '' unless ARGV[2]&.eql?('rails')
-      # Cnfs.repository_root.split.last.to_s
-    end
-
-    def self.repo_options(repository = default_repository)
-      path = Cnfs.paths.src.join(repository, '.cnfs.yml')
-      hash = path.exist? ? YAML.load_file(path) : {}
-      puts hash if Cnfs.config.debug.positive?
-      Thor::CoreExt::HashWithIndifferentAccess.new(hash)
-    end
-
     include Cnfs::Options
+
+    # Activate common options
+    cnfs_class_options :repository, :noop, :quiet, :verbose
+
+    private
+
+    def before_run
+      repository = Cnfs.repositories[options.repository.to_sym]
+      raise Cnfs::Error, "Unknown repostiory #{options.repository}" unless repository
+
+      Cnfs.repository = repository
+    end
   end
 end

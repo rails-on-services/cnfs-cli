@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class ProjectController < CommandsController
-  OPTS = %i[noop quiet verbose]
   include Cnfs::Options
+
+  # Activate common options
+  cnfs_class_options :noop, :quiet, :verbose, :debug
 
   register Project::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
   register Project::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'

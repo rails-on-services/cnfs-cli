@@ -1,16 +1,20 @@
 # frozen_string_literal: true
 
 class RepositoriesController < Thor
-  OPTS = %i[force noop quiet verbose]
   include Cnfs::Options
   include Repositories::Concern
+
+  # Activate common options
+  cnfs_class_options :noop, :quiet, :verbose, :force
 
   register Repositories::NewController, 'new', 'new TYPE NAME [options]', 'Create a new repoository'
 
   desc 'add URL [NAME]', 'Add a remote CNFS compatible services repository'
   def add(url, name = nil)
     # Shortcut for CNFS backend repo 
-    url = 'git@github.com:rails-on-services/ros.git' if url.eql?('cnfs')
+    if (mapped_url = url_map[url.to_sym])
+      url = mapped_url
+    end
     # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
     name ||= url.split('/').last&.delete_suffix('.git')
     return unless name
@@ -44,6 +48,13 @@ class RepositoriesController < Thor
   end
 
   private
+
+  def url_map
+    {
+      cnfs: 'git@github.com:rails-on-services/ros.git',
+      generic: 'git@github.com:rails-on-services/generic.git'
+    }
+  end
 
   # NOTE: URL based rails repositories contain services with Gemfiles that have the gem and the path
   def clone_repository(url, name)

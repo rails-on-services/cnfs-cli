@@ -9,7 +9,7 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :autoload_dirs, :pwd
+    attr_accessor :autoload_dirs, :pwd, :repository
     attr_reader :project, :config, :project_root, :repository_root
     PROJECT_FILE = 'lib/project.rb'
 
@@ -26,7 +26,7 @@ module Cnfs
 
     def initialize!
       @pwd = Pathname.new(Dir.pwd)
-      # Cause help for new to be displayed when no argument is passed 
+      # Display help for new command when no argument is passed 
       ARGV.unshift('help', 'new') if ARGV.size.zero? and project_root.nil?
       raise Cnfs::Error, 'Not a cnfs project' unless project_root
       s = Time.now
@@ -39,6 +39,7 @@ module Cnfs
         else
           initialize_plugins
         end
+        initialize_repositories
         setup_loader
         PrimaryController.start
       end
@@ -63,7 +64,7 @@ module Cnfs
       require_relative 'ext/string'
 
       ActiveSupport::Inflector.inflections do |inflect|
-        inflect.uncountable %w[cnfs]
+        inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
       end
     end
 
@@ -112,14 +113,35 @@ module Cnfs
           require plugin_module
           next unless (klass = plugin_module.camelize.safe_constantize)
 
-          msg = "initialize_#{name}"
-          klass.send msg if klass.respond_to? msg
+          cmd = "initialize_#{name}"
+          klass.send(cmd) if klass.respond_to?(cmd)
         end
       end
     end
 
+    def initialize_repositories
+      return unless Cnfs.paths.src.exist?
+
+      Cnfs.paths.src.children.select{ |e| e.directory? }.each do |repo_path|
+        repo_config_path = repo_path.join('cnfs/repository.yml')
+        puts "Scanning repository path #{repo_path}" if config.debug.positive?
+        next unless repo_config_path.exist? and (namespace = YAML.load_file(repo_config_path)['namespace'])
+
+        puts "Loading repository path #{repo_path}" if config.debug.positive?
+        config = YAML.load_file(repo_config_path).merge({
+          path: repo_path
+        })
+        repositories[namespace.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
+      end
+      @repository = current_repository
+      puts "Current repository set to #{repository&.name}" if config.debug.positive?
+    end
+
     # Zeitwerk based class loader methods
     def setup_loader
+      add_plugin_autoload_paths
+      add_repository_autoload_paths
+      add_extensions
       Zeitwerk::Loader.default_logger = method(:puts) if config.debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 
@@ -153,18 +175,21 @@ module Cnfs
     end
 
     def repository_root
-      @repository_root ||= (
-        relative_path_to_src = project_root.join(paths.src).relative_path_from(pwd)
-        # Example: I'm in project_root/src/api/lib/core
-        # relative_path_to_src would be ../../..
-        # If execution dir is a subdir of a repository then return the Pathname of the repo
-        unless relative_path_to_src.to_s.end_with?(paths.src.to_s) or relative_path_to_src.to_s.eql?('.')
-          pwd.join(relative_path_to_src.split.first)
-        else
-          # Otherwise return the Pathname of the default repository in project’s cnfs.yml 
-          project_root.join(paths.src, config.repository || '')
-        end
-      )
+      @repository_root ||= repository ? project_root.join(repository.path) : ''
+    end
+
+    # Determine the current repository from where the user is in the project filesystem
+    # Returns the default repository unless the user is in the path of another project repository
+    def current_repository
+      return unless project_root.class.name.eql?('Pathname')
+
+      default_repo = repositories[config.repository&.to_sym]
+      current_path = pwd.to_s
+      src_path = project_root.join(paths.src).to_s
+      return default_repo if current_path.eql?(src_path) or !current_path.start_with?(src_path)
+
+      repo_name = current_path.delete_prefix(src_path).split('/')[1]
+      repositories[repo_name.to_sym]
     end
 
     def paths
@@ -175,9 +200,74 @@ module Cnfs
       path.join('app').children.select(&:directory?).select{ |m| %w[controllers models generators].include?(m.split.last.to_s) }
     end
 
-    def controllers
-      @controllers ||= []
+    # Scan plugsin for subdirs in <plugin_root>/app and add them to autoload_dirs
+    def add_plugin_autoload_paths
+      plugins.sort.each do |namespace, plugin|
+        next unless (plugin = "cnfs/cli/#{namespace}".classify.safe_constantize)
+
+        gem_load_paths = plugin.respond_to?(:load_paths) ? plugin.load_paths : %w[app]
+        plugin_load_paths = plugin.respond_to?(:plugin_load_paths) ? plugin.plugin_load_paths : %w[controllers generators models]
+
+        gem_load_paths.each do |load_path|
+          load_path = plugin.gem_root.join(load_path)
+          next unless load_path.exist?
+
+          paths_to_load = load_path.children.select{ |p| p.directory? && plugin_load_paths.include?(p.split.last.to_s) }
+          autoload_dirs.concat(paths_to_load)
+        end
+      end
     end
+
+    # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
+    # TODO: plugin and repository load paths should work the same way and follow same class structures
+    # So there should just be one method to populate autoload_dirs
+    def add_repository_autoload_paths
+      repositories.each do |name, config|
+        cnfs_load_path = Cnfs.project_root.join(config.path, 'cnfs/app')
+        next unless cnfs_load_path.exist?
+
+        paths_to_load = cnfs_load_path.children.select{ |e| e.directory? }
+        autoload_dirs.concat(paths_to_load)
+      end
+    end
+
+    def repositories
+      @repositories ||= {}
+    end
+
+    def extensions
+      @extensions ||= []
+    end
+
+    # Extensions found in autoload_dirs are configured to be loaded at a pre-defined extension point
+    def add_extensions
+      autoload_dirs.select{ |p| p.split.last.to_s.eql?('controllers') }.each do |controllers_path|
+        # TODO: This should not be inferred from the path name, but rather that autoload dirs contains a key to the plugin or the repo
+        namespace = controllers_path.join('../..').split.last.to_s
+        next if namespace.eql?('cli')
+
+        Dir.chdir(controllers_path) do
+          Dir['**/*.rb'].each do |extension_path|
+            extension = extension_path.delete_suffix('.rb')
+            extension_point = extension.delete_prefix("#{namespace}/")
+            extensions << Thor::CoreExt::HashWithIndifferentAccess.new({
+              extension_class: extension.camelize, extension_point: extension_point.camelize,
+              title: namespace, help: "#{namespace} SUBCOMMAND", description: "Add a service from the #{namespace} repository"
+            })
+          end
+        end
+      end
+    end
+
+    def require_project!(arguments:, options:, response:)
+      project_file = project_root.join(PROJECT_FILE)
+      return unless File.exist?(project_file)
+
+      require project_file
+      @project = Cnfs::Project.descendants.shift&.new(root: project_root, arguments: arguments, options: options, response: response)
+      true
+    end
+
 
     def require_project!(arguments:, options:, response:)
       project_file = project_root.join(PROJECT_FILE)

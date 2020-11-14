@@ -1,15 +1,15 @@
 # frozen_string_literal: true
-require_relative 'lib/cnfs/cli/angular/version'
+require_relative 'lib/cnfs/cli/<%= name %>/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-cli-angular'
+  spec.name          = 'cnfs-cli-<%= name %>'
   # spec.version       = File.read('VERSION').strip
-  spec.version       = Cnfs::Cli::Angular::VERSION
+  spec.version       = Cnfs::Cli::<%= name.classify %>::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'CNFS CLI plugin for the Angular Framework'
-  spec.description   = 'CNFS CLI plugin to create Angular repositories and services in CNFS project'
+  spec.summary       = 'CNFS CLI plugin for <%= metadata[name][:summary] %>'
+  spec.description   = 'CNFS CLI plugin to <%= metadata[name][:description] %>'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')

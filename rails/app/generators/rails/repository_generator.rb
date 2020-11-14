@@ -16,7 +16,7 @@ module Rails
       in_root do
         # Dockerfile, cnfs.yml, etc
         directory('files', '.')
-        template('cnfs.yml.erb', '.cnfs.yml')
+        template('cnfs/repository.yml.erb', 'cnfs/repository.yml')
         # ['', '.dev', '.prod'].each do |type|
         #   template("services/Gemfile#{type}.erb", "services/Gemfile#{type}")
         # end

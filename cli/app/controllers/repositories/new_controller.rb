@@ -2,9 +2,11 @@
 
 module Repositories
   class NewController < Thor
-    OPTS = %i[force noop quiet verbose]
     include Cnfs::Options
     include Concern
+
+    # Activate common options
+    cnfs_class_options :noop, :quiet, :verbose, :force
 
     private
 
@@ -18,7 +20,7 @@ module Repositories
       generator.destination_root = Cnfs.paths.src.join(name)
       generator.invoke_all
 
-      update_config(name, repo_type: type)
+      update_config(name, url: '')
     end
   end
 end

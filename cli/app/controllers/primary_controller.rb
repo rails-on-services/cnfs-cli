@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 class PrimaryController < Thor
-  OPTS = []
-  OPTS.append(:debug) if Cnfs.config.dig(:cli, :dev)
+  include Cnfs::Options
 
-  register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Add a blueprint to environment or namespace'
-  # register Component::RemoveController, 'remove', 'remove COMPONENT NAME', 'Remove a project component'
+  # Activate common options
+  cnfs_class_options :noop, :quiet, :verbose, :debug
 
   register ProjectController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
   register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
@@ -13,6 +12,7 @@ class PrimaryController < Thor
   register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
   register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
   register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
+  # register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Add a blueprint to environment or namespace'
 
   def self.exit_on_failure?
     true
@@ -20,8 +20,7 @@ class PrimaryController < Thor
 
   # This command will not show up in a list; the user has to know it exists and call it directly
   if Cnfs.config.dig(:cli, :dev) and ARGV[0].eql?('dev')
-    OPTS.unshift(:env, :ns, :fail_fast)
-    OPTS.append(:noop, :quiet, :verbose)
+    cnfs_options :environment, :namespace
     desc 'dev', 'Placeholder command for development of new commands'
     def dev
       binding.pry
@@ -65,7 +64,6 @@ class PrimaryController < Thor
   # Utility
   desc 'version', 'Show cnfs version'
   def version
-    puts "v#{Cnfs::VERSION}"
+    Primary::VersionController.new([], options).execute
   end
-  include Cnfs::Options
 end

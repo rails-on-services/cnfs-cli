@@ -1,18 +1,34 @@
 # frozen_string_literal: true
 
 class ServicesController < CommandsController
-  OPTS = %i[env ns noop quiet verbose]
   include Cnfs::Options
 
-  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
+  # Define common options for this controller
+  add_cnfs_option :attach, desc: "Attach to service's running process ",
+    aliases: '-a', type: :boolean
+  add_cnfs_option :build, desc: 'Build image before executing command',
+    aliases: '-b', type: :boolean
+  add_cnfs_option :console, desc: "Connect to service's console",
+    aliases: '-c', type: :boolean
+  add_cnfs_option :profiles, desc: 'Service profiles',
+    aliases: '-p', type: :array
+  add_cnfs_option :profile, desc: 'Service profile',
+    aliases: '-p', type: :string
+  add_cnfs_option :shell, desc: "Connect to service's OS shell",
+    aliases: '--sh', type: :boolean
+
+  # Activate common options
+  cnfs_class_options :noop, :quiet, :verbose
+
   register Services::NewController, 'new', 'new SUBCOMMAND [options]', 'Create a new service in the default (or specified) repository'
+  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
 
   # TODO: Implement list
   desc 'list', 'Lists services configured in the project'
-  # option :environment, desc: 'Target environment',
-  #   aliases: '-e', type: :string
-  # option :namespace, desc: 'Target namespace',
-  #   aliases: '-n', type: :string
+  option :environment, desc: 'Target environment',
+    aliases: '-e', type: :string
+  option :namespace, desc: 'Target namespace',
+    aliases: '-n', type: :string
   map %w[ls] => :list
   def list
     binding.pry
@@ -38,6 +54,7 @@ class ServicesController < CommandsController
   end
 
   desc 'show SERVICE', 'Display the service manifest'
+  cnfs_options :environment, :namespace
   option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
     aliases: '-m', type: :string
   def show(*services)
@@ -45,9 +62,10 @@ class ServicesController < CommandsController
   end
 
   desc 'ps', 'List running services'
+  cnfs_options :environment, :namespace
   option :format, desc: '',
     type: :string, aliases: '-f'
-  option :status, desc: 'created, restarting, running, removing, paused, exited, or dead',
+  option :status, desc: 'created, restarting, running, removing, paused, exited or dead',
     type: :string
   def ps # (*args)
     binding.pry
@@ -56,18 +74,11 @@ class ServicesController < CommandsController
 
   # Service Admin
   desc 'start [SERVICES]', 'Start one or more services (short-cut: s)'
-  option :attach, desc: 'Attach to service after starting',
-    aliases: '-a', type: :boolean
-  # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
+  cnfs_options :environment, :namespace
+  cnfs_options :attach, :build, :console, :profiles, :shell
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
-  option :console, desc: "Connect to service's rails console after starting",
-    aliases: '-c', type: :boolean
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
-  option :profiles, desc: 'List of profiles to start',
-    aliases: '-p', type: :array
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-  option :shell, desc: 'Connect to service shell after starting',
-    aliases: '--sh', type: :boolean
   # TODO: Take a profile array also. The config should define a default profile
   map %w[s] => :start
   def start(*services)
@@ -75,35 +86,29 @@ class ServicesController < CommandsController
   end
 
   desc 'restart [SERVICES]', 'Stop and start one or more running services'
+  cnfs_options :environment, :namespace
+  cnfs_options :attach, :build, :console, :profiles, :shell
   # TODO: When taking array of services but attach only uses the last one
   # Add default: '' so if -a is passed and value is blank then it's the last one
-  option :attach, desc: 'Attach to service after executing command',
-    aliases: '-a', type: :boolean
-  option :build, desc: 'Build image before executing command',
-    aliases: '-b', type: :boolean
   # NOTE: Seed the database before executing command
   option :clean, desc: 'Perform a clean restart equivalent to terminate and start',
     aliases: '--clean', type: :boolean
-  option :profiles, desc: 'List of profiles to start',
-    aliases: '-p', type: :array
-  # option :console, type: :boolean, aliases: '-c', desc: 'Connect to service console after executing command'
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-  # option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after executing command'
   def restart(*services)
     run(:restart, services: services)
   end
 
   desc 'stop [SERVICES]', 'Stop one or more running services'
-  option :profiles, desc: 'List of profiles to stop',
-    aliases: '-p', type: :array
+  cnfs_options :environment, :namespace
+  cnfs_options :profiles
   def stop(*services)
     run(:stop, services: services)
   end
 
   desc 'terminate [SERVICES]', 'Terminate one or more running services'
-  option :profiles, desc: 'List of profiles to terminate',
-    aliases: '-p', type: :array
+  cnfs_options :environment, :namespace
+  cnfs_options :profiles
   def terminate(*services)
     run(:terminate, services: services)
   end
@@ -116,10 +121,8 @@ class ServicesController < CommandsController
 
   ctrl-f to detach; ctrl-c to stop/kill the service
   DESC
-  option :build, desc: 'Build image before executing command',
-    aliases: '-b', type: :boolean
-  option :profile, desc: 'Service profiles',
-    aliases: '-p', type: :string
+  cnfs_options :environment, :namespace
+  cnfs_options :profile
   map %w[a] => :attach
   def attach(service)
     run(:attach, service: service)
@@ -133,6 +136,8 @@ class ServicesController < CommandsController
   # end
 
   desc 'console SERVICE', 'Start a console on a running service (short-cut: c)'
+  cnfs_options :environment, :namespace
+  cnfs_options :profile
   map %w[c] => :console
   def console(service)
     run(:console, service: service)
@@ -147,17 +152,23 @@ class ServicesController < CommandsController
 
   To copy to a service: cnfs service copy local/path/to/file service_name:path/to/file
   DESC
+  cnfs_options :environment, :namespace
+  cnfs_options :profile
   map %w[cp] => :copy
   def copy(src, dest)
     run(:copy, src: src, dest: dest)
   end
 
   desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
+  cnfs_options :environment, :namespace
+  cnfs_options :profile
   def exec(service, *command_args)
     run(:exec, service: service, command_args: command_args)
   end
 
   desc 'logs SERVICE', 'Display the logs of a running service'
+  cnfs_options :environment, :namespace
+  cnfs_options :profile
   option :tail, desc: 'Continuous logging',
     aliases: '-f', type: :boolean
   def logs(service)
@@ -165,8 +176,7 @@ class ServicesController < CommandsController
   end
 
   desc 'sh SERVICE', 'Execute an interactive shell on a running service'
-  option :build, desc: 'Build image before executing shell',
-    aliases: '-b', type: :boolean
+  cnfs_options :environment, :namespace
   # NOTE: shell is a reserved word in Thor so it can't be used
   def sh(service)
     arguments = { service: service }
@@ -176,6 +186,7 @@ class ServicesController < CommandsController
 
   # Commands ot refactor
   desc 'publish SERVICE', 'Publish API documentation to Postman'
+  cnfs_options :environment, :namespace
   option :force, desc: 'Force generation of new documentation',
     aliases: '-f', type: :boolean
   # TODO: refactor

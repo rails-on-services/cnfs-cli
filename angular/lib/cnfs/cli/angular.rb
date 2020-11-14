@@ -12,13 +12,6 @@ module Cnfs
 
         def initialize
           puts "Initializing plugin angular from #{gem_root}" if Cnfs.config.debug.positive?
-          Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
-          Cnfs.controllers << {
-            extension_point: 'Repositories::NewController', extension: 'Angular::Repositories::NewController'
-          }
-          Cnfs.controllers << {
-            extension_point: 'Services::NewController', extension: 'Angular::Services::NewController'
-          }
         end
 
         def on_project_initialize

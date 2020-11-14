@@ -7,9 +7,6 @@ module Cnfs
     def self.initialize!
       # Set up in-memory database
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-      ActiveSupport::Inflector.inflections do |inflect|
-        inflect.uncountable %w[dns kubernetes postgres redis rails]
-      end
       load_data
     end
 
