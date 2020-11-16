@@ -32,26 +32,26 @@ module Cnfs
     included do |_base|
       add_cnfs_option :environment, desc: 'Target environment',
                                     aliases: '-e', type: :string, default: Cnfs.config.environment
-      add_cnfs_option :namespace, desc: 'Target namespace',
-                                  aliases: '-n', type: :string, default: Cnfs.config.namespace
-      add_cnfs_option :repository, desc: 'The repository in which to run the command',
-                                   aliases: '-r', type: :string, default: Cnfs.repository&.namespace
+      add_cnfs_option :namespace,   desc: 'Target namespace',
+                                    aliases: '-n', type: :string, default: Cnfs.config.namespace
+      add_cnfs_option :repository,  desc: 'The repository in which to run the command',
+                                    aliases: '-r', type: :string, default: Cnfs.repository&.namespace
 
-      add_cnfs_option :tag, desc: 'Filter services by tag',
-                            aliases: '-t', type: :string
-      add_cnfs_option :force, desc: 'Do not prompt for confirmation',
-                              aliases: '-f', type: :boolean
-      add_cnfs_option :fail_fast, desc: 'Skip any remaining commands after a command fails',
-                                  aliases: '--ff', type: :boolean
+      add_cnfs_option :tag,         desc: 'Filter services by tag',
+                                    aliases: '-t', type: :string
+      add_cnfs_option :force,       desc: 'Do not prompt for confirmation',
+                                    aliases: '-f', type: :boolean
+      add_cnfs_option :fail_fast,   desc: 'Skip any remaining commands after a command fails',
+                                    aliases: '--ff', type: :boolean
 
-      add_cnfs_option :debug, desc: 'Display deugging information with degree of verbosity',
-                              aliases: '-d', type: :numeric, default: Cnfs.config.debug
-      add_cnfs_option :noop, desc: 'Do not execute commands',
-                             type: :boolean, default: Cnfs.config.noop
-      add_cnfs_option :quiet, desc: 'Suppress status output',
-                              aliases: '-q', type: :boolean, default: Cnfs.config.quiet
-      add_cnfs_option :verbose, desc: 'Display extra information from command',
-                                aliases: '-v', type: :boolean, default: Cnfs.config.verbose
+      add_cnfs_option :debug,       desc: 'Display deugging information with degree of verbosity',
+                                    aliases: '-d', type: :numeric, default: Cnfs.config.debug
+      add_cnfs_option :noop,        desc: 'Do not execute commands',
+                                    type: :boolean, default: Cnfs.config.noop
+      add_cnfs_option :quiet,       desc: 'Suppress status output',
+                                    aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+      add_cnfs_option :verbose,     desc: 'Display extra information from command',
+                                    aliases: '-v', type: :boolean, default: Cnfs.config.verbose
 
       Cnfs.extensions.select { |e| e.extension_point.eql?(name) }.each do |extension|
         if extension.klass < Thor

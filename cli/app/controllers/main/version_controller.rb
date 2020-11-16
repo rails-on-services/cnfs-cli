@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Primary
+module Main
   class VersionController
     attr_accessor :name, :options
 

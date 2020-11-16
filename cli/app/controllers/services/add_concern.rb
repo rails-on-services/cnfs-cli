@@ -30,6 +30,7 @@ module Services
       end
 
       def repository_root
+        # TODO: Remove; It's not necessary
         @repository_root ||= options.repository ? Cnfs.paths.src.join(options.repository) : Cnfs.repository_root
       end
     end

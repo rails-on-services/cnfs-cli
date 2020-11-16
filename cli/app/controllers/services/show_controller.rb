@@ -2,6 +2,7 @@
 
 module Services
   class ShowController < ApplicationController
+    # rubocop:disable Metrics/AbcSize
     def execute
       application.arguments.services.each do |service_name|
         modifier = options.modifier || '.yml'
@@ -14,5 +15,6 @@ module Services
         response.output.puts("\nContents from: #{show_file}")
       end
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

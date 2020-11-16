@@ -16,6 +16,7 @@ module Cnfs
       load_data
     end
 
+    # rubocop:disable Metrics/MethodLength
     def self.load_data
       show_output = Cnfs.config.debug.positive?
       Cnfs.silence_output(!show_output) { create_schema }
@@ -249,5 +250,6 @@ module Cnfs
         User.reset_column_information
       end
     end
+    # rubocop:enable Metrics/MethodLength
   end
 end

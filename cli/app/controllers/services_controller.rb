@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class ServicesController < CommandsController
   include Cnfs::Options
 
@@ -8,30 +9,30 @@ class ServicesController < CommandsController
                            aliases: '-a', type: :boolean
   add_cnfs_option :build, desc: 'Build image before executing command',
                           aliases: '-b', type: :boolean
-  add_cnfs_option :console, desc: "Connect to service's console",
-                            aliases: '-c', type: :boolean
+  add_cnfs_option :console,  desc: "Connect to service's console",
+                             aliases: '-c', type: :boolean
   add_cnfs_option :profiles, desc: 'Service profiles',
                              aliases: '-p', type: :array
-  add_cnfs_option :profile, desc: 'Service profile',
-                            aliases: '-p', type: :string
-  add_cnfs_option :shell, desc: "Connect to service's OS shell",
-                          aliases: '--sh', type: :boolean
+  add_cnfs_option :profile,  desc: 'Service profile',
+                             aliases: '-p', type: :string
+  add_cnfs_option :shell,    desc: "Connect to service's OS shell",
+                             aliases: '--sh', type: :boolean
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose
 
-  register Services::NewController, 'new', 'new SUBCOMMAND [options]', 'Create a new service in the default (or specified) repository'
+  register Services::NewController, 'new', 'new SUBCOMMAND [options]',
+           'Create a new service in the default (or specified) repository'
   register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
 
-  # TODO: Implement list
   desc 'list', 'Lists services configured in the project'
   option :environment, desc: 'Target environment',
                        aliases: '-e', type: :string
   option :namespace, desc: 'Target namespace',
                      aliases: '-n', type: :string
   map %w[ls] => :list
+  # TODO: Implement list
   def list
-    binding.pry
     # run(:list)
   end
 
@@ -41,8 +42,7 @@ class ServicesController < CommandsController
                        aliases: '-e', type: :string
   option :namespace, desc: 'Target namespace',
                      aliases: '-n', type: :string
-  option :repository, desc: 'Remove the service from a repository',
-                      aliases: '-r', type: :string
+  cnfs_options :repository
   map %w[rm] => :remove
   def remove(_name)
     return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?")
@@ -67,9 +67,8 @@ class ServicesController < CommandsController
                   type: :string, aliases: '-f'
   option :status, desc: 'created, restarting, running, removing, paused, exited or dead',
                   type: :string
-  def ps # (*args)
-    binding.pry
-    run(:ps) # , args: args)
+  def ps(*args)
+    run(:ps, args: args)
   end
 
   # Service Admin
@@ -216,3 +215,4 @@ class ServicesController < CommandsController
   #   command.exit
   # end
 end
+# rubocop:enable Metrics/ClassLength

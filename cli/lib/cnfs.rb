@@ -56,7 +56,7 @@ module Cnfs
         setup_loader
         add_extensions
         Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
-        PrimaryController.start
+        MainController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
     end
@@ -109,6 +109,7 @@ module Cnfs
       Config.use_env = true
       ENV['CNFS_ENVIRONMENT'] = ENV.delete('CNFS_ENV')
       ENV['CNFS_NAMESPACE'] = ENV.delete('CNFS_NS')
+      ENV['CNFS_REPOSITORY'] = ENV.delete('CNFS_REPO')
       @config = Config.load_files(gem_root.join('config', 'cnfs.yml'), user_root.join('cnfs.yml'), 'cnfs.yml')
       Config.use_env = false
       config.debug ||= 0

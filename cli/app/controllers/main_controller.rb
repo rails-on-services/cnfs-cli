@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PrimaryController < Thor
+class MainController < Thor
   include Cnfs::Options
 
   # Activate common options
@@ -57,13 +57,13 @@ class PrimaryController < Thor
           raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
         end
       end
-      Primary::NewController.new(name, options).execute
+      Main::NewController.new(name, options).execute
     end
   end
 
   # Utility
   desc 'version', 'Show cnfs version'
   def version
-    Primary::VersionController.new([], options).execute
+    Main::VersionController.new([], options).execute
   end
 end
