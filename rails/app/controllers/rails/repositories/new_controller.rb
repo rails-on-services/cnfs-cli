@@ -16,9 +16,7 @@ module Rails
         # TODO: Add options that carry over to the rails plugin new command
         def rails(name)
           binding.pry
-          with_context(name) do
-            create_repository(:rails, name)
-          end
+          create_repository(:rails, name)
         end
       end
     end

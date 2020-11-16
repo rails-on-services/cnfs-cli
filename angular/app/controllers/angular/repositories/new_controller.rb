@@ -10,9 +10,7 @@ module Angular
       included do
         desc 'angular NAME', 'Add a CNFS compatible services repository based on the Angular Framework'
         def angular(name)
-          with_context(name) do
-            create_repository(:angular, name)
-          end
+          create_repository(:angular, name)
         end
       end
     end

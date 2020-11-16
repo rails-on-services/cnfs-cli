@@ -52,6 +52,7 @@ module Cnfs
         end
         initialize_repositories
         setup_loader
+        add_extensions
         PrimaryController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
@@ -152,7 +153,6 @@ module Cnfs
     def setup_loader
       add_plugin_autoload_paths
       add_repository_autoload_paths
-      add_extensions
       Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
       Zeitwerk::Loader.default_logger = method(:puts) if config.debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
@@ -253,18 +253,19 @@ module Cnfs
 
     # Extensions found in autoload_dirs are configured to be loaded at a pre-defined extension point
     def add_extensions
-      autoload_dirs.select{ |p| p.split.last.to_s.eql?('controllers') }.each do |controllers_path|
-        # TODO: This should not be inferred from the path name, but rather that autoload dirs contains a key to the plugin or the repo
-        namespace = controllers_path.join('../..').split.last.to_s
-        next if namespace.eql?('cli')
-
+      # Ignore the extension points which are the controllers in the cli core gem
+      autoload_dirs.select{ |p| p.split.last.to_s.eql?('controllers') }
+        .reject{ |p| p.join('../..').split.last.to_s.eql?('cli') }.each do |controllers_path|
         Dir.chdir(controllers_path) do
           Dir['**/*.rb'].each do |extension_path|
             extension = extension_path.delete_suffix('.rb')
+            namespace = extension.split('/').first
             extension_point = extension.delete_prefix("#{namespace}/")
+            extension_klass = extension.camelize.safe_constantize
             extensions << Thor::CoreExt::HashWithIndifferentAccess.new({
               extension_class: extension.camelize, extension_point: extension_point.camelize,
-              title: namespace, help: "#{namespace} SUBCOMMAND", description: "Add a service from the #{namespace} repository"
+              title: namespace, help: "#{namespace} SUBCOMMAND",
+              description: extension_klass.respond_to?(:description) ? extension_klass.description : ''
             })
           end
         end

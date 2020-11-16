@@ -19,9 +19,9 @@ class RepositoriesController < Thor
     name ||= url.split('/').last&.delete_suffix('.git')
     return unless name
 
-    with_context(name) do
-      clone_repository(url, name)
-    end
+    Cnfs.paths.src.mkpath
+    clone_repository(url, name)
+    update_config(name, url: url)
   end
 
   desc 'list', 'List repositories and services'
@@ -62,8 +62,5 @@ class RepositoriesController < Thor
     # TODO: Use the response object to run the command
     puts cmd if options.debug.positive? or options.verbose
     Dir.chdir(Cnfs.paths.src) { `#{cmd}` } unless options.noop
-
-    # TODO: Get the config from a file in the just cloned repository
-    update_config(name, url: url)
   end
 end
