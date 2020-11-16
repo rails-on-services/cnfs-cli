@@ -6,7 +6,11 @@ module Cnfs
       class << self
         def initialize_rails
           require 'cnfs/cli/rails'
-          Cnfs::Cli::Rails.initialize
+          plugin_lib.initialize
+        end
+
+        def plugin_lib
+          Cnfs::Cli::Rails
         end
       end
     end

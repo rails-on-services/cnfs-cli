@@ -6,7 +6,11 @@ module Cnfs
       class << self
         def initialize_<%= name %>
           require 'cnfs/cli/<%= name %>'
-          Cnfs::Cli::<%= name.classify %>.initialize
+          plugin_lib.initialize
+        end
+
+        def plugin_lib
+          Cnfs::Cli::<%= name.classify %>
         end
       end
     end

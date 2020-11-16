@@ -1,13 +1,13 @@
 # frozen_string_literal: true
-require_relative 'lib/cnfs/cli/cnfs_backend/version'
+require_relative 'lib/cnfs/cli/cnfs_core/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-cli-cnfs_backend'
-  spec.version       = Cnfs::Cli::CnfsBackend::VERSION
+  spec.name          = 'cnfs-cli-cnfs_core'
+  spec.version       = Cnfs::Cli::CnfsCore::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'CNFS CLI plugin for CNFS Services'
+  spec.summary       = 'CNFS CLI plugin for CNFS Core Services'
   spec.description   = 'CNFS CLI plugin to install service configurations into CNFS projects'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'

@@ -52,14 +52,10 @@ module Cnfs
         aliases: '-v', type: :boolean, default: Cnfs.config.verbose
 
       Cnfs.extensions.select{ |e| e.extension_point.eql?(self.name) }.each do |extension|
-        unless (klass = extension.extension_class.safe_constantize)
-          raise Cnfs::Error, "#{base.name} failed to load #{extension.extension_class}"
-        end
-
-        if klass < Thor
-          register(klass, extension.title, extension.help, extension.description)
+        if extension.klass < Thor
+          register(extension.klass, extension.title, extension.help, extension.description)
         else
-          include klass
+          include extension.klass
         end
       end
     end

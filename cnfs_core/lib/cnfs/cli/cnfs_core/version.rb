@@ -1,6 +1,6 @@
 module Cnfs
   module Cli
-    module CnfsBackend
+    module CnfsCore
       VERSION = "0.1.0"
     end
   end

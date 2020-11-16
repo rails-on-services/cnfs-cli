@@ -12,11 +12,6 @@ module Cnfs
 
         def initialize
           puts "Initializing plugin rails from #{gem_root}" if Cnfs.config.debug.positive?
-          # Cnfs.controllers << {
-          #   extension_point: 'Services::NewController', extension: 'Rails::Services::NewController',
-          #   # title: 'xrails', help: 'xrails [SUBCOMMAND]',
-          #   # description: 'Add a CNFS service based on the Ruby on Rails Framework'
-          # }
         end
 
         def on_project_initialize

@@ -33,8 +33,8 @@ class Generator < Thor::Group
         summary: 'the Ruby on Rails Framework',
         description: 'create RoR repositories and services in CNFS project'
       },
-      cnfs_backend: {
-        summary: 'CNFS Services',
+      cnfs_core: {
+        summary: 'CNFS Core Services',
         description: 'install service configurations into CNFS projects'
       },
     })

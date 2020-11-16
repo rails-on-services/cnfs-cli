@@ -2,15 +2,15 @@
 
 module Cnfs
   module Plugins
-    class Angular
+    class CnfsCore
       class << self
-        def initialize_angular
-          require 'cnfs/cli/angular'
+        def initialize_cnfs_core
+          require 'cnfs/cli/cnfs_core'
           plugin_lib.initialize
         end
 
         def plugin_lib
-          Cnfs::Cli::Angular
+          Cnfs::Cli::CnfsCore
         end
       end
     end

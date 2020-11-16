@@ -53,6 +53,7 @@ module Cnfs
         initialize_repositories
         setup_loader
         add_extensions
+        Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
         PrimaryController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
@@ -153,7 +154,6 @@ module Cnfs
     def setup_loader
       add_plugin_autoload_paths
       add_repository_autoload_paths
-      Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
       Zeitwerk::Loader.default_logger = method(:puts) if config.debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 
@@ -259,28 +259,20 @@ module Cnfs
         Dir.chdir(controllers_path) do
           Dir['**/*.rb'].each do |extension_path|
             extension = extension_path.delete_suffix('.rb')
+            next unless (klass = extension.camelize.safe_constantize)
+
             namespace = extension.split('/').first
-            extension_point = extension.delete_prefix("#{namespace}/")
-            extension_klass = extension.camelize.safe_constantize
+            extension_point = extension.delete_prefix("#{namespace}/").camelize
             extensions << Thor::CoreExt::HashWithIndifferentAccess.new({
-              extension_class: extension.camelize, extension_point: extension_point.camelize,
-              title: namespace, help: "#{namespace} SUBCOMMAND",
-              description: extension_klass.respond_to?(:description) ? extension_klass.description : ''
+              klass: klass, extension_point: extension_point,
+              title: klass.respond_to?(:title) ? klass.title : namespace,
+              help: klass.respond_to?(:help_text) ? klass.help_text : "#{namespace} SUBCOMMAND",
+              description: klass.respond_to?(:description) ? klass.description : ''
             })
           end
         end
       end
     end
-
-    def require_project!(arguments:, options:, response:)
-      project_file = project_root.join(PROJECT_FILE)
-      return unless File.exist?(project_file)
-
-      require project_file
-      @project = Cnfs::Project.descendants.shift&.new(root: project_root, arguments: arguments, options: options, response: response)
-      true
-    end
-
 
     def require_project!(arguments:, options:, response:)
       project_file = project_root.join(PROJECT_FILE)

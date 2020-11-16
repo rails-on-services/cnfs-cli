@@ -7,7 +7,7 @@ module Generic
       include ::Services::AddConcern
 
       def self.description
-        'Add a generic backend service'
+        'Add a generic service'
       end
 
       # Activate common options

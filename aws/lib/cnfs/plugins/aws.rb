@@ -6,7 +6,11 @@ module Cnfs
       class << self
         def initialize_aws
           require 'cnfs/cli/aws'
-          Cnfs::Cli::Aws.initialize
+          plugin_lib.initialize
+        end
+
+        def plugin_lib
+          Cnfs::Cli::Aws
         end
       end
     end

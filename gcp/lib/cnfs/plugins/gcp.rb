@@ -6,7 +6,11 @@ module Cnfs
       class << self
         def initialize_gcp
           require 'cnfs/cli/gcp'
-          Cnfs::Cli::Gcp.initialize
+          plugin_lib.initialize
+        end
+
+        def plugin_lib
+          Cnfs::Cli::Gcp
         end
       end
     end
