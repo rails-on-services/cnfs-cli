@@ -11,11 +11,12 @@ class Generator < Thor::Group
   def gemspec
     file_name = "cnfs-cli-#{name}.gemspec"
     remove_file(file_name) if self.class.name.eql?('NewGenerator')
-    template('gemspec.rb', file_name)
+    template('gemspec.rb.erb', file_name)
   end
 
   private
 
+  # rubocop:disable Metrics/MethodLength
   def metadata
     @metadata ||= Thor::CoreExt::HashWithIndifferentAccess.new(
       angular: {
@@ -40,6 +41,7 @@ class Generator < Thor::Group
       }
     )
   end
+  # rubocop:enable Metrics/MethodLength
 
   def source_paths
     ["#{__dir__}/new", "#{__dir__}/new/templates"]
@@ -53,12 +55,10 @@ class NewGenerator < Generator
       remove_file('.travis.yml')
       directory('files', '.')
       remove_file("lib/cnfs/cli/#{name}.rb")
-      template('lib/cnfs/cli/gem_name.rb', "lib/cnfs/cli/#{name}.rb")
-      template('lib/cnfs/plugins/gem_name.rb', "lib/cnfs/plugins/#{name}.rb")
+      template('lib/cnfs/cli/gem_name.rb.erb', "lib/cnfs/cli/#{name}.rb")
+      template('lib/cnfs/plugins/gem_name.rb.erb', "lib/cnfs/plugins/#{name}.rb")
     end
   end
-
-  private
 end
 
 class GemCli < Thor
