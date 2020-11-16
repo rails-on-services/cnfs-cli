@@ -6,7 +6,7 @@ module Cnfs
       class << self
         def initialize_<%= name %>
           require 'cnfs/cli/<%= name %>'
-          Cnfs::Cli::<%= name.classify %>.safe_constantize&.initialize
+          Cnfs::Cli::<%= name.classify %>.initialize
         end
       end
     end

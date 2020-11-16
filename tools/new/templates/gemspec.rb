@@ -3,7 +3,6 @@ require_relative 'lib/cnfs/cli/<%= name %>/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-<%= name %>'
-  # spec.version       = File.read('VERSION').strip
   spec.version       = Cnfs::Cli::<%= name.classify %>::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']

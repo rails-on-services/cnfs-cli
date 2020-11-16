@@ -9,6 +9,7 @@ class Generator < Thor::Group
 
   def gemspec
     file_name = "cnfs-cli-#{name}.gemspec"
+    remove_file(file_name) if self.class.name.eql?('NewGenerator')
     template('gemspec.rb', file_name)
   end
 
@@ -32,7 +33,7 @@ class Generator < Thor::Group
         summary: 'the Ruby on Rails Framework',
         description: 'create RoR repositories and services in CNFS project'
       },
-      services: {
+      cnfs_backend: {
         summary: 'CNFS Services',
         description: 'install service configurations into CNFS projects'
       },
@@ -40,17 +41,17 @@ class Generator < Thor::Group
   end
 
   def source_paths
-    ["#{__dir__}/new", "#{__dir__}/gem/templates"]
+    ["#{__dir__}/new", "#{__dir__}/new/templates"]
   end
 end
 
 class NewGenerator < Generator
   def libs
     in_root do
-      remove_dir("lib/#{name}")
       remove_dir('.git')
       remove_file('.travis.yml')
       directory('files', '.')
+      remove_file("lib/cnfs/cli/#{name}.rb")
       template('lib/cnfs/cli/gem_name.rb', "lib/cnfs/cli/#{name}.rb")
       template('lib/cnfs/plugins/gem_name.rb', "lib/cnfs/plugins/#{name}.rb")
     end
@@ -67,7 +68,9 @@ class GemCli < Thor
 
   desc 'new', 'Create new CLI plugin gem'
   def new(name)
-    exec("bundle gem #{name}")
+    gem_name = "cnfs-cli-#{name}"
+    exec("bundle gem #{gem_name}")
+    FileUtils.mv(gem_name, name)
     generator = NewGenerator.new([name], {})
     generator.destination_root = "#{Dir.pwd}/#{name}"
     generator.invoke_all

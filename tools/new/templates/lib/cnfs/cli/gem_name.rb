@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'cnfs/cli/<%= name %>/version'
+
 module Cnfs
   module Cli
     module <%= name.classify %>
@@ -9,8 +11,7 @@ module Cnfs
         end
 
         def initialize
-          puts "Initializing plugin angular from #{gem_root}" if Cnfs.config.debug.positive?
-          Cnfs.autoload_dirs += Cnfs.autoload_all(gem_root)
+          Cnfs.logger.info "Initializing plugin <%= name %> from #{gem_root}"
         end
 
         def on_project_initialize
