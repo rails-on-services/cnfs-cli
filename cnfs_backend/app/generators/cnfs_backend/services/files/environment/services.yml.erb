@@ -1,0 +1,75 @@
+# local/services.yml
+---
+cognito: &base_service
+  config:
+    depends_on:
+      - wait
+  environment: &base_environment
+    rails_env: development
+    rails_database_host: postgres
+    rails_database_user: admin
+    rails_database_password: admin
+    redis_url: redis://redis:6379
+    # DATABASE_HOST: postgres
+    # DATABASE_USER: admin
+    # DATABASE_PASS: admin
+
+comm:
+  <<: *base_service
+
+iam:
+  <<: *base_service
+
+organization:
+  <<: *base_service
+
+storage:
+  <<: *base_service
+
+# fluentd:
+#   config:
+#     ports:
+#       - 24222
+
+# kafka:
+#   tags: infra
+
+localstack:
+  tags: infra, storage
+  config:
+    ports:
+      - { port: 4572, wait: yes }
+  environment:
+    services: s3:4572,lambda:4574,sns:4575,sqs:4576
+    port_web_ui: 8080
+    debug: s3
+    hostname: localstack
+    hostname_external: localstack
+
+nginx:
+  tags: infra, storage
+
+postgres:
+  tags: service_db, storage
+  config:
+    ports:
+      - { port: 5432, wait: yes }
+  environment:
+    postgres_user: admin
+    postgres_password: admin
+    postgres_db: postgres
+
+redis:
+  tags: service_db, storage
+  config:
+    shell_command: sh
+    ports:
+      - { port: 6379, wait: yes }
+
+sftp:
+  config:
+    depends_on:
+      - wait
+
+wait:
+  tags: infra

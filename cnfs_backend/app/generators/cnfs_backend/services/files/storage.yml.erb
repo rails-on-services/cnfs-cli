@@ -1,0 +1,11 @@
+
+storage:
+  <<: *base_service
+  tags:
+    name: core
+    unit: storage
+  config:
+    <<: *base_config
+    profiles:
+      <<: *base_profiles
+      sqs_worker:  '["bundle", "exec", "shoryuken", "-r", "./app/workers/aws", "-C", "config/shoryuken.yml"]'
