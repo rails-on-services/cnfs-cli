@@ -2,9 +2,8 @@
 
 module Project
   class SetController < Thor
-
     class_option :local, desc: 'Manage local configuration',
-      aliases: '-l', type: :boolean
+                         aliases: '-l', type: :boolean
 
     desc 'environment VALUE', 'Set default environment'
     def environment(value)

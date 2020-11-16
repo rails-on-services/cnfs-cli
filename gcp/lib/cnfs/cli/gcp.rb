@@ -1,4 +1,6 @@
-require "cnfs/cli/gcp/version"
+# frozen_string_literal: true
+
+require 'cnfs/cli/gcp/version'
 
 module Cnfs
   module Cli
@@ -12,12 +14,10 @@ module Cnfs
           Cnfs.logger.info "Initializing plugin gcp from #{gem_root}"
         end
 
-        def on_project_initialize
-        end
+        def on_project_initialize; end
 
         # TODO: Copy in blueprints, etc
-        def customize
-        end
+        def customize; end
       end
     end
   end

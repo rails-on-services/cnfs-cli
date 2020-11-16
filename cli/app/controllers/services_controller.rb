@@ -5,17 +5,17 @@ class ServicesController < CommandsController
 
   # Define common options for this controller
   add_cnfs_option :attach, desc: "Attach to service's running process ",
-    aliases: '-a', type: :boolean
+                           aliases: '-a', type: :boolean
   add_cnfs_option :build, desc: 'Build image before executing command',
-    aliases: '-b', type: :boolean
+                          aliases: '-b', type: :boolean
   add_cnfs_option :console, desc: "Connect to service's console",
-    aliases: '-c', type: :boolean
+                            aliases: '-c', type: :boolean
   add_cnfs_option :profiles, desc: 'Service profiles',
-    aliases: '-p', type: :array
+                             aliases: '-p', type: :array
   add_cnfs_option :profile, desc: 'Service profile',
-    aliases: '-p', type: :string
+                            aliases: '-p', type: :string
   add_cnfs_option :shell, desc: "Connect to service's OS shell",
-    aliases: '--sh', type: :boolean
+                          aliases: '--sh', type: :boolean
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose
@@ -26,9 +26,9 @@ class ServicesController < CommandsController
   # TODO: Implement list
   desc 'list', 'Lists services configured in the project'
   option :environment, desc: 'Target environment',
-    aliases: '-e', type: :string
+                       aliases: '-e', type: :string
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string
+                     aliases: '-n', type: :string
   map %w[ls] => :list
   def list
     binding.pry
@@ -38,14 +38,14 @@ class ServicesController < CommandsController
   # TODO: Implement remove
   desc 'remove NAME', 'Remove a service from the project configuration (short-cut: rm)'
   option :environment, desc: 'Target environment',
-    aliases: '-e', type: :string
+                       aliases: '-e', type: :string
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string
+                     aliases: '-n', type: :string
   option :repository, desc: 'Remove the service from a repository',
-    aliases: '-r', type: :string
+                      aliases: '-r', type: :string
   map %w[rm] => :remove
-  def remove(name)
-    return unless (options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?"))
+  def remove(_name)
+    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?")
 
     # cs = controller_class(:service).new
     # cs.action = :revoke
@@ -55,8 +55,8 @@ class ServicesController < CommandsController
 
   desc 'show SERVICE', 'Display the service manifest'
   cnfs_options :environment, :namespace
-  option :modifier,  desc: "A suffix applied to service name, e.g. '.env'",
-    aliases: '-m', type: :string
+  option :modifier, desc: "A suffix applied to service name, e.g. '.env'",
+                    aliases: '-m', type: :string
   def show(*services)
     run(:show, services: services)
   end
@@ -64,9 +64,9 @@ class ServicesController < CommandsController
   desc 'ps', 'List running services'
   cnfs_options :environment, :namespace
   option :format, desc: '',
-    type: :string, aliases: '-f'
+                  type: :string, aliases: '-f'
   option :status, desc: 'created, restarting, running, removing, paused, exited or dead',
-    type: :string
+                  type: :string
   def ps # (*args)
     binding.pry
     run(:ps) # , args: args)
@@ -92,7 +92,7 @@ class ServicesController < CommandsController
   # Add default: '' so if -a is passed and value is blank then it's the last one
   # NOTE: Seed the database before executing command
   option :clean, desc: 'Perform a clean restart equivalent to terminate and start',
-    aliases: '--clean', type: :boolean
+                 aliases: '--clean', type: :boolean
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   def restart(*services)
@@ -170,7 +170,7 @@ class ServicesController < CommandsController
   cnfs_options :environment, :namespace
   cnfs_options :profile
   option :tail, desc: 'Continuous logging',
-    aliases: '-f', type: :boolean
+                aliases: '-f', type: :boolean
   def logs(service)
     run(:logs, service: service)
   end
@@ -188,7 +188,7 @@ class ServicesController < CommandsController
   desc 'publish SERVICE', 'Publish API documentation to Postman'
   cnfs_options :environment, :namespace
   option :force, desc: 'Force generation of new documentation',
-    aliases: '-f', type: :boolean
+                 aliases: '-f', type: :boolean
   # TODO: refactor
   # Maybe in the service configuration is an attribute commands which is an array of hashes:
   # { command: 'publish erd', exec: 'rails g erd' }

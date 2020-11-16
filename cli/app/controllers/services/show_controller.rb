@@ -6,7 +6,7 @@ module Services
       application.arguments.services.each do |service_name|
         modifier = options.modifier || '.yml'
         show_file = application.write_path.join("#{service_name}#{modifier}")
-        if not File.exist?(show_file)
+        unless File.exist?(show_file)
           response.output.puts "File not found: #{show_file}"
           next
         end

@@ -43,6 +43,7 @@ module Cnfs
       @manifest = Manifest.new(config_files_paths: paths['config'], manifests_path: write_path)
       manifest.purge! if manifest.outdated?
       return unless (@runtime = environment&.runtime)
+
       runtime.application = self
       runtime.options = options
       runtime.response = response
@@ -176,10 +177,10 @@ module Cnfs
       # 2. If that fails then if the directory from options.environment exists then write that to fixtures file
       # 3. Otherwise continue
       FileUtils.mkdir_p(write_path(:fixtures))
-      if options.environment and Cnfs.paths.config.join('environments', options.environment).exist?
+      if options.environment && Cnfs.paths.config.join('environments', options.environment).exist?
         File.open("#{write_path(:fixtures)}/targets.yml", 'w') { |f| f.write("#{options.environment}:\n  name: #{options.environment}\n  key: #{options.environment}\n  runtime: compose") }
         # if Cnfs.paths.config.join('environments', options.environment, "#{options.namespace}.yml").exist?
-        if options.namespace and Cnfs.paths.config.join('environments', options.environment, options.namespace).exist?
+        if options.namespace && Cnfs.paths.config.join('environments', options.environment, options.namespace).exist?
           File.open("#{write_path(:fixtures)}/namespaces.yml", 'w') { |f| f.write("#{options.namespace}:\n  name: #{options.namespace}\n  key: #{options.namespace}") }
         end
         # if Cnfs.paths.config.join('environments', options.environment, 'namespaces.yml').exist?
@@ -200,8 +201,8 @@ module Cnfs
         value = o_config.to_hash.deep_stringify_keys.to_yaml
         File.open("#{write_path(:fixtures)}/#{fixture[:name]}.yml", 'w') { |f| f.write(value) }
         # File.open(write_path(:fixtures).join(fixture[:name], '.yml'), 'w') { |f| f.write(value) }
-      # rescue StandardError => e
-      #  binding.pry
+        # rescue StandardError => e
+        #  binding.pry
       end
       puts "-----\n> = loaded\n* = not found\n-----" if options.debug.positive?
     end
@@ -243,19 +244,19 @@ module Cnfs
       [
         # { name: :applications, types: [:app] },
         { name: :assets, scopes: [:global], sources: [:project] },
-        { name: :blueprints, scopes: [:global, :environment, :namespace], sources: [:project], dir: :environments },
+        { name: :blueprints, scopes: %i[global environment namespace], sources: [:project], dir: :environments },
         # { name: :contexts },
         # { name: :deployments },
-        { name: :keys, scopes: [:environment, :namespace], sources: [:user], dir: :environments },
+        { name: :keys, scopes: %i[environment namespace], sources: [:user], dir: :environments },
         # { name: :namespaces, scopes: [:environment], sources: [:project, :user] },
         { name: :providers, scopes: [:global], sources: [:project] },
         { name: :repositories, scopes: [:global], sources: [:project] },
         # { name: :resources, scopes: [:global, :environment, :namespace], sources: [:project, :user] },
-        { name: :runtimes, scopes: [:global], sources: [:cli, :project, :user] },
-        { name: :services, scopes: [:global, :environment, :namespace], sources: [:project], dir: :environments },
+        { name: :runtimes, scopes: [:global], sources: %i[cli project user] },
+        { name: :services, scopes: %i[global environment namespace], sources: [:project], dir: :environments },
         # { name: :tags, types: [:app, :infra] },
         # { name: :targets, alias: :environments, scopes: [:global], sources: [:project, :user] },
-        { name: :users, scopes: [:global], sources: [:project] } 
+        { name: :users, scopes: [:global], sources: [:project] }
       ]
     end
 

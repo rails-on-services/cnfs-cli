@@ -4,7 +4,7 @@ module Services
   module AddConcern
     extend ActiveSupport::Concern
 
-    included do |base|
+    included do |_base|
       attr_accessor :action
 
       private
@@ -35,32 +35,3 @@ module Services
     end
   end
 end
-
-=begin
-    # def hash
-    #   hash = repo ? options_string_to_hash(repo.options) : {}
-    #   hash.merge!(options_string_to_hash(options.options || ''))
-    #   hash.merge!(type: options.type)
-    #   hash.merge!(repository_root: repository_root)
-    #   hash.merge!(services_file: Cnfs.project_root.join(Cnfs.paths.config, 'environments', options.environment || '', options.namespace || '', 'services.yml'))
-    # end
-
-    # def repo
-    #   @repo ||= set_repo
-    # end
-
-    # def set_repo
-    #   Cnfs.require_deps
-    #   Cnfs.require_project!(arguments: arguments, options: options, response: nil)
-    #   repository_name = repository_root.split.last.to_s
-
-    #   unless (repo = Repository.find_by(name: repository_name))
-    #     raise Cnfs::Error, "Repository #{repository_name} not found"
-    #   end
-    #   repo
-    # end
-
-    # def options_string_to_hash(string)
-    #   string.split(',').each_with_object({}) { |s, h| k, v = s.split('='); h[k] = v }
-    # end
-=end

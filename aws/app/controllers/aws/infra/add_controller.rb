@@ -14,9 +14,9 @@ module Aws
 
       desc 'ec2 NAME', 'Add a CNFS compatible blueprint for AWS EC2'
       option :alb, desc: 'Frontend EC2 with an ALB',
-        aliases: '-a', type: :boolean
+                   aliases: '-a', type: :boolean
       option :rds, desc: 'Add and RDS backend',
-        aliases: '-r', type: :boolean
+                   aliases: '-r', type: :boolean
       def ec2(name)
         binding.pry
       end
@@ -32,4 +32,3 @@ module Aws
     end
   end
 end
-

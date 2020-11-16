@@ -10,9 +10,9 @@ module Rails
       included do
         desc 'rails NAME', 'Add a CNFS compatible services repository based on the Ruby on Rails Framework'
         option :database, desc: 'Preconfigure for selected database (options: postgresql)',
-          aliases: '-D', type: :string, default: 'postgresql'
+                          aliases: '-D', type: :string, default: 'postgresql'
         option :test_with, desc: 'Testing framework',
-          aliases: '-t', type: :string, default: 'rspec'
+                           aliases: '-t', type: :string, default: 'rspec'
         # TODO: Add options that carry over to the rails plugin new command
         def rails(name)
           binding.pry

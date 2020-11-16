@@ -22,8 +22,7 @@ module Cnfs
         end
 
         # TODO: Copy in blueprints, etc
-        def customize
-        end
+        def customize; end
       end
     end
   end

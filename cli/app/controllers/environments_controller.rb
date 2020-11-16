@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class EnvironmentsController < CommandsController
-  OPTS = %i[noop quiet verbose]
+  OPTS = %i[noop quiet verbose].freeze
   include Cnfs::Options
 
   map %w[i] => :infra
@@ -14,7 +14,7 @@ class EnvironmentsController < CommandsController
 
   desc 'list', 'List configured environments'
   def list
-    puts Cnfs.paths.config.join('environments').children.select{ |e| e.directory? }.sort.map{ |path| path.split.last }
+    puts Cnfs.paths.config.join('environments').children.select(&:directory?).sort.map { |path| path.split.last }
   end
 
   desc 'remove NAME', 'Remove environment from project'
@@ -30,12 +30,12 @@ class EnvironmentsController < CommandsController
 
   DESC
   option :environment, desc: 'Target environment',
-    aliases: '-e', type: :string, default: Cnfs.config.environment
+                       aliases: '-e', type: :string, default: Cnfs.config.environment
   # TODO: Only include aws options if the environment is AWS
   option :long, desc: 'Run the long form of the command',
-    aliases: '-l', type: :boolean
+                aliases: '-l', type: :boolean
   option :role_name, desc: 'Override the AWS IAM role to be used',
-    aliases: '-r', type: :string
+                     aliases: '-r', type: :string
   def init
     run(:init)
   end

@@ -4,8 +4,7 @@ module Repositories
   module Concern
     extend ActiveSupport::Concern
 
-    included do |base|
-
+    included do |_base|
       private
 
       def update_config(name, config = {})

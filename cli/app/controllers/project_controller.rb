@@ -11,8 +11,8 @@ class ProjectController < CommandsController
 
   desc 'config', 'Display project configuration'
   option :local, desc: 'Display local overrides',
-    aliases: '-l', type: :boolean
-  def config(name = nil)
+                 aliases: '-l', type: :boolean
+  def config(_name = nil)
     YAML.load_file('cnfs.yml').each do |key, value|
       puts "#{key}: #{value}"
     end
@@ -20,9 +20,9 @@ class ProjectController < CommandsController
 
   desc 'console', 'Start a CNFS project console (short-cut: c)'
   option :environment, desc: 'Target environment',
-    aliases: '-e', type: :string, default: Cnfs.config.environment
+                       aliases: '-e', type: :string, default: Cnfs.config.environment
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string, default: Cnfs.config.namespace
+                     aliases: '-n', type: :string, default: Cnfs.config.namespace
   map %w[c] => :console
   def console
     run(:console)

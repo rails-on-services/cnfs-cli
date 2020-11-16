@@ -6,13 +6,13 @@ module Namespaces
   class StatusController < ApplicationController
     def execute(entry)
       super
-    #   context.each_target do
-    #     before_execute_on_target
-    #     execute_on_target
-    #   end
-    # end
+      #   context.each_target do
+      #     before_execute_on_target
+      #     execute_on_target
+      #   end
+      # end
 
-    # def execute_on_target
+      # def execute_on_target
       header = %w[Application Status Target Status_]
       table = TTY::Table.new(header: header, rows: rows)
 

@@ -15,7 +15,7 @@ class EnvironmentGenerator < Thor::Group
       create_file("#{name}/namespaces.yml", "---\n")
       template(views_path.join('services.yml.erb'), "#{name}/services.yml")
       inject_into_file('environments.yml') do
-      "\n#{name}:
+        "\n#{name}:
   key: #{name}
   type: Target::Instance
   runtime: compose

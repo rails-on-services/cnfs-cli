@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'tty-command'
 
 class Response
@@ -27,12 +28,12 @@ class Response
   # :all will run all commands from the first command added
   # :first will run just the first command
   def run!(type = nil)
-    return if errors.size.positive? and options.fail_fast
+    return if errors.size.positive? && options.fail_fast
 
     while (cmd = commands_to_run(type).shift)
       output.puts(cmd.exec) unless suppress_output
       cmd.pty ? execute_pty(cmd) : execute(cmd)
-      break if errors.size.positive? and options.fail_fast
+      break if errors.size.positive? && options.fail_fast
     end
   end
 
@@ -40,6 +41,7 @@ class Response
     return [commands.pop] if type.nil?
     return [commands.shift] if type.eql?(:first)
     return commands if type.eql?(:all)
+
     []
   end
 
@@ -51,16 +53,12 @@ class Response
   end
 
   def execute(cmd)
-    begin
-      # with_spinner('Building...') do end
-      result = command.run(cmd.exec, cmd_options(cmd))
-      if result.failure?
-        errors.add(cmd.caller, result.err.chomp)
-      end
-      @results << result.out
-    rescue StandardError => e # TTY::Command::ExitError => e
-      errors.add(cmd.caller, e.message)
-    end
+    # with_spinner('Building...') do end
+    result = command.run(cmd.exec, cmd_options(cmd))
+    errors.add(cmd.caller, result.err.chomp) if result.failure?
+    @results << result.out
+  rescue StandardError => e # TTY::Command::ExitError => e
+    errors.add(cmd.caller, e.message)
   end
 
   # Specific running command
@@ -80,8 +78,9 @@ class Response
   end
 
   def suppress_output
-    return false if options.key?(:quiet) and not options.quiet
-    return false if (options.verbose || options.debug || options.noop )
+    return false if options.key?(:quiet) && !options.quiet
+    return false if options.verbose || options.debug || options.noop
+
     true
   end
 

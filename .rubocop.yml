@@ -1,4 +1,4 @@
-Layout/LineLength:
+Metrics/LineLength:
   Max: 120
 Metrics/ClassLength:
   Exclude:

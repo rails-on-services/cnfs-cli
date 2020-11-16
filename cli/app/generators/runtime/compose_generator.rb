@@ -20,7 +20,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
 
     space_count = 6
     service.ports.each_with_object([]) do |entry, ary|
-      if entry.is_a?(Integer) or entry.is_a?(String)
+      if entry.is_a?(Integer) || entry.is_a?(String)
         ary.append("\n#{' ' * space_count}- #{entry}")
       elsif entry.is_a? Hash
         ary.append("\n#{' ' * space_count}- #{entry[:port]}")
@@ -40,7 +40,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   def compose_environment
     # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
-      compose_file: Dir["#{application.write_path}/**/*.yml"].map{ |f| f.gsub("#{application.root}/", '') }.join(':'),
+      compose_file: Dir["#{application.write_path}/**/*.yml"].map { |f| f.gsub("#{application.root}/", '') }.join(':'),
       compose_project_name: application.full_project_name,
       # context_dir: '../../../../../../..',
       # ros_context_dir: '../../../../../../../ros',

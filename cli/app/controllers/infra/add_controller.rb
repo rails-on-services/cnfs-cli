@@ -8,18 +8,10 @@ module Infra
     cnfs_class_options :environment
     # binding.pry
     class_option :namespace, desc: 'Target namespace',
-      aliases: '-n', type: :string
+                             aliases: '-n', type: :string
     cnfs_class_options :noop, :quiet, :verbose, :debug
-  end
-end
 
-=begin
-    attr_accessor :options, :arguments
-
-    def initialize(options:, arguments:)
-      @options = options
-      @arguments = arguments
-    end
+    private
 
     def execute
       # generator = Component::EnvironmentGenerator.new([arguments.name], options)
@@ -30,4 +22,3 @@ end
     end
   end
 end
-=end

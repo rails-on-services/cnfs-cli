@@ -9,15 +9,15 @@ module Cnfs
     end
 
     def add(attribute, message = :invalid, options = {})
-      @messages.append({ command: attribute, message: message, options: options })
+      @messages.append(command: attribute, message: message, options: options)
     end
 
     def size
       @messages.size
     end
-    
+
     def full_messages
-      messages.map{ |error| "#{error[:command]}: #{error[:message]}" }.join("\n")
+      messages.map { |error| "#{error[:command]}: #{error[:message]}" }.join("\n")
     end
   end
 end

@@ -19,7 +19,7 @@ class PrimaryController < Thor
   end
 
   # This command will not show up in a list; the user has to know it exists and call it directly
-  if Cnfs.config.dig(:cli, :dev) and ARGV[0].eql?('dev')
+  if Cnfs.config.dig(:cli, :dev) && ARGV[0].eql?('dev')
     cnfs_options :environment, :namespace
     desc 'dev', 'Placeholder command for development of new commands'
     def dev
@@ -48,7 +48,7 @@ class PrimaryController < Thor
       This generates a skeletal CNFS project in ~/Projects/todo.
     DESC
     option :force, desc: 'Force creation even if the project directory already exists',
-      aliases: '-f', type: :boolean
+                   aliases: '-f', type: :boolean
     def new(name)
       if Dir.exist?(name)
         if options.force || yes?('Directory already exists. Destroy and recreate?')

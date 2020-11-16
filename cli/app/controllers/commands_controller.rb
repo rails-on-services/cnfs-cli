@@ -14,7 +14,7 @@ class CommandsController < Thor
     Cnfs.require_deps
     arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
     response = Response.new(command_name: command_name, options: options, output: $stdout, input: $stdin)
-    if not Cnfs.require_project!(arguments: arguments, options: options, response: response)
+    unless Cnfs.require_project!(arguments: arguments, options: options, response: response)
       # binding.pry
       raise Cnfs::Error, set_color('Not a cnfs project', :red)
     end
@@ -24,8 +24,8 @@ class CommandsController < Thor
     # TODO: Some way to filter out the services that need to be built rather than all services (pg, nginx, etc)
     # NOTE: This could also apply to resources or anything else that uses -a
     if options.all
-      arguments[:services] = Service.pluck(:name) if arguments.key?(:services) and arguments[:services].empty?
-      arguments[:service] = arguments[:services].last if arguments.key?(:service) and arguments[:service].nil?
+      arguments[:services] = Service.pluck(:name) if arguments.key?(:services) && arguments[:services].empty?
+      arguments[:service] = arguments[:services].last if arguments.key?(:service) && arguments[:service].nil?
       Cnfs.project.initialize!
     end
     raise Cnfs::Error, Cnfs.project.errors.full_messages.join("\n") unless Cnfs.project.valid?

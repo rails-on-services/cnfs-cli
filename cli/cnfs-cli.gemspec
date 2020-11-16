@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'lib/cnfs/version'
 
 Gem::Specification.new do |spec|
@@ -63,9 +64,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'xdg', '~> 4.0'
   spec.add_dependency 'zeitwerk', '~> 2.4'
 
+  spec.add_development_dependency 'bump'
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 12.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'bump'
   # spec.add_development_dependency "awesome_print"
 end

@@ -17,11 +17,11 @@ class NamespacesController < CommandsController
 
   desc 'list', 'Lists configured namespaces'
   def list
-    paths = Cnfs.paths.config.join('environments', options.environment).children.select{ |e| e.directory? }
+    paths = Cnfs.paths.config.join('environments', options.environment).children.select(&:directory?)
     return unless paths.any?
 
     puts options.environment
-    puts paths.sort.map{ |path| "> #{path.split.last}" }
+    puts paths.sort.map { |path| "> #{path.split.last}" }
   end
 
   desc 'remove NAME', 'Remove namespace from environment configuration'
@@ -33,7 +33,7 @@ class NamespacesController < CommandsController
   desc 'generate', 'Generate service manifests'
   cnfs_options :namespace
   option :clean, desc: 'Delete all existing manifests before generating',
-    aliases: '-c', type: :boolean
+                 aliases: '-c', type: :boolean
   def generate
     run(:generate)
   end
@@ -45,7 +45,7 @@ class NamespacesController < CommandsController
   desc 'credentials', 'Display IAM credentials'
   cnfs_options :namespace
   option :format, desc: 'Options: sdk, cli, postman',
-    aliases: '-f', type: :string
+                  aliases: '-f', type: :string
   def credentials
     run(:credentials)
   end
@@ -67,13 +67,14 @@ class NamespacesController < CommandsController
   def destroy
     return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
                                       "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
+
     run(:destroy)
   end
 
   # Cluster Runtime
   desc 'deploy', 'Deploy all services to namespace'
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string, default: Cnfs.config.namespace
+                     aliases: '-n', type: :string, default: Cnfs.config.namespace
   # option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
   def deploy(*services)
     services = Service.pluck(:name) if services.empty?
@@ -82,9 +83,9 @@ class NamespacesController < CommandsController
 
   desc 'redeploy', 'Terminate and restart all services in namespace'
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string, default: Cnfs.config.namespace
+                     aliases: '-n', type: :string, default: Cnfs.config.namespace
   option :force, desc: 'Do not prompt for confirmation',
-    type: :boolean
+                 type: :boolean
   # TODO: validate that supplied services are correct and fail if they are not
   def redeploy(*services)
     services = Service.pluck(:name) if services.empty?
@@ -101,7 +102,7 @@ class NamespacesController < CommandsController
   created, restarting, running, removing, paused, exited, or dead
   DESC
   option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string, default: Cnfs.config.namespace
+                     aliases: '-n', type: :string, default: Cnfs.config.namespace
   def status(status = :running)
     run(:status, status: status)
   end

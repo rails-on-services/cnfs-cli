@@ -17,11 +17,11 @@ class Service::Rails < Service
     self.dockerfile ||= 'ros/Dockerfile.dev'
   end
 
-
   def git
-    Dir.chdir(Cnfs.paths.src.join(self.build_args['source_path'])) do
-    # Dir.chdir(application.apps_path.join(project_path)) do
-      return Config::Options.new.merge!(sha: '', branch_name: '') unless system('git rev-parse --git-dir > /dev/null 2>&1')
+    Dir.chdir(Cnfs.paths.src.join(build_args['source_path'])) do
+      unless system('git rev-parse --git-dir > /dev/null 2>&1')
+        return Config::Options.new.merge!(sha: '', branch_name: '')
+      end
 
       Config::Options.new(
         tag_name: `git tag --points-at HEAD`.chomp,

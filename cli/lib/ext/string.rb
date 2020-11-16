@@ -16,7 +16,7 @@ class String
   end
 
   def cnfs_sub(*objs)
-    return self unless objs.any? and (replace_ary = scan(/\${(.*?)}/).flatten)
+    return self unless objs.any? && (replace_ary = scan(/\${(.*?)}/).flatten)
 
     str = self
     replace_ary.each do |replace_string|

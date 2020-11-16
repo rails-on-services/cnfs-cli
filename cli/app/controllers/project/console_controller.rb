@@ -40,7 +40,7 @@ module Project
         Cnfs.reload
       end
       Project::ConsoleController::Commands.load
-      Pry.start(self, prompt: proc { |obj, nest_level, _| "cnfs> " })
+      Pry.start(self, prompt: proc { |_obj, _nest_level, _| 'cnfs> ' })
     end
   end
 end

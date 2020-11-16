@@ -15,7 +15,7 @@ class ApplicationController
     @options = options
     @response = response
     @name = self.class.name.demodulize.delete_suffix('Controller').downcase.to_sym
-    run('namespaces/generate') if application.manifest.was_purged? and not name.eql?(:generate)
+    run('namespaces/generate') if application.manifest.was_purged? && !name.eql?(:generate)
   end
 
   # NOTE: Don't pass a command from the router; This is for command chaining

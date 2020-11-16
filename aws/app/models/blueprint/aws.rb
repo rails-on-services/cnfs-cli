@@ -7,6 +7,5 @@ class Blueprint::Aws < Blueprint
 
   before_validation :set_defaults
 
-  def set_defaults
-  end
+  def set_defaults; end
 end

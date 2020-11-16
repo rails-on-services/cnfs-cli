@@ -17,7 +17,7 @@ module Rails
         # option :test_with, desc: 'Testing framework',
         #   aliases: '-t', type: :string, default: 'rspec'
         option :type, desc: 'The service type to generate, application or plugin',
-          aliases: '-t', type: :string
+                      aliases: '-t', type: :string
         def rails(name)
           before_run
           type = options.type || Cnfs.repository.service_type

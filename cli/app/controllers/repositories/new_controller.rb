@@ -17,7 +17,7 @@ module Repositories
 
       generator_name = "#{type}/repository_generator"
       unless (generator_class = generator_name.classify.safe_constantize)
-        raise Cnfs::Error, set_color("#{generator_name} class not found. This is a bug. please report", :red) 
+        raise Cnfs::Error, set_color("#{generator_name} class not found. This is a bug. please report", :red)
       end
 
       generator = generator_class.new(['restogy', name], options)

@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 # Convenience methods to add conventional configurations to a new project
-# Backend: 
+# Backend:
 module Project
   class AddController < Thor
-
     desc 'backend', 'Add backend package to the project'
     # option :backend, desc: 'Create the project with a set of typical backend services',
     #   aliases: '-b', type: :boolean
     option :cnfs, desc: 'Create CNFS service configurations for development mode',
-      type: :boolean
+                  type: :boolean
     def backend
       # add_backend_development_services
       # add_backend_repository_and_cnfs_services
@@ -59,7 +58,12 @@ module Project
       # end
     end
 
-    def this_repo; 'backend' end
-    def cnfs_repo; 'cnfs' end
+    def this_repo
+      'backend'
+    end
+
+    def cnfs_repo
+      'cnfs'
+    end
   end
 end

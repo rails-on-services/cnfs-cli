@@ -6,7 +6,7 @@ class InfraController < CommandsController
   # Activate common options
   cnfs_class_options :environment
   class_option :namespace, desc: 'Target namespace',
-    aliases: '-n', type: :string
+                           aliases: '-n', type: :string
   cnfs_class_options :noop, :quiet, :verbose, :debug
 
   register Infra::AddController, 'add', 'add SUBCOMMAND [options]', 'Add a new infrastructure blueprint'
@@ -25,16 +25,16 @@ class InfraController < CommandsController
 
   desc 'plan', 'Show the terraform infrastructure plan'
   option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
-    type: :boolean
+                 type: :boolean
   option :init, desc: 'Force to download latest modules from TF registry',
-    type: :boolean
+                type: :boolean
   def plan(*args)
     run(:plan, args)
   end
 
   desc 'apply', 'Apply the terraform infrastructure plan'
   option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
-    type: :boolean
+                 type: :boolean
   def apply(*args)
     run(:apply, args)
   end

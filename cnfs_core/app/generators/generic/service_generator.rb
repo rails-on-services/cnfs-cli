@@ -11,16 +11,16 @@ module Generic
     def generate
       # binding.pry
       # FileUtils.touch(options.services_file)
-      if File.exist?(template_path)
-        content = ERB.new(File.read(template_path)).result(binding)
-      else
-        content = send(type)
-      end
+      content = if File.exist?(template_path)
+                  ERB.new(File.read(template_path)).result(binding)
+                else
+                  send(type)
+                end
       binding.pry
       if File.exist?(options.services_file)
         append_to_file(options.services_file, content)
         # When revoked, the above line will subtract content; if the file is now empty the next line will remove it
-        create_file(options.services_file) if behavior.eql?(:revoke) and File.size(options.services_file).zero?
+        create_file(options.services_file) if behavior.eql?(:revoke) && File.size(options.services_file).zero?
       else
         create_file(options.services_file, content)
       end

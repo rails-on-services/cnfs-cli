@@ -11,7 +11,7 @@ class RepositoriesController < Thor
 
   desc 'add URL [NAME]', 'Add a remote CNFS compatible services repository'
   def add(url, name = nil)
-    # Shortcut for CNFS backend repo 
+    # Shortcut for CNFS backend repo
     if (mapped_url = url_map[url.to_sym])
       url = mapped_url
     end
@@ -28,17 +28,17 @@ class RepositoriesController < Thor
   def list
     return unless Cnfs.paths.src.exist?
 
-    Cnfs.paths.src.children.select{ |e| e.directory? }.sort.each do |repo|
+    Cnfs.paths.src.children.select(&:directory?).sort.each do |repo|
       puts repo.split.last
       next unless repo.join('services').exist?
 
-      puts repo.join('services').children.select{ |e| e.directory? }.map{ |path| "> #{path.split.last}" }.sort
+      puts repo.join('services').children.select(&:directory?).map { |path| "> #{path.split.last}" }.sort
     end
   end
 
   desc 'remove NAME', 'Remove a repository from the project'
   def remove(name)
-    return unless (options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the repository.\nAre you sure?"))
+    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the repository.\nAre you sure?")
 
     Cnfs.require_deps
     Cnfs.require_project!(arguments: {}, options: options, response: nil)
@@ -60,7 +60,7 @@ class RepositoriesController < Thor
   def clone_repository(url, name)
     cmd = "git clone #{url} #{name}"
     # TODO: Use the response object to run the command
-    puts cmd if options.debug.positive? or options.verbose
+    puts cmd if options.debug.positive? || options.verbose
     Dir.chdir(Cnfs.paths.src) { `#{cmd}` } unless options.noop
   end
 end

@@ -67,7 +67,7 @@ class Blueprint::Aws::Instance < Blueprint::Aws
   #   ERB.new(erbs, trim_mode: '-').result(binding)
   # end
 
-  # # TODO: 
+  # # TODO:
   # def erbs
   #   # ERB.new(IO.read(Cnfs.gem_root.join('app/models/fart.erb')), trim_mode: '-').result(binding)
   #   '<% MODULES.each do |key| -%>

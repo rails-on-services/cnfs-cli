@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'fileutils'
 require 'thor'
 require 'active_support/inflector'
@@ -16,7 +17,7 @@ class Generator < Thor::Group
   private
 
   def metadata
-    @metadata ||= Thor::CoreExt::HashWithIndifferentAccess.new({
+    @metadata ||= Thor::CoreExt::HashWithIndifferentAccess.new(
       angular: {
         summary: 'the Angular Framework',
         description: 'create Angular repositories and services in CNFS project'
@@ -36,8 +37,8 @@ class Generator < Thor::Group
       cnfs_core: {
         summary: 'CNFS Core Services',
         description: 'install service configurations into CNFS projects'
-      },
-    })
+      }
+    )
   end
 
   def source_paths
@@ -62,9 +63,9 @@ end
 
 class GemCli < Thor
   class_option :noop, desc: 'Do not execute commands',
-    aliases: '-n', type: :boolean
+                      aliases: '-n', type: :boolean
   class_option :verbose, desc: 'Display extra information from command',
-    aliases: '-v', type: :boolean
+                         aliases: '-v', type: :boolean
 
   desc 'new', 'Create new CLI plugin gem'
   def new(name)
@@ -79,14 +80,14 @@ class GemCli < Thor
 
   desc 'build', 'Build all gems'
   def build
-    each_dir do |name, gemspec|
+    each_dir do |_name, gemspec|
       exec("gem build #{gemspec}")
     end
   end
 
   desc 'install', 'Install all gems locally from source'
   def install
-    each_dir do |name, gemspec|
+    each_dir do |_name, gemspec|
       exec("gem build #{gemspec}")
       next unless (gem = Dir['*.gem'].shift)
 
@@ -97,20 +98,20 @@ class GemCli < Thor
 
   desc 'uninstall', 'Uninstall all gems'
   def uninstall
-    each_dir do |name, gemspec|
+    each_dir do |_name, gemspec|
       exec("gem uninstall -a -x #{gemspec.delete_suffix('.gemspec')}")
     end
   end
 
   desc 'gemspec', 'Generate gemspecs for all gems'
   def gemspec
-    each_dir do |name, gemspec|
+    each_dir do |name, _gemspec|
       next if name.eql?('cli')
 
       begin
         generator = Generator.new([name], {})
         generator.invoke_all
-      rescue => e
+      rescue StandardError => e
         puts e
         puts "Failed to generate gemspec for #{name}"
       end

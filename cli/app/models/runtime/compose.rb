@@ -92,7 +92,9 @@ class Runtime::Compose < Runtime
   end
 
   # TODO: make this a configuration option
-  def default_profile; 'server' end
+  def default_profile
+    'server'
+  end
 
   ###
   # Service Runtime
@@ -164,7 +166,6 @@ class Runtime::Compose < Runtime
     @runtime_services ||= runtime_services_query(format: format, status: status, **filters)
   end
 
-
   private
 
   def compose(command, *modifiers)
@@ -211,7 +212,7 @@ class Runtime::Compose < Runtime
   end
 
   def gem_cache_server
-    return unless Cnfs.capabilities.include?(:docker) and `docker ps`.index('gem_server')
+    return unless Cnfs.capabilities.include?(:docker) && `docker ps`.index('gem_server')
 
     host = RbConfig::CONFIG['host_os']
     # TODO: Make this configurable per user

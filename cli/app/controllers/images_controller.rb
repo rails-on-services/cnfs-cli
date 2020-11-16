@@ -25,13 +25,13 @@ class ImagesController < CommandsController
 
   desc 'test [IMAGES]', 'Run test commands on service image(s)'
   option :build, desc: 'Build image before testing',
-    aliases: '-b', type: :boolean
+                 aliases: '-b', type: :boolean
   option :fail_all, desc: 'Skip any remaining services after a test fails',
-    aliases: '--fa', type: :boolean
+                    aliases: '--fa', type: :boolean
   option :fail_fast, desc: 'Skip any remaining tests for a service after a test fails',
-    aliases: '--ff', type: :boolean
+                     aliases: '--ff', type: :boolean
   option :push, desc: 'Push image after successful testing',
-    aliases: '-p', type: :boolean
+                aliases: '-p', type: :boolean
   # TODO: Test arguments are defined in the services.yml:
   # test_commands:
   #   this: bundle exec rspec ...
