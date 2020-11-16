@@ -6,7 +6,7 @@ module Cnfs
       class << self
         def initialize_rails
           require 'cnfs/cli/rails'
-          name.gsub('Plugins', 'Cli').safe_constantize&.initialize
+          Cnfs::Cli::Rails.initialize
         end
       end
     end

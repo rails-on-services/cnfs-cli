@@ -8,9 +8,19 @@ module Cnfs
 
   class Error < StandardError; end
 
+  class Logger
+    def info(msg)
+      puts msg if Cnfs.config.debug.positive?
+    end
+
+    def debug(msg)
+      puts msg if Cnfs.config.debug > 1
+    end
+  end
+
   class << self
     attr_accessor :autoload_dirs, :pwd, :repository
-    attr_reader :project, :config, :project_root, :repository_root
+    attr_reader :project, :config, :project_root, :repository_root, :logger
     PROJECT_FILE = 'lib/project.rb'
 
     def reset
@@ -26,6 +36,7 @@ module Cnfs
 
     def initialize!
       @pwd = Pathname.new(Dir.pwd)
+      @logger = Logger.new
       # Display help for new command when no argument is passed 
       ARGV.unshift('help', 'new') if ARGV.size.zero? and project_root.nil?
       raise Cnfs::Error, 'Not a cnfs project' unless project_root
@@ -43,7 +54,7 @@ module Cnfs
         setup_loader
         PrimaryController.start
       end
-      puts "Wall time: #{Time.now - s}" if config.debug.positive?
+      Cnfs.logger.info "Wall time: #{Time.now - s}"
     end
 
     def require_minimum_deps
@@ -69,7 +80,7 @@ module Cnfs
     end
 
     def require_deps
-      puts 'Loading dependencies...' if config.debug.positive?
+      Cnfs.logger.info 'Loading dependencies...'
       s = Time.now
       require 'active_record'
       require 'active_record/fixtures'
@@ -85,7 +96,7 @@ module Cnfs
 
       require_relative 'cnfs/project'
       require_relative 'cnfs/schema'
-      puts "Loaded in #{Time.now - s} seconds" if config.debug.positive?
+      Cnfs.logger.info "Loaded in #{Time.now - s} seconds"
     end
 
     def load_config
@@ -124,17 +135,17 @@ module Cnfs
 
       Cnfs.paths.src.children.select{ |e| e.directory? }.each do |repo_path|
         repo_config_path = repo_path.join('cnfs/repository.yml')
-        puts "Scanning repository path #{repo_path}" if config.debug.positive?
+        Cnfs.logger.info "Scanning repository path #{repo_path}"
         next unless repo_config_path.exist? and (namespace = YAML.load_file(repo_config_path)['namespace'])
 
-        puts "Loading repository path #{repo_path}" if config.debug.positive?
+        Cnfs.logger.info "Loading repository path #{repo_path}"
         config = YAML.load_file(repo_config_path).merge({
           path: repo_path
         })
         repositories[namespace.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
       end
       @repository = current_repository
-      puts "Current repository set to #{repository&.name}" if config.debug.positive?
+      Cnfs.logger.info "Current repository set to #{repository&.namespace}"
     end
 
     # Zeitwerk based class loader methods
@@ -142,6 +153,7 @@ module Cnfs
       add_plugin_autoload_paths
       add_repository_autoload_paths
       add_extensions
+      Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
       Zeitwerk::Loader.default_logger = method(:puts) if config.debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
 

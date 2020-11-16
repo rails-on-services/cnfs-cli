@@ -6,7 +6,7 @@ module Cnfs
       class << self
         def initialize_gcp
           require 'cnfs/cli/gcp'
-          name.gsub('Plugins', 'Cli').safe_constantize&.initialize
+          Cnfs::Cli::Gcp.initialize
         end
       end
     end

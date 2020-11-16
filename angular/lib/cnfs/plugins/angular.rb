@@ -6,7 +6,7 @@ module Cnfs
       class << self
         def initialize_angular
           require 'cnfs/cli/angular'
-          name.gsub('Plugins', 'Cli').safe_constantize&.initialize
+          Cnfs::Cli::Angular.initialize
         end
       end
     end

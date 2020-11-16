@@ -6,7 +6,7 @@ module Cnfs
       class << self
         def initialize_aws
           require 'cnfs/cli/aws'
-          name.gsub('Plugins', 'Cli').safe_constantize&.initialize
+          Cnfs::Cli::Aws.initialize
         end
       end
     end

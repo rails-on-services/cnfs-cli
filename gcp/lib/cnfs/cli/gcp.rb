@@ -9,7 +9,7 @@ module Cnfs
         end
 
         def initialize
-          puts "Initializing plugin gcp from #{gem_root}" if Cnfs.config.debug.positive?
+          Cnfs.logger.info "Initializing plugin gcp from #{gem_root}"
         end
 
         def on_project_initialize
