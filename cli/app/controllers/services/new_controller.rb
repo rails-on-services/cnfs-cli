@@ -10,12 +10,5 @@ module Services
     cnfs_class_options :repository, :noop, :quiet, :verbose
 
     private
-
-    def before_run
-      repository = Cnfs.repositories[options.repository.to_sym]
-      raise Cnfs::Error, "Unknown repostiory #{options.repository}" unless repository
-
-      Cnfs.repository = repository
-    end
   end
 end

@@ -16,10 +16,15 @@ module Rails
         #   aliases: '-D', type: :string, default: 'postgresql'
         # option :test_with, desc: 'Testing framework',
         #   aliases: '-t', type: :string, default: 'rspec'
-        option :type, desc: 'The service type to generate, application or plugin',
-                      aliases: '-t', type: :string
+        option :gem,        desc: 'Base this service on a CNFS compatible service gem from rubygems, e.g. cnfs-iam',
+                            aliases: '-g', type: :string
+        option :gem_source, desc: 'Source path to a gem in the project filesystem, e.g. ros/iam (used for development of source gem)',
+                            aliases: '-s', type: :string
+        option :type,       desc: 'The service type to generate, application or plugin',
+                            aliases: '-t', type: :string
         def rails(name)
-          before_run
+          binding.pry
+          # before_run
           type = options.type || Cnfs.repository.service_type
           raise Cnfs::Error, "Unknown service type #{type}" unless %w[application plugin].include?(type)
 

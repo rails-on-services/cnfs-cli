@@ -9,9 +9,9 @@ module Services
 
     # Activate common options
     cnfs_class_options :noop, :quiet, :verbose
-    class_option :environment, desc: 'Target environment',
-                               aliases: '-e', type: :string
-    class_option :namespace, desc: 'Target namespace',
-                             aliases: '-n', type: :string
+    # class_option :environment, desc: 'Target environment',
+    #                            aliases: '-e', type: :string
+    # class_option :namespace, desc: 'Target namespace',
+    #                          aliases: '-n', type: :string
   end
 end

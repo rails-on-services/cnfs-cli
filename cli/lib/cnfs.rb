@@ -69,6 +69,7 @@ module Cnfs
       require 'config'
       require 'fileutils'
       require 'thor'
+      require 'thor/hollaback'
       require 'xdg'
       require 'zeitwerk'
 
@@ -187,9 +188,9 @@ module Cnfs
       end
     end
 
-    def repository_root
-      @repository_root ||= repository ? project_root.join(repository.path) : ''
-    end
+    # def repository_root
+    #   @repository_root ||= repository ? project_root.join(repository.path) : ''
+    # end
 
     # Determine the current repository from where the user is in the project filesystem
     # Returns the default repository unless the user is in the path of another project repository

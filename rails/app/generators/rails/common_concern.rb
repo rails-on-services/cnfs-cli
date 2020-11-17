@@ -14,6 +14,7 @@ module Rails
           puts env
           puts exec_ary.join(' ')
         end
+        binding.pry
         inside(path) do
           yield(env, exec_ary)
         end
@@ -34,7 +35,7 @@ module Rails
       def gem_env(path)
         return {} unless options.gem_source
 
-        gem_repo, gem_name = options.gem_source.split('/')
+        gem_repo, gem_name = options.gem_source.to_s.split('/')
         gem_name ||= name
 
         {

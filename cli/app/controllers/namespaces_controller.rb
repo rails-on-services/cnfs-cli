@@ -25,6 +25,7 @@ class NamespacesController < CommandsController
   end
 
   desc 'remove NAME', 'Remove namespace from environment configuration'
+  map %w[rm] => :remove
   def remove(name)
     Namespaces::AddRemoveController.new(options: options.merge(behavior: :revoke), arguments: { name: name }).execute
   end

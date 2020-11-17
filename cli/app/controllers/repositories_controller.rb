@@ -25,6 +25,7 @@ class RepositoriesController < Thor
   end
 
   desc 'list', 'List repositories and services'
+  map %w[ls] => :list
   def list
     return unless Cnfs.paths.src.exist?
 
@@ -37,6 +38,7 @@ class RepositoriesController < Thor
   end
 
   desc 'remove NAME', 'Remove a repository from the project'
+  map %w[rm] => :remove
   def remove(name)
     return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the repository.\nAre you sure?")
 

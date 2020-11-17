@@ -60,6 +60,20 @@ module Cnfs
           include extension.klass
         end
       end
+
+      private
+
+      def set_repository
+        unless (Cnfs.repository = Cnfs.repositories[options.repository.to_sym])
+          raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
+            " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
+        end
+      end
+
+      def services_file_path
+        path = [options.environment, options.namespace].compact.join('/')
+        Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
+      end
     end
   end
 end
