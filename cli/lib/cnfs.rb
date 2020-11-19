@@ -55,10 +55,16 @@ module Cnfs
         initialize_repositories
         setup_loader
         add_extensions
-        Cnfs.logger.info "Loaded Extensions:\n#{extensions.join("\n")}"
         MainController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
+    end
+
+    # TODO: This is a quick and dirty to get the project name w/out loading the entire project
+    def require_for_project_name
+      require 'active_record'
+      require 'cnfs/project'
+      require "#{pwd}/lib/project"
     end
 
     def require_minimum_deps
@@ -142,14 +148,14 @@ module Cnfs
       Cnfs.paths.src.children.select(&:directory?).each do |repo_path|
         repo_config_path = repo_path.join('cnfs/repository.yml')
         Cnfs.logger.info "Scanning repository path #{repo_path}"
-        next unless repo_config_path.exist? && (namespace = YAML.load_file(repo_config_path)['namespace'])
+        next unless repo_config_path.exist? && (name = YAML.load_file(repo_config_path)['name'])
 
         Cnfs.logger.info "Loading repository path #{repo_path}"
         config = YAML.load_file(repo_config_path).merge(path: repo_path)
-        repositories[namespace.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
+        repositories[name.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
       end
       @repository = current_repository
-      Cnfs.logger.info "Current repository set to #{repository&.namespace}"
+      Cnfs.logger.info "Current repository set to #{repository&.name}"
     end
 
     # Zeitwerk based class loader methods
@@ -256,6 +262,7 @@ module Cnfs
     # Extensions found in autoload_dirs are configured to be loaded at a pre-defined extension point
     def add_extensions
       # Ignore the extension points which are the controllers in the cli core gem
+      Cnfs.logger.info "Loaded Extensions:"
       autoload_dirs.select { |p| p.split.last.to_s.eql?('controllers') }
                    .reject { |p| p.join('../..').split.last.to_s.eql?('cli') }.each do |controllers_path|
         Dir.chdir(controllers_path) do
@@ -271,6 +278,7 @@ module Cnfs
               help: klass.respond_to?(:help_text) ? klass.help_text : "#{namespace} SUBCOMMAND",
               description: klass.respond_to?(:description) ? klass.description : ''
             )
+            Cnfs.logger.info "#{klass} #{' ' * (40 - klass.to_s.size)} => #{extension_point}"
           end
         end
       end

@@ -45,26 +45,6 @@ module Cnfs
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
-        # create_table :applications, force: true do |t|
-        #   t.string :name
-        #   t.string :config
-        #   t.string :environment
-        #   t.string :type
-        # end
-        # ::Application.reset_column_information
-
-        # create_table :application_resources, force: true do |t|
-        #   t.references :application
-        #   t.references :resource
-        # end
-        # ApplicationResource.reset_column_information
-
-        # create_table :application_services, force: true do |t|
-        #   t.references :application
-        #   t.references :service
-        # end
-        # ApplicationService.reset_column_information
-
         create_table :assets, force: true do |t|
           t.string :name
           t.string :type
@@ -84,40 +64,22 @@ module Cnfs
         end
         Blueprint.reset_column_information
 
-        # create_table :contexts, force: true do |t|
-        #   # t.references :target
-        #   t.references :namespace
-        #   t.references :deployment
-        #   t.references :application
-        #   t.string :name
-        #   t.string :services
-        #   t.string :resources
-        #   t.string :tags
-        # end
-        # Context.reset_column_information
-
-        # create_table :context_services, force: true do |t|
-        #   t.references :context
-        #   t.references :service
-        # end
-        # ContextService.reset_column_information
-
-        # create_table :context_targets, force: true do |t|
-        #   t.references :context
-        #   t.references :target
-        # end
-        # ContextTarget.reset_column_information
-
-        # create_table :deployments, force: true do |t|
-        #   t.references :application
-        #   t.references :namespace
-        #   t.references :key
-        #   t.string :name
-        #   t.string :config
-        #   t.string :environment
-        #   t.string :service_environments
-        # end
-        # Deployment.reset_column_information
+        create_table :environments, force: true do |t|
+          t.references :key
+          t.references :runtime
+          t.references :infra_runtime
+          t.references :provider
+          t.references :blueprint
+          t.references :application
+          t.string :name
+          t.string :config
+          t.string :tf_config
+          t.string :environment
+          t.string :type
+          t.string :namespaces
+          t.string :dns_root_domain
+        end
+        Environment.reset_column_information
 
         create_table :keys, force: true do |t|
           t.string :name
@@ -126,7 +88,7 @@ module Cnfs
         Key.reset_column_information
 
         create_table :namespaces, force: true do |t|
-          t.references :target
+          t.references :environment
           t.references :key
           t.string :name
           t.string :config
@@ -174,12 +136,6 @@ module Cnfs
         # end
         # Resource.reset_column_information
 
-        # create_table :resource_tags, force: true do |t|
-        #   t.references :resource
-        #   t.references :tag
-        # end
-        # ResourceTag.reset_column_information
-
         create_table :services, force: true do |t|
           # TODO: Perhaps these are better as strings that can be inherited
           t.references :source_repo
@@ -194,54 +150,6 @@ module Cnfs
           t.string :path
         end
         Service.reset_column_information
-
-        # create_table :service_tags, force: true do |t|
-        #   t.references :service
-        #   t.references :tag
-        # end
-        # ServiceTag.reset_column_information
-
-        # create_table :tags, force: true do |t|
-        #   t.string :name
-        #   t.string :description
-        #   t.string :config
-        #   t.string :environment
-        # end
-        # Tag.reset_column_information
-
-        create_table :targets, force: true do |t|
-          t.references :key
-          t.references :runtime
-          t.references :infra_runtime
-          t.references :provider
-          t.references :blueprint
-          t.string :name
-          t.string :config
-          t.string :tf_config
-          t.string :environment
-          t.string :type
-          t.string :namespaces
-          t.string :dns_root_domain
-        end
-        Target.reset_column_information
-
-        # create_table :target_namespaces, force: true do |t|
-        #   t.references :target
-        #   t.references :namespace
-        # end
-        # TargetResource.reset_column_information
-
-        # create_table :target_resources, force: true do |t|
-        #   t.references :target
-        #   t.references :resource
-        # end
-        # TargetResource.reset_column_information
-
-        # create_table :target_services, force: true do |t|
-        #   t.references :target
-        #   t.references :service
-        # end
-        # TargetService.reset_column_information
 
         create_table :users, force: true do |t|
           t.string :name

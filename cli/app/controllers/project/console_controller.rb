@@ -23,7 +23,7 @@ module Project
         end
 
         def shortcuts
-          { b: Blueprint, e: Target, k: Key, n: Namespace, p: Provider, r: Resource, s: Service, u: User }
+          { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Resource, s: Service, u: User }
         end
       end
     end

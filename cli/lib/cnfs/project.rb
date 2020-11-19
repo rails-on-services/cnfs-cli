@@ -36,7 +36,7 @@ module Cnfs
     # TODO: This would include any dirs from the project directory
     def initialize!
       Cnfs.invoke_plugins_wtih(:on_project_initialize)
-      @environment = Target.find_by(name: options.environment)
+      @environment = Environment.find_by(name: options.environment)
       @namespace = Namespace.find_by(name: options.namespace)
       @service = Service.find_by(name: arguments.service) if arguments.service
       @services = Service.where(name: arguments.services) if arguments.services
@@ -178,7 +178,7 @@ module Cnfs
       # 3. Otherwise continue
       FileUtils.mkdir_p(write_path(:fixtures))
       if options.environment && Cnfs.paths.config.join('environments', options.environment).exist?
-        File.open("#{write_path(:fixtures)}/targets.yml", 'w') { |f| f.write("#{options.environment}:\n  name: #{options.environment}\n  key: #{options.environment}\n  runtime: compose") }
+        File.open("#{write_path(:fixtures)}/environments.yml", 'w') { |f| f.write("#{options.environment}:\n  name: #{options.environment}\n  key: #{options.environment}\n  runtime: compose") }
         # if Cnfs.paths.config.join('environments', options.environment, "#{options.namespace}.yml").exist?
         if options.namespace && Cnfs.paths.config.join('environments', options.environment, options.namespace).exist?
           File.open("#{write_path(:fixtures)}/namespaces.yml", 'w') { |f| f.write("#{options.namespace}:\n  name: #{options.namespace}\n  key: #{options.namespace}") }
@@ -262,6 +262,12 @@ module Cnfs
 
     def self.descendants
       ObjectSpace.each_object(Class).select { |klass| klass < self }
+    end
+
+    # TODO: This is a quick and dirty to get the project name w/out loading the entire project
+    # Fix this when refactoring to A/R models
+    def self.x_name
+      descendants.pop.module_parent.to_s.underscore
     end
   end
 end

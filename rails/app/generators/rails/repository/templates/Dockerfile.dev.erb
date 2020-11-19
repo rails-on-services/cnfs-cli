@@ -1,0 +1,20 @@
+# Dockerfile.dev
+<%= dockerfile_header -%>
+
+ARG cnfs_source_path=<%= cnfs.source_repo_name %>
+ARG cnfs_target_path=<%= cnfs.source_repo_path %>
+
+COPY ${cnfs_source_path}/lib/core/*.gemspec ${cnfs_target_path}/lib/core/
+COPY ${cnfs_source_path}/lib/sdk/*.gemspec ${cnfs_target_path}/lib/sdk/
+RUN sed -i '/git/d' ${cnfs_target_path}/lib/sdk/*.gemspec
+
+<%= dockerfile_content -%>
+
+ARG cnfs_source_path=<%= cnfs.source_repo_name %>
+ARG cnfs_target_path=<%= cnfs.source_repo_path %>
+
+COPY --chown=rails:rails ${cnfs_source_path}/lib/core/. ${cnfs_target_path}/lib/core/
+COPY --chown=rails:rails ${cnfs_source_path}/lib/sdk/. ${cnfs_target_path}/lib/sdk/
+RUN sed -i '/git/d' ${cnfs_target_path}/lib/sdk/*.gemspec
+
+<%= dockerfile_runtime_content -%>

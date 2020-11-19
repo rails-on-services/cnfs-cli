@@ -10,8 +10,8 @@ apply('postgres.rb')
 apply('readme.rb')
 apply('gemspec.rb')
 
-gem "#{cnfs.repository_name}-core", path: '../../lib/core'
-gem "#{cnfs.repository_name}_sdk", path: '../../lib/sdk'
+gem "#{cnfs.repo_name}-core", path: '../../lib/core'
+gem "#{cnfs.repo_name}_sdk", path: '../../lib/sdk'
 
 # Create Engine's namespaced classes
 template 'app/models/%namespaced_name%/application_record.rb'

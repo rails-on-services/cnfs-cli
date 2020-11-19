@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+# module <%# platform_name.classify %>
+module <%= full_service_name.classify %>
+  class Client < Ros::Platform::Client; end
+  class Base < Ros::Sdk::Base; end
+
+  class Tenant < Base; end
+end
+# end

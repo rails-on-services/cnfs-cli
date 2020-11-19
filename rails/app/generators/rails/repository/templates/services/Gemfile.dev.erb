@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+# services/Gemfile.dev
+
+<% if cnfs.source_repo_path %>
+# Include the ros core and sdk
+gem '<%= cnfs.source_repo_name %>-core', path: '<%= cnfs.source_repo_path %>/lib/core'
+gem '<%= cnfs.source_repo_name %>_sdk', path: '<%= cnfs.source_repo_path %>/lib/sdk'
+
+# NOTE: The empty group is to put a separator between the above gems and the ones below.
+# Without this, rails template will put them in alphabetical order which is a problem
+group :development do
+end
+<% end %>
+
+# Include the project's core and sdk
+# gem '<%= cnfs.repo_name %>_core', path: '<%= cnfs.repo_path %>/lib/core'
+# gem '<%= cnfs.repo_name %>_sdk', path: '<%= cnfs.repo_path %>/lib/sdk'

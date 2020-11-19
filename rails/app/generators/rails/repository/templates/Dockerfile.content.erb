@@ -1,0 +1,50 @@
+# Don't use the --deployment flag since this is a container. See: http://bundler.io/man/bundle-install.1.html#DEPLOYMENT-MODE
+ARG GEM_SERVER
+ARG bundle_string='development test'
+RUN bundle config set without ${bundle_string}
+# Build a layer with gems from just the common Gemfile
+# Remove reference to git in spec.files
+RUN sed -i '/git/d' ${target_path}/lib/sdk/*.gemspec \
+ && bundle install \
+ && find /usr/local/bundle -iname '*.o' -exec rm -rf {} \; \
+ && find /usr/local/bundle -iname '*.a' -exec rm -rf {} \; \
+ && mv Gemfile ..
+
+# Build the project specific gems
+ARG project=user
+COPY ${source_path}/services/${project}/Gemfile* ./
+# TODO: next line not present in Dockerile.dev, but is present in Dockerfile
+# COPY ${source_path}/services/${project}/ros-${project}.gemspec ./
+
+RUN bundle install \
+ && find /usr/local/bundle -iname '*.o' -exec rm -rf {} \; \
+ && find /usr/local/bundle -iname '*.a' -exec rm -rf {} \;
+
+# Runtime container
+FROM ruby:2.7.1-slim-buster
+
+# Install OS packages and create a non-root user to run the application
+# To compile pg gem: libpq-dev
+# To install pg client to run via bash: postgresql-client
+ARG os_packages='libpq5 git less'
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends ${os_packages} \
+ && apt-get clean
+
+ARG PUID=1000
+ARG PGID=1000
+
+RUN [ $(getent group $PGID) ] || addgroup --gid ${PGID} rails \
+ && useradd -ms /bin/bash -d /home/rails --uid ${PUID} --gid ${PGID} --non-unique rails \
+ && mkdir -p /home/rails/services/app \
+ && echo 'set editing-mode vi' > /home/rails/.inputrc.vi \
+ && echo "alias ivi='cp /home/rails/.inputrc.vi /home/rails/.inputrc; set -o vi'" > /home/rails/.bash_aliases \
+ && echo "alias rspec='spring rspec $@'\nalias src='ss; rc'\nalias ss='spring stop'\nalias rs='rails server -b 0.0.0.0 --pid /tmp/server.pid'\nalias rc='ivi; spring rails console'\nalias rk='spring rake'" >> /home/rails/.bash_aliases \
+ && chown ${PUID}:${PGID} /home/rails -R \
+ && echo 'rails ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+USER ${PUID}:${PGID}
+
+# Rails operations
+WORKDIR /home/rails/services/app

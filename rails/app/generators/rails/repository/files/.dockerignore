@@ -1,0 +1,38 @@
+# The placement of ! exception rules influences the behavior:
+# the last line of the .dockerignore that matches a particular file determines whether it is included or excluded.
+# --- Hidden files and directories ---
+**/*.gitignore
+
+**/README.md
+**/Guardfile
+**/puma.*
+
+# --- Rails ---
+**/tmp/*
+**/log/*
+
+**/db/*.sqlite3*
+**/public/system
+**/coverage/
+**/.orig
+**/.bundle
+
+
+# --- Operating System Files ---
+# --- OS X ---
+.DS_Store
+.AppleDouble
+.LSOverride
+# Icon must end with two \r
+Icon
+# Thumbnails
+._*
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk

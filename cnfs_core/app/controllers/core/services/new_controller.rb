@@ -2,7 +2,7 @@
 
 module Core
   module Services
-    class AddController < Thor
+    class NewController < Thor
       include Cnfs::Options
 
       # Label for Thor register command
@@ -14,8 +14,7 @@ module Core
       # NOTE: No environment or namespace; All services are declared at the project scope
       cnfs_class_options :repository, :noop, :quiet, :verbose, :force
 
-      # Run checks on the requested repository before executing the command
-      class_before :set_repository
+      # Validate that the requested repository is a rails repo and not the 'ros' repo
       class_before :validate_repository
 
       # TODO: If frontend repo exists then add to that; if backedn repo exists add to that also
@@ -24,25 +23,26 @@ module Core
       %w[cognito comm iam organization storage].each do |method|
         desc "#{method} [NAME]", "Add the #{method.capitalize} Service to the project"
         define_method(method) do |name = method|
-          generate_service(method, name)
-          generate_service_configs(method, name)
+          generate_service(name, method)
+          generate_service_configs(name, method)
         end
       end
 
       private
 
-      def generate_service(type, name)
-        options.merge!(gem: "cnfs-#{type}")
+      def generate_service(name, type)
+        options.merge!(gem: "cnfs-#{type}", type: Cnfs.repository.service_type)
         if (cnfs_repo = Cnfs.repositories[:ros])
-          # cnfs_service_path = cnfs_repo.path.join('services', type).sub("#{Cnfs.paths.src}/", '')
-          options.merge!(gem_source: "ros/#{type}") # cnfs_service_path)
+          repo_path = cnfs_repo.path.sub("#{Cnfs.paths.src}/", '')
+          options.merge!(gem_source: type)
         end
-        generator = Rails::ServiceGenerator.new(['restogy', name], options)
+        # generator = Rails::ServiceGenerator.new(['restogy', name], options)
+        generator = Rails::ServiceGenerator.new([name], options)
         generator.destination_root = Cnfs.repository.path
         generator.invoke_all
       end
 
-      def generate_service_configs(type, name)
+      def generate_service_configs(name, type)
         generator = Core::ServiceGenerator.new(['restogy', name, services_file_path], options)
         generator.destination_root = Cnfs.repository.path
         generator.invoke_all
@@ -53,7 +53,7 @@ module Core
           raise Cnfs::Error, "Invalid repository type '#{Cnfs.repository.type}'." \
             " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
         elsif Cnfs.repository.namespace.eql?('ros')
-          raise Cnfs::Error, "Cannot add cnfs service to repository 'ros'." \
+          raise Cnfs::Error, "Cannot add a CNFS service to repository 'ros'." \
             " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
         end
       end

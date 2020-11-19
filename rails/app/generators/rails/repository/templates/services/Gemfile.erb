@@ -1,7 +1,23 @@
+# frozen_string_literal: true
+# servcies/Gemfile
+# NOTE: The location of the gems on a path vs loaded from rubygems or other gem server
+# is coordinated with the Dockerfile
+
 source ENV['GEM_SERVER'] || 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '2.7.1'
+
+# Default environment is development
+# Sourced from <repo_root>/services/<service_root>/Gemfile so path names are relative to that directory
+# Gemfiles sourced:
+# services/service/Gemfile
+# services/Gemfile
+# services/Gemfile.env
+# services/service/Gemfile.env
+
+env = ENV['GEM_ENV'] ||= 'dev'
+["../Gemfile.#{env}", "Gemfile.#{env}"].each { |gemfile| instance_eval File.read(gemfile) }
 
 gem 'awesome_print'
 gem 'bootsnap', '>= 1.4.2', require: false
@@ -13,16 +29,9 @@ gem 'pg', '>= 0.18', '< 2.0'
 gem 'pry-rails'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
-gem 'rails', '~> 6.0.2.1'
+gem 'rails', '~> 6.0.3.4'
 gem 'rufus-scheduler', '~> 3.6.0'
 
-
-# TODO: The location of the gems on a path vs loaded from rubygems or other gem server
-# needs to be coordinated with the Dockerfile
-gem 'ros-core', path: '../../../ros/lib/core'
-gem 'ros_sdk', path: '../../../ros/lib/sdk'
-gem '<%= name %>-core', path: '../../lib/core'
-gem '<%= name %>_sdk', path: '../../lib/sdk'
 
 group :development do
   gem 'listen', '>= 3.0.5', '< 3.2'

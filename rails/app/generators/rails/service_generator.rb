@@ -7,61 +7,57 @@
 module Rails
   class ServiceGenerator < Thor::Group
     include Thor::Actions
-    include CommonConcern
-    argument :project_name
-    argument :name
+    include GeneratorConcern
+    # argument :project_name
+    # argument :repository_name
+    argument :service_name
 
     def service_gem
-      if behavior.eql? :revoke
-        inside('services') { empty_directory(name) }
-        return
+      send("service_gem_#{behavior}")
+    end
+
+    no_commands do
+      def service_gem_revoke
+        inside('services') { empty_directory(service_name) }
       end
 
-      raise Cnfs::Error, "service #{name} already exists" if Dir.exist?("#{destination_root}/services/#{name}")
-
-      binding.pry
-      with_context('service/generator.rb', "#{project_name}-#{name}", 'services') do |env, exec_ary|
-        system(env, exec_ary.join(' '))
+      # Create the service
+      def service_gem_invoke
+        base_env = { repo_name: Cnfs.repository.name, repo_path: '../..', name: full_service_name }
+        with_context('service/generator.rb', 'services', full_service_name, base_env) do |env, exec_ary|
+          system(env, exec_ary.join(' '))
+        end
       end
+    end
+
+    # Create a module and base classes for this service in the SDK and require it at load time
+    def sdk_service_model
+      template('sdk_model.rb.erb', "#{sdk_lib_path}/models/#{service_name}.rb")
+      append_file "#{sdk_lib_path}/models.rb", <<~RUBY
+        require_relative 'models/#{service_name}'
+      RUBY
     end
 
     # TODO: This should not be necessary
     # Figure out how to name the SDK and Core gems appropriately
     # def gemspec_content
     #   return unless options.type.eql?('plugin')
-
     #   gemspec = "services/#{name}/#{name}.gemspec"
     #   gsub_file gemspec, '  spec.name        = "', '  spec.name        = "cnfs-'
     # end
 
-    def sdk_service_model
-      create_file "#{sdk_lib_path}/models/#{name}.rb", <<~RUBY
-        # frozen_string_literal: true
-
-        module #{platform_name.split('_').collect(&:capitalize).join}
-          module #{name.split('_').collect(&:capitalize).join}
-            class Client < Ros::Platform::Client; end
-            class Base < Ros::Sdk::Base; end
-
-            class Tenant < Base; end
-          end
-        end
-      RUBY
-
-      append_file "#{sdk_lib_path}/models.rb", <<~RUBY
-        require '#{platform_name}_sdk/models/#{name}.rb'
-      RUBY
-    end
-
     private
 
-    def sdk_lib_path
-      lib_path.join('sdk/lib', "#{platform_name}_sdk")
+    def full_service_name
+      [namespace, service_name].compact.join('_')
     end
 
-    # TODO: Should this rather be passed in or taken from teh project name itself
-    def platform_name
-      File.basename(Dir["#{lib_path.join('sdk')}/*.gemspec"].first).delete_suffix('_sdk.gemspec')
+    def sdk_lib_path
+      lib_path.join('sdk/lib', [namespace, 'sdk'].compact.join('_'))
+    end
+
+    def namespace
+      @namespace ||= Cnfs.repository.namespace
     end
 
     def lib_path

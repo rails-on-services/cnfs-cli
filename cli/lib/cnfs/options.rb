@@ -35,7 +35,9 @@ module Cnfs
       add_cnfs_option :namespace,   desc: 'Target namespace',
                                     aliases: '-n', type: :string, default: Cnfs.config.namespace
       add_cnfs_option :repository,  desc: 'The repository in which to run the command',
-                                    aliases: '-r', type: :string, default: Cnfs.repository&.namespace
+                                    aliases: '-r', type: :string, default: Cnfs.repository&.name
+      add_cnfs_option :source_repository,  desc: 'The source repository to link to',
+        aliases: '-s', type: :string, default: Cnfs.config.source_repository
 
       add_cnfs_option :tag,         desc: 'Filter services by tag',
                                     aliases: '-t', type: :string

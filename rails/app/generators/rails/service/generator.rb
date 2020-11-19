@@ -7,7 +7,7 @@ def source_paths
 end
 
 def views_path
-  internal_path.join(ENV['CNFS_SERVICE_TYPE'])
+  internal_path.join(ENV['CNFS_TYPE'])
 end
 
 def lib_path
@@ -25,7 +25,7 @@ end
 apply('cnfs.rb')
 
 # Start in the root of the project rather than spec/dummy if generating a plugin
-work_dir = cnfs.service_type.eql?('plugin') ? '../..' : '.'
+work_dir = cnfs.type.eql?('plugin') ? '../..' : '.'
 Dir.chdir(work_dir) do
-  apply("#{internal_path}/#{cnfs.service_type}_generator.rb")
+  apply("#{internal_path}/#{cnfs.type}_generator.rb")
 end

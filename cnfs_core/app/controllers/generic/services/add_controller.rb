@@ -4,7 +4,6 @@ module Generic
   module Services
     class AddController < Thor
       include Cnfs::Options
-      include ::Services::AddConcern
 
       def self.description
         'Add a generic service'

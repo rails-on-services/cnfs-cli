@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+# services/<%= cnfs.name %>/Gemfile.dev
+
+<%- if cnfs.gem_source %>
+# Include the <%= cnfs.source_repo_name %> <%= cnfs.gem_source %> gem
+# gem '<%= cnfs.source_repo_name %>-<%= cnfs.gem_source %>', path: '<%= cnfs.source_repo_path %>/services/<%= cnfs.gem_source %>'
+<% end -%>

@@ -16,19 +16,31 @@ module Rails
         #   aliases: '-D', type: :string, default: 'postgresql'
         # option :test_with, desc: 'Testing framework',
         #   aliases: '-t', type: :string, default: 'rspec'
-        option :gem,        desc: 'Base this service on a CNFS compatible service gem from rubygems, e.g. cnfs-iam',
-                            aliases: '-g', type: :string
-        option :gem_source, desc: 'Source path to a gem in the project filesystem, e.g. ros/iam (used for development of source gem)',
-                            aliases: '-s', type: :string
+        # option :gem,        desc: 'Base this service on a CNFS compatible service gem from rubygems, e.g. cnfs-iam',
+        #                     aliases: '-g', type: :string
+        # option :gem_source, desc: 'Source path to a gem in the project filesystem, e.g. ros/iam (used for development of source gem)',
+        #                     aliases: '-s', type: :string
         option :type,       desc: 'The service type to generate, application or plugin',
-                            aliases: '-t', type: :string
+                            aliases: '-t', type: :string, default: Cnfs.repository&.service_type
+        cnfs_options :force
+        # TODO: Add before for type
         def rails(name)
-          binding.pry
-          # before_run
           type = options.type || Cnfs.repository.service_type
           raise Cnfs::Error, "Unknown service type #{type}" unless %w[application plugin].include?(type)
 
-          generate(:rails, ['restogy', name])
+          generator = Rails::ServiceGenerator.new([name], options)
+          generator.destination_root = Cnfs.repository.path
+
+          # TODO: Dir check does not take into account full_service_name
+          service_path = "#{generator.destination_root}/services/#{name}"
+          if Dir.exist?(service_path)
+            raise Cnfs::Error, "service #{name} already exists" unless options.force
+            FileUtils.rm_rf(service_path)
+            # TODO: This also doesn't reverse the SDK
+            # so it should run this with behvior revoke and then run again with invoke
+          end
+
+          generator.invoke_all
         end
       end
     end

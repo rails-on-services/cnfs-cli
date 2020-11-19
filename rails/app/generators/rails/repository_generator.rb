@@ -7,38 +7,41 @@
 module Rails
   class RepositoryGenerator < Thor::Group
     include Thor::Actions
-    include CommonConcern
+    include GeneratorConcern
     argument :project_name
-    argument :name
+    argument :repository_name
 
     def root_files
-      # return
       in_root do
-        # Dockerfile, cnfs.yml, etc
-        directory('files', '.')
         template('cnfs/repository.yml.erb', 'cnfs/repository.yml')
-        # ['', '.dev', '.prod'].each do |type|
-        #   template("services/Gemfile#{type}.erb", "services/Gemfile#{type}")
-        # end
-        # ['', '.dev'].each do |type|
-        #   # template("Dockerfile#{type}.erb", "Dockerfile#{type}")
-        # end
+        directory('files', '.')
+      end
+    end
+
+    def services_gemfiles
+      gemfile_extensions = ['', '.prod']
+      gemfile_extensions.append('.dev') if options.source_repository
+      in_root do
+        gemfile_extensions.each do |env|
+          template("services/Gemfile#{env}.erb", "services/Gemfile#{env}")
+        end
+      end
+    end
+
+    def dockerfiles
+      dockerfile_extensions = ['']
+      dockerfile_extensions.append('.dev') if options.source_repository
+      in_root do
+        dockerfile_extensions.each do |env|
+          template("Dockerfile#{env}.erb", "Dockerfile#{env}")
+        end
       end
     end
 
     def core_gem
-      gem_name = "#{project_name}-#{name}_core"
-      with_context('repository/core_generator.rb', gem_name, 'lib') do |env, exec_ary|
+      with_context('repository/core_generator.rb', 'lib', core_name, base_envs) do |env, exec_ary|
         system(env, exec_ary.join(' '))
-        # TODO: These gsubs should happen in the rails template itself
-        # and apply to both service and repo core gem
-        # inside(gem_name) do
-        #   gsub_file(gemspec, 'TODO: Write your name', `git config --get user.name`.chomp)
-        #   gsub_file(gemspec, 'TODO: Write your email address', `git config --get user.email`.chomp)
-        #   gsub_file(gemspec, '  spec.homepage', '  # spec.homepage')
-        #   gsub_file(gemspec, 'TODO: ', '')
-        # end
-        FileUtils.mv(gem_name, 'core')
+        FileUtils.mv(core_name, 'core') unless core_name.eql?('core')
       end
     end
 
@@ -46,31 +49,35 @@ module Rails
       exec_string = ['bundle gem']
       exec_string.append('--exe --no-coc --no-mit')
       exec_string.append(sdk_name)
-
-      env = {}
-      puts exec_string.join(' ') if options.debug
+      Cnfs.logger.debug exec_string.join(' ')
 
       inside 'lib' do
+        env = base_envs.transform_keys! { |k| k.to_s }
         system(env, exec_string.join(' '))
-        FileUtils.mv(sdk_name, 'sdk')
-        FileUtils.rm_rf('sdk/.git')
+        FileUtils.mv(sdk_name, 'sdk') unless sdk_name.eql?('sdk')
+        inside 'sdk' do
+          remove_directory('.git')
+          remove_file('bin/console')
+          str = v.size.positive? ? "require '#{v[0]}_sdk'" : ''
+          template('bin/console.erb', 'bin/console')
+          # TODO: Decide how to handle versioning
+          # remove_file("lib/#{sdk_path}/version.rb")
+        end
       end
     end
 
-    # TODO: Path to ros sdk needs to be an ENV or taken from an ENV at time of creating this file
-    def sdk_gemfile_content
-      inside 'lib/sdk' do
-        append_to_file 'Gemfile', after: "source \"https://rubygems.org\"\n" do
-          <<~HEREDOC
+    no_commands do
+      def v
+        envs = source_envs(base_envs)
+        envs.slice(:source_repo_name, :source_repo_path).values
+      end
+    end
 
-            gem 'ros_sdk', path: '../../../ros/lib/sdk'
-            gem 'pry'
-            gem 'awesome_print'
-          HEREDOC
-        end
-        # remove_file "lib/#{name}_sdk/version.rb"
-        remove_file 'bin/console'
-        # template 'bin/console.erb', 'bin/console'
+    def sdk_gemfile_content
+      str = v.size.positive? ? "gem '#{v[0]}_sdk', path: '#{v[1]}/lib/sdk'" : ''
+      inside 'lib/sdk' do
+        remove_file('Gemfile')
+        template('Gemfile.erb', 'Gemfile')
       end
     end
 
@@ -108,12 +115,77 @@ module Rails
 
     private
 
+    def cnfs
+      @cnfs ||= Thor::CoreExt::HashWithIndifferentAccess.new(base_envs.merge(source_envs(base_envs)).merge(service_envs))
+    end
+
+    def dockerfile_header
+      ERB.new(File.read(template_path.join('Dockerfile.header.erb'))).result(binding)
+    end
+
+    def dockerfile_content
+      ERB.new(File.read(template_path.join('Dockerfile.content.erb'))).result(binding)
+    end
+
+    def dockerfile_runtime_content
+      ERB.new(File.read(template_path.join('Dockerfile.runtime.content.erb'))).result(binding)
+    end
+
+    def template_path
+      views_path.join('templates')
+    end
+
+    def dockerfile_bundler
+      @dockerfile_bundler ||= "bundler:#{%x(bundler version).split[2]}"
+    end
+
+    # TODO: remove nokogiri
+    def dockerfile_gems
+      return 'nokogiri:1.10.10'
+
+      @dockerfile_gems ||= (
+        gem_list.map do |gem|
+          gem_name, version = %x(gem list -r "^#{gem}$" |tail -1).strip.split
+          "#{gem_name}:#{version.gsub('(', '').gsub(')', '')}"
+        end.join(" \\\n    ")
+      )
+    end
+
+    def gem_list
+      %w[nokogiri ffi grpc mini_portile2 msgpack pg nio4r puma eventmachine]
+    end
+
+    def base_envs
+      { repo_name: repository_name, repo_path: '../..', name: core_name }
+    end
+
+    def core_name
+      @core_name ||= [*namespace, 'core'].join('_')
+    end
+
     def sdk_path
       sdk_name.gsub('-', '/')
     end
 
     def sdk_name
-      "#{project_name}-#{name}_sdk"
+      @sdk_name ||= [*namespace, 'sdk'].join('_')
+    end
+
+    # TODO: Move to repository model after refactoring models
+    def namespace
+      @namespace ||= set_namespace
+    end
+
+    # TODO: Move to repository model after refactoring models
+    def set_namespace
+      case options.namespace
+      when 'project'
+        [project_name, repository_name]
+      when 'repository'
+        [repository_name]
+      else
+        []
+      end
     end
 
     def source_paths

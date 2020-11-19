@@ -2,8 +2,9 @@
 
 # gemspec.rb
 
-gemspec = "#{cnfs.service_name}.gemspec"
-klass = cnfs.service_name.split('-').collect(&:capitalize).join('::')
+gemspec = "#{cnfs.name}.gemspec"
+# TODO: use classify and test
+klass = cnfs.name.split('-').collect(&:capitalize).join('::')
 
 in_root do
   comment_lines gemspec, 'require '
@@ -16,4 +17,4 @@ in_root do
 end
 
 create_file 'config/environment.rb'
-template 'config/spring.rb' if cnfs.is_engine?
+template 'config/spring.rb' if cnfs.is_engine
