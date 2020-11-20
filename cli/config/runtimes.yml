@@ -12,5 +12,3 @@ compose:
 native:
   <<: *DEFAULTS
   type: Runtime::Native
-
-<%# Cnfs.load_configs(__FILE__) %>

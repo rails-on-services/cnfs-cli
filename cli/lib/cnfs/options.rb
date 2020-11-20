@@ -76,6 +76,20 @@ module Cnfs
         path = [options.environment, options.namespace].compact.join('/')
         Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
       end
+
+      # Usage: before: (or class_before:) :set_app_options
+      # Will pass cli options to Cnfs.app
+      def set_app_options
+        Cnfs.app.set_from_options(options)
+      end
+
+      # Usage: before: (or class_before:) :validate_destroy
+      # Will raise an error unless force option is provided or user confirms the action
+      def validate_destroy
+        return if options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
+
+        raise Cnfs::Error, 'Operation cancelled'
+      end
     end
   end
 end

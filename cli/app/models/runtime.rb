@@ -1,7 +1,15 @@
 # frozen_string_literal: true
 
 class Runtime < ApplicationRecord
+  belongs_to :app
   # has_many :targets
+
+
+  class << self
+    def dirs
+      [Cnfs.gem_root.join('config').to_s]
+    end
+  end
 
   store :config, accessors: %i[version], coder: YAML
 

@@ -25,12 +25,12 @@ module Cnfs
       # TODO: Is path modification even necessary now?
       # paths['db'].unshift(Cnfs.gem_root.join('db'))
       paths['app/views'].unshift(Cnfs.gem_root.join('app/views'))
-      compile_fixtures
+      # compile_fixtures
 
       Cnfs::Schema.dir = write_path(:fixtures)
-      puts 'Loading configuration...' if options.debug.positive?
-      Cnfs::Schema.initialize!
-      puts 'Loaded' if options.debug.positive?
+      # puts 'Loading configuration...' if options.debug.positive?
+      # Cnfs::Schema.initialize!
+      # puts 'Loaded' if options.debug.positive?
     end
 
     # TODO: This would include any dirs from the project directory
@@ -51,7 +51,7 @@ module Cnfs
     end
 
     def reload
-      compile_fixtures
+      # compile_fixtures
       Cnfs::Schema.reload
     end
 
@@ -127,9 +127,9 @@ module Cnfs
 
     def generate_runtime_configs!
       manifest.purge! if options.clean
-      generator = runtime.generator_class.new([], options)
-      generator.application = self
-      generator.invoke_all
+      # generator = runtime.generator_class.new([], options)
+      # generator.application = self
+      # generator.invoke_all
     end
 
     def runtime_services(format:, status:)
@@ -172,7 +172,7 @@ module Cnfs
       environment.decrypt(ciphertext)
     end
 
-    def compile_fixtures
+    def x_compile_fixtures
       # 1. If the file environments.yml exists and it has the key from options.environment write that to fixtures file
       # 2. If that fails then if the directory from options.environment exists then write that to fixtures file
       # 3. Otherwise continue

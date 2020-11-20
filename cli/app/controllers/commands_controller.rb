@@ -28,9 +28,10 @@ class CommandsController < Thor
       arguments[:service] = arguments[:services].last if arguments.key?(:service) && arguments[:service].nil?
       Cnfs.project.initialize!
     end
-    raise Cnfs::Error, Cnfs.project.errors.full_messages.join("\n") unless Cnfs.project.valid?
+    # raise Cnfs::Error, Cnfs.project.errors.full_messages.join("\n") unless Cnfs.project.valid?
+    Cnfs.app.set_from_options(options)
 
-    controller_name = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".camelize
+    controller_name = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".classify
 
     unless (controller_class = controller_name.safe_constantize)
       raise Cnfs::Error, set_color("Class not found: #{controller_name} (this is a bug. please report)", :red)

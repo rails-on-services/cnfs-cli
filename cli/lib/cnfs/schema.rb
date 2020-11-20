@@ -21,6 +21,7 @@ module Cnfs
       show_output = Cnfs.config.debug.positive?
       Cnfs.silence_output(!show_output) { create_schema }
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
+      # binding.pry
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
     # rescue ActiveRecord::Fixture::FixtureError => err
     #   raise Cnfs::Error, err
@@ -45,6 +46,18 @@ module Cnfs
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
+        create_table :apps, force: true do |t|
+          t.references :repository
+          t.references :source_repository
+          t.references :environment
+          t.references :namespace
+          t.string :name
+          t.string :config
+          t.string :paths
+          t.string :tags
+        end
+        App.reset_column_information
+
         create_table :assets, force: true do |t|
           t.string :name
           t.string :type
@@ -65,6 +78,7 @@ module Cnfs
         Blueprint.reset_column_information
 
         create_table :environments, force: true do |t|
+          t.references :app
           t.references :key
           t.references :runtime
           t.references :infra_runtime
@@ -76,14 +90,15 @@ module Cnfs
           t.string :tf_config
           t.string :environment
           t.string :type
-          t.string :namespaces
           t.string :dns_root_domain
+          t.string :tags
         end
         Environment.reset_column_information
 
         create_table :keys, force: true do |t|
           t.string :name
           t.string :value
+          t.string :tags
         end
         Key.reset_column_information
 
@@ -93,14 +108,17 @@ module Cnfs
           t.string :name
           t.string :config
           t.string :environment
+          t.string :tags
         end
         Namespace.reset_column_information
 
         create_table :providers, force: true do |t|
+          t.references :app
           t.string :name
           t.string :config
           t.string :environment
           t.string :type
+          t.string :tags
           # t.string :kubernetes
         end
         Provider.reset_column_information
@@ -113,16 +131,25 @@ module Cnfs
         # Registry.reset_column_information
 
         create_table :repositories, force: true do |t|
+          t.references :app
           t.string :name
           t.string :config
+          t.string :type
+          t.string :service_type
+          t.string :path
+          t.string :namespace
+          t.string :test_framework
+          t.string :tags
         end
         Repository.reset_column_information
 
         create_table :runtimes, force: true do |t|
+          t.references :app
           t.string :name
           t.string :config
           t.string :environment
           t.string :type
+          t.string :tags
         end
         Runtime.reset_column_information
 
@@ -137,23 +164,26 @@ module Cnfs
         # Resource.reset_column_information
 
         create_table :services, force: true do |t|
+          t.references :namespace
           # TODO: Perhaps these are better as strings that can be inherited
-          t.references :source_repo
-          t.references :image_repo
-          t.references :chart_repo
+          # t.references :source_repo
+          # t.references :image_repo
+          # t.references :chart_repo
           t.string :name
-          t.string :tags
           t.string :config
           t.string :environment
           t.string :type
           t.string :template
           t.string :path
+          t.string :tags
         end
         Service.reset_column_information
 
         create_table :users, force: true do |t|
+          t.references :app
           t.string :name
           t.string :role
+          t.string :tags
         end
         User.reset_column_information
       end

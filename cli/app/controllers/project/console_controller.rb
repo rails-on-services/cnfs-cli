@@ -23,7 +23,7 @@ module Project
         end
 
         def shortcuts
-          { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Resource, s: Service, u: User }
+          { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
         end
       end
     end
@@ -40,7 +40,13 @@ module Project
         Cnfs.reload
       end
       Project::ConsoleController::Commands.load
-      Pry.start(self, prompt: proc { |_obj, _nest_level, _| 'cnfs> ' })
+      if options.shortcuts
+        # Start the console with the loaded commands
+        Pry.start
+      else
+        # Start the console in the context of this controller
+        Pry.start(self, prompt: proc { |_obj, _nest_level, _| 'cnfs> ' })
+      end
     end
   end
 end

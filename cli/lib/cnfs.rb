@@ -20,7 +20,7 @@ module Cnfs
   end
 
   class << self
-    attr_accessor :autoload_dirs, :pwd, :repository
+    attr_accessor :autoload_dirs, :pwd, :repository, :app
     attr_reader :project, :config, :project_root, :repository_root, :logger
     PROJECT_FILE = 'lib/project.rb'
 
@@ -52,9 +52,26 @@ module Cnfs
         else
           initialize_plugins
         end
-        initialize_repositories
         setup_loader
         add_extensions
+
+        # BEGIN: Refactor Project to models
+        require_deps
+        # require_relative 'cnfs/project'
+        # @project = Cnfs::Project.new(root: pwd, arguments: {}, options: {}, response: nil)
+
+        # compile fixtures:
+        [App, Environment, Namespace, Provider, Repository, Runtime, Service, User].each { |model| model.parse }
+        # Key.parse([user_root.join('config').to_s])
+    
+        # puts 'Loading configuration...' if options.debug.positive?
+        # Cnfs::Schema.dir = write_path(:fixtures)
+        Cnfs::Schema.dir = Pathname.new('tmp/dump')
+        Cnfs::Schema.initialize!
+        # puts 'Loaded' if options.debug.positive?
+        @app = App.first
+        # END: Refactor Project to models
+
         MainController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
@@ -142,21 +159,21 @@ module Cnfs
       end
     end
 
-    def initialize_repositories
-      return unless Cnfs.paths.src.exist?
+    # def initialize_repositories
+    #   return unless Cnfs.paths.src.exist?
 
-      Cnfs.paths.src.children.select(&:directory?).each do |repo_path|
-        repo_config_path = repo_path.join('cnfs/repository.yml')
-        Cnfs.logger.info "Scanning repository path #{repo_path}"
-        next unless repo_config_path.exist? && (name = YAML.load_file(repo_config_path)['name'])
+    #   Cnfs.paths.src.children.select(&:directory?).each do |repo_path|
+    #     repo_config_path = repo_path.join('cnfs/repository.yml')
+    #     Cnfs.logger.info "Scanning repository path #{repo_path}"
+    #     next unless repo_config_path.exist? && (name = YAML.load_file(repo_config_path)['name'])
 
-        Cnfs.logger.info "Loading repository path #{repo_path}"
-        config = YAML.load_file(repo_config_path).merge(path: repo_path)
-        repositories[name.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
-      end
-      @repository = current_repository
-      Cnfs.logger.info "Current repository set to #{repository&.name}"
-    end
+    #     Cnfs.logger.info "Loading repository path #{repo_path}"
+    #     config = YAML.load_file(repo_config_path).merge(path: repo_path)
+    #     repositories[name.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
+    #   end
+    #   @repository = current_repository
+    #   Cnfs.logger.info "Current repository set to #{repository&.name}"
+    # end
 
     # Zeitwerk based class loader methods
     def setup_loader
@@ -241,6 +258,7 @@ module Cnfs
     # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
     # TODO: plugin and repository load paths should work the same way and follow same class structures
     # So there should just be one method to populate autoload_dirs
+    # TODO: This needs to be refactored b/c repositories are not in the Cnfs.repositories array now
     def add_repository_autoload_paths
       repositories.each do |_name, config|
         cnfs_load_path = Cnfs.project_root.join(config.path, 'cnfs/app')

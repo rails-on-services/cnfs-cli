@@ -1,18 +1,32 @@
 # frozen_string_literal: true
 
 class Repository < ApplicationRecord
-  store :config, accessors: %i[url repo_type options], coder: YAML
+  include BelongsToApp
 
-  after_initialize do
-    self.options ||= ''
+  store :config, accessors: %i[url repo_type], coder: YAML
+
+  validates :name, presence: true
+  validates :url, presence: true
+  # TODO: Validate the url is a proper git pattern:
+  # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
+
+  def clone
+    # Ensure the project's repositories directory exists
+    paths.src.mkpath
+    if paths.src.join(name).exist?
+      Cnfs.logger.info("Repository already exists at #{name}")
+      return
+    end
+
+    cmd = "git clone #{url} #{name}"
+    Cnfs.logger.debug(cmd)
+    # TODO: Use the response object to run the command?
+    Dir.chdir(app.paths.src) { `#{cmd}` } unless app.options.noop
+    true
   end
 
-  validates :url, presence: true
-
-  def pull
-    return if Dir.exist?(full_path)
-
-    "git clone #{url} #{full_path}"
+  def save_hash
+    { name => attributes.slice('name', 'config') }
   end
 
   def on_delete
@@ -20,24 +34,51 @@ class Repository < ApplicationRecord
   end
 
   def full_path
-    Cnfs.project.write_path(file_name).join(name)
+    paths.src.join(name)
   end
 
-  # TODO: refactor this to a concern so other global models can use it
-  # Just move the below methods to the conern
-  def delete
-    o = Config.load_file(file_path)
-    o.delete_field(name)
-    o.save
-    on_delete
-    super
-  end
+  class << self
+    def add(url, name)
+      if (mapped_url = url_map[url.to_sym])
+        url = mapped_url
+      end
+      name ||= url.split('/').last&.delete_suffix('.git')
+      repo = new(name: name, url: url)
+      return unless repo.valid? and repo.clone
 
-  def file_path
-    Cnfs.paths.config.join("#{file_name}.yml")
-  end
+      repo.save
+      # If this is the first source repository added to the project then make it the default
+      repo.app.update(source_repository: repo.name) if repo.app.source_repository.nil?
+    end
 
-  def file_name
-    self.class.name.underscore.pluralize
+    # Shortcuts for CNFS repos
+    def url_map
+      {
+        cnfs: 'git@github.com:rails-on-services/ros.git',
+        generic: 'git@github.com:rails-on-services/generic.git'
+      }
+    end
+
+    def parse
+      src = Pathname.new('src')
+      output = dirs.each_with_object({}) do |dir, output|
+        yaml = YAML.load_file("#{dir}/#{table_name}.yml")
+        yaml.each_with_object(output) do |(k, v), h|
+          #
+          repo_path = src.join(k)
+          Cnfs.logger.info "Scanning repository path #{repo_path}"
+          repo_config_path = repo_path.join('cnfs/repository.yml')
+          repo_yaml = {}
+          if repo_config_path.exist?
+            Cnfs.logger.info "Loading repository path #{repo_path}"
+            repo_yaml = YAML.load_file(repo_config_path).merge(path: repo_path.to_s)
+            repo_yaml.merge!(type: "repository/#{repo_yaml['type']}".classify)
+          end
+          #
+          h[k] = v.merge(name: k, app: 'app').merge(repo_yaml)
+        end
+      end
+      write_fixture(output)
+    end
   end
 end

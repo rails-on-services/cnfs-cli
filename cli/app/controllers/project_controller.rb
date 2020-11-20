@@ -12,17 +12,20 @@ class ProjectController < CommandsController
   desc 'config', 'Display project configuration'
   option :local, desc: 'Display local overrides',
                  aliases: '-l', type: :boolean
-  def config(_name = nil)
+  def config
+    # puts Cnfs.app.attributes
+    # puts "-----"
     YAML.load_file('cnfs.yml').each do |key, value|
       puts "#{key}: #{value}"
     end
   end
 
   desc 'console', 'Start a CNFS project console (short-cut: c)'
-  option :environment, desc: 'Target environment',
-                       aliases: '-e', type: :string, default: Cnfs.config.environment
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string, default: Cnfs.config.namespace
+  # TODO: Maybe have an option that removes :enfironment and namespace from options before running command
+  # So that Cnfs.app.valid? returns true if env and ns are not necessary
+  cnfs_options :environment, :namespace
+  option :shortcuts, desc: 'Start console with command shortcuts',
+                     aliases: '-s', type: :boolean
   map %w[c] => :console
   def console
     run(:console)
