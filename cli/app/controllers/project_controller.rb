@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class ProjectController < CommandsController
-  include Cnfs::Options
+class ProjectController < Thor
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose, :debug
@@ -23,12 +23,13 @@ class ProjectController < CommandsController
   desc 'console', 'Start a CNFS project console (short-cut: c)'
   # TODO: Maybe have an option that removes :enfironment and namespace from options before running command
   # So that Cnfs.app.valid? returns true if env and ns are not necessary
-  cnfs_options :environment, :namespace
-  option :shortcuts, desc: 'Start console with command shortcuts',
-                     aliases: '-s', type: :boolean
+  cnfs_options :environment, :namespace, :tags
+  before :initialize_project
+  before :ensure_valid_project
   map %w[c] => :console
   def console
-    run(:console)
+    execute
+    # command_controller.new(options: options).execute
   end
 
   desc 'init', 'Initialize the project'
@@ -40,7 +41,7 @@ class ProjectController < CommandsController
   Check for dependencies
   DESC
   def init
-    run(:init)
+    command.new(options: options).execute
   end
 
   desc 'customize', 'Customize project templates'

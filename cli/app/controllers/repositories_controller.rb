@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class RepositoriesController < Thor
-  include Cnfs::Options
+  include CommandHelper
   include Repositories::Concern
 
   # Activate common options

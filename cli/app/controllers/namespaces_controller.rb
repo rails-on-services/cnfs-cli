@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class NamespacesController < CommandsController
-  include Cnfs::Options
+class NamespacesController < Thor
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :environment
@@ -36,7 +36,8 @@ class NamespacesController < CommandsController
   option :clean, desc: 'Delete all existing manifests before generating',
                  aliases: '-c', type: :boolean
   def generate
-    run(:generate)
+    execute
+    # run(:generate)
   end
 
   # TODO: This should be a custom command

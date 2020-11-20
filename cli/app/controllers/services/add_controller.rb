@@ -5,7 +5,7 @@
 # To hook into this controller repositories need to implement <Namespace>::Services::AddController
 module Services
   class AddController < Thor
-    include Cnfs::Options
+    include CommandHelper
 
     # Activate common options
     cnfs_class_options :noop, :quiet, :verbose

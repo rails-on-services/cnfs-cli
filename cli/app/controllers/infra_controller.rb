@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class InfraController < CommandsController
-  include Cnfs::Options
+class InfraController < Thor
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :environment

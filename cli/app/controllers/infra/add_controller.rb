@@ -2,7 +2,7 @@
 
 module Infra
   class AddController < Thor
-    include Cnfs::Options
+    include CommandHelper
 
     # Activate common options
     cnfs_class_options :environment

@@ -1,52 +1,43 @@
 # frozen_string_literal: true
 
 module Project
-  class ConsoleController < ApplicationController
-    module Commands
-      class << self
-        def cache
-          @cache ||= {}
-        end
-
-        def reset_cache
-          @cache = nil
-        end
-
-        def load
-          shortcuts.each_pair do |key, klass|
-            define_method("#{key}a") { klass.all }
-            define_method("#{key}f") { Project::ConsoleController::Commands.cache["#{key}f"] ||= klass.first }
-            define_method("#{key}l") { Project::ConsoleController::Commands.cache["#{key}l"] ||= klass.last }
-            define_method("#{key}fb") { |name| klass.find_by(name: name) }
-          end
-          TOPLEVEL_BINDING.eval('self').extend(self)
-        end
-
-        def shortcuts
-          { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
-        end
-      end
-    end
+  class ConsoleController
+    include ExecHelper
 
     def execute
       require 'pry'
-      Pry::Commands.block_command 'r', 'Reload', keep_retval: true do |*_args|
-        Project::ConsoleController::Commands.reset_cache
-        Cnfs.reload
-      end
-      # TODO: Alias 'r' above to this command
-      Pry::Commands.block_command 'reload!', 'Reload', keep_retval: true do |*_args|
-        Project::ConsoleController::Commands.reset_cache
-        Cnfs.reload
-      end
-      Project::ConsoleController::Commands.load
-      if options.shortcuts
-        # Start the console with the loaded commands
-        Pry.start
-      else
-        # Start the console in the context of this controller
-        Pry.start(self, prompt: proc { |_obj, _nest_level, _| 'cnfs> ' })
+      Pry.start(self, prompt: proc { |_obj, _nest_level, _| 'cnfs> ' })
+    end
+
+    class << self
+      def shortcuts
+        { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
       end
     end
+
+    shortcuts.each_pair do |key, klass|
+      define_method("#{key}a") { klass.all }
+      define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
+      define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
+      define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
+      define_method("#{key}fb") { |name| klass.find_by(name: name) }
+    end
+
+    def cache
+      @cache ||= {}
+    end
+
+    def reset_cache
+      @cache = nil
+    end
+
+    def reload!
+      reset_cache
+      true
+    end
+
+    def r; reload! end
+
+    def a; Cnfs.app end
   end
 end

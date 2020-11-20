@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module BelongsToApp
+module BelongsToProject
   extend ActiveSupport::Concern
 
   included do

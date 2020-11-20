@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Repository < ApplicationRecord
-  include BelongsToApp
+  include BelongsToProject
 
   store :config, accessors: %i[url repo_type], coder: YAML
 

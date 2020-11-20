@@ -9,11 +9,7 @@ module Generic
     argument :type
 
     def generate
-      content = if File.exist?(template_path)
-                  ERB.new(File.read(template_path)).result(binding)
-                else
-                  send(type)
-                end
+      content = File.exist?(template_path) ? ERB.new(File.read(template_path)).result(binding) : send(type)
       in_root do
         if File.exist?(options.services_file)
           append_to_file(options.services_file, content)

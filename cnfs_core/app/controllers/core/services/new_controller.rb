@@ -3,7 +3,7 @@
 module Core
   module Services
     class NewController < Thor
-      include Cnfs::Options
+      include CommandHelper
 
       # Label for Thor register command
       def self.description
@@ -23,7 +23,7 @@ module Core
       %w[cognito comm iam organization storage].each do |method|
         desc "#{method} [NAME]", "Add the #{method.capitalize} Service to the project"
         define_method(method) do |name = method|
-          generate_service(name, method)
+          # generate_service(name, method)
           generate_service_configs(name, method)
         end
       end
@@ -45,11 +45,12 @@ module Core
       def generate_service_configs(name, type)
         generator = Core::ServiceGenerator.new(['restogy', name, services_file_path], options)
         generator.destination_root = Cnfs.repository.path
+        binding.pry
         generator.invoke_all
       end
 
       def validate_repository
-        if not Cnfs.repository.type.eql?('rails')
+        if not Cnfs.repository.type.eql?('Repository::Rails')
           raise Cnfs::Error, "Invalid repository type '#{Cnfs.repository.type}'." \
             " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
         elsif Cnfs.repository.namespace.eql?('ros')

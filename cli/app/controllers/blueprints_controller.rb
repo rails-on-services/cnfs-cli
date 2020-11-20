@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class BlueprintsController < Thor
-  include Cnfs::Options
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :environment

@@ -4,17 +4,21 @@ class Runtime < ApplicationRecord
   belongs_to :app
   # has_many :targets
 
-
   class << self
     def dirs
       [Cnfs.gem_root.join('config').to_s]
     end
   end
 
+  # delegate :options, to: :app
+  def options; Cnfs.app.options end
+
+
   store :config, accessors: %i[version], coder: YAML
 
   # Attributes configured by the controller
-  attr_accessor :application, :response, :options
+  attr_accessor :application, :response #, :options
+
 
   # method inherited from A/R base interferes with controller#destroy
   undef_method :destroy

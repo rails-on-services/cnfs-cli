@@ -10,6 +10,14 @@ class Manifest
     @purged
   end
 
+  def generate
+    # generator = Cnfs.app.runtime.generator_class.new([Cnfs.app], {}) # options)
+    generator = Cnfs.app.runtime.generator_class.new([], {}) # options)
+    binding.pry
+    generator.application = Cnfs.app
+    generator.invoke_all
+  end
+
   def outdated?
     return false if config_files.empty?
 

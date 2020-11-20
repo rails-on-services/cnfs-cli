@@ -58,9 +58,10 @@ class Runtime::Compose < Runtime
   ###
   # Service Admin Operations
   ###
-  def start
+  def start(services) # , options)
     compose_options = options.foreground ? '' : '-d'
-    response.add(exec: compose("up #{compose_options} #{exec_string}"), env: compose_env)
+    { exec: compose("up #{compose_options} #{services.pluck(:name).join(' ')}"), env: compose_env }
+    # response.add(exec: compose("up #{compose_options} #{exec_string}"), env: compose_env)
   end
 
   def stop
@@ -99,9 +100,9 @@ class Runtime::Compose < Runtime
   ###
   # Service Runtime
   ###
-  # TODO: add support for profile
   def attach(service)
-    response.add(exec: "docker attach #{application.full_project_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true)
+    { exec: "docker attach #{service.app.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true }
+    # response.add(exec: "docker attach #{service.app.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true)
   end
 
   def copy(src, dest)

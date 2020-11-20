@@ -4,7 +4,7 @@
 # To hook into this controller gems need to implement <Namespace>::Services::NewController
 module Services
   class NewController < Thor
-    include Cnfs::Options
+    include CommandHelper
 
     # Activate common options
     # NOTE: No environment or namespace; All services are declared at the project scope

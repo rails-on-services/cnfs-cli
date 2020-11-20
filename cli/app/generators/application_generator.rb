@@ -3,6 +3,7 @@
 class ApplicationGenerator < Thor::Group
   include Thor::Actions
   attr_accessor :application
+  # argument :application
 
   private
 

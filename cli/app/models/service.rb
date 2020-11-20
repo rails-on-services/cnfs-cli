@@ -3,7 +3,31 @@
 class Service < ApplicationRecord
   belongs_to :namespace
 
+  delegate :app, :runtime, to: :namespace
+
   validates :name, presence: true
+
+  store :config, accessors: %i[path image depends_on ports mount], coder: YAML
+  store :config, accessors: %i[shell_command], coder: YAML
+
+  # depends_on is used by compose to set order of container starts
+  # shell_command: the command ShellController passes to runtime.exec
+  after_initialize do
+    self.depends_on ||= []
+    self.shell_command ||= :bash
+  end
+
+  def attach
+    runtime.attach(self)
+  end
+
+  def start
+    runtime.start(self, app.options)
+  end
+
+  def test_commands(_options = nil)
+    []
+  end
 
   class << self
     # rubocop:disable Metrics/MethodLength
@@ -25,26 +49,12 @@ class Service < ApplicationRecord
             o_config[key].name = key.to_s
             o_config[key].namespace = "#{env}_#{ns}"
           end
-          ns_services_hash = o_config.to_hash.transform_keys! { |key| "#{env}_#{ns}_#{key}" }.deep_stringify_keys
+          ns_services_hash = o_config.to_hash.except(:DEFAULTS).transform_keys! { |key| "#{env}_#{ns}_#{key}" }.deep_stringify_keys
           hash.merge!(ns_services_hash)
         end
       end
       write_fixture(output)
     end
     # rubocop:enable Metrics/MethodLength
-  end
-
-  store :config, accessors: %i[path image depends_on ports mount], coder: YAML
-  store :config, accessors: %i[shell_command], coder: YAML
-
-  # depends_on is used by compose to set order of container starts
-  # shell_command: the command ShellController passes to runtime.exec
-  after_initialize do
-    self.depends_on ||= []
-    self.shell_command ||= :bash
-  end
-
-  def test_commands(_options = nil)
-    []
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class ImagesController < CommandsController
-  include Cnfs::Options
+class ImagesController < Thor
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :environment, :namespace, :noop, :quiet, :verbose, :debug

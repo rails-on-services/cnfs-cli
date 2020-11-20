@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/ClassLength
-class ServicesController < CommandsController
-  include Cnfs::Options
+class ServicesController < Thor
+  include CommandHelper
 
   # Define common options for this controller
-  add_cnfs_option :attach, desc: "Attach to service's running process ",
-                           aliases: '-a', type: :boolean
-  add_cnfs_option :build, desc: 'Build image before executing command',
-                          aliases: '-b', type: :boolean
+  add_cnfs_option :attach,   desc: "Attach to service's running process ",
+                             aliases: '-a', type: :boolean
+  add_cnfs_option :build,    desc: 'Build image before executing command',
+                             aliases: '-b', type: :boolean
   add_cnfs_option :console,  desc: "Connect to service's console",
                              aliases: '-c', type: :boolean
   add_cnfs_option :profiles, desc: 'Service profiles',
@@ -20,6 +20,7 @@ class ServicesController < CommandsController
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose
+  class_before :initialize_project
 
   register Services::NewController, 'new', 'new SUBCOMMAND [options]',
            'Create a new service in the default (or specified) repository'
@@ -80,8 +81,11 @@ class ServicesController < CommandsController
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   # TODO: Take a profile array also. The config should define a default profile
   map %w[s] => :start
+  after :execute_after
   def start(*services)
-    run(:start, services: services)
+    # puts 'hi'
+    execute(services: services)
+    # run(:start, services: services)
   end
 
   desc 'restart [SERVICES]', 'Stop and start one or more running services'
@@ -121,10 +125,12 @@ class ServicesController < CommandsController
   ctrl-f to detach; ctrl-c to stop/kill the service
   DESC
   cnfs_options :environment, :namespace
-  cnfs_options :profile
+  # cnfs_options :profile
+  cnfs_options :tags, :profile
   map %w[a] => :attach
   def attach(service)
-    run(:attach, service: service)
+    command_controller.new(arguments: { services: [service] }, options: options).execute
+    # run(:attach, service: service)
   end
 
   # NOTE: This is a test to run a command with multiple arguments; different from exec

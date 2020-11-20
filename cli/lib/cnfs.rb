@@ -21,8 +21,9 @@ module Cnfs
 
   class << self
     attr_accessor :autoload_dirs, :pwd, :repository, :app
-    attr_reader :project, :config, :project_root, :repository_root, :logger
-    PROJECT_FILE = 'lib/project.rb'
+    attr_reader :config, :project_root, :repository_root, :logger
+    # attr_reader :project, :config, :project_root, :repository_root, :logger
+    # PROJECT_FILE = 'lib/project.rb'
 
     def reset
       ARGV.shift # remove 'new'
@@ -54,35 +55,17 @@ module Cnfs
         end
         setup_loader
         add_extensions
-
-        # BEGIN: Refactor Project to models
-        require_deps
-        # require_relative 'cnfs/project'
-        # @project = Cnfs::Project.new(root: pwd, arguments: {}, options: {}, response: nil)
-
-        # compile fixtures:
-        [App, Environment, Namespace, Provider, Repository, Runtime, Service, User].each { |model| model.parse }
-        # Key.parse([user_root.join('config').to_s])
-    
-        # puts 'Loading configuration...' if options.debug.positive?
-        # Cnfs::Schema.dir = write_path(:fixtures)
-        Cnfs::Schema.dir = Pathname.new('tmp/dump')
-        Cnfs::Schema.initialize!
-        # puts 'Loaded' if options.debug.positive?
-        @app = App.first
-        # END: Refactor Project to models
-
         MainController.start
       end
       Cnfs.logger.info "Wall time: #{Time.now - s}"
     end
 
     # TODO: This is a quick and dirty to get the project name w/out loading the entire project
-    def require_for_project_name
-      require 'active_record'
-      require 'cnfs/project'
-      require "#{pwd}/lib/project"
-    end
+    # def require_for_project_name
+    #   require 'active_record'
+    #   require 'cnfs/project'
+    #   require "#{pwd}/lib/project"
+    # end
 
     def require_minimum_deps
       require 'active_support/concern'
@@ -97,7 +80,6 @@ module Cnfs
       require 'zeitwerk'
 
       require_relative 'cnfs/errors'
-      require_relative 'cnfs/options'
       require_relative 'cnfs/version'
       require_relative 'ext/config/options'
       require_relative 'ext/string'
@@ -234,7 +216,7 @@ module Cnfs
     end
 
     def autoload_all(path)
-      path.join('app').children.select(&:directory?).select { |m| %w[controllers models generators].include?(m.split.last.to_s) }
+      path.join('app').children.select(&:directory?).select { |m| %w[controllers helpers models generators].include?(m.split.last.to_s) }
     end
 
     # Scan plugsin for subdirs in <plugin_root>/app and add them to autoload_dirs
@@ -302,14 +284,14 @@ module Cnfs
       end
     end
 
-    def require_project!(arguments:, options:, response:)
-      project_file = project_root.join(PROJECT_FILE)
-      return unless File.exist?(project_file)
+    # def require_project!(arguments:, options:, response:)
+    #   project_file = project_root.join(PROJECT_FILE)
+    #   return unless File.exist?(project_file)
 
-      require project_file
-      @project = Cnfs::Project.descendants.shift&.new(root: project_root, arguments: arguments, options: options, response: response)
-      true
-    end
+    #   require project_file
+    #   @project = Cnfs::Project.descendants.shift&.new(root: project_root, arguments: arguments, options: options, response: response)
+    #   true
+    # end
 
     def invoke_plugins_wtih(method, *options)
       plugins_responding_to(method).each do |plugin|

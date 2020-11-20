@@ -5,7 +5,7 @@
 module Aws
   module Infra
     class AddController < Thor
-      include Cnfs::Options
+      include CommandHelper
 
       # cnfs_class_options :environment
       # class_option :namespace, desc: 'Target namespace',

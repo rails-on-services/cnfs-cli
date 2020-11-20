@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class App < ApplicationRecord
-  attr_accessor :options
+  attr_accessor :options, :manifest
 
   belongs_to :environment
   belongs_to :namespace
@@ -17,7 +17,8 @@ class App < ApplicationRecord
   store :paths, coder: YAML
 
   after_initialize do
-    self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
+    # self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
+    self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
   end
 
   # If options were passed in then ensure the values are valid (names found in the config)
@@ -27,6 +28,15 @@ class App < ApplicationRecord
   # validates :service, presence: { message: 'not found' }, if: -> { arguments.service }
   # validate :all_services, if: -> { arguments.services }
   # validates :runtime, presence: true
+
+  # TODO: This may be unnecessary or a very important method/scope. Think about this
+  def services; namespace.services end
+  def runtime; environment.runtime end 
+
+  # NOTE: Not yet in use; decide where this should go
+  def user_root
+    @user_root ||= Cnfs.xdg.config_home.join('cnfs').join(base_project_name)
+  end
 
   def update(opts)
     file_config.merge!(opts)
@@ -44,7 +54,7 @@ class App < ApplicationRecord
   def set_from_options(options)
     self.options = options
     self.environment = environments.find_by(name: options.environment) if options.environment
-    self.namespace = environment.namespaces.find_by(name: options.namespace) if options.namespace
+    self.namespace = environment&.namespaces&.find_by(name: options.namespace) if options.namespace
     self.repository = repositories.find_by(name: options.repository) if options.repository
     self.source_repository = repositories.find_by(name: options.source_repository) if options.source_repository
     self

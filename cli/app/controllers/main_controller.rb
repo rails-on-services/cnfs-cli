@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MainController < Thor
-  include Cnfs::Options
+  include CommandHelper
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose, :debug
