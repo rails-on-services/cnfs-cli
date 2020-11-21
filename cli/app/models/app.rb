@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class App < ApplicationRecord
-  # attr_accessor :options, :manifest
   attr_accessor :manifest
 
   belongs_to :environment
@@ -16,9 +15,9 @@ class App < ApplicationRecord
   has_many :namespaces, through: :environments
 
   store :paths, coder: YAML
+  store :options, coder: YAML
 
   after_initialize do
-    # self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
     # self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
   end
 
@@ -45,21 +44,16 @@ class App < ApplicationRecord
   end
 
   def file_config
-    @file_config ||= Config.load_file('cnfs.yml')
+    @file_config ||= Config.load_file(Cnfs::PROJECT_FILE)
+  end
+
+  def options
+    @options ||= Thor::CoreExt::HashWithIndifferentAccess.new(super)
   end
 
   def paths
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
-
-  # def set_from_options(options)
-  #   self.options = options
-  #   self.environment = environments.find_by(name: options.environment) if options.environment
-  #   self.namespace = environment&.namespaces&.find_by(name: options.namespace) if options.namespace
-  #   self.repository = repositories.find_by(name: options.repository) if options.repository
-  #   self.source_repository = repositories.find_by(name: options.source_repository) if options.source_repository
-  #   self
-  # end
 
   # Returns a path relative from the project root
   # Example: write_path(:deployment) # => #<Pathname:tmp/cache/development/main>
@@ -86,12 +80,10 @@ class App < ApplicationRecord
     { project: full_context_name, environment: environment&.name,  namespace: namespace&.name }
   end
 
-  # def full_project_name
   def full_context_name
     context_attrs.unshift(name).join('_')
   end
 
-  # def project_name
   def context_name
     context_attrs.join('_')
   end
@@ -103,7 +95,9 @@ class App < ApplicationRecord
   class << self
     def parse
       content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths))
-      output = { app: content.merge(namespace: "#{content[:environment]}_#{content[:namespace]}") }
+      namespace = "#{content[:environment]}_#{content[:namespace]}"
+      options = Cnfs.config.delete_field(:options).to_hash
+      output = { app: content.merge(namespace: namespace, options: options) }
       write_fixture(output)
     end
   end

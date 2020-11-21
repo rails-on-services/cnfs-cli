@@ -3,7 +3,7 @@
 module Repositories
   class NewController < Thor
     include CommandHelper
-    include Concern
+    include RepositoryHelper
 
     # Activate common options
     cnfs_class_options :source_repository

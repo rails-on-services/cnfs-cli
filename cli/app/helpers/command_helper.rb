@@ -68,7 +68,8 @@ module CommandHelper
       Cnfs.with_timer('loading project configuration') do
         Cnfs.require_deps
         # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
-        Cnfs.config.merge!(options)
+        # Merge options also under options key for Project to pick up
+        Cnfs.config.merge!(options).merge!(options: options)
         Cnfs::Schema.initialize!
         Cnfs.app = App.first
         # binding.pry
@@ -108,26 +109,20 @@ module CommandHelper
     end
 
     # TODO: Refactor
-    def set_repository
-      Cnfs.repository = Cnfs.app.repository
-      return
-      binding.pry
-      unless (Cnfs.repository = Cnfs.repositories[options.repository.to_sym])
-        raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
-          " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
-      end
-    end
+    # def set_repository
+    #   Cnfs.repository = Cnfs.app.repository
+    #   return
+    #   binding.pry
+    #   unless (Cnfs.repository = Cnfs.repositories[options.repository.to_sym])
+    #     raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
+    #       " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
+    #   end
+    # end
 
     def services_file_path
       path = [options.environment, options.namespace].compact.join('/')
       Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
     end
-
-    # Usage: before: (or class_before:) :set_app_options
-    # Will pass cli options to Cnfs.app
-    # def set_app_options
-    #   Cnfs.app.set_from_options(options)
-    # end
 
     # Usage: before: (or class_before:) :validate_destroy
     # Will raise an error unless force option is provided or user confirms the action

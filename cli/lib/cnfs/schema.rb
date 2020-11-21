@@ -69,6 +69,7 @@ module Cnfs
           t.string :name
           t.string :config
           t.string :paths
+          t.string :options
           t.string :tags
         end
         App.reset_column_information

@@ -17,8 +17,7 @@ module Rails
                            type: :string, default: 'service'
         # TODO: Add options that carry over to the rails plugin new command
         def rails(name)
-          Cnfs.require_for_project_name
-          generator = Rails::RepositoryGenerator.new([Cnfs::Project.x_name, name], options.merge(type: 'plugin'))
+          generator = Rails::RepositoryGenerator.new([Cnfs.config.name], options.merge(type: 'plugin'))
           invoke(generator, name)
         end
       end

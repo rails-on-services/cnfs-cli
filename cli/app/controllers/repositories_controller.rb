@@ -2,11 +2,11 @@
 
 class RepositoriesController < Thor
   include CommandHelper
-  include Repositories::Concern
+  include RepositoryHelper
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose
-  class_before :set_app_options
+  class_before :initialize_project
 
   register Repositories::NewController, 'new', 'new TYPE NAME [options]', 'Create a new repoository'
 
