@@ -2,6 +2,8 @@
 
 require 'little-plugger'
 require 'pathname'
+require 'config'
+require 'xdg'
 
 module Cnfs
   extend LittlePlugger
@@ -20,93 +22,84 @@ module Cnfs
   end
 
   class << self
-    attr_accessor :autoload_dirs, :pwd, :repository, :app
-    attr_reader :config, :project_root, :repository_root, :logger
-    # attr_reader :project, :config, :project_root, :repository_root, :logger
-    # PROJECT_FILE = 'lib/project.rb'
+    attr_accessor :autoload_dirs, :cwd, :repository, :app
+    attr_reader :config, :project_root, :repository_root, :logger, :timers
 
     def reset
       ARGV.shift # remove 'new'
-      @pwd = Pathname.new(Dir.pwd)
+      @cwd = Pathname.new(Dir.pwd)
       @project_root = nil
       @repository_root = nil
-      @project = nil
-      Dir.chdir(project_root) do
-        load_config
-      end
+      Dir.chdir(project_root) { load_config }
     end
 
     def initialize!
-      @pwd = Pathname.new(Dir.pwd)
+      # TODO: Get reset to be the common method here
+      @timers = {}
       @logger = Logger.new
+      @cwd = Pathname.new(Dir.pwd)
       # Display help for new command when no argument is passed
       ARGV.unshift('help', 'new') if ARGV.size.zero? && project_root.nil?
       raise Cnfs::Error, 'Not a cnfs project' unless project_root
 
       s = Time.now
       Dir.chdir(project_root) do
-        require_minimum_deps
         load_config
-        if config.dig(:cli, :dev)
-          require 'pry'
-          initialize_dev_plugins
-        else
-          initialize_plugins
-        end
+        with_timer('loading minimum deps') { require_minimum_deps }
+        config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
         add_extensions
         MainController.start
       end
-      Cnfs.logger.info "Wall time: #{Time.now - s}"
+      Cnfs.logger.info(timers.map { |k, v| "#{k}: #{v}" }.join("\n"))
+      Cnfs.logger.info("wall time: #{Time.now - s}")
     end
 
-    # TODO: This is a quick and dirty to get the project name w/out loading the entire project
-    # def require_for_project_name
-    #   require 'active_record'
-    #   require 'cnfs/project'
-    #   require "#{pwd}/lib/project"
-    # end
+    def initialize_development
+      require 'pry'
+      initialize_dev_plugins
+    end
+
+    def with_timer(title = '', level = :info)
+      start_time = Time.now
+      Cnfs.logger.send(level, "Start #{title} at #{start_time}")
+      yield
+      timers[title] = Time.now - start_time
+      Cnfs.logger.send(level, "Completed #{title} in #{Time.now - start_time} seconds")
+    end
 
     def require_minimum_deps
-      require 'active_support/concern'
-      require 'active_support/inflector'
-      require 'active_support/core_ext/hash/keys'
-      require 'active_support/core_ext/enumerable'
-      require 'config'
-      require 'fileutils'
-      require 'thor'
-      require 'thor/hollaback'
-      require 'xdg'
-      require 'zeitwerk'
-
-      require_relative 'cnfs/errors'
-      require_relative 'cnfs/version'
-      require_relative 'ext/config/options'
-      require_relative 'ext/string'
-
+      minimum_deps.each { |dep| require dep }
+      minimum_deps_rel.each { |dep| require_relative dep }
       ActiveSupport::Inflector.inflections do |inflect|
         inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
       end
     end
 
     def require_deps
-      Cnfs.logger.info 'Loading dependencies...'
-      s = Time.now
-      require 'active_record'
-      require 'active_record/fixtures'
-      require 'active_support/core_ext/enumerable'
-      require 'active_support/log_subscriber'
-      require 'active_support/string_inquirer'
-      # require 'json_schemer'
-      require 'rails/railtie' # required before lockbox
-      require 'lockbox'
-      require 'open-uri'
-      # require 'open3'
-      require 'sqlite3'
+      deps.each { |dep| require dep }
+      deps_rel.each { |dep| require_relative dep }
+    end
 
-      require_relative 'cnfs/project'
-      require_relative 'cnfs/schema'
-      Cnfs.logger.info "Loaded in #{Time.now - s} seconds"
+    def minimum_deps
+      %w[active_support/concern active_support/inflector active_support/core_ext/hash/keys
+         active_support/core_ext/enumerable fileutils thor thor/hollaback zeitwerk]
+    end
+
+    def minimum_deps_rel
+      %w[cnfs/errors cnfs/version ext/config/options ext/string]
+    end
+
+    def deps
+      # NOTE: require rails/railtie before lockbox
+      # json_schemer open3
+      %w[active_record active_record/fixtures active_support/core_ext/enumerable
+         active_support/log_subscriber active_support/string_inquirer rails/railtie
+         lockbox open-uri sqlite3]
+    end
+
+    def deps_rel
+      %w[cnfs/schema]
     end
 
     def load_config
@@ -189,26 +182,21 @@ module Cnfs
       @project_root ||= begin
         return '.' if %w[dev help new version].include?(ARGV[0])
 
-        pwd.ascend { |path| break path if path.join('cnfs.yml').file? }
+        cwd.ascend { |path| break path if path.join('cnfs.yml').file? }
       end
     end
-
-    # def repository_root
-    #   @repository_root ||= repository ? project_root.join(repository.path) : ''
-    # end
 
     # Determine the current repository from where the user is in the project filesystem
     # Returns the default repository unless the user is in the path of another project repository
     def current_repository
       return unless project_root.class.name.eql?('Pathname')
 
-      default_repo = repositories[config.repository&.to_sym]
-      current_path = pwd.to_s
+      current_path = cwd.to_s
       src_path = project_root.join(paths.src).to_s
-      return default_repo if current_path.eql?(src_path) || !current_path.start_with?(src_path)
+      return app.repository if current_path.eql?(src_path) || !current_path.start_with?(src_path)
 
       repo_name = current_path.delete_prefix(src_path).split('/')[1]
-      repositories[repo_name.to_sym]
+      app.repositories.find_by(name: repo_name)
     end
 
     def paths
@@ -283,15 +271,6 @@ module Cnfs
         end
       end
     end
-
-    # def require_project!(arguments:, options:, response:)
-    #   project_file = project_root.join(PROJECT_FILE)
-    #   return unless File.exist?(project_file)
-
-    #   require project_file
-    #   @project = Cnfs::Project.descendants.shift&.new(root: project_root, arguments: arguments, options: options, response: response)
-    #   true
-    # end
 
     def invoke_plugins_wtih(method, *options)
       plugins_responding_to(method).each do |plugin|

@@ -65,20 +65,21 @@ module CommandHelper
     private
 
     def initialize_project
-      Cnfs.logger.debug('Loading project configuration...')
-      Cnfs.require_deps
-      # compile fixtures:
-      [App, Environment, Namespace, Provider, Repository, Runtime, Service, User].each { |model| model.parse }
-      # Key.parse([user_root.join('config').to_s])
+      Cnfs.with_timer('loading project configuration') do
+        Cnfs.require_deps
+        # compile fixtures:
+        [App, Environment, Namespace, Provider, Repository, Runtime, Service, User].each { |model| model.parse }
+        # Key.parse([user_root.join('config').to_s])
     
-      Cnfs::Schema.dir = Pathname.new('tmp/dump')
-      Cnfs::Schema.initialize!
-      Cnfs.app = App.first
-      Cnfs.app.set_from_options(options)
-      # binding.pry
-      # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
-      # Cnfs.app.manifest.generate
-      Cnfs.logger.debug('Loaded')
+        Cnfs::Schema.dir = Pathname.new('tmp/dump')
+        Cnfs::Schema.initialize!
+        Cnfs.app = App.first
+        Cnfs.app.set_from_options(options)
+        # binding.pry
+        # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
+        # Cnfs.app.manifest.generate
+      end
+      # Cnfs.logger.debug('Loaded')
     end
 
     # def generate_runtime_configs!
@@ -139,21 +140,6 @@ module CommandHelper
       return if options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
 
       raise Cnfs::Error, 'Operation cancelled'
-    end
-
-    def execute_after
-      if options.attach
-        k = controller_class(:attach)
-        # binding.pry
-        k.new(arguments: { services: args }, options: options).execute
-        # k.new(arguments: { service: args.first }, options: options).execute
-        # invoke(:attach)
-        # controller.run(:attach)
-      elsif options.shell
-        # controller.run(:shell)
-      elsif options.console
-        # controller.run(:console)
-      end
     end
   end
 end

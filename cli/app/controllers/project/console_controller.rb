@@ -11,7 +11,8 @@ module Project
 
     class << self
       def shortcuts
-        { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
+        {}
+        # { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
       end
     end
 

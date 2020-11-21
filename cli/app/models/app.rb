@@ -17,7 +17,7 @@ class App < ApplicationRecord
   store :paths, coder: YAML
 
   after_initialize do
-    # self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
+    self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
     self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
   end
 
@@ -35,7 +35,7 @@ class App < ApplicationRecord
 
   # NOTE: Not yet in use; decide where this should go
   def user_root
-    @user_root ||= Cnfs.xdg.config_home.join('cnfs').join(base_project_name)
+    @user_root ||= Cnfs.user_root.join(name)
   end
 
   def update(opts)

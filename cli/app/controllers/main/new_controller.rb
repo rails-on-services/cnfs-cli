@@ -2,14 +2,16 @@
 
 module Main
   class NewController
-    attr_accessor :name, :options
+    include ExecHelper
+    # attr_accessor :name, :options
 
-    def initialize(name, options)
-      @name = name
-      @options = options
-    end
+    # def initialize(name, options)
+    #   @name = name
+    #   @options = options
+    # end
 
     def execute
+      binding.pry
       generator = NewGenerator.new([name], options)
       generator.destination_root = name
       generator.invoke_all

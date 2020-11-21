@@ -220,5 +220,22 @@ class ServicesController < Thor
   #   command.up(services)
   #   command.exit
   # end
+
+  private
+
+  def execute_after
+    if options.attach
+      k = controller_class(:attach)
+      # binding.pry
+      k.new(arguments: { services: args }, options: options).execute
+      # k.new(arguments: { service: args.first }, options: options).execute
+      # invoke(:attach)
+      # controller.run(:attach)
+    elsif options.shell
+      # controller.run(:shell)
+    elsif options.console
+      # controller.run(:console)
+    end
+  end
 end
 # rubocop:enable Metrics/ClassLength
