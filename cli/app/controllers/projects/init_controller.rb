@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Services
+module Projects
   class InitController < ApplicationController
     def execute
       Repository.all.each do |repo|

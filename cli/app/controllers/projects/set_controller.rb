@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Project
+module Projects
   class SetController < Thor
     class_option :local, desc: 'Manage local configuration',
                          aliases: '-l', type: :boolean
@@ -23,7 +23,7 @@ module Project
     private
 
     def config_set(name, value)
-      o = Config.load_file('cnfs.yml')
+      o = Config.load_file(Cnfs::PROJECT_FILE)
       # TODO: Decide what config goes where
       # user_root cnfs.yml should have things like cli.dev
       # but user_root.join(project_name, cnfs.yml) should override the project values

@@ -13,7 +13,7 @@ class ApplicationRecord < ActiveRecord::Base
         output = dirs.each_with_object({}) do |dir, output|
           next unless (yaml = YAML.load_file("#{dir}/#{table_name}.yml"))
           yaml.each_with_object(output) do |(k, v), h|
-            h[k] = v.merge(name: k, app: 'app')
+            h[k] = v.merge(name: k, project: 'app')
             yield h[k] if block_given?
           end
         end
@@ -30,14 +30,9 @@ class ApplicationRecord < ActiveRecord::Base
     def write_fixture(content)
       Cnfs.logger.debug "parsing #{content}"
       Cnfs.logger.info "parsing #{table_name}"
-      File.open(path.join("#{table_name}.yml"), 'w') do |file|
+      File.open(Cnfs::Schema.dir.join("#{table_name}.yml"), 'w') do |file|
         file.write(content.deep_stringify_keys.to_yaml)
       end
-    end
-
-    def path
-      Pathname.new('tmp/dump')
-      # Cnfs.project.write_path(:fixtures)
     end
 
     def environments

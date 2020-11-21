@@ -71,7 +71,7 @@ module CommandHelper
         # Merge options also under options key for Project to pick up
         Cnfs.config.merge!(options).merge!(options: options)
         Cnfs::Schema.initialize!
-        Cnfs.app = App.first
+        Cnfs.app = Project.first
         # binding.pry
         # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
         # Cnfs.app.manifest.generate

@@ -2,7 +2,7 @@
 
 # Convenience methods to add conventional configurations to a new project
 # Backend:
-module Project
+module Projects
   class AddController < Thor
     desc 'backend', 'Add backend package to the project'
     # option :backend, desc: 'Create the project with a set of typical backend services',

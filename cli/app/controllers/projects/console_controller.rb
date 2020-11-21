@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Project
+module Projects
   class ConsoleController
     include ExecHelper
 

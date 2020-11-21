@@ -6,7 +6,7 @@ class MainController < Thor
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose, :debug
 
-  register ProjectController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
+  register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
   register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
   register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
   register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'

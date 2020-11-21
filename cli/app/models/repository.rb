@@ -74,7 +74,7 @@ class Repository < ApplicationRecord
             repo_yaml = YAML.load_file(repo_config_path).merge(path: repo_path.to_s)
             repo_yaml.merge!(type: "repository/#{repo_yaml['type']}".classify)
           end
-          hash[k] = v.merge(name: k, app: 'app').merge(repo_yaml)
+          hash[k] = v.merge(name: k, project: 'app').merge(repo_yaml)
         end
       end
       write_fixture(output)

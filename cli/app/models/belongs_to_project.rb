@@ -4,13 +4,9 @@ module BelongsToProject
   extend ActiveSupport::Concern
 
   included do
-    belongs_to :app
+    belongs_to :project
 
-    after_initialize do
-      self.app ||= Cnfs.app
-    end
-
-    delegate :options, :paths, :write_path, to: :app
+    delegate :options, :paths, :write_path, to: :project
   end
 
   # NOTE: the including class must implement #save_hash

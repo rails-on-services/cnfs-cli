@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class App < ApplicationRecord
+class Project < ApplicationRecord
   attr_accessor :manifest
 
   belongs_to :environment

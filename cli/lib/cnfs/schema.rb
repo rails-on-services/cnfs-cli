@@ -55,13 +55,13 @@ module Cnfs
     end
 
     def self.models
-      [App, Environment, Key, Namespace, Provider, Repository, Runtime, Service, User]
+      [Project, Environment, Key, Namespace, Provider, Repository, Runtime, Service, User]
     end
 
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
-        create_table :apps, force: true do |t|
+        create_table :projects, force: true do |t|
           t.references :repository
           t.references :source_repository
           t.references :environment
@@ -72,7 +72,7 @@ module Cnfs
           t.string :options
           t.string :tags
         end
-        App.reset_column_information
+        Project.reset_column_information
 
         create_table :assets, force: true do |t|
           t.string :name
@@ -94,13 +94,12 @@ module Cnfs
         Blueprint.reset_column_information
 
         create_table :environments, force: true do |t|
-          t.references :app
+          t.references :project
           t.references :key
           t.references :runtime
           t.references :infra_runtime
           t.references :provider
           t.references :blueprint
-          t.references :application
           t.string :name
           t.string :config
           t.string :tf_config
@@ -129,7 +128,7 @@ module Cnfs
         Namespace.reset_column_information
 
         create_table :providers, force: true do |t|
-          t.references :app
+          t.references :project
           t.string :name
           t.string :config
           t.string :environment
@@ -147,7 +146,7 @@ module Cnfs
         # Registry.reset_column_information
 
         create_table :repositories, force: true do |t|
-          t.references :app
+          t.references :project
           t.string :name
           t.string :config
           t.string :type
@@ -160,7 +159,7 @@ module Cnfs
         Repository.reset_column_information
 
         create_table :runtimes, force: true do |t|
-          t.references :app
+          t.references :project
           t.string :name
           t.string :config
           t.string :environment
@@ -196,7 +195,7 @@ module Cnfs
         Service.reset_column_information
 
         create_table :users, force: true do |t|
-          t.references :app
+          t.references :project
           t.string :name
           t.string :role
           t.string :tags
