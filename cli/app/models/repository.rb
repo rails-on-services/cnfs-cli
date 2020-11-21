@@ -61,10 +61,10 @@ class Repository < ApplicationRecord
 
     def parse
       src = Pathname.new('src')
-      output = dirs.each_with_object({}) do |dir, output|
-        yaml = YAML.load_file("#{dir}/#{table_name}.yml")
-        yaml.each_with_object(output) do |(k, v), h|
-          #
+      output = dirs.each_with_object({}) do |dir, hash|
+        next unless (yaml = YAML.load_file("#{dir}/#{table_name}.yml"))
+
+        yaml.each do |k, v|
           repo_path = src.join(k)
           Cnfs.logger.info "Scanning repository path #{repo_path}"
           repo_config_path = repo_path.join('cnfs/repository.yml')
@@ -74,8 +74,7 @@ class Repository < ApplicationRecord
             repo_yaml = YAML.load_file(repo_config_path).merge(path: repo_path.to_s)
             repo_yaml.merge!(type: "repository/#{repo_yaml['type']}".classify)
           end
-          #
-          h[k] = v.merge(name: k, app: 'app').merge(repo_yaml)
+          hash[k] = v.merge(name: k, app: 'app').merge(repo_yaml)
         end
       end
       write_fixture(output)

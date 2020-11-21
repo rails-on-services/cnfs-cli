@@ -12,7 +12,7 @@ class NamespacesController < Thor
 
   desc 'add NAME', 'Add namespace to environment configuration'
   def add(name)
-    Namespaces::AddRemoveController.new(options: options.merge(behavior: :invoke), arguments: { name: name }).execute
+    Namespaces::AddRemoveController.new(options: options.merge(behavior: :invoke), args: { name: name }).execute
   end
 
   desc 'list', 'Lists configured namespaces'

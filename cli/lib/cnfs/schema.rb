@@ -7,19 +7,30 @@ module Cnfs
     def self.initialize!
       # Set up in-memory database
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-      load_data
+      prepare
+      parse
+      import
+    end
+
+    def self.prepare
+      show_output = Cnfs.config.debug.positive?
+      Cnfs.silence_output(!show_output) { create_schema }
+    end
+
+    def self.parse
+      dir.mkpath
+      models.each { |model| model.parse }
     end
 
     def self.reload
       # Enable fixtures to be re-seeded on code reload
       ActiveRecord::FixtureSet.reset_cache
-      load_data
+      prepare
+      import
     end
 
     # rubocop:disable Metrics/MethodLength
-    def self.load_data
-      show_output = Cnfs.config.debug.positive?
-      Cnfs.silence_output(!show_output) { create_schema }
+    def self.import
       fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
       # binding.pry
       ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
@@ -41,6 +52,10 @@ module Cnfs
     ensure
       # TODO: Maybe this should be a setting to disable auto remove for debugging purposes
       # FileUtils.rm_rf(dir)
+    end
+
+    def self.models
+      [App, Environment, Key, Namespace, Provider, Repository, Runtime, Service, User]
     end
 
     # Set up database tables and columns
@@ -189,5 +204,9 @@ module Cnfs
       end
     end
     # rubocop:enable Metrics/MethodLength
+
+    def self.dir
+      Cnfs.paths.tmp.join('dump')
+    end
   end
 end

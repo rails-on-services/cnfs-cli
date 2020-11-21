@@ -19,6 +19,13 @@ class Key < ApplicationRecord
     box.decrypt(ciphertext).chomp
   end
 
+  class << self
+    # TODO: Implement
+    def parse
+      # Key.parse([user_root.join('config').to_s])
+    end
+  end
+
   private
 
   def box

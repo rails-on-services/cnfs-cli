@@ -5,10 +5,11 @@ require 'pathname'
 require 'config'
 require 'xdg'
 
+# rubocop:disable Metrics/ModuleLength
 module Cnfs
+  PROJECT_FILE = 'config/project.yml'
   extend LittlePlugger
   module Plugins; end
-
   class Error < StandardError; end
 
   class Logger
@@ -22,51 +23,31 @@ module Cnfs
   end
 
   class << self
-    attr_accessor :autoload_dirs, :cwd, :repository, :app
-    attr_reader :config, :project_root, :repository_root, :logger, :timers
+    attr_accessor :repository, :app
+    attr_reader :config
+    attr_reader :timers, :logger, :cwd
 
-    def reset
-      ARGV.shift # remove 'new'
-      @cwd = Pathname.new(Dir.pwd)
-      @project_root = nil
-      @repository_root = nil
-      Dir.chdir(project_root) { load_config }
-    end
-
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
     def initialize!
-      # TODO: Get reset to be the common method here
       @timers = {}
       @logger = Logger.new
       @cwd = Pathname.new(Dir.pwd)
-      # Display help for new command when no argument is passed
-      ARGV.unshift('help', 'new') if ARGV.size.zero? && project_root.nil?
-      raise Cnfs::Error, 'Not a cnfs project' unless project_root
-
-      s = Time.now
+      validate_command if project_root.nil?
+      start_time = Time.now
       Dir.chdir(project_root) do
         load_config
-        with_timer('loading minimum deps') { require_minimum_deps }
+        with_timer('loading core dependencies') { require_minimum_deps }
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
-        add_extensions
+        setup_extensions
         MainController.start
       end
       Cnfs.logger.info(timers.map { |k, v| "#{k}: #{v}" }.join("\n"))
-      Cnfs.logger.info("wall time: #{Time.now - s}")
+      Cnfs.logger.info("wall time: #{Time.now - start_time}")
     end
-
-    def initialize_development
-      require 'pry'
-      initialize_dev_plugins
-    end
-
-    def with_timer(title = '', level = :info)
-      start_time = Time.now
-      Cnfs.logger.send(level, "Start #{title} at #{start_time}")
-      yield
-      timers[title] = Time.now - start_time
-      Cnfs.logger.send(level, "Completed #{title} in #{Time.now - start_time} seconds")
-    end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize
 
     def require_minimum_deps
       minimum_deps.each { |dep| require dep }
@@ -76,32 +57,6 @@ module Cnfs
       end
     end
 
-    def require_deps
-      deps.each { |dep| require dep }
-      deps_rel.each { |dep| require_relative dep }
-    end
-
-    def minimum_deps
-      %w[active_support/concern active_support/inflector active_support/core_ext/hash/keys
-         active_support/core_ext/enumerable fileutils thor thor/hollaback zeitwerk]
-    end
-
-    def minimum_deps_rel
-      %w[cnfs/errors cnfs/version ext/config/options ext/string]
-    end
-
-    def deps
-      # NOTE: require rails/railtie before lockbox
-      # json_schemer open3
-      %w[active_record active_record/fixtures active_support/core_ext/enumerable
-         active_support/log_subscriber active_support/string_inquirer rails/railtie
-         lockbox open-uri sqlite3]
-    end
-
-    def deps_rel
-      %w[cnfs/schema]
-    end
-
     def load_config
       Config.env_separator = '_'
       Config.env_prefix = 'CNFS'
@@ -109,12 +64,19 @@ module Cnfs
       ENV['CNFS_ENVIRONMENT'] = ENV.delete('CNFS_ENV')
       ENV['CNFS_NAMESPACE'] = ENV.delete('CNFS_NS')
       ENV['CNFS_REPOSITORY'] = ENV.delete('CNFS_REPO')
-      @config = Config.load_files(gem_root.join('config', 'cnfs.yml'), user_root.join('cnfs.yml'), 'cnfs.yml')
+      @config = Config.load_files(gem_root.join(PROJECT_FILE), user_root.join('cnfs.yml'), PROJECT_FILE)
       Config.use_env = false
       config.debug ||= 0
     end
 
+    def initialize_development
+      require 'pry'
+      initialize_dev_plugins
+    end
+
     # Emulate LittlePlugger's initialize process when in development mode
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
     def initialize_dev_plugins
       gem_root.join('..').children.select(&:directory?).each do |dir|
         plugin_dir = dir.join('lib/cnfs/plugins')
@@ -132,6 +94,13 @@ module Cnfs
           klass.send(cmd) if klass.respond_to?(cmd)
         end
       end
+    end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize
+
+    def require_deps
+      deps.each { |dep| require dep }
+      deps_rel.each { |dep| require_relative dep }
     end
 
     # def initialize_repositories
@@ -179,15 +148,12 @@ module Cnfs
     end
 
     def project_root
-      @project_root ||= begin
-        return '.' if %w[dev help new version].include?(ARGV[0])
-
-        cwd.ascend { |path| break path if path.join('cnfs.yml').file? }
-      end
+      @project_root ||= cwd.ascend { |path| break path if path.join(PROJECT_FILE).file? }
     end
 
     # Determine the current repository from where the user is in the project filesystem
     # Returns the default repository unless the user is in the path of another project repository
+    # rubocop:disable Metrics/AbcSize
     def current_repository
       return unless project_root.class.name.eql?('Pathname')
 
@@ -198,31 +164,42 @@ module Cnfs
       repo_name = current_path.delete_prefix(src_path).split('/')[1]
       app.repositories.find_by(name: repo_name)
     end
+    # rubocop:enable Metrics/AbcSize
 
     def paths
       @paths ||= config.paths.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
     end
 
     def autoload_all(path)
-      path.join('app').children.select(&:directory?).select { |m| %w[controllers helpers models generators].include?(m.split.last.to_s) }
+      path.join('app').children.select(&:directory?).select { |m| default_load_paths.include?(m.split.last.to_s) }
     end
 
     # Scan plugsin for subdirs in <plugin_root>/app and add them to autoload_dirs
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     def add_plugin_autoload_paths
       plugins.sort.each do |namespace, plugin|
         next unless (plugin = "cnfs/cli/#{namespace}".classify.safe_constantize)
 
         gem_load_paths = plugin.respond_to?(:load_paths) ? plugin.load_paths : %w[app]
-        plugin_load_paths = plugin.respond_to?(:plugin_load_paths) ? plugin.plugin_load_paths : %w[controllers generators models]
+        plugin_load_paths = plugin.respond_to?(:plugin_load_paths) ? plugin.plugin_load_paths : default_load_paths
 
         gem_load_paths.each do |load_path|
           load_path = plugin.gem_root.join(load_path)
           next unless load_path.exist?
 
-          paths_to_load = load_path.children.select { |p| p.directory? && plugin_load_paths.include?(p.split.last.to_s) }
+          paths_to_load = load_path.children.select do |p|
+            p.directory? && plugin_load_paths.include?(p.split.last.to_s)
+          end
           autoload_dirs.concat(paths_to_load)
         end
       end
+    end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+
+    def default_load_paths
+      %w[controllers helpers models generators]
     end
 
     # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
@@ -248,9 +225,11 @@ module Cnfs
     end
 
     # Extensions found in autoload_dirs are configured to be loaded at a pre-defined extension point
-    def add_extensions
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    def setup_extensions
       # Ignore the extension points which are the controllers in the cli core gem
-      Cnfs.logger.info "Loaded Extensions:"
+      Cnfs.logger.info 'Loaded Extensions:'
       autoload_dirs.select { |p| p.split.last.to_s.eql?('controllers') }
                    .reject { |p| p.join('../..').split.last.to_s.eql?('cli') }.each do |controllers_path|
         Dir.chdir(controllers_path) do
@@ -271,6 +250,8 @@ module Cnfs
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
 
     def invoke_plugins_wtih(method, *options)
       plugins_responding_to(method).each do |plugin|
@@ -280,6 +261,33 @@ module Cnfs
 
     def plugins_responding_to(method)
       plugins.values.select { |klass| klass.plugin_lib.respond_to?(method) }.collect(&:plugin_lib)
+    end
+
+    def validate_command
+      # Display help for new command when no arguments are passed
+      ARGV.append('help', 'new') if ARGV.size.zero?
+      command = %w[dev help new version].each do |valid_command|
+        break [valid_command] if valid_command.start_with?(ARGV[0])
+      end
+      raise Cnfs::Error, 'Not a cnfs project' unless command.size.eql?(1)
+
+      @project_root = '.'
+    end
+
+    def reset
+      ARGV.shift # remove 'new'
+      @cwd = Pathname.new(Dir.pwd)
+      @project_root = nil
+      @paths = nil
+      Dir.chdir(project_root) { load_config }
+    end
+
+    def with_timer(title = '', level = :info)
+      start_time = Time.now
+      Cnfs.logger.send(level, "Start #{title} at #{start_time}")
+      yield
+      timers[title] = Time.now - start_time
+      Cnfs.logger.send(level, "Completed #{title} in #{Time.now - start_time} seconds")
     end
 
     # OS methods
@@ -294,6 +302,11 @@ module Cnfs
     end
 
     def capabilities
+      @capabilities ||= set_capabilities
+    end
+
+    # rubocop:disable Metrics/CyclomaticComplexity
+    def set_capabilities
       ary = []
       ary.append(:docker) if system('which docker')
       ary.append(:compose) if system('which docker-compose')
@@ -303,6 +316,7 @@ module Cnfs
       ary.append(:terraform) if system('which terraform')
       ary
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     def platform
       case RbConfig::CONFIG['host_os']
@@ -311,6 +325,27 @@ module Cnfs
       when /darwin/
         'darwin'
       end
+    end
+
+    def minimum_deps
+      %w[active_support/concern active_support/inflector active_support/core_ext/hash
+         active_support/core_ext/enumerable fileutils thor thor/hollaback zeitwerk]
+    end
+
+    def minimum_deps_rel
+      %w[cnfs/errors cnfs/version ext/config/options ext/string]
+    end
+
+    def deps
+      # NOTE: require rails/railtie before lockbox
+      # json_schemer open3
+      %w[active_record active_record/fixtures active_support/core_ext/enumerable
+         active_support/log_subscriber active_support/string_inquirer rails/railtie
+         lockbox open-uri sqlite3]
+    end
+
+    def deps_rel
+      %w[cnfs/schema]
     end
 
     # def git
@@ -339,3 +374,4 @@ module Cnfs
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

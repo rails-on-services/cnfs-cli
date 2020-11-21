@@ -4,12 +4,12 @@ module ExecHelper
   extend ActiveSupport::Concern
 
   included do
-    attr_accessor :options, :arguments
+    attr_accessor :options, :args
   end
 
-  def initialize(options:, arguments:)
+  def initialize(options:, args:)
     @options = options
-    @arguments = arguments
+    @args = args
   end
 
   def conditions

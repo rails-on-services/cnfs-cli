@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class App < ApplicationRecord
-  attr_accessor :options, :manifest
+  # attr_accessor :options, :manifest
+  attr_accessor :manifest
 
   belongs_to :environment
   belongs_to :namespace
@@ -17,13 +18,13 @@ class App < ApplicationRecord
   store :paths, coder: YAML
 
   after_initialize do
-    self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
-    self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
+    # self.options ||= Thor::CoreExt::HashWithIndifferentAccess.new
+    # self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
   end
 
   # If options were passed in then ensure the values are valid (names found in the config)
-  validates :environment, presence: { message: 'not found' }, if: -> { options.environment }
-  validates :namespace, presence: { message: 'not found' }, if: -> { options.namespace }
+  validates :environment, presence: { message: 'not found' } #, if: -> { options.environment }
+  validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
   # TODO: Should there be validations for repository and source_repository?
   # validates :service, presence: { message: 'not found' }, if: -> { arguments.service }
   # validate :all_services, if: -> { arguments.services }
@@ -51,14 +52,14 @@ class App < ApplicationRecord
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
 
-  def set_from_options(options)
-    self.options = options
-    self.environment = environments.find_by(name: options.environment) if options.environment
-    self.namespace = environment&.namespaces&.find_by(name: options.namespace) if options.namespace
-    self.repository = repositories.find_by(name: options.repository) if options.repository
-    self.source_repository = repositories.find_by(name: options.source_repository) if options.source_repository
-    self
-  end
+  # def set_from_options(options)
+  #   self.options = options
+  #   self.environment = environments.find_by(name: options.environment) if options.environment
+  #   self.namespace = environment&.namespaces&.find_by(name: options.namespace) if options.namespace
+  #   self.repository = repositories.find_by(name: options.repository) if options.repository
+  #   self.source_repository = repositories.find_by(name: options.source_repository) if options.source_repository
+  #   self
+  # end
 
   # Returns a path relative from the project root
   # Example: write_path(:deployment) # => #<Pathname:tmp/cache/development/main>
@@ -101,8 +102,8 @@ class App < ApplicationRecord
 
   class << self
     def parse
-      yaml = YAML.load_file('cnfs.yml')
-      output = { app: yaml.merge(namespace: "#{yaml['environment']}_#{yaml['namespace']}") }
+      content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths))
+      output = { app: content.merge(namespace: "#{content[:environment]}_#{content[:namespace]}") }
       write_fixture(output)
     end
   end

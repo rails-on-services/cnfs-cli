@@ -3,20 +3,14 @@
 module Main
   class NewController
     include ExecHelper
-    # attr_accessor :name, :options
-
-    # def initialize(name, options)
-    #   @name = name
-    #   @options = options
-    # end
 
     def execute
-      binding.pry
-      generator = NewGenerator.new([name], options)
-      generator.destination_root = name
+      FileUtils.rm_rf(args.name) if Dir.exist?(args.name)
+      generator = ProjectGenerator.new([args.name], options)
+      generator.destination_root = args.name
       generator.invoke_all
 
-      Dir.chdir(name) do
+      Dir.chdir(args.name) do
         Cnfs.reset
         add_environments
       end
@@ -24,8 +18,8 @@ module Main
 
     def add_environments
       %w[development staging production].each do |env|
-        EnvironmentsController.new([], options.merge(project_name: name)).add(env)
-        NamespacesController.new([], options.merge(project_name: name, environment: env)).add('main')
+        EnvironmentsController.new([], options).add(env)
+        NamespacesController.new([], options.merge(environment: env)).add('main')
       end
     end
   end

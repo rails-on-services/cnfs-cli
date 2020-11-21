@@ -67,28 +67,23 @@ module CommandHelper
     def initialize_project
       Cnfs.with_timer('loading project configuration') do
         Cnfs.require_deps
-        # compile fixtures:
-        [App, Environment, Namespace, Provider, Repository, Runtime, Service, User].each { |model| model.parse }
-        # Key.parse([user_root.join('config').to_s])
-    
-        Cnfs::Schema.dir = Pathname.new('tmp/dump')
+        # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
+        Cnfs.config.merge!(options)
         Cnfs::Schema.initialize!
         Cnfs.app = App.first
-        Cnfs.app.set_from_options(options)
         # binding.pry
         # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
         # Cnfs.app.manifest.generate
       end
-      # Cnfs.logger.debug('Loaded')
     end
 
     # def generate_runtime_configs!
     #   manifest.purge! if options.clean
     # end
 
-    def execute(arguments = {})
-      arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
-      command_controller(2).new(options: options, arguments: arguments).execute
+    def execute(args = {})
+      args = Thor::CoreExt::HashWithIndifferentAccess.new(args)
+      command_controller(2).new(options: options, args: args).execute
     end
 
     def command_controller(location = 1)
@@ -136,8 +131,8 @@ module CommandHelper
 
     # Usage: before: (or class_before:) :validate_destroy
     # Will raise an error unless force option is provided or user confirms the action
-    def validate_destroy
-      return if options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
+    def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
+      return true if options.force || yes?(msg)
 
       raise Cnfs::Error, 'Operation cancelled'
     end

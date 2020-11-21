@@ -26,9 +26,6 @@ class Namespace < ApplicationRecord
           else
             hash["#{env}_#{ns}"] = base_hash
           end
-            # yaml.each_with_object(hash) do |(k, v), h|
-            #   h["#{env}_#{ns}"] = v.merge(name: ns, environment: env)
-            # end
         # rescue => e
         #   Cnfs.logger.info e.message
         end

@@ -2,17 +2,11 @@
 
 module Namespaces
   class AddRemoveController < ApplicationController
-    attr_accessor :options, :arguments
-
-    def initialize(options:, arguments:)
-      Cnfs.require_deps
-      Cnfs.require_project!(arguments: {}, options: options, response: nil)
-      @options = options.merge(project_name: Cnfs.project.class.module_parent.name.downcase)
-      @arguments = Thor::CoreExt::HashWithIndifferentAccess.new(arguments)
-    end
+    include ExecHelper
 
     def execute
-      generator = NamespaceGenerator.new([arguments.name], options)
+      @args = Thor::CoreExt::HashWithIndifferentAccess.new(args)
+      generator = NamespaceGenerator.new([args.name], options)
       generator.behavior = options.behavior
       generator.invoke_all
     end

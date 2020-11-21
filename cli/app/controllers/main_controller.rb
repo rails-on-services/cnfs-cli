@@ -50,14 +50,10 @@ class MainController < Thor
     option :force, desc: 'Force creation even if the project directory already exists',
                    aliases: '-f', type: :boolean
     def new(name)
-      if Dir.exist?(name)
-        if options.force || yes?('Directory already exists. Destroy and recreate?')
-          FileUtils.rm_rf(name)
-        else
-          raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
-        end
+      if Dir.exist?(name) and not validate_destroy('Directory already exists. Destroy and recreate?')
+        raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
       end
-      Main::NewController.new(name, options).execute
+      execute(name: name)
     end
   end
 

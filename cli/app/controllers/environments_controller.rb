@@ -8,7 +8,7 @@ class EnvironmentsController < Thor
 
   desc 'add NAME', 'Add environment to project'
   def add(name)
-    Environments::AddRemoveController.new(options: options, arguments: { name: name }).execute(:invoke)
+    Environments::AddRemoveController.new(options: options, args: { name: name }).execute(:invoke)
   end
 
   desc 'list', 'List configured environments'
@@ -19,6 +19,7 @@ class EnvironmentsController < Thor
   desc 'remove NAME', 'Remove environment from project'
   def remove(name)
     Environments::AddRemoveController.new(options: options, arguments: { name: name }).execute(:revoke)
+    # TODO: refactor execute method to handle different controller name
   end
 
   # NOTE: It may be that run command will not understand the namespace of the Infra commands
