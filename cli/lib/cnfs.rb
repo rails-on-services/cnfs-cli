@@ -50,7 +50,7 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
 
     def require_minimum_deps
-      with_timer('loading core dependencies') { require_relative 'minimum_dependencies' }
+      with_timer('loading core dependencies') { require_relative 'cnfs/minimum_dependencies' }
       ActiveSupport::Inflector.inflections do |inflect|
         inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
       end
@@ -100,7 +100,7 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
 
     def require_deps
-      with_timer('loading dependencies') { require_relative 'dependencies' }
+      with_timer('loading dependencies') { require_relative 'cnfs/dependencies' }
     end
 
     # def initialize_repositories
