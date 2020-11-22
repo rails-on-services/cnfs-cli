@@ -6,7 +6,8 @@ module Services
     attr_accessor :services
 
     def execute
-      # command.run(*project.runtime.start(services))
+      result = command.run!(*project.runtime.start(services))
+      raise Cnfs::Error, result.err if result.failure?
     end
   end
 end

@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 module Namespaces
-  class DeployController < ApplicationController
-    cattr_reader :command_group, default: :cluster_runtime
+  class DeployController
+    include ExecHelper
+    include TtyHelper
 
     def execute
-      context.each_target do
-        before_execute_on_target
-        execute_on_target
-      end
+      result = command.run!(*project.runtime.deploy)
+      raise Cnfs::Error, result.err if result.failure?
     end
 
+    # TODO: Refactor this; uses git tags etc
     def execute_on_target
       # Local deploy is a deployment direct to the cluster from the local machine
       # The default is to push a tag to the repo which triggers a deploy via CI/CD

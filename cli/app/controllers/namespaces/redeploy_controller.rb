@@ -1,18 +1,14 @@
 # frozen_string_literal: true
 
 module Namespaces
-  class RedeployController < ApplicationController
-    cattr_reader :command_group, default: :cluster_runtime
+  class RedeployController
+    include ExecHelper
+    include TtyHelper
 
     def execute
-      context.each_target do
-        before_execute_on_target
-        execute_on_target
+      project.runtime.redeploy.each do |cmd_array|
+        command.run(*cmd_array)
       end
-    end
-
-    def execute_on_target
-      context.runtime.redeploy.run!
     end
   end
 end

@@ -78,11 +78,10 @@ class ServicesController < Thor
   cnfs_options :environment, :namespace
   cnfs_options :attach, :build, :console, :profiles, :sh
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
-  # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
+  option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
   # TODO: Take a profile array also. The config should define a default profile
   map %w[s] => :start
-  after :execute_after
   def start(*services)
     execute(services: services)
   end

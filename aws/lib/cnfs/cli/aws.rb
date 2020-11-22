@@ -14,8 +14,7 @@ module Cnfs
           Cnfs.logger.info "Initializing plugin aws from #{gem_root}"
         end
 
-        def on_project_initialize
-        end
+        def on_project_initialize; end
 
         # TODO: Copy in blueprints, etc
         def customize; end

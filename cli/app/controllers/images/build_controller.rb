@@ -2,12 +2,12 @@
 
 module Images
   class BuildController
-    include ExecHelper
-    include TtyHelper
+    include ServicesHelper
+    attr_accessor :services
 
     def execute
-      services = project.services.where(name: args.services)
-      command.run(*project.runtime.build(services))
+      result = command.run!(*project.runtime.build(services))
+      raise Cnfs::Error, result.err if result.failure?
     end
   end
 end

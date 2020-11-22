@@ -103,6 +103,10 @@ module CommandHelper
       klass
     end
 
+    def prepare_runtime
+      project.runtime.switch!
+    end
+
     def ensure_valid_project
       raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
     end
@@ -119,6 +123,10 @@ module CommandHelper
       return true if options.force || yes?(msg)
 
       raise Cnfs::Error, 'Operation cancelled'
+    end
+
+    def timer
+      Cnfs.with_timer('command processing') { yield }
     end
 
     # References to instances of the command classes

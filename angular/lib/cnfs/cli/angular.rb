@@ -14,8 +14,7 @@ module Cnfs
           Cnfs.logger.info "Initializing plugin angular from #{gem_root}"
         end
 
-        def on_project_initialize
-        end
+        def on_project_initialize; end
 
         def customize
           src = gem_root.join('app/generators/rails')

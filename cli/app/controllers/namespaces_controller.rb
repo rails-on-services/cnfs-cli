@@ -6,6 +6,7 @@ class NamespacesController < Thor
   # Activate common options
   cnfs_class_options :environment
   cnfs_class_options :noop, :quiet, :verbose, :debug
+  # class_around :timer
 
   map %w[i] => :infra
   register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure. (short-cut: i)'
@@ -16,7 +17,10 @@ class NamespacesController < Thor
   end
 
   desc 'list', 'Lists configured namespaces'
+  before :initialize_project
+  # TODO: Look at Repository for how to delegate to the model
   def list
+    binding.pry
     paths = Cnfs.paths.config.join('environments', options.environment).children.select(&:directory?)
     return unless paths.any?
 
@@ -52,58 +56,54 @@ class NamespacesController < Thor
   end
 
   desc 'init', 'Initialize the namespace in the target environment'
+  cnfs_options :namespace
   long_desc <<-DESC.gsub("\n", "\x5")
 
   Initializes the namespace in a K8s cluster, e.g. EKS, with services
 
   DESC
-  cnfs_options :namespace
   def init
     run(:init)
   end
 
-  desc 'destroy', 'Destory all services in the current namespace'
-  cnfs_options :namespace, :force
-  # TODO: Test this by taking down a compose cluster
-  def destroy
-    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
-                                      "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
-
-    run(:destroy)
-  end
-
   # Cluster Runtime
   desc 'deploy', 'Deploy all services to namespace'
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string, default: Cnfs.config.namespace
+  cnfs_options :namespace
+  before :initialize_project
+  before :prepare_runtime
   # option :local, type: :boolean, aliases: '-l', desc: 'Deploy from local; default is via CI/CD'
-  def deploy(*services)
-    services = Service.pluck(:name) if services.empty?
-    run(:deploy, services: services)
+  def deploy
+    execute
+  end
+
+  desc 'destroy', 'Destory all services in the current namespace'
+  cnfs_options :namespace, :force
+  before :initialize_project
+  before :prepare_runtime
+  def destroy
+    validate_destroy("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
+                     "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
+    execute
   end
 
   desc 'redeploy', 'Terminate and restart all services in namespace'
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string, default: Cnfs.config.namespace
-  option :force, desc: 'Do not prompt for confirmation',
-                 type: :boolean
-  # TODO: validate that supplied services are correct and fail if they are not
-  def redeploy(*services)
-    services = Service.pluck(:name) if services.empty?
-    return unless options.force || yes?("\nAbout to *restart* #{services.join(' ')} \n\nAre you sure?")
-
-    run(:redeploy, services: services)
+  cnfs_options :namespace, :force
+  before :initialize_project
+  before :prepare_runtime
+  def redeploy
+    validate_destroy("\nAbout to *restart* the #{options.namespace} " \
+                     "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
+    execute
   end
 
   desc 'status', 'Show services status'
+  cnfs_options :namespace
   long_desc <<-DESC.gsub("\n", "\x5")
 
   Show the status of all services in the current namespace
 
   created, restarting, running, removing, paused, exited, or dead
   DESC
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string, default: Cnfs.config.namespace
   def status(status = :running)
     run(:status, status: status)
   end

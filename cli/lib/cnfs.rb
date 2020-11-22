@@ -56,6 +56,7 @@ module Cnfs
       end
     end
 
+    # rubocop:disable Metrics/MethodLength
     def load_config
       Config.env_separator = '_'
       Config.env_prefix = 'CNFS'
@@ -66,9 +67,10 @@ module Cnfs
       @config = Config.load_files(gem_root.join(PROJECT_FILE), user_root.join('cnfs.yml'), PROJECT_FILE)
       Config.use_env = false
       config.debug ||= 0
-    rescue => e
-      raise Cnfs::Error, "Error parsing config. Environment:\n#{%x(env | grep CNFS)}"
+    rescue StandardError => _e
+      raise Cnfs::Error, "Error parsing config. Environment:\n#{`env | grep CNFS`}"
     end
+    # rubocop:enable Metrics/MethodLength
 
     def initialize_development
       require 'pry'
@@ -291,18 +293,13 @@ module Cnfs
       @capabilities ||= set_capabilities
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity
     def set_capabilities
-      ary = []
-      ary.append(:docker) if system('which docker')
-      ary.append(:compose) if system('which docker-compose')
-      ary.append(:skaffold) if system('which skaffold')
-      ary.append(:git) if system('which git')
-      ary.append(:ansible) if system('which ansible')
-      ary.append(:terraform) if system('which terraform')
-      ary
+      cmd = TTY::Command.new(printer: :null, uuid: false)
+      tools = %i[docker skaffold git ansible docker-compose terraform].each_with_object([]) do |dep, ary|
+        ary.append(dep) if cmd.run!("which #{dep}").failure?
+      end
+      Cnfs.logger.info "Missing dependency tools [#{tools.join(', ')}]" if tools.any?
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
 
     def platform
       case RbConfig::CONFIG['host_os']

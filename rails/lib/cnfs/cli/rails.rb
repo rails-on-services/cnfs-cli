@@ -24,7 +24,7 @@ module Cnfs
             Cnfs.logger.info "Rails plugin configuring on runtime switch #{Dir.pwd}"
             FileUtils.rm_f('.env')
             path = Dir.pwd
-            r_path = Cnfs.project_root.x_relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
+            r_path = Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
             return unless r_path.exist?
 
             FileUtils.ln_s(r_path, '.env')

@@ -46,10 +46,4 @@ class ImagesController < Thor
   def push(*services)
     run(:push, services: services)
   end
-
-  private
-
-  def prepare_runtime
-    project.runtime.switch!
-  end
 end

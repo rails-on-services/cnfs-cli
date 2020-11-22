@@ -3,48 +3,34 @@
 class Runtime::Compose < Runtime
   def supported_commands
     %w[build test push pull publish
-       destroy
-       deploy redeploy ps status
+       destroy deploy redeploy 
        start restart stop terminate
+       ps status
        attach command console copy credentials exec logs shell]
     # list show generate
   end
 
-  def services_to_string(services)
-    services.pluck(:name).join(' ')
-  end
-
-  ###
   # Image Operations
-  ###
   def build(services)
-    # binding.pry
-    command_string = compose("build --parallel #{services.pluck(:name).join(' ')}")
-    return compose_env, command_string, command_options
+    rv compose("build --parallel #{services.pluck(:name).join(' ')}")
   end
 
   def pull(services)
-    command_string = compose("pull #{services.pluck(:name).join(' ')}")
-    return compose_env, command_string, command_options
+    rv compose("pull #{services.pluck(:name).join(' ')}")
   end
 
   def push(services)
-    command_string = compose("push #{services.pluck(:name).join(' ')}")
-    return compose_env, command_string, command_options
+    rv compose("push #{services.pluck(:name).join(' ')}")
   end
 
-  ###
   # Namespace Operations
-  ###
-  # TODO: Add support for destrying volumes; https://docs.docker.com/compose/reference/down/
+  # TODO: Add support for destroying volumes; https://docs.docker.com/compose/reference/down/
   def destroy
-    command_string = compose(:down)
-    return compose_env, command_string, command_options
+    rv compose(:down)
   end
 
   def deploy
-    command_string = compose(:up)
-    return compose_env, command_string, command_options
+    rv compose(:up)
   end
 
   def redeploy
@@ -53,70 +39,39 @@ class Runtime::Compose < Runtime
 
   def status; end
 
-  ###
   # Service Process Operations
-  ###
   def ps; end
 
-  ###
   # Service Admin Operations
-  ###
   def start(services)
-    compose_options = options.foreground ? '' : '-d'
-    command_string = compose("up #{compose_options} #{services.pluck(:name).join(' ')}")
-    return compose_env, command_string, command_options
-  end
-
-  def command_options
-    { pty: true }
+    rv compose("up #{compose_options} #{services.pluck(:name).join(' ')}")
   end
 
   def stop(services)
-    command_string = compose("stop #{services.pluck(:name).join(' ')}")
-    return compose_env, command_string, command_options
+    rv compose("stop #{services.pluck(:name).join(' ')}")
   end
 
   def restart(services)
     [stop(services), start(services)]
-    # stop
+    # TODO: Implement this; If a service has a method then it gets called
     # if options.clean
     #   clean
     #   database_check
     # end
-    # start
   end
 
   def terminate(services)
     [stop(services), clean(services)]
   end
 
-  def exec_string
-    application.services.each_with_object([]) do |service, ary|
-      binding.pry
-      (options.profiles || service.try(:profiles)&.keys || {}).each do |profile|
-        profile = profile.eql?(default_profile) ? '' : "_#{profile}"
-        ary.append("#{service.name}#{profile}")
-      end
-    end.join(' ')
-  end
-
-  # TODO: make this a configuration option
-  def default_profile
-    'server'
-  end
-
-  ###
   # Service Runtime
-  ###
   def attach(service)
-    command_string = "docker attach #{service.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'"
-    return compose_env, command_string, command_options
+    rv "docker attach #{service.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'"
   end
 
   def copy(src, dest)
     service_name = src.index(':') ? src.split(':')[0] : dest.split(':')[0]
-    command_string = "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:")
-    return compose_env, command_string, command_options
+    rv "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:")
   end
 
   # TODO: Needs filter for profile and adjust for 'server'
@@ -130,12 +85,10 @@ class Runtime::Compose < Runtime
   end
 
   def logs(service)
-    compose_options = options.tail ? '-f' : ''
     # TODO: Query running services to get the name
-    command_string = "docker logs #{compose_options} #{service.full_context_name}_#{service.name}_1"
     # TODO: Get options available in the runtime
     # command_options = { pty: options.tail }
-    return compose_env, command_string, command_options
+    rv "docker logs #{compose_options} #{service.full_context_name}_#{service.name}_1"
   end
 
   #### Support Methods
@@ -166,18 +119,54 @@ class Runtime::Compose < Runtime
 
   private
 
-  def compose(command, *modifiers)
-    modifiers.unshift('docker-compose').append(command).join(' ')
-  end
-
-  def runtime_service_names_to_service_names(runtime_services_list)
-    runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
+  # Simplified syntax to return a command array
+  def rv(command_string)
+    [compose_env, command_string, command_options]
   end
 
   def compose_env
     hash = {}
     hash.merge!('GEM_SERVER' => "http://#{gem_cache_server}:9292") if gem_cache_server
     hash
+  end
+
+  def compose(command, *modifiers)
+    modifiers.unshift('docker-compose').append(command).join(' ')
+  end
+
+  # options embedded in the compose command string
+  def compose_options
+    opts = []
+    opts.append('-d') if options.foreground
+    opts.append('-f') if options.tail
+    opts.join(' ')
+  end
+
+  # options returned to the TTY command
+  def command_options
+    opts = {}
+    opts.merge!(pty: true) if 1 == 2
+    opts.merge!(only_output_on_error: true) if project.options.quiet
+    opts
+  end
+
+  # def exec_string
+  #   application.services.each_with_object([]) do |service, ary|
+  #     binding.pry
+  #     (options.profiles || service.try(:profiles)&.keys || {}).each do |profile|
+  #       profile = profile.eql?(default_profile) ? '' : "_#{profile}"
+  #       ary.append("#{service.name}#{profile}")
+  #     end
+  #   end.join(' ')
+  # end
+
+  # TODO: make this a configuration option
+  # def default_profile
+  #   'server'
+  # end
+
+  def runtime_service_names_to_service_names(runtime_services_list)
+    runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
   end
 
   def runtime_services_query(format:, status:, **filters)
@@ -219,6 +208,7 @@ class Runtime::Compose < Runtime
     `ip -o -4 addr show dev docker0`.split[3].split('/')[0]
   end
 
+  # TODO: This will be an interesting task
   def database_check
     application.services.each do |service|
       next unless service.respond_to?(:database_seed_commands)
