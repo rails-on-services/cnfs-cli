@@ -14,6 +14,7 @@ module Repositories
     # Another gem includes its commands in this class, e.g. rails, angular, etc
     # This method is then available to those classes
     def invoke(generator, name)
+      # TODO: Repository class should be handling everything but code generation
       Cnfs.paths.src.mkpath
       generator.destination_root = Cnfs.paths.src.join(name)
       generator.invoke_all

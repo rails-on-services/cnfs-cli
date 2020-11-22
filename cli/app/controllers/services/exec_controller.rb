@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 module Services
-  class ExecController < ApplicationController
-    # cnfs exec iam ls -l -R
+  class ExecController
+    include ServicesHelper
+    attr_accessor :service
+
+    # cnfs service exec iam ls -l -R
     def execute
-      application.exec(application.service, application.arguments.command_args.join(' '), true)
+      command.run(*service.exec(args.command))
     end
   end
 end

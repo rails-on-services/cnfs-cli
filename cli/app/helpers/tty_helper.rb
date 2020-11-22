@@ -2,40 +2,11 @@
 
 require 'forwardable'
 
-class ApplicationController
+module TtyHelper
+  extend ActiveSupport::Concern
   extend Forwardable
 
   def_delegators :command, :run
-  attr_accessor :application, :options, :response
-  # attr_accessor :input, :output, :response # , :display
-  attr_accessor :name
-
-  def initialize(application:, options:, response:)
-    @application = application
-    @options = options
-    @response = response
-    @name = self.class.name.demodulize.delete_suffix('Controller').downcase.to_sym
-    run('namespaces/generate') if application.manifest.was_purged? && !name.eql?(:generate)
-  end
-
-  # NOTE: Don't pass a command from the router; This is for command chaining
-  # TODO: make this method private
-  def run(command)
-    command_module = command.to_s.index('/') ? '' : "#{self.class.name.module_parent}/"
-    controller_name = "#{command_module}#{command}_controller".camelize
-    unless (controller_class = controller_name.safe_constantize)
-      raise Cnfs::Error, "Class not found: #{controller_name} (this is a bug. please report)"
-    end
-
-    controller = controller_class.new(application: application, options: options, response: response)
-    response.command_name = controller.name
-    controller.execute
-    response.command_name = name
-  end
-
-  def execute
-    raise NotImplementedError
-  end
 
   # The external commands runner
   #

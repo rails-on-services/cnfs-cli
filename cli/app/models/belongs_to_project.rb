@@ -6,6 +6,11 @@ module BelongsToProject
   included do
     belongs_to :project
 
+    # For records created with new during cli operations
+    after_initialize do
+      self.project ||= Cnfs.project
+    end
+
     delegate :options, :paths, :write_path, to: :project
   end
 

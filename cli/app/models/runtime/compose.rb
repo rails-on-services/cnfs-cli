@@ -58,28 +58,33 @@ class Runtime::Compose < Runtime
   ###
   # Service Admin Operations
   ###
-  def start(services) # , options)
+  def start(services)
     compose_options = options.foreground ? '' : '-d'
-    { exec: compose("up #{compose_options} #{services.pluck(:name).join(' ')}"), env: compose_env }
-    # response.add(exec: compose("up #{compose_options} #{exec_string}"), env: compose_env)
+    command_string = compose("up #{compose_options} #{services.pluck(:name).join(' ')}")
+    return compose_env, command_string, command_options
   end
 
-  def stop
-    response.add(exec: compose("stop #{exec_string}"), env: compose_env)
+  def command_options
+    { pty: true }
   end
 
-  def restart
-    stop
-    if options.clean
-      clean
-      database_check
-    end
-    start
+  def stop(services)
+    command_string = compose("stop #{services.pluck(:name).join(' ')}")
+    return compose_env, command_string, command_options
   end
 
-  def terminate
-    stop
-    clean
+  def restart(services)
+    [stop(services), start(services)]
+    # stop
+    # if options.clean
+    #   clean
+    #   database_check
+    # end
+    # start
+  end
+
+  def terminate(services)
+    [stop(services), clean(services)]
   end
 
   def exec_string
@@ -101,28 +106,33 @@ class Runtime::Compose < Runtime
   # Service Runtime
   ###
   def attach(service)
-    { exec: "docker attach #{service.app.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true }
-    # response.add(exec: "docker attach #{service.app.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'", pty: true)
+    command_string = "docker attach #{service.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'"
+    return compose_env, command_string, command_options
   end
 
   def copy(src, dest)
     service_name = src.index(':') ? src.split(':')[0] : dest.split(':')[0]
-    response.add(exec: "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:"))
+    command_string = "docker cp #{src} #{dest}".gsub("#{service_name}:", "#{service_id(service_name)}:")
+    return compose_env, command_string, command_options
   end
 
   # TODO: Needs filter for profile and adjust for 'server'
   def exec(service, command, pty)
-    filters = { project: application.full_project_name, service: service.name }
+    filters = { project: service.full_context_name, service: service.name }
     # filters.merge!(profile: profile_name) if profile_name
-    running_services = runtime_services(filters)
+    running_services = [] # runtime_services(filters)
     modifier = running_services.empty? ? 'run --rm' : 'exec'
-    response.add(exec: compose(command, modifier, service.name), pty: pty)
+    return compose_env, compose(command, modifier, service.name), { pty: pty }
+    # response.add(exec: compose(command, modifier, service.name), pty: pty)
   end
 
   def logs(service)
     compose_options = options.tail ? '-f' : ''
     # TODO: Query running services to get the name
-    response.add(exec: "docker logs #{compose_options} #{application.full_project_name}_#{service.name}_1", pty: options.tail)
+    command_string = "docker logs #{compose_options} #{service.full_context_name}_#{service.name}_1"
+    # TODO: Get options available in the runtime
+    # command_options = { pty: options.tail }
+    return compose_env, command_string, command_options
   end
 
   #### Support Methods
@@ -164,6 +174,7 @@ class Runtime::Compose < Runtime
 
   # See: https://docs.docker.com/engine/reference/commandline/ps
   def runtime_services(format: '{{.Names}}', status: :running, **filters)
+    binding.pry
     @runtime_services ||= runtime_services_query(format: format, status: status, **filters)
   end
 
@@ -174,7 +185,7 @@ class Runtime::Compose < Runtime
   end
 
   def runtime_service_names_to_service_names(runtime_services_list)
-    runtime_services_list.map { |a| a.gsub("#{application.full_project_name}_", '')[0...-2] }
+    runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
   end
 
   def compose_env
@@ -204,8 +215,8 @@ class Runtime::Compose < Runtime
   #   output.puts "compose options set to #{compose_options}" if options.verbose
   # end
 
-  def clean
-    response.add(exec: compose("rm -f #{exec_string}"))
+  def clean(services)
+    return compose_env, compose("stop #{services.pluck(:name).join(' ')}"), { tty: true }
   end
 
   def deploy_type

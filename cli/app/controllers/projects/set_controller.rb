@@ -23,6 +23,8 @@ module Projects
     private
 
     def config_set(name, value)
+      binding.pry
+      Cnfs.project
       o = Config.load_file(Cnfs::PROJECT_FILE)
       # TODO: Decide what config goes where
       # user_root cnfs.yml should have things like cli.dev

@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 module Images
-  class BuildController < ApplicationController
+  class BuildController
+    include ExecHelper
+
     def execute
-      application.build
+      puts "building #{args.services.join(' ')}"
     end
   end
 end

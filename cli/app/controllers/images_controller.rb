@@ -19,8 +19,9 @@ class ImagesController < Thor
   # so that each image and within an environment/namespace _could_ have its own naming pattern
   # option :all,
   #   aliases: '-a', type: :boolean
+  before :initialize_project
   def build(*services)
-    run(:build, services: services, service: services.last)
+    execute(services: services)
   end
 
   desc 'test [IMAGES]', 'Run test commands on service image(s)'

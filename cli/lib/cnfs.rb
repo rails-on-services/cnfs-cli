@@ -23,7 +23,7 @@ module Cnfs
   end
 
   class << self
-    attr_accessor :repository, :app
+    attr_accessor :repository, :project
     attr_reader :config
     attr_reader :timers, :logger, :cwd
 
@@ -37,7 +37,7 @@ module Cnfs
       start_time = Time.now
       Dir.chdir(project_root) do
         load_config
-        with_timer('loading core dependencies') { require_minimum_deps }
+        require_minimum_deps
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
         setup_extensions
@@ -50,8 +50,7 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
 
     def require_minimum_deps
-      minimum_deps.each { |dep| require dep }
-      minimum_deps_rel.each { |dep| require_relative dep }
+      with_timer('loading core dependencies') { require_relative 'minimum_dependencies' }
       ActiveSupport::Inflector.inflections do |inflect|
         inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
       end
@@ -67,6 +66,8 @@ module Cnfs
       @config = Config.load_files(gem_root.join(PROJECT_FILE), user_root.join('cnfs.yml'), PROJECT_FILE)
       Config.use_env = false
       config.debug ||= 0
+    rescue => e
+      raise Cnfs::Error, "Error parsing config. Environment:\n#{%x(env | grep CNFS)}"
     end
 
     def initialize_development
@@ -88,7 +89,7 @@ module Cnfs
           lib_path = File.expand_path(dir.join('lib'))
           $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
           require plugin_module
-          next unless (klass = plugin_module.camelize.safe_constantize)
+          next unless (klass = plugin_module.classify.safe_constantize)
 
           cmd = "initialize_#{name}"
           klass.send(cmd) if klass.respond_to?(cmd)
@@ -99,8 +100,7 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
 
     def require_deps
-      deps.each { |dep| require dep }
-      deps_rel.each { |dep| require_relative dep }
+      with_timer('loading dependencies') { require_relative 'dependencies' }
     end
 
     # def initialize_repositories
@@ -131,7 +131,7 @@ module Cnfs
     end
 
     def reload
-      project&.reload
+      Cnfs::Schema.reload
       loader.reload
     end
 
@@ -150,21 +150,6 @@ module Cnfs
     def project_root
       @project_root ||= cwd.ascend { |path| break path if path.join(PROJECT_FILE).file? }
     end
-
-    # Determine the current repository from where the user is in the project filesystem
-    # Returns the default repository unless the user is in the path of another project repository
-    # rubocop:disable Metrics/AbcSize
-    def current_repository
-      return unless project_root.class.name.eql?('Pathname')
-
-      current_path = cwd.to_s
-      src_path = project_root.join(paths.src).to_s
-      return app.repository if current_path.eql?(src_path) || !current_path.start_with?(src_path)
-
-      repo_name = current_path.delete_prefix(src_path).split('/')[1]
-      app.repositories.find_by(name: repo_name)
-    end
-    # rubocop:enable Metrics/AbcSize
 
     def paths
       @paths ||= config.paths.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
@@ -199,7 +184,7 @@ module Cnfs
     # rubocop:enable Metrics/MethodLength
 
     def default_load_paths
-      %w[controllers helpers models generators]
+      %w[controllers generators helpers models]
     end
 
     # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
@@ -325,27 +310,6 @@ module Cnfs
       when /darwin/
         'darwin'
       end
-    end
-
-    def minimum_deps
-      %w[active_support/concern active_support/inflector active_support/core_ext/hash
-         active_support/core_ext/enumerable fileutils thor thor/hollaback zeitwerk]
-    end
-
-    def minimum_deps_rel
-      %w[cnfs/errors cnfs/version ext/config/options ext/string]
-    end
-
-    def deps
-      # NOTE: require rails/railtie before lockbox
-      # json_schemer open3
-      %w[active_record active_record/fixtures active_support/core_ext/enumerable
-         active_support/log_subscriber active_support/string_inquirer rails/railtie
-         lockbox open-uri sqlite3]
-    end
-
-    def deps_rel
-      %w[cnfs/schema]
     end
 
     # def git

@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 module Services
-  class ShellController < ApplicationController
+  class ShellController
+    include ServicesHelper
+    attr_accessor :service
+
     def execute
-      run(:build) if options.build
-      application.exec(application.service, application.service.shell_command, true)
+      unless service.shell_command
+        raise Cnfs::Error, "#{service.name} does not implement the shell command"
+      end
+
+      command.run(*service.shell)
     end
   end
 end

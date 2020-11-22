@@ -3,20 +3,21 @@
 # rubocop:disable Metrics/ClassLength
 class ServicesController < Thor
   include CommandHelper
+  alias_method :super_execute, :execute
 
   # Define common options for this controller
-  add_cnfs_option :attach,   desc: "Attach to service's running process ",
-                             aliases: '-a', type: :boolean
+  add_cnfs_option :attach,   desc: "Connect to service's running process ",
+                             aliases: '-a', type: :string
   add_cnfs_option :build,    desc: 'Build image before executing command',
                              aliases: '-b', type: :boolean
   add_cnfs_option :console,  desc: "Connect to service's console",
-                             aliases: '-c', type: :boolean
+                             aliases: '-c', type: :string
   add_cnfs_option :profiles, desc: 'Service profiles',
                              aliases: '-p', type: :array
   add_cnfs_option :profile,  desc: 'Service profile',
                              aliases: '-p', type: :string
-  add_cnfs_option :shell,    desc: "Connect to service's OS shell",
-                             aliases: '--sh', type: :boolean
+  add_cnfs_option :sh,       desc: "Connect to service's OS shell",
+                             aliases: '--sh', type: :string
 
   # Activate common options
   cnfs_class_options :noop, :quiet, :verbose
@@ -32,9 +33,8 @@ class ServicesController < Thor
   option :namespace, desc: 'Target namespace',
                      aliases: '-n', type: :string
   map %w[ls] => :list
-  # TODO: Implement list
   def list
-    # run(:list)
+    puts project.services.pluck(:name).join("\n")
   end
 
   # TODO: Implement remove
@@ -59,23 +59,24 @@ class ServicesController < Thor
   option :modifier, desc: "A suffix applied to service name, e.g. '.env'",
                     aliases: '-m', type: :string
   def show(*services)
-    run(:show, services: services)
+    execute(services: services)
   end
 
   desc 'ps', 'List running services'
   cnfs_options :environment, :namespace
-  option :format, desc: '',
+  option :format, desc: 'Format output',
                   type: :string, aliases: '-f'
   option :status, desc: 'created, restarting, running, removing, paused, exited or dead',
-                  type: :string
+                  type: :string, default: 'running'
   def ps(*args)
-    run(:ps, args: args)
+    # TODO: This is not working
+    execute(args: args)
   end
 
   # Service Admin
   desc 'start [SERVICES]', 'Start one or more services (short-cut: s)'
   cnfs_options :environment, :namespace
-  cnfs_options :attach, :build, :console, :profiles, :shell
+  cnfs_options :attach, :build, :console, :profiles, :sh
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
@@ -83,14 +84,14 @@ class ServicesController < Thor
   map %w[s] => :start
   after :execute_after
   def start(*services)
-    # puts 'hi'
     execute(services: services)
-    # run(:start, services: services)
   end
 
   desc 'restart [SERVICES]', 'Stop and start one or more running services'
   cnfs_options :environment, :namespace
-  cnfs_options :attach, :build, :console, :profiles, :shell
+  cnfs_options :tags, :profiles
+  cnfs_options :build
+  cnfs_options :attach, :console, :sh
   # TODO: When taking array of services but attach only uses the last one
   # Add default: '' so if -a is passed and value is blank then it's the last one
   # NOTE: Seed the database before executing command
@@ -98,22 +99,23 @@ class ServicesController < Thor
                  aliases: '--clean', type: :boolean
   # option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
+  # TODO: Implement clean
   def restart(*services)
-    run(:restart, services: services)
+    execute(services: services)
   end
 
   desc 'stop [SERVICES]', 'Stop one or more running services'
   cnfs_options :environment, :namespace
   cnfs_options :profiles
   def stop(*services)
-    run(:stop, services: services)
+    execute(services: services)
   end
 
   desc 'terminate [SERVICES]', 'Terminate one or more running services'
   cnfs_options :environment, :namespace
-  cnfs_options :profiles
+  cnfs_options :tags, :profiles
   def terminate(*services)
-    run(:terminate, services: services)
+    execute(services: services)
   end
 
   # Service Runtime
@@ -125,12 +127,10 @@ class ServicesController < Thor
   ctrl-f to detach; ctrl-c to stop/kill the service
   DESC
   cnfs_options :environment, :namespace
-  # cnfs_options :profile
-  cnfs_options :tags, :profile
+  cnfs_options :tags, :profile, :build
   map %w[a] => :attach
   def attach(service)
-    command_controller.new(arguments: { services: [service] }, options: options).execute
-    # run(:attach, service: service)
+    execute(service: service)
   end
 
   # NOTE: This is a test to run a command with multiple arguments; different from exec
@@ -145,7 +145,7 @@ class ServicesController < Thor
   cnfs_options :profile
   map %w[c] => :console
   def console(service)
-    run(:console, service: service)
+    execute(service: service)
   end
 
   desc 'copy SRC DEST', 'Copy a file to/from a running service (short-cut: cp)'
@@ -161,14 +161,14 @@ class ServicesController < Thor
   cnfs_options :profile
   map %w[cp] => :copy
   def copy(src, dest)
-    run(:copy, src: src, dest: dest)
+    execute(src: src, dest: dest)
   end
 
   desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
   cnfs_options :environment, :namespace
   cnfs_options :profile
-  def exec(service, *command_args)
-    run(:exec, service: service, command_args: command_args)
+  def exec(service, *command)
+    execute(service: service, command: command)
   end
 
   desc 'logs SERVICE', 'Display the logs of a running service'
@@ -177,16 +177,14 @@ class ServicesController < Thor
   option :tail, desc: 'Continuous logging',
                 aliases: '-f', type: :boolean
   def logs(service)
-    run(:logs, service: service)
+    execute(service: service)
   end
 
   desc 'sh SERVICE', 'Execute an interactive shell on a running service'
   cnfs_options :environment, :namespace
   # NOTE: shell is a reserved word in Thor so it can't be used
   def sh(service)
-    arguments = { service: service }
-    arguments.merge!(services: [service]) if options.build
-    run(:shell, arguments)
+    execute({ service: service }, :shell)
   end
 
   # Commands ot refactor
@@ -223,19 +221,25 @@ class ServicesController < Thor
 
   private
 
-  def execute_after
-    if options.attach
-      k = controller_class(:attach)
-      # binding.pry
-      k.new(arguments: { services: args }, options: options).execute
-      # k.new(arguments: { service: args.first }, options: options).execute
-      # invoke(:attach)
-      # controller.run(:attach)
-    elsif options.shell
-      # controller.run(:shell)
-    elsif options.console
-      # controller.run(:console)
+  def execute(xargs = {})
+    super_execute(xargs, nil, 3) do
+      if options.build
+        remove_option(:build)
+        cmd.images.build(args.services)
+      end
     end
+    # Run any post execute command based on options passed in
+    %i[attach sh console].each do |after_exec|
+      next unless (service = options.send(after_exec))
+
+      service = args.services&.last if service.eql?(after_exec.to_s)
+      send(after_exec, service)
+      break
+    end
+  end
+
+  def remove_option(key)
+    @options = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(key.to_s))
   end
 end
 # rubocop:enable Metrics/ClassLength

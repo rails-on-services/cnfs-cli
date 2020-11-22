@@ -1,28 +1,51 @@
 # frozen_string_literal: true
 
 class Service < ApplicationRecord
+  include Taggable
+
   belongs_to :namespace
 
-  delegate :app, :runtime, to: :namespace
+  delegate :project, :runtime, to: :namespace
+
+  delegate :full_context_name, :write_path, to: :project
 
   validates :name, presence: true
 
   store :config, accessors: %i[path image depends_on ports mount], coder: YAML
   store :config, accessors: %i[shell_command], coder: YAML
+  store :profiles, coder: YAML
 
   # depends_on is used by compose to set order of container starts
   # shell_command: the command ShellController passes to runtime.exec
   after_initialize do
     self.depends_on ||= []
-    self.shell_command ||= :bash
+    # self.shell_command ||= :bash
   end
 
+  # Commands that execute on only one service are implemented here
+  # Commands that execute on multiple services are handled directly by the runtime
   def attach
     runtime.attach(self)
   end
 
-  def start
-    runtime.start(self, app.options)
+  def console
+    runtime.exec(self, console_command, true)
+  end
+
+  def copy(src, dest)
+    runtime.copy(src, dest)
+  end
+
+  def exec(command)
+    runtime.exec(self, command, true)
+  end
+
+  def logs
+    runtime.logs(self)
+  end
+
+  def shell
+    runtime.exec(self, shell_command, true)
   end
 
   def test_commands(_options = nil)
@@ -30,6 +53,10 @@ class Service < ApplicationRecord
   end
 
   class << self
+    def by_profiles(profiles = project.profiles)
+      where("profiles LIKE ?", profiles.map { |k, v| "%#{k}: #{v}%" }.join)
+    end
+
     # rubocop:disable Metrics/MethodLength
     def parse
       file_name = 'config/environments/services.yml'

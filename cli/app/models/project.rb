@@ -29,6 +29,14 @@ class Project < ApplicationRecord
   # validate :all_services, if: -> { arguments.services }
   # validates :runtime, presence: true
 
+  validate :repository_is_valid
+
+  def repository_is_valid
+    # binding.pry
+    #aise Cnfs::Error, "Unknown repository '#{options.repository}'." \
+    #  " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
+  end
+
   # TODO: This may be unnecessary or a very important method/scope. Think about this
   def services; namespace.services end
   def runtime; environment.runtime end 
@@ -94,11 +102,25 @@ class Project < ApplicationRecord
 
   class << self
     def parse
-      content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths))
+      content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags))
       namespace = "#{content[:environment]}_#{content[:namespace]}"
-      options = Cnfs.config.delete_field(:options).to_hash
+      options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
       output = { app: content.merge(namespace: namespace, options: options) }
       write_fixture(output)
     end
+
+    # Determine the current repository from where the user is in the project filesystem
+    # Returns the default repository unless the user is in the path of another project repository
+    # rubocop:disable Metrics/AbcSize
+    def current_repository
+      current_path = Cnfs.cwd.to_s
+      src_path = Cnfs.project_root.join(paths.src).to_s
+      # return app.repository if current_path.eql?(src_path) || !current_path.start_with?(src_path)
+      return if current_path.eql?(src_path) || !current_path.start_with?(src_path)
+
+      repo_name = current_path.delete_prefix(src_path).split('/')[1]
+      app.repositories.find_by(name: repo_name)
+    end
+    # rubocop:enable Metrics/AbcSize
   end
 end

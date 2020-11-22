@@ -23,13 +23,12 @@ class ProjectsController < Thor
   desc 'console', 'Start a CNFS project console (short-cut: c)'
   # TODO: Maybe have an option that removes :enfironment and namespace from options before running command
   # So that Cnfs.app.valid? returns true if env and ns are not necessary
-  cnfs_options :environment, :namespace, :tags
+  cnfs_options :environment, :namespace, :tags, :repository
   before :initialize_project
   before :ensure_valid_project
   map %w[c] => :console
   def console
     execute
-    # command_controller.new(options: options).execute
   end
 
   desc 'init', 'Initialize the project'

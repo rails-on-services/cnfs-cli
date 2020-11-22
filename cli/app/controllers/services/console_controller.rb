@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 module Services
-  class ConsoleController < ApplicationController
+  class ConsoleController
+    include ServicesHelper
+    attr_accessor :service
+
     def execute
-      unless application.service.respond_to?(:console_command)
-        raise Cnfs::Error, "#{application.service.name} does not implement the console command"
+      unless service.respond_to?(:console_command)
+        raise Cnfs::Error, "#{service.name} does not implement the console command"
       end
 
-      application.runtime.exec(application.service, application.service.console_command, true).run!
+      command.run(*service.console)
     end
   end
 end

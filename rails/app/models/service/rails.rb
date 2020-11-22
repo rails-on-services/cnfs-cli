@@ -4,7 +4,7 @@ class Service::Rails < Service
   # attr_accessor :images
   # NOTE: project_path, e.g. 'whistler' is relative to build_context_path which is 'project_root/src'
   # NOTE: dockerfile is also relative to build_context_path
-  store :config, accessors: %i[project_path dockerfile profiles image_gems build_args], coder: YAML
+  store :config, accessors: %i[project_path dockerfile image_gems build_args], coder: YAML
   store :config, accessors: %i[image_repository image_tag], coder: YAML
   store :config, accessors: %i[console_command database_seed_commands test_commands], coder: YAML
 

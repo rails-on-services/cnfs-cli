@@ -10,34 +10,10 @@ module ExecHelper
   def initialize(options:, args:)
     @options = options
     @args = args
+    before_execute if respond_to?(:before_execute)
   end
 
-  def conditions
-    hash = { name: service }
-    if options.tags
-      hash.merge!(tags: rt) if options.tags
-    end
-    hash.merge!(profile: options.profile) if options.profile
-    hash
+  def project
+    Cnfs.project
   end
-
-  # def tags
-  #   @tags ||= options.tags ? Hash[options.tags.each_slice(2).to_a] : {}
-  # end
-
-  # def user
-  #   rt = tags.map{|k, v| "%#{k}: #{v}%"}
-  #   # User.where('tags LIKE ?', '%status: cool%')
-  #   User.where('tags LIKE ?', rt)
-  # end
-
-  def tags
-    @tags ||= options.tags ? Hash[options.tags.each_slice(2).to_a] : {}
-  end
-
-  def rt; tags.map{|k, v| "%#{k}: #{v}%"}.join end
-
-	def services; project.services end
-	def runtime; project.runtime end
-  def project; Cnfs.app end
 end

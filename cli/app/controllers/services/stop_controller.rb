@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 module Services
-  class StopController < ApplicationController
+  class StopController
+    include ServicesHelper
+    attr_accessor :services
+
     def execute
-      application.stop
+      command.run(*project.runtime.stop(services))
     end
   end
 end

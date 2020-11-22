@@ -10,6 +10,18 @@ class Repository < ApplicationRecord
   # TODO: Validate the url is a proper git pattern:
   # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
 
+  def services
+    services_path.exist? ? services_path.children.select(&:directory?).map { |p| p.split.last.to_s } : []
+  end
+
+  def services_path
+    path.join('services')
+  end
+
+  def path
+    @path ||= paths.src.join(name)
+  end
+
   def clone
     # Ensure the project's repositories directory exists
     paths.src.mkpath
@@ -21,7 +33,7 @@ class Repository < ApplicationRecord
     cmd = "git clone #{url} #{name}"
     Cnfs.logger.debug(cmd)
     # TODO: Use the response object to run the command?
-    Dir.chdir(app.paths.src) { `#{cmd}` } unless app.options.noop
+    Dir.chdir(paths.src) { `#{cmd}` } unless options.noop
     true
   end
 
@@ -48,7 +60,7 @@ class Repository < ApplicationRecord
 
       repo.save
       # If this is the first source repository added to the project then make it the default
-      repo.app.update(source_repository: repo.name) if repo.app.source_repository.nil?
+      repo.project.update(source_repository: repo.name) if repo.project.source_repository.nil?
     end
 
     # Shortcuts for CNFS repos

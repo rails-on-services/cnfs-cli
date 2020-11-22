@@ -17,15 +17,10 @@ class RepositoriesController < Thor
 
   desc 'list', 'List repositories and services'
   def list
-    puts Repository.pluck(:name)
-    # return unless Cnfs.app.paths.src.exist?
-
-    # Cnfs.app.paths.src.children.select(&:directory?).sort.each do |repo|
-    #   puts repo.split.last
-    #   next unless repo.join('services').exist?
-
-    #   puts repo.join('services').children.select(&:directory?).map { |path| "> #{path.split.last}" }.sort
-    # end
+    Repository.all.each do |repo|
+      puts repo.name
+      puts repo.services.sort.map { |s| "> #{s}" }
+    end
   end
 
   desc 'remove NAME', 'Remove a repository from the project'

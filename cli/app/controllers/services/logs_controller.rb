@@ -1,18 +1,14 @@
 # frozen_string_literal: true
 
 module Services
-  class LogsController < ApplicationController
-    cattr_reader :command_group, default: :service_runtime
+  class LogsController
+    include ServicesHelper
+    attr_accessor :service
 
     def execute
-      trap('SIGINT') { throw StandardError } if context.options.tail
-      before_execute_on_target
-      execute_on_target
+      trap('SIGINT') { throw StandardError } if options.tail
+      command.run(*service.logs)
     rescue StandardError
-    end
-
-    def execute_on_target
-      context.runtime.logs(context.service.name).run!
     end
   end
 end

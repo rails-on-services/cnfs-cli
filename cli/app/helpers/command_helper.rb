@@ -34,7 +34,7 @@ module CommandHelper
     add_cnfs_option :namespace,         desc: 'Target namespace',
                                         aliases: '-n', type: :string, default: Cnfs.config.namespace
     add_cnfs_option :repository,        desc: 'The repository in which to run the command',
-                                        aliases: '-r', type: :string, default: Cnfs.repository&.name
+      aliases: '-r', type: :string, default: Cnfs.config.repository
     add_cnfs_option :source_repository, desc: 'The source repository to link to',
                                         aliases: '-s', type: :string, default: Cnfs.config.source_repository
 
@@ -65,14 +65,15 @@ module CommandHelper
     private
 
     def initialize_project
+      puts "INITIALIZE"
+      Cnfs.require_deps
       Cnfs.with_timer('loading project configuration') do
-        Cnfs.require_deps
         # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
         # Merge options also under options key for Project to pick up
+        @options.merge!("tags" => Hash[*options.tags.flatten]) if options.tags
+        # binding.pry
         Cnfs.config.merge!(options).merge!(options: options)
         Cnfs::Schema.initialize!
-        Cnfs.app = Project.first
-        # binding.pry
         # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
         # Cnfs.app.manifest.generate
       end
@@ -82,45 +83,39 @@ module CommandHelper
     #   manifest.purge! if options.clean
     # end
 
-    def execute(args = {})
-      args = Thor::CoreExt::HashWithIndifferentAccess.new(args)
-      command_controller(2).new(options: options, args: args).execute
+    def execute(command_args = {}, command_name = nil, location = 2)
+      @args = Thor::CoreExt::HashWithIndifferentAccess.new(command_args)
+      yield if block_given?
+      Cnfs.logger.info("execute: #{command_name}")
+      command_name ||= command_method(location)
+      exec_instance = command_class(command_name)
+      exec_instance.new(options: options, args: args).execute
     end
 
-    def command_controller(location = 1)
-      command_name = caller_locations(1,location)[location -1].label
-      controller_class(command_name)
+    # Can be called directory by the command, e.g. 'console' with no params and will return 'console'
+    def command_method(location = 1)
+      method = caller_locations(1, location)[location -1].label
+      Cnfs.logger.info("command_method: #{method}")
+      method
     end
 
-    def controller_class(command_name)
-      name = controller_name(command_name)
-      unless (klass = name.safe_constantize)
-        raise Cnfs::Error, set_color("Class not found: #{name} (this is a bug. please report)", :red)
+    def command_class(command_name)
+      class_name = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".classify
+      Cnfs.logger.info("command_class: #{class_name}")
+      unless (klass = class_name.safe_constantize)
+        raise Cnfs::Error, set_color("Class not found: #{class_name} (this is a bug. please report)", :red)
       end
+
       klass
     end
 
-    def controller_name(command_name)
-      "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".classify
-    end
-
     def ensure_valid_project
-      raise Cnfs::Error, set_color(Cnfs.app.errors.full_messages.join("\n"), :red) unless Cnfs.app.valid?
+      raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
     end
-
-    # TODO: Refactor
-    # def set_repository
-    #   Cnfs.repository = Cnfs.app.repository
-    #   return
-    #   binding.pry
-    #   unless (Cnfs.repository = Cnfs.repositories[options.repository.to_sym])
-    #     raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
-    #       " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
-    #   end
-    # end
 
     def services_file_path
       path = [options.environment, options.namespace].compact.join('/')
+      # TODO: just reference project?
       Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
     end
 
@@ -130,6 +125,22 @@ module CommandHelper
       return true if options.force || yes?(msg)
 
       raise Cnfs::Error, 'Operation cancelled'
+    end
+
+    # References to instances of the command classes
+    def cmd
+      OpenStruct.new({
+        projects: ProjectsController.new(args, options),
+        repositories: RepositoriesController.new(args, options),
+        environments: EnvironmentsController.new(args, options),
+        namespaces: NamespacesController.new(args, options),
+        images: ImagesController.new(args, options),
+        services: ServicesController.new(args, options)
+      })
+    end
+
+    def project
+      Cnfs.project
     end
   end
 end

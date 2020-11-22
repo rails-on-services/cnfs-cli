@@ -18,6 +18,7 @@ module Projects
     end
 
     shortcuts.each_pair do |key, klass|
+      define_method(key) { klass } unless %w[p r].include?(key)
       define_method("#{key}a") { klass.all }
       define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
       define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
@@ -35,11 +36,34 @@ module Projects
 
     def reload!
       reset_cache
+      Cnfs.reload
       true
     end
 
     def r; reload! end
 
-    def a; Cnfs.app end
+    def o
+      options
+    end
+
+    def oa(opts = {})
+      options.merge!(opts)
+    end
+
+    def od(key)
+      @options = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(key.to_s))
+      options
+    end
+
+    def cmd
+      OpenStruct.new({
+        projects: ProjectsController.new(args, options),
+        repositories: RepositoriesController.new(args, options),
+        environments: EnvironmentsController.new(args, options),
+        namespaces: NamespacesController.new(args, options),
+        images: ImagesController.new(args, options),
+        services: ServicesController.new(args, options)
+      })
+    end
   end
 end

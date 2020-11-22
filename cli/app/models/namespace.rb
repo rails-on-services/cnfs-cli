@@ -8,7 +8,7 @@ class Namespace < ApplicationRecord
   validates :name, presence: true
 
   delegate :encrypt, :decrypt, to: :key
-  delegate :app, :runtime, to: :environment
+  delegate :project, :runtime, to: :environment
 
   store :config, accessors: %i[main], coder: YAML
 

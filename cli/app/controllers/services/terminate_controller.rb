@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 module Services
-  class TerminateController < ApplicationController
+  class TerminateController
+    include ServicesHelper
+    attr_accessor :services
+
     def execute
-      application.terminate
+      project.runtime.terminate(services).each do |cmd_array|
+        command.run(*cmd_array)
+      end
     end
   end
 end

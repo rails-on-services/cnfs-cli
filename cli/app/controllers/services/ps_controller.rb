@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 module Services
-  class PsController < ApplicationController
+  class PsController
+    include ServicesHelper
+
     def execute
-      response.output.puts application.runtime_services(format: format, status: status)
+      xargs = args.args.empty? ? {} : args.args
+      project.runtime.runtime_services(format: options.format, status: options.status, **xargs)
+      # project.runtime.runtime_services(format: options.format, status: options.status, **args.args)
     end
 
     # TODO: format and status are specific to the runtime so refactor when implementing skaffold

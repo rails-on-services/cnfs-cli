@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 module Services
-  class RestartController < ApplicationController
+  class StopController
+    include ServicesHelper
+    attr_accessor :services
+
     def execute
-      application.restart
+      command.run(*project.runtime.restart(services))
     end
   end
 end

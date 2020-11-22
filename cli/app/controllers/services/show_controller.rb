@@ -1,18 +1,22 @@
 # frozen_string_literal: true
 
 module Services
-  class ShowController < ApplicationController
+  class ShowController
+    include ServicesHelper
+    attr_accessor :services
+
     # rubocop:disable Metrics/AbcSize
     def execute
-      application.arguments.services.each do |service_name|
-        modifier = options.modifier || '.yml'
-        show_file = application.write_path.join("#{service_name}#{modifier}")
+      modifier = options.modifier || '.yml'
+      services.each do |service|
+        show_file = service.write_path.join("#{service.name}#{modifier}")
         unless File.exist?(show_file)
-          response.output.puts "File not found: #{show_file}"
+          puts "File not found: #{show_file}"
           next
         end
-        response.output.puts(File.read(show_file))
-        response.output.puts("\nContents from: #{show_file}")
+
+        puts(File.read(show_file))
+        puts("\nContents from: #{show_file}")
       end
     end
     # rubocop:enable Metrics/AbcSize

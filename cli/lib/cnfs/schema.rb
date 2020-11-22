@@ -26,6 +26,7 @@ module Cnfs
       # Enable fixtures to be re-seeded on code reload
       ActiveRecord::FixtureSet.reset_cache
       prepare
+      parse
       import
     end
 
@@ -50,8 +51,8 @@ module Cnfs
         raise c
       end
     ensure
-      # TODO: Maybe this should be a setting to disable auto remove for debugging purposes
-      # FileUtils.rm_rf(dir)
+      FileUtils.rm_rf(dir) unless Cnfs.config.retain #_artifacts
+      Cnfs.project = Project.first
     end
 
     def self.models
@@ -80,6 +81,7 @@ module Cnfs
           t.string :path
           t.string :owner_type
           t.string :owner_id
+          t.string :tags
         end
         Asset.reset_column_information
 
@@ -90,6 +92,7 @@ module Cnfs
           t.string :version
           t.string :config
           t.string :environment
+          t.string :tags
         end
         Blueprint.reset_column_information
 
@@ -190,6 +193,7 @@ module Cnfs
           t.string :type
           t.string :template
           t.string :path
+          t.string :profiles
           t.string :tags
         end
         Service.reset_column_information
