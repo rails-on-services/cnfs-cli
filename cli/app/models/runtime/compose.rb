@@ -18,15 +18,19 @@ class Runtime::Compose < Runtime
   # Image Operations
   ###
   def build(services)
-    response.add(exec: compose("build --parallel #{services_to_string(services)}"), env: compose_env)
+    # binding.pry
+    command_string = compose("build --parallel #{services.pluck(:name).join(' ')}")
+    return compose_env, command_string, command_options
   end
 
   def pull(services)
-    response.add(exec: compose("pull #{services_to_string(services)}"), env: compose_env)
+    command_string = compose("pull #{services.pluck(:name).join(' ')}")
+    return compose_env, command_string, command_options
   end
 
   def push(services)
-    response.add(exec: compose("push #{services_to_string(services)}"), env: compose_env)
+    command_string = compose("push #{services.pluck(:name).join(' ')}")
+    return compose_env, command_string, command_options
   end
 
   ###
@@ -34,18 +38,17 @@ class Runtime::Compose < Runtime
   ###
   # TODO: Add support for destrying volumes; https://docs.docker.com/compose/reference/down/
   def destroy
-    response.add(exec: compose(:down), env: compose_env)
+    command_string = compose(:down)
+    return compose_env, command_string, command_options
   end
 
   def deploy
-    response.add(exec: compose(:up), env: compose_env)
+    command_string = compose(:up)
+    return compose_env, command_string, command_options
   end
 
   def redeploy
-    destroy
-    deploy
-    # response.add(exec: compose(:down), env: compose_env)
-    # response.add(exec: compose(:up), env: compose_env)
+    [destroy, deploy]
   end
 
   def status; end
@@ -137,31 +140,14 @@ class Runtime::Compose < Runtime
 
   #### Support Methods
 
-  def before_execute
-    switch!
-  end
-
   def switch!
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
-    # TODO: This is specific to a Cnfs Backend project
-    # Dir.chdir("#{Cnfs.application.root}/services") do
-    #   FileUtils.rm_f('.env')
-    #   FileUtils.ln_s("../#{target.write_path}", '.env')
-    # end
-    # unless config.platform.is_cnfs?
-    #   Dir.chdir("#{Cnfs.application.root}/ros/services") do
-    #     FileUtils.rm_f('.env')
-    #     FileUtils.ln_s("../../#{write_path}", '.env')
-    #   end
-    # end
+    Cnfs.invoke_plugins_with(:on_runtime_switch)
   end
 
   def compose_file
-    # binding.pry
-    # @compose_file ||= "#{runtime_path}/compose.env"
-    @compose_file ||= runtime_path + 'compose.env'
-    # @compose_file ||= runtime_path.join('compose.env')
+    @compose_file ||= runtime_path.join('compose.env')
   end
 
   def service_id(service_name)

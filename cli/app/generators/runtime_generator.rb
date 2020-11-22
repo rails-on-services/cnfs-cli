@@ -6,10 +6,10 @@ class RuntimeGenerator < ApplicationGenerator
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
   def generate_service_environments
-    Service.all.reject { |service| service.environment.empty? }.each do |service|
-      file_name = application.write_path(path_type).join("#{service.name}.env")
+    project.services.reject { |service| service.environment.empty? }.each do |service|
+      file_name = write_path(path_type).join("#{service.name}.env")
       environment = Config::Options.new.merge!(service.environment)
-      generated_files << template('../env.erb', file_name, env: environment)
+      generated_files << template('env.erb', file_name, env: environment)
     end
   end
 
@@ -21,8 +21,7 @@ class RuntimeGenerator < ApplicationGenerator
   private
 
   def proxy_services
-    # services.select { |svc| svc.respond_to?(:profiles) && svc.profiles.include?('server') }
-    application.selected_services.select { |svc| svc.config.dig(:profiles)&.include?('server') }
+    project.services.select { |service| service.profiles.key?(:server) }
   end
 
   # Is a given service enabled?
@@ -35,35 +34,30 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   def entities
-    application.selected_services
+    project.services
   end
 
   # Render template
   def generate
-    template("#{entity_to_template}.yml.erb", "#{application.write_path(path_type)}/#{service.name}.yml")
+    template("#{entity_to_template}.yml.erb", "#{write_path(path_type)}/#{service.name}.yml")
   end
 
   def path_type
     :deployment
   end
 
-  # Methods for all runtime templates
-  def relative_path
-    application.relative_path(path_type)
-  end
-
   def template_types
-    @template_types ||= application.selected_services.map { |service| entity_to_template(service).to_sym }.uniq
+    @template_types ||= project.services.map { |service| entity_to_template(service).to_sym }.uniq
   end
 
   def version
-    application.runtime.version
+    project.runtime.version
   end
 
   # Default space_count is for compose
   # Template is expected to pass in a hash for example for profile
   def labels(labels: {}, space_count: 6)
-    application.runtime.labels(labels.merge(service: service.name)).map do |key, value|
+    project.runtime.labels(labels.merge(service: service.name)).map do |key, value|
       "\n#{' ' * space_count}#{key}: #{value}"
     end.join
   end
@@ -75,8 +69,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    # files << './application.env' if File.exist?(application.write_path(path_type).join('application.env'))
-    files << "./#{service.name}.env" if File.exist?(application.write_path(path_type).join("#{service.name}.env"))
+    files << "./#{service.name}.env" if File.exist?(write_path(path_type).join("#{service.name}.env"))
     files
   end
 end

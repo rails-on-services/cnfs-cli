@@ -37,7 +37,6 @@ class NamespacesController < Thor
                  aliases: '-c', type: :boolean
   def generate
     execute
-    # run(:generate)
   end
 
   # TODO: This should be a custom command

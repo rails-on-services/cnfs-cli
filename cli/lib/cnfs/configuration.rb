@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Cnfs
-  class Schema
+  class Configuration
     def self.initialize!
       # Set up in-memory database
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
@@ -201,7 +201,7 @@ module Cnfs
     # rubocop:enable Metrics/MethodLength
 
     def self.dir
-      Cnfs.paths.tmp.join('dump')
+      Cnfs.paths.tmp.join('fixtures')
     end
   end
 end

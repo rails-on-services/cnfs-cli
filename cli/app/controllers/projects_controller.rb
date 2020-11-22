@@ -45,6 +45,6 @@ class ProjectsController < Thor
 
   desc 'customize', 'Customize project templates'
   def customize
-    Cnfs.invoke_plugins_wtih(:customize)
+    Cnfs.invoke_plugins_with(:customize)
   end
 end

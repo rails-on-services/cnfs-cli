@@ -42,6 +42,8 @@ module Projects
 
     def r; reload! end
 
+    def m; project.manifest end
+
     def o
       options
     end

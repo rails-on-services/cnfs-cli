@@ -11,14 +11,10 @@ module Cnfs
         end
 
         def initialize
-          puts "Initializing plugin angular from #{gem_root}" if Cnfs.config.debug.positive?
+          Cnfs.logger.info "Initializing plugin angular from #{gem_root}"
         end
 
         def on_project_initialize
-          return unless Cnfs.project
-
-          Cnfs.project.paths['config'].unshift(gem_root.join('config'))
-          Cnfs.project.paths['app/views'].unshift(gem_root.join('app/views'))
         end
 
         def customize

@@ -2,7 +2,7 @@
 
 class Runtime < ApplicationRecord
   include BelongsToProject
-  # has_many :targets
+  has_many :environments
 
   class << self
     def dirs
@@ -11,10 +11,6 @@ class Runtime < ApplicationRecord
   end
 
   store :config, accessors: %i[version], coder: YAML
-
-  # Attributes configured by the controller
-  attr_accessor :response
-
 
   # method inherited from A/R base interferes with controller#destroy
   undef_method :destroy
@@ -29,15 +25,7 @@ class Runtime < ApplicationRecord
   end
 
   def labels(labels)
-    application.labels.merge(labels)
-  end
-
-  def context_service_names
-    application.arguments.services
-  end
-
-  def context_service_name
-    application.arguments.service
+    project.labels.merge(labels)
   end
 
   def clean_cache
@@ -61,11 +49,11 @@ class Runtime < ApplicationRecord
   end
 
   def deployment_path
-    @deployment_path ||= application.write_path(:deployment)
+    @deployment_path ||= write_path(:deployment)
   end
 
   def runtime_path
-    @runtime_path ||= application.write_path(:runtime)
+    @runtime_path ||= write_path(:runtime)
   end
 
   def generator_class
@@ -73,6 +61,6 @@ class Runtime < ApplicationRecord
   end
 
   def project_name
-    application.project_name
+    project.name
   end
 end

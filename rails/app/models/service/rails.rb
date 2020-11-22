@@ -33,6 +33,6 @@ class Service::Rails < Service
 
   def build_context_path
     # application.relative_path.join(Cnfs.paths.src, self.build_args['source_path'])
-    application.relative_path.join(Cnfs.paths.src)
+    project.relative_path.join(Cnfs.paths.src)
   end
 end

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Namespaces
-  class GenerateController < ApplicationController
+  class GenerateController
+    include ExecHelper
+
     def execute
-        application.generate_runtime_configs!
-      # Cnfs.silence_output(response.suppress_output) do
-      #   application.generate_runtime_configs!
-      # end
+      binding.pry
+      # project.process_manifests
     end
   end
 end

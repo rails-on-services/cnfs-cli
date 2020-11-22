@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
 class Runtime::ComposeGenerator < RuntimeGenerator
+
   def generate_nginx_conf
-    template('nginx.conf.erb', "#{application.write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
+    template('nginx.conf.erb', "#{write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
   end
 
   def generate_compose_environment
-    template('../env.erb', application.runtime.compose_file, env: compose_environment)
+    template('env.erb', project.runtime.compose_file, env: compose_environment)
   end
 
   private
 
   def excluded_files
-    ["#{application.write_path(path_type)}/nginx.conf"]
+    ["#{write_path(path_type)}/nginx.conf"]
   end
 
   def expose_ports(port = nil)
@@ -40,8 +41,8 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   def compose_environment
     # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
-      compose_file: Dir["#{application.write_path}/**/*.yml"].map { |f| f.gsub("#{application.root}/", '') }.join(':'),
-      compose_project_name: application.full_project_name,
+      compose_file: Dir["#{write_path}/**/*.yml"].map { |f| f.gsub("#{Cnfs.project_root}/", '') }.join(':'),
+      compose_project_name: project.full_context_name,
       # context_dir: '../../../../../../..',
       # ros_context_dir: '../../../../../../../ros',
       # image_repository: 'railsonservices',

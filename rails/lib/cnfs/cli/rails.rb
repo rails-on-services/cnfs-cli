@@ -11,14 +11,23 @@ module Cnfs
         end
 
         def initialize
-          puts "Initializing plugin rails from #{gem_root}" if Cnfs.config.debug.positive?
+          Cnfs.logger.info "Initializing plugin rails from #{gem_root}"
         end
 
-        def on_project_initialize
-          return unless Cnfs.project
+        # NOTE: This is specific to a CNFS Rails project
+        # Create a softlink in repo/services/.env to the write_path dir so that iam.env, etc is available
+        def on_runtime_switch
+          return unless Cnfs.project.repository&.services_path&.exist?
 
-          Cnfs.project.paths['config'].unshift(gem_root.join('config'))
-          Cnfs.project.paths['app/views'].unshift(gem_root.join('app/views'))
+          Dir.chdir(Cnfs.project.repository.services_path) do
+            Cnfs.logger.info "Rails plugin configuring on runtime switch #{Dir.pwd}"
+            FileUtils.rm_f('.env')
+            path = Dir.pwd
+            rel_path = Cnfs.project_root.x_relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
+            return unless rel_path.exist?
+
+            FileUtils.ln_s(rel_path, '.env')
+          end
         end
 
         def customize

@@ -30,7 +30,7 @@ class ApplicationRecord < ActiveRecord::Base
     def write_fixture(content)
       Cnfs.logger.debug "parsing #{content}"
       Cnfs.logger.info "parsing #{table_name}"
-      File.open(Cnfs::Schema.dir.join("#{table_name}.yml"), 'w') do |file|
+      File.open(Cnfs::Configuration.dir.join("#{table_name}.yml"), 'w') do |file|
         file.write(content.deep_stringify_keys.to_yaml)
       end
     end

@@ -133,7 +133,7 @@ module Cnfs
     def reload
       load_config
       loader.reload
-      Cnfs::Schema.reload
+      Cnfs::Configuration.reload
     end
 
     def loader

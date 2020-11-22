@@ -73,15 +73,9 @@ module CommandHelper
         @options.merge!("tags" => Hash[*options.tags.flatten]) if options.tags
         # binding.pry
         Cnfs.config.merge!(options).merge!(options: options)
-        Cnfs::Schema.initialize!
-        # Cnfs.app.manifest.purge! if Cnfs.app.manifest.outdated?
-        # Cnfs.app.manifest.generate
+        Cnfs::Configuration.initialize!
       end
     end
-
-    # def generate_runtime_configs!
-    #   manifest.purge! if options.clean
-    # end
 
     def execute(command_args = {}, command_name = nil, location = 2)
       @args = Thor::CoreExt::HashWithIndifferentAccess.new(command_args)

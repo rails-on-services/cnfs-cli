@@ -12,5 +12,4 @@ require 'lockbox'
 require 'open-uri'
 require 'sqlite3'
 
-require_relative 'cnfs/schema'
-
+require_relative 'cnfs/configuration'

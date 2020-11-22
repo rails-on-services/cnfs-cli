@@ -3,9 +3,11 @@
 module Images
   class BuildController
     include ExecHelper
+    include TtyHelper
 
     def execute
-      puts "building #{args.services.join(' ')}"
+      services = project.services.where(name: args.services)
+      command.run(*project.runtime.build(services))
     end
   end
 end

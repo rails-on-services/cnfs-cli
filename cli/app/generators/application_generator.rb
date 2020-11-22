@@ -2,21 +2,22 @@
 
 class ApplicationGenerator < Thor::Group
   include Thor::Actions
-  attr_accessor :application
-  # argument :application
+  argument :project
 
   private
 
   def source_paths
-    application.paths['app/views'].reverse.map { |path| path.join(generator_type) }
+    @source_paths ||= plugin_paths.each_with_object([]) { |path, a| a.append(path, path.join('templates')) }
+  end
+
+  def plugin_paths
+    Cnfs.plugins.values.map do |plugin|
+      plugin.plugin_lib.gem_root.join('app/generators/runtime', generator_type)
+    end.select { |path| path.exist? }.append Cnfs.gem_root.join('app/generators/runtime', generator_type)
   end
 
   def generator_type
     self.class.name.demodulize.delete_suffix('Generator').underscore
-  end
-
-  def path_type
-    nil
   end
 
   def entity_to_template(entity = nil)
@@ -32,7 +33,7 @@ class ApplicationGenerator < Thor::Group
   def generate_entity_manifests
     entities.each do |entity|
       instance_variable_set("@#{entity_name}", entity)
-      entity.send(:application=, application)
+      # entity.send(:project=, project)
       generated_files << generate
     end
   rescue StandardError => e
@@ -48,7 +49,11 @@ class ApplicationGenerator < Thor::Group
   end
 
   def all_files
-    Dir[application.write_path(path_type).join('**/*')]
+    Dir[write_path(path_type).join('**/*')]
+  end
+
+  def path_type
+    nil
   end
 
   def excluded_files
@@ -57,5 +62,15 @@ class ApplicationGenerator < Thor::Group
 
   def generated_files
     @generated_files ||= []
+  end
+
+  # Used by all runtime templates; Returns a path relative from the write path to the project root
+  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
+  def relative_path(path_type = :deployment)
+    project.relative_path(path_type)
+  end
+
+  def write_path(type = :deployment)
+    project.write_path(type)
   end
 end

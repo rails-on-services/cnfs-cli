@@ -17,10 +17,6 @@ class Project < ApplicationRecord
   store :paths, coder: YAML
   store :options, coder: YAML
 
-  after_initialize do
-    # self.manifest ||= Manifest.new(config_files_paths: [paths.config], manifests_path: write_path)
-  end
-
   # If options were passed in then ensure the values are valid (names found in the config)
   validates :environment, presence: { message: 'not found' } #, if: -> { options.environment }
   validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
@@ -35,6 +31,31 @@ class Project < ApplicationRecord
     # binding.pry
     #aise Cnfs::Error, "Unknown repository '#{options.repository}'." \
     #  " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
+  end
+
+  # TODO: Implement options.clean
+  # NOTE: If this method is called more than once it will get a new manifest instance each time
+  def process_manifests
+    @manifest = nil
+    manifest.purge! if options.clean
+    return if manifest.valid?
+
+    manifest.generate
+  end
+
+  # TODO: add other dirs for config files, e.g. gem user's path; load from a config file?
+  def manifest
+    @manifest ||= Manifest.new(project: self, config_files_paths: [paths.config])
+  end
+
+  # Used by all runtime templates; Returns a path relative from the write path to the project root
+  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
+  def relative_path(path_type = :deployment)
+    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(write_path(path_type)))
+  end
+
+  def x_relative_path(path)
+    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path))
   end
 
   # TODO: This may be unnecessary or a very important method/scope. Think about this
@@ -99,6 +120,18 @@ class Project < ApplicationRecord
   def context_attrs
     [environment&.name, namespace&.name].compact
   end
+
+  # TODO: See what to do about this
+    # scope is either :namespace or :environment
+    def encrypt(plaintext, scope)
+      send(scope).encrypt(plaintext)
+    end
+
+    def decrypt(ciphertext)
+      namespace.decrypt(ciphertext)
+    rescue Lockbox::DecryptionError => e
+      environment.decrypt(ciphertext)
+    end
 
   class << self
     def parse

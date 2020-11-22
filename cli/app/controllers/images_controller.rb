@@ -20,6 +20,7 @@ class ImagesController < Thor
   # option :all,
   #   aliases: '-a', type: :boolean
   before :initialize_project
+  before :prepare_runtime
   def build(*services)
     execute(services: services)
   end
@@ -44,5 +45,11 @@ class ImagesController < Thor
   desc 'push [IMAGES]', 'Push images to designated repository'
   def push(*services)
     run(:push, services: services)
+  end
+
+  private
+
+  def prepare_runtime
+    project.runtime.switch!
   end
 end
