@@ -16,6 +16,7 @@ module Cnfs
 
         # NOTE: This is specific to a CNFS Rails project
         # Create a softlink in repo/services/.env to the write_path dir so that iam.env, etc is available
+        # rubocop:disable Metrics/AbcSize
         def on_runtime_switch
           return unless Cnfs.project.repository&.services_path&.exist?
 
@@ -23,12 +24,13 @@ module Cnfs
             Cnfs.logger.info "Rails plugin configuring on runtime switch #{Dir.pwd}"
             FileUtils.rm_f('.env')
             path = Dir.pwd
-            rel_path = Cnfs.project_root.x_relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
-            return unless rel_path.exist?
+            r_path = Cnfs.project_root.x_relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
+            return unless r_path.exist?
 
-            FileUtils.ln_s(rel_path, '.env')
+            FileUtils.ln_s(r_path, '.env')
           end
         end
+        # rubocop:enable Metrics/AbcSize
 
         def customize
           src = gem_root.join('app/generators/rails')

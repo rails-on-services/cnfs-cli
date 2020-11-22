@@ -35,6 +35,7 @@ module Rails
           service_path = "#{generator.destination_root}/services/#{name}"
           if Dir.exist?(service_path)
             raise Cnfs::Error, "service #{name} already exists" unless options.force
+
             FileUtils.rm_rf(service_path)
             # TODO: This also doesn't reverse the SDK
             # so it should run this with behvior revoke and then run again with invoke

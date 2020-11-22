@@ -1,9 +1,10 @@
 # frozen_string_literal: true
+
 #
 # Modify a new Rails application or plugin (engine) into a CNFS service
 def source_paths
   [views_path, views_path.join('templates'), lib_path, lib_path.join('templates'),
-    core_path, core_path.join('templates')] + Array(super)
+   core_path, core_path.join('templates')] + Array(super)
 end
 
 def views_path

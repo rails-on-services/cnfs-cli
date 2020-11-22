@@ -4,6 +4,8 @@
 # 1. Copy files into the root of the repository
 # 2. Invoke 'rails plugin new' to create the repository's core gem (a template is invoked to modify generated files)
 # 3. Invoke 'bundle gem' to create the repository's SDK gem (no template so all modifications are made in this file)
+# rubocop:disable Metrics/AbcSize
+# rubocop:disable Metrics/ClassLength
 module Rails
   class RepositoryGenerator < Thor::Group
     include Thor::Actions
@@ -52,7 +54,7 @@ module Rails
       Cnfs.logger.debug exec_string.join(' ')
 
       inside 'lib' do
-        env = base_envs.transform_keys! { |k| k.to_s }
+        env = base_envs.transform_keys!(&:to_s)
         system(env, exec_string.join(' '))
         FileUtils.mv(sdk_name, 'sdk') unless sdk_name.eql?('sdk')
         inside 'sdk' do
@@ -136,19 +138,19 @@ module Rails
     end
 
     def dockerfile_bundler
-      @dockerfile_bundler ||= "bundler:#{%x(bundler version).split[2]}"
+      @dockerfile_bundler ||= "bundler:#{`bundler version`.split[2]}"
     end
 
     # TODO: remove nokogiri
     def dockerfile_gems
       return 'nokogiri:1.10.10'
 
-      @dockerfile_gems ||= (
+      @dockerfile_gems ||= begin
         gem_list.map do |gem|
-          gem_name, version = %x(gem list -r "^#{gem}$" |tail -1).strip.split
+          gem_name, version = `gem list -r "^#{gem}$" |tail -1`.strip.split
           "#{gem_name}:#{version.gsub('(', '').gsub(')', '')}"
         end.join(" \\\n    ")
-      )
+      end
     end
 
     def gem_list
@@ -201,3 +203,5 @@ module Rails
     end
   end
 end
+# rubocop:enable Metrics/AbcSize
+# rubocop:enable Metrics/ClassLength

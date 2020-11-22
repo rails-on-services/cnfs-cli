@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # in_root is the actual root e,g. spec/dummy/../..
 # 1. core lib for an application repository
 # 2. core lib for a plugin repository

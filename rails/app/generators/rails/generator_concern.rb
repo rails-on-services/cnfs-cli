@@ -97,8 +97,7 @@ module Rails
       # New core service; source repo is ros
       def six
         { repo_name: Cnfs.repository.name, repo_path: '../..', service_name: name, gem_name: "cnfs-#{name}",
-          source_repo_name: 'ros', source_repo_path: '../../../ros'
-        }
+          source_repo_name: 'ros', source_repo_path: '../../../ros' }
       end
 
       # New cnfs service; source repo is ros (or nil)

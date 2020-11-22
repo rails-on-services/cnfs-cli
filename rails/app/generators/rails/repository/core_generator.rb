@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Modify a new Rails plugin into the CNFS repository's core gem
 

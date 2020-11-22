@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # in_root is the actual root
 # 1. application stand alone
 # 2. application that wraps a plugin from a plugin repository
