@@ -131,8 +131,9 @@ module Cnfs
     end
 
     def reload
-      Cnfs::Schema.reload
+      load_config
       loader.reload
+      Cnfs::Schema.reload
     end
 
     def loader
@@ -238,7 +239,7 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
-    def invoke_plugins_wtih(method, *options)
+    def invoke_plugins_with(method, *options)
       plugins_responding_to(method).each do |plugin|
         options.empty? ? plugin.send(method) : plugin.send(method, options)
       end
@@ -322,7 +323,7 @@ module Cnfs
     #   )
     # end
 
-    def silence_output(enforce)
+    def silence_output(enforce = config.debug.zero?)
       rs = $stdout
       $stdout = StringIO.new if enforce
       yield

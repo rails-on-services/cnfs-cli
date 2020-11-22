@@ -2,57 +2,24 @@
 
 module Cnfs
   class Schema
-    cattr_accessor :dir
-
     def self.initialize!
       # Set up in-memory database
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-      prepare
-      parse
-      import
-    end
-
-    def self.prepare
-      show_output = Cnfs.config.debug.positive?
-      Cnfs.silence_output(!show_output) { create_schema }
-    end
-
-    def self.parse
-      dir.mkpath
-      models.each { |model| model.parse }
+      initialize
     end
 
     def self.reload
-      # Enable fixtures to be re-seeded on code reload
-      ActiveRecord::FixtureSet.reset_cache
-      prepare
-      parse
-      import
+      ActiveRecord::FixtureSet.reset_cache # Enable fixtures to be re-seeded on code reload
+      initialize
     end
 
-    # rubocop:disable Metrics/MethodLength
-    def self.import
-      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
-      # binding.pry
-      ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
-    # rescue ActiveRecord::Fixture::FixtureError => err
-    #   raise Cnfs::Error, err
-    rescue Psych::BadAlias => a
-      failing_fixture = nil
-      begin
-        fixtures.each do |fixture|
-          failing_fixture = fixture
-          ActiveRecord::FixtureSet.create_fixtures(dir, fixture)
-        end
-      rescue Psych::BadAlias => b
-        fixture_contents = File.read(dir.join("#{failing_fixture}.yml"))
-        c = StandardError.new "Error parsing configuration in #{failing_fixture}.yml\n#{fixture_contents}"
-        [a, b, c].map { |exception| exception.set_backtrace([]) }
-        raise c
-      end
-    ensure
-      FileUtils.rm_rf(dir) unless Cnfs.config.retain #_artifacts
-      Cnfs.project = Project.first
+    private
+
+    def self.initialize
+      dir.mkpath
+      models.each { |model| model.parse }
+      Cnfs.silence_output { create_schema }
+      load_fixtures
     end
 
     def self.models
@@ -206,6 +173,30 @@ module Cnfs
         end
         User.reset_column_information
       end
+    end
+
+    def self.load_fixtures
+      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
+      ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
+    # rescue ActiveRecord::Fixture::FixtureError => err
+    #   raise Cnfs::Error, err
+    rescue Psych::BadAlias => a
+      failing_fixture = nil
+      begin
+        fixtures.each do |fixture|
+          failing_fixture = fixture
+          ActiveRecord::FixtureSet.create_fixtures(dir, fixture)
+        end
+      rescue Psych::BadAlias => b
+        fixture_contents = File.read(dir.join("#{failing_fixture}.yml"))
+        c = StandardError.new "Error parsing configuration in #{failing_fixture}.yml\n#{fixture_contents}"
+        [a, b, c].map { |exception| exception.set_backtrace([]) }
+        raise c
+      end
+    ensure
+      FileUtils.rm_rf(dir) unless Cnfs.config.retain #_artifacts
+      Cnfs.project = Project.first
+      Cnfs.invoke_plugins_with(:on_project_initialize)
     end
     # rubocop:enable Metrics/MethodLength
 
