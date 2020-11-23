@@ -5,8 +5,7 @@ module Namespaces
     include ExecHelper
 
     def execute
-      binding.pry
-      # project.process_manifests
+      project.process_manifests
     end
   end
 end

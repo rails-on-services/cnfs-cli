@@ -12,10 +12,10 @@ ENV['CNFS_LOGGING'] = ARGV[dval + 1] if dval
 
 require 'cnfs'
 
-Signal.trap('INT') do
-  warn("\n#{caller.join("\n")}: interrupted")
-  exit 1
-end
+# Signal.trap('INT') do
+#   warn("\n#{caller.join("\n")}: interrupted")
+#   # exit 1
+# end
 
 begin
   Cnfs.initialize!

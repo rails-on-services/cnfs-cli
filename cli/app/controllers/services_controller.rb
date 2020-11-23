@@ -159,7 +159,8 @@ class ServicesController < Thor
   cnfs_options :environment, :namespace
   cnfs_options :profile
   map %w[cp] => :copy
-  def copy(src, dest)
+  def copy(src, dest = nil)
+    dest ||= project.write_path(:services).join(src.split(':').last.to_s.delete_prefix('/'))
     execute(src: src, dest: dest)
   end
 

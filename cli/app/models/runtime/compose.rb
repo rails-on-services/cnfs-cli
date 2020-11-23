@@ -81,7 +81,7 @@ class Runtime::Compose < Runtime
   end
 
   def copy(service, src, dest)
-    container_id = service_id(service)
+    container_id = running_service_id(service)
     rv "docker cp #{src} #{dest}".gsub("#{service.name}:", "#{container_id}:")
   end
 
@@ -114,8 +114,8 @@ class Runtime::Compose < Runtime
     @compose_file ||= write_path.join('compose.env')
   end
 
-  def service_id(service)
-    command.run(compose_env, "docker-compose ps -q #{service.name}", command_options).out
+  def running_service_id(service)
+    command.run(compose_env, "docker-compose ps -q #{service.name}", command_options).out.strip
   end
 
   def running_services_names(status: :running)

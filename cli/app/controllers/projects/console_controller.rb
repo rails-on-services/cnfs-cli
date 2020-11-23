@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pry'
+
 class Console < Pry::ClassCommand
   match 'commands'
   group 'cnfs'
@@ -25,14 +27,13 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
     def execute
-      require 'pry'
       project = Pry::Helpers::Text.blue(Cnfs.project.name)
       environment_name = Cnfs.project.environment.name
       environment_color = environment_name.eql?('production') ? 'red' : 'green'
       environment = Pry::Helpers::Text.send(environment_color, environment_name)
       prompt = proc do |obj, _nest_level, _|
         "[#{project}][#{environment}] " \
-          "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')}) > "
+          "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')})> "
       end
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [prompt])
       Pry.start(self)

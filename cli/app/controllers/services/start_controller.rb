@@ -10,7 +10,12 @@ module Services
       result = command.run!(*cmd_array)
       raise Cnfs::Error, result.err if result.failure?
 
-      services.each { |service| service.update_state(:started) }
+      services.each do |service|
+        service.update_state(:started).each do |cmd_array|
+          result = command.run!(*cmd_array)
+          Cnfs.logger.error(result.err) if result.failure?
+        end
+      end
     end
   end
 end

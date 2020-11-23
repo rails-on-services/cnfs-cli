@@ -120,20 +120,9 @@ module CommandHelper
       raise Cnfs::Error, 'Operation cancelled'
     end
 
+    # NOTE: Not currently in use; intended as a class_around option
     def timer
       Cnfs.with_timer('command processing') { yield }
-    end
-
-    # References to instances of the command classes
-    def cmd
-      OpenStruct.new({
-        projects: ProjectsController.new(args, options),
-        repositories: RepositoriesController.new(args, options),
-        environments: EnvironmentsController.new(args, options),
-        namespaces: NamespacesController.new(args, options),
-        images: ImagesController.new(args, options),
-        services: ServicesController.new(args, options)
-      })
     end
 
     def project
