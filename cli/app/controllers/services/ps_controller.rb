@@ -6,8 +6,8 @@ module Services
 
     def execute
       xargs = args.args.empty? ? {} : args.args
-      project.runtime.runtime_services(format: options.format, status: options.status, **xargs)
-      # project.runtime.runtime_services(format: options.format, status: options.status, **args.args)
+      list = project.runtime.ps(**xargs)
+      puts list
     end
 
     # TODO: format and status are specific to the runtime so refactor when implementing skaffold

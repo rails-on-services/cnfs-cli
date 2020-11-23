@@ -2,6 +2,7 @@
 
 class Runtime < ApplicationRecord
   include BelongsToProject
+  include TtyHelper
   has_many :environments
 
   class << self

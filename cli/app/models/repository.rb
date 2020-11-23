@@ -84,11 +84,13 @@ class Repository < ApplicationRecord
           if repo_config_path.exist?
             Cnfs.logger.info "Loading repository path #{repo_path}"
             repo_yaml = YAML.load_file(repo_config_path).merge(path: repo_path.to_s)
-            repo_yaml.merge!(type: "repository/#{repo_yaml['type']}".classify)
+            repo_yaml.merge!('type' => "repository/#{repo_yaml['type']}".classify)
           end
           hash[k] = v.merge(name: k, project: 'app').merge(repo_yaml)
         end
       end
+      # require 'pry'
+      # binding.pry
       write_fixture(output)
     end
   end

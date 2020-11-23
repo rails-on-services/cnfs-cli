@@ -33,7 +33,7 @@ class Service < ApplicationRecord
   end
 
   def copy(src, dest)
-    runtime.copy(src, dest)
+    runtime.copy(self, src, dest)
   end
 
   def exec(command)

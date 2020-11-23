@@ -13,12 +13,28 @@ module Cnfs
   class Error < StandardError; end
 
   class Logger
+    attr_accessor :output
+
+    def initialize(file = nil)
+      @output = file ? Cnfs.project_root.join('tmp/log.txt') : 'screen'
+    end
+
     def info(msg)
-      puts msg if Cnfs.config.debug.positive?
+      log(msg) if Cnfs.config.debug.positive?
     end
 
     def debug(msg)
-      puts msg if Cnfs.config.debug > 1
+      log(msg) if Cnfs.config.debug > 1
+    end
+
+    private
+
+    def log(msg)
+      if output.eql?('screen')
+        puts(msg)
+      else
+        File.open(output, 'a') { |f| f.puts(msg) }
+      end
     end
   end
 
@@ -31,9 +47,9 @@ module Cnfs
     # rubocop:disable Metrics/MethodLength
     def initialize!
       @timers = {}
-      @logger = Logger.new
       @cwd = Pathname.new(Dir.pwd)
       validate_command if project_root.nil?
+      @logger = Logger.new
       start_time = Time.now
       Dir.chdir(project_root) do
         load_config
@@ -294,20 +310,33 @@ module Cnfs
     end
 
     def set_capabilities
-      cmd = TTY::Command.new(printer: :null, uuid: false)
-      tools = %i[docker skaffold git ansible docker-compose terraform].each_with_object([]) do |dep, ary|
-        ary.append(dep) if cmd.run!("which #{dep}").failure?
+      cmd = TTY::Command.new(printer: :null)
+      installed_tools = missing_tools = []
+      tools.each do |tool|
+        if cmd.run!("which #{tool}").success?
+          installed_tools.append(tool)
+        else
+          missing_tools.append(tool)
+        end
       end
-      Cnfs.logger.info "Missing dependency tools [#{tools.join(', ')}]" if tools.any?
+      Cnfs.logger.info "Missing dependency tools [#{tools.join(', ')}]" if missing_tools.any?
+      installed_tools
+    end
+
+    def tools
+      %i[docker skaffold git ansible docker-compose terraform]
     end
 
     def platform
-      case RbConfig::CONFIG['host_os']
+      os = case RbConfig::CONFIG['host_os']
       when /linux/
         'linux'
       when /darwin/
         'darwin'
+      else
+        'unknown'
       end
+      ActiveSupport::StringInquirer.new(os)
     end
 
     # def git

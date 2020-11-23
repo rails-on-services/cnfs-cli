@@ -32,6 +32,19 @@ module Cnfs
         end
         # rubocop:enable Metrics/AbcSize
 
+        def set_compose_env(opts)
+          command, hash = opts
+          return unless command.run('docker ps').out.index('gem_server')
+
+          gem_cache_server = if Cnfs.platform.darwin?
+            # TODO: Make this configurable per user
+            command.run('ifconfig vboxnet1').out.split[7]
+          elsif Cnfs.platform.linux?
+            command.run('ip -o -4 addr show dev docker0').out.split[3].split('/')[0]
+          end
+          hash.merge!('GEM_SERVER' => "http://#{gem_cache_server}:9292") if gem_cache_server
+        end
+
         def customize
           src = gem_root.join('app/generators/rails')
           dest = Cnfs.paths.lib.join('generators/rails')
