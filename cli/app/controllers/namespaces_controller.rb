@@ -5,7 +5,7 @@ class NamespacesController < Thor
 
   # Activate common options
   cnfs_class_options :environment
-  cnfs_class_options :noop, :quiet, :verbose, :debug
+  cnfs_class_options :dry_run, :logging, :force
   # class_around :timer
 
   map %w[i] => :infra

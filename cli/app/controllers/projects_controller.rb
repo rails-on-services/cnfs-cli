@@ -4,7 +4,7 @@ class ProjectsController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :noop, :quiet, :verbose, :debug
+  cnfs_class_options :dry_run, :logging
 
   register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
   register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'

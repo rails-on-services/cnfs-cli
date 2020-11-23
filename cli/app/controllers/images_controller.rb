@@ -4,7 +4,7 @@ class ImagesController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :environment, :namespace, :noop, :quiet, :verbose, :debug
+  cnfs_class_options :environment, :namespace, :dry_run, :logging
 
   desc 'pull [IMAGES]', 'Pull one or more or all images'
   def pull(*services)

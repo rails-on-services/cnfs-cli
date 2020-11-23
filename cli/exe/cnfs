@@ -7,6 +7,8 @@ $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 ENV['CNFS_CLI_DEV'] ||= ARGV.delete('--cli-dev')
 dval = ARGV.index('--debug') || ARGV.index('-d')
 ENV['CNFS_DEBUG'] = ARGV[dval + 1] if dval
+dval = ARGV.index('--logging') || ARGV.index('-l')
+ENV['CNFS_LOGGING'] = ARGV[dval + 1] if dval
 
 require 'cnfs'
 

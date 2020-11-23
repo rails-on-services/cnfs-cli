@@ -20,7 +20,7 @@ class ServicesController < Thor
                              aliases: '--sh', type: :string
 
   # Activate common options
-  cnfs_class_options :noop, :quiet, :verbose
+  cnfs_class_options :dry_run, :logging
   class_before :initialize_project
 
   register Services::NewController, 'new', 'new SUBCOMMAND [options]',

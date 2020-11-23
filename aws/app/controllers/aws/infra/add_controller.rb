@@ -10,7 +10,7 @@ module Aws
       # cnfs_class_options :environment
       # class_option :namespace, desc: 'Target namespace',
       #   aliases: '-n', type: :string
-      cnfs_class_options :noop, :quiet, :verbose, :debug
+      cnfs_class_options :dry_run, :logging
 
       desc 'ec2 NAME', 'Add a CNFS compatible blueprint for AWS EC2'
       option :alb, desc: 'Frontend EC2 with an ALB',

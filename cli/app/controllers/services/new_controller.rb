@@ -8,7 +8,8 @@ module Services
 
     # Activate common options
     # NOTE: No environment or namespace; All services are declared at the project scope
-    cnfs_class_options :repository, :source_repository, :noop, :quiet, :verbose
+    cnfs_class_options :repository, :source_repository
+    cnfs_class_options :dry_run, :logging
 
     # Ensure a valid repository is specified; raise an error if not
     class_before :set_repository

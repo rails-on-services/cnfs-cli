@@ -7,7 +7,7 @@ module Repositories
 
     # Activate common options
     cnfs_class_options :source_repository
-    cnfs_class_options :noop, :quiet, :verbose, :force
+    cnfs_class_options :dry_run, :logging, :force
 
     private
 

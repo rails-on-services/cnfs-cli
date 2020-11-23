@@ -34,7 +34,7 @@ module CommandHelper
     add_cnfs_option :namespace,         desc: 'Target namespace',
                                         aliases: '-n', type: :string, default: Cnfs.config.namespace
     add_cnfs_option :repository,        desc: 'The repository in which to run the command',
-      aliases: '-r', type: :string, default: Cnfs.config.repository
+                                        aliases: '-r', type: :string, default: Cnfs.config.repository
     add_cnfs_option :source_repository, desc: 'The source repository to link to',
                                         aliases: '-s', type: :string, default: Cnfs.config.source_repository
 
@@ -45,14 +45,10 @@ module CommandHelper
     add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
                                         aliases: '--ff', type: :boolean
 
-    add_cnfs_option :debug,             desc: 'Display deugging information with degree of verbosity',
-                                        aliases: '-d', type: :numeric, default: Cnfs.config.debug
-    add_cnfs_option :noop,              desc: 'Do not execute commands',
-                                        type: :boolean, default: Cnfs.config.noop
-    add_cnfs_option :quiet,             desc: 'Suppress status output',
-                                        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
-    add_cnfs_option :verbose,           desc: 'Display extra information from command',
-                                        aliases: '-v', type: :boolean, default: Cnfs.config.verbose
+    add_cnfs_option :dry_run,           desc: 'Do not execute commands',
+                                        aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
+    add_cnfs_option :logging,           desc: 'Display loggin information with degree of verbosity',
+                                        aliases: '-l', type: :string, default: Cnfs.config.logging
 
     Cnfs.extensions.select { |e| e.extension_point.eql?(name) }.each do |extension|
       if extension.klass < Thor

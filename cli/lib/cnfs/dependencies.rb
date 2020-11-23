@@ -12,5 +12,7 @@ require 'lockbox'
 require 'open-uri'
 require 'sqlite3'
 require 'tty-command'
+require 'tty-prompt'
+require 'tty-table'
 
 require_relative 'configuration'

@@ -9,7 +9,7 @@ module Infra
     # binding.pry
     class_option :namespace, desc: 'Target namespace',
                              aliases: '-n', type: :string
-    cnfs_class_options :noop, :quiet, :verbose, :debug
+    cnfs_class_options :dry_run, :logging
 
     private
 

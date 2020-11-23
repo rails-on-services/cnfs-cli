@@ -5,7 +5,7 @@ class RepositoriesController < Thor
   include RepositoryHelper
 
   # Activate common options
-  cnfs_class_options :noop, :quiet, :verbose
+  cnfs_class_options :dry_run, :logging
   class_before :initialize_project
 
   register Repositories::NewController, 'new', 'new TYPE NAME [options]', 'Create a new repoository'

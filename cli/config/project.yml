@@ -7,3 +7,4 @@ paths:
   lib: lib
   src: src
   tmp: tmp
+logging: warn

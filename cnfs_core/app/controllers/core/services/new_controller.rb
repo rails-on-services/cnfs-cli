@@ -12,7 +12,7 @@ module Core
 
       # Activate common options
       # NOTE: No environment or namespace; All services are declared at the project scope
-      cnfs_class_options :repository, :noop, :quiet, :verbose, :force
+      cnfs_class_options :repository, :dry_run, :logging
 
       # Validate that the requested repository is a rails repo and not the 'ros' repo
       class_before :validate_repository

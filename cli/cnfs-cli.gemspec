@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency 'json_schemer'
   spec.add_dependency 'little-plugger', '~> 1.1'
   spec.add_dependency 'lockbox', '~> 0.4'
-  spec.add_dependency 'pastel', '~> 0.8'
+  # spec.add_dependency 'pastel', '~> 0.8'
   spec.add_dependency 'pry', '~> 0.13'
   spec.add_dependency 'sqlite3', '~> 1.4'
   spec.add_dependency 'thor', '~> 1.0'
@@ -49,13 +49,13 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "tty-editor", "~> 0.5"
   # spec.add_dependency "tty-file", "~> 0.8.0"
   # spec.add_dependency "tty-font", "~> 0.4.0"
-  # spec.add_dependency "tty-logger", "~> 0.2.0"
+  spec.add_dependency 'tty-logger', '~> 0.5'
   # spec.add_dependency "tty-markdown", "~> 0.6.0"
   # spec.add_dependency "tty-pager", "~> 0.12"
   # spec.add_dependency "tty-pie", "~> 0.3.0"
   # spec.add_dependency "tty-platform", "~> 0.2"
   # spec.add_dependency "tty-progressbar", "~> 0.17"
-  # spec.add_dependency "tty-prompt", "~> 0.19"
+  spec.add_dependency 'tty-prompt', '~> 0.22'
   # spec.add_dependency "tty-screen", "~> 0.7"
   # spec.add_dependency "tty-spinner", "~> 0.9"
   spec.add_dependency 'tty-table', '~> 0.12.0'

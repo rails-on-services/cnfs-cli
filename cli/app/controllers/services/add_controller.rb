@@ -8,6 +8,6 @@ module Services
     include CommandHelper
 
     # Activate common options
-    cnfs_class_options :noop, :quiet, :verbose
+    cnfs_class_options :dry_run, :logging
   end
 end

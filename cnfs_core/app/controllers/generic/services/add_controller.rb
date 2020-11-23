@@ -14,7 +14,7 @@ module Generic
                                  aliases: '-e', type: :string
       class_option :namespace, desc: 'Target namespace',
                                aliases: '-n', type: :string
-      cnfs_class_options :noop, :quiet, :verbose, :force
+      cnfs_class_options :dry_run, :logging, :force
 
       desc 'localstack', 'Add a Localstack service'
       def localstack(name = 'localstack')

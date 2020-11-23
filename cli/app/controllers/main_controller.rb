@@ -4,7 +4,7 @@ class MainController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :noop, :quiet, :verbose, :debug
+  cnfs_class_options :dry_run, :logging
 
   register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
   register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'

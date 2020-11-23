@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
+require 'config'
 require 'little-plugger'
 require 'pathname'
-require 'config'
+require 'tty-logger'
 require 'xdg'
 
 # rubocop:disable Metrics/ModuleLength
@@ -11,32 +12,6 @@ module Cnfs
   extend LittlePlugger
   module Plugins; end
   class Error < StandardError; end
-
-  class Logger
-    attr_accessor :output
-
-    def initialize(file = nil)
-      @output = file ? Cnfs.project_root.join('tmp/log.txt') : 'screen'
-    end
-
-    def info(msg)
-      log(msg) if Cnfs.config.debug.positive?
-    end
-
-    def debug(msg)
-      log(msg) if Cnfs.config.debug > 1
-    end
-
-    private
-
-    def log(msg)
-      if output.eql?('screen')
-        puts(msg)
-      else
-        File.open(output, 'a') { |f| f.puts(msg) }
-      end
-    end
-  end
 
   class << self
     attr_accessor :repository, :project
@@ -49,10 +24,10 @@ module Cnfs
       @timers = {}
       @cwd = Pathname.new(Dir.pwd)
       validate_command if project_root.nil?
-      @logger = Logger.new
       start_time = Time.now
       Dir.chdir(project_root) do
         load_config
+        @logger = TTY::Logger.new { |cfg| cfg.level = config.logging }
         require_minimum_deps
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
@@ -233,7 +208,7 @@ module Cnfs
     # rubocop:disable Metrics/AbcSize
     def setup_extensions
       # Ignore the extension points which are the controllers in the cli core gem
-      Cnfs.logger.info 'Loaded Extensions:'
+      Cnfs.logger.debug 'Loaded Extensions:'
       autoload_dirs.select { |p| p.split.last.to_s.eql?('controllers') }
                    .reject { |p| p.join('../..').split.last.to_s.eql?('cli') }.each do |controllers_path|
         Dir.chdir(controllers_path) do
@@ -311,7 +286,8 @@ module Cnfs
 
     def set_capabilities
       cmd = TTY::Command.new(printer: :null)
-      installed_tools = missing_tools = []
+      installed_tools = []
+      missing_tools = []
       tools.each do |tool|
         if cmd.run!("which #{tool}").success?
           installed_tools.append(tool)
@@ -319,7 +295,7 @@ module Cnfs
           missing_tools.append(tool)
         end
       end
-      Cnfs.logger.info "Missing dependency tools [#{tools.join(', ')}]" if missing_tools.any?
+      Cnfs.logger.warn "Missing dependency tools: #{missing_tools.join(', ')}" if missing_tools.any?
       installed_tools
     end
 
@@ -349,9 +325,9 @@ module Cnfs
     #   )
     # end
 
-    def silence_output(enforce = config.debug.zero?)
+    def silence_output(unless_logging_at = :debug)
       rs = $stdout
-      $stdout = StringIO.new if enforce
+      $stdout = StringIO.new if logger.compare_levels(config.logging, unless_logging_at).eql?(:gt)
       yield
       $stdout = rs
     end
