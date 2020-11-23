@@ -168,6 +168,7 @@ class Runtime::Compose < Runtime
       opts.append('-d') unless options.foreground
     end
     opts.append('-f') if options.tail
+    Cnfs.logger.debug "compose options set to #{opts.join(' ')}"
     opts.join(' ')
   end
 
@@ -219,41 +220,12 @@ class Runtime::Compose < Runtime
     TTY::Command.new(printer: :null)
   end
 
-  # TODO: taken from deploy command; is it needed/appropriate here?
-  # def set_compose_options
-  #   @compose_options = ''
-  #   if options.daemon || options.console || options.shell || options.attach
-  #     @compose_options = '-d'
-  #   end
-  #   output.puts "compose options set to #{compose_options}" if options.verbose
-  # end
-
   def clean(services)
-    [compose_env, compose("rm -f #{services.pluck(:name).join(' ')}"), { tty: true }]
+    [compose_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
   end
 
-  def deploy_type
-    :instance
-  end
-
-  # TODO: This will be an interesting task
-  def database_check
-    application.services.each do |service|
-      next unless service.respond_to?(:database_seed_commands)
-
-      migration_file = "#{write_path}/#{service.name}-migrated"
-      next unless !File.exist?(migration_file) || options.seed || options.clean
-
-      FileUtils.rm(migration_file) if File.exist?(migration_file)
-      service.database_seed_commands.each do |command|
-        response.add(exec: compose(command, service.name)) # .run!
-        # TODO: refactor; this knows too much about what's going on in the response object
-        if response.errors.size.zero?
-          FileUtils.touch(migration_file)
-        else
-          break
-        end
-      end
-    end
-  end
+  # TODO: Only referenced in terraform_generator; after refactoring all that see if this is needed
+  # def deploy_type
+  #   :instance
+  # end
 end

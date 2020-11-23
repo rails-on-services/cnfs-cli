@@ -201,22 +201,8 @@ class ServicesController < Thor
   end
 
   # desc 'up SERVICE', 'bring up service(s)'
-  # option :attach, type: :boolean, aliases: '-a', desc: 'Attach to service after starting'
-  # option :build, type: :boolean, aliases: '-b', desc: 'Build image before run'
-  # option :console, type: :boolean, aliases: '-c', desc: "Connect to service's rails console after starting"
-  # option :daemon, type: :boolean, aliases: '-d', desc: 'Run in the background'
-  # option :force, type: :boolean, default: false, aliases: '-f', desc: 'Force cluster creation'
-  # option :profile, type: :string, aliases: '-p', desc: 'Service profile to bring up'
   # option :replicas, type: :numeric, aliases: '-r', desc: 'Number of containers (instance) or pods (kubernetes) to run'
   # option :seed, type: :boolean, aliases: '--seed', desc: 'Seed the database before starting the service'
-  # option :shell, type: :boolean, aliases: '--sh', desc: 'Connect to service shell after starting'
-  # option :skip, type: :boolean, aliases: '--skip', desc: 'Skip starting services (just initialize cluster)'
-  # option :skip_infra, type: :boolean, aliases: '--skip-infra', desc: 'Skip deploy infra services'
-  # def up(*services)
-  #   command = context(options)
-  #   command.up(services)
-  #   command.exit
-  # end
 
   private
 
@@ -235,6 +221,7 @@ class ServicesController < Thor
       send(after_exec, service)
       break
     end
+    true
   end
 
   def remove_option(key)

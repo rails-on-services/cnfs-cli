@@ -15,6 +15,14 @@ class Service::Rails < Service
     self.volumes ||= []
     self.project_path ||= '.'
     self.dockerfile ||= 'ros/Dockerfile.dev'
+    self.database_seed_commands ||= []
+  end
+
+  def after_started(hash)
+    Cnfs.logger.debug "got #{hash}"
+    database_seed_commands.each_with_object([]) do |db_command, ary|
+      ary.append(runtime.exec(self, db_command, true))
+    end
   end
 
   def git

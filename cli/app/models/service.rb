@@ -16,14 +16,25 @@ class Service < ApplicationRecord
   store :profiles, coder: YAML
 
   # depends_on is used by compose to set order of container starts
-  # shell_command: the command ShellController passes to runtime.exec
   after_initialize do
     self.depends_on ||= []
-    # self.shell_command ||= :bash
   end
 
-  # Commands that execute on only one service are implemented here
-  # Commands that execute on multiple services are handled directly by the runtime
+  def update_state(state)
+    file_path = write_path(:runtime).join('services.yml')
+    FileUtils.touch(file_path) unless File.exist?(file_path)
+    o = Config.load_file(file_path)
+    hash = { name => { state: state } }
+    Cnfs.logger.info "State for service #{name} updated to #{hash}"
+    method = "after_#{state}"
+    additional_commands = respond_to?(method) ? send(method, hash) : []
+    o.merge!(hash)
+    o.save
+    additional_commands
+  end
+
+  # NOTE: Commands that execute on only one service are implemented here
+  # Commands that execute on multiple services are handled directly by the runtime (or namespace?)
   def attach
     runtime.attach(self)
   end

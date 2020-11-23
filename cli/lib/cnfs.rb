@@ -27,7 +27,7 @@ module Cnfs
       start_time = Time.now
       Dir.chdir(project_root) do
         load_config
-        @logger = TTY::Logger.new { |cfg| cfg.level = config.logging }
+        configure_logger
         require_minimum_deps
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
@@ -62,6 +62,13 @@ module Cnfs
       raise Cnfs::Error, "Error parsing config. Environment:\n#{`env | grep CNFS`}"
     end
     # rubocop:enable Metrics/MethodLength
+
+    def configure_logger
+      @logger = TTY::Logger.new do |cfg|
+        level = TTY::Logger::LOG_TYPES.keys.include?(config.logging.to_sym) ? config.logging.to_sym : :warn
+        config.logging = cfg.level = level
+      end
+    end
 
     def initialize_development
       require 'pry'
@@ -114,11 +121,10 @@ module Cnfs
 
     # Zeitwerk based class loader methods
     def setup_loader
+      Zeitwerk::Loader.default_logger = logger
       add_plugin_autoload_paths
       add_repository_autoload_paths
-      Zeitwerk::Loader.default_logger = method(:puts) if config.debug > 1
       autoload_dirs.each { |dir| loader.push_dir(dir) }
-
       loader.enable_reloading
       loader.setup
     end
@@ -153,7 +159,7 @@ module Cnfs
       path.join('app').children.select(&:directory?).select { |m| default_load_paths.include?(m.split.last.to_s) }
     end
 
-    # Scan plugsin for subdirs in <plugin_root>/app and add them to autoload_dirs
+    # Scan plugins for subdirs in <plugin_root>/app and add them to autoload_dirs
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
     def add_plugin_autoload_paths

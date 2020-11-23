@@ -6,8 +6,11 @@ module Services
     attr_accessor :services
 
     def execute
-      result = command.run!(*project.runtime.start(services))
+      cmd_array = project.runtime.start(services)
+      result = command.run!(*cmd_array)
       raise Cnfs::Error, result.err if result.failure?
+
+      services.each { |service| service.update_state(:started) }
     end
   end
 end

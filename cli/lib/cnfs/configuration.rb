@@ -9,7 +9,8 @@ module Cnfs
     end
 
     def self.reload
-      ActiveRecord::FixtureSet.reset_cache # Enable fixtures to be re-seeded on code reload
+      # Enable fixtures to be re-seeded on code reload
+      ActiveRecord::FixtureSet.reset_cache
       initialize
     end
 
