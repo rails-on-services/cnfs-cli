@@ -3,7 +3,7 @@
 class Runtime::ComposeGenerator < RuntimeGenerator
 
   def generate_nginx_conf
-    template('nginx.conf.erb', "#{write_path(:deployment)}/nginx.conf") if template_types.include?(:nginx)
+    template('nginx.conf.erb', "#{write_path}/nginx.conf") if template_types.include?(:nginx)
   end
 
   def generate_compose_environment
@@ -13,7 +13,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   private
 
   def excluded_files
-    ["#{write_path(path_type)}/nginx.conf"]
+    ["#{write_path}/nginx.conf"]
   end
 
   def expose_ports(port = nil)

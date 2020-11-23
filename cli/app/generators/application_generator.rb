@@ -65,12 +65,12 @@ class ApplicationGenerator < Thor::Group
   end
 
   # Used by all runtime templates; Returns a path relative from the write path to the project root
-  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
-  def relative_path(path_type = :deployment)
+  # Example: relative_path(:manifests) # => #<Pathname:../../../..>
+  def relative_path(path_type = :manifests)
     project.relative_path(path_type)
   end
 
-  def write_path(type = :deployment)
+  def write_path(type = :manifests)
     project.write_path(type)
   end
 end

@@ -1,5 +1,5 @@
 <% # compose/fluentd.yml.erb
-fluentd_dir = "#{target.write_path(:runtime)}/fluentd"
+fluentd_dir = "#{write_path(:runtime)}/fluentd"
 empty_directory("#{fluentd_dir}/log")
 FileUtils.chmod('+w', "#{fluentd_dir}/log")
 %>---
@@ -14,6 +14,6 @@ services:
       - <%= expose_ports('24224/udp') %>
       - <%= expose_ports(9880) %>
     volumes:
-      - "<%= "#{relative_path}/#{target.write_path(:runtime)}/fluentd/log" %>:/fluentd/log"
-      - "<%= "#{relative_path}/#{target.write_path(:runtime)}/fluentd/etc/config.d" %>:/fluentd/etc/config.d"
+      - "<%= "#{relative_path}/#{write_path(:runtime)}/fluentd/log" %>:/fluentd/log"
+      - "<%= "#{relative_path}/#{write_path(:runtime)}/fluentd/etc/config.d" %>:/fluentd/etc/config.d"
       # - "../fluentd/etc/config.d:/fluentd/etc/config.d"

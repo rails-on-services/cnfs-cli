@@ -43,7 +43,7 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   def path_type
-    :deployment
+    :manifests
   end
 
   def template_types

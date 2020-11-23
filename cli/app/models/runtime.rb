@@ -32,12 +32,12 @@ class Runtime < ApplicationRecord
   def clean_cache
     # NOTE: Who calls this method?
     if application.selected_services.empty?
-      FileUtils.rm_rf(runtime_path)
+      FileUtils.rm_rf(write_path)
       return
     end
 
     context_service_names.each do |service_name|
-      migration_file = "#{runtime_path}/#{service_name}-migrated"
+      migration_file = "#{write_path}/#{service_name}-migrated"
       FileUtils.rm(migration_file) if File.exist?(migration_file)
       FileUtils.rm(credentials[:local_file]) if service_name.eql?('iam') && File.exist?(credentials[:local_file])
     end
@@ -45,20 +45,16 @@ class Runtime < ApplicationRecord
 
   def credentials
     { remote_file: '/home/rails/services/app/tmp/mounted/credentials.json',
-      local_file: "#{runtime_path}/target/credentials.json",
-      local_path: "#{runtime_path}/target" }
-  end
-
-  def deployment_path
-    @deployment_path ||= write_path(:deployment)
-  end
-
-  def runtime_path
-    @runtime_path ||= write_path(:runtime)
+      local_file: "#{write_path}/target/credentials.json",
+      local_path: "#{write_path}/target" }
   end
 
   def generator_class
     "Runtime::#{type.demodulize}Generator".safe_constantize
+  end
+
+  def write_path(path = :runtime)
+    project.write_path(path)
   end
 
   def project_name

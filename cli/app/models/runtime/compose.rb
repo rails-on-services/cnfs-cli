@@ -48,8 +48,9 @@ class Runtime::Compose < Runtime
 
   # Service Process Operations
   def ps(xargs)
-    tool_check
-    running_services(format: options.format, status: options.status, **xargs)
+    rv compose('ps')
+    # tool_check
+    # running_services(format: options.format, status: options.status, **xargs)
   end
 
   # Service Admin Operations
@@ -110,7 +111,7 @@ class Runtime::Compose < Runtime
   end
 
   def compose_file
-    @compose_file ||= runtime_path.join('compose.env')
+    @compose_file ||= write_path.join('compose.env')
   end
 
   def service_id(service)
@@ -160,10 +161,18 @@ class Runtime::Compose < Runtime
 
   # options embedded in the compose command string
   def compose_options
+    location = 1
+    method = caller_locations(1, location)[location -1].label
     opts = []
-    opts.append('-d') if options.foreground
+    if server_commands.include?(method)
+      opts.append('-d') unless options.foreground
+    end
     opts.append('-f') if options.tail
     opts.join(' ')
+  end
+
+  def server_commands
+    %w[start]
   end
 
   # options returned to the TTY command
@@ -220,7 +229,7 @@ class Runtime::Compose < Runtime
   # end
 
   def clean(services)
-    [compose_env, compose("stop #{services.pluck(:name).join(' ')}"), { tty: true }]
+    [compose_env, compose("rm -f #{services.pluck(:name).join(' ')}"), { tty: true }]
   end
 
   def deploy_type
@@ -232,7 +241,7 @@ class Runtime::Compose < Runtime
     application.services.each do |service|
       next unless service.respond_to?(:database_seed_commands)
 
-      migration_file = "#{runtime_path}/#{service.name}-migrated"
+      migration_file = "#{write_path}/#{service.name}-migrated"
       next unless !File.exist?(migration_file) || options.seed || options.clean
 
       FileUtils.rm(migration_file) if File.exist?(migration_file)

@@ -31,7 +31,7 @@ class Runtime::Native < Runtime
   end
 
   def services(status: :running, file_name: procfile_name)
-    file = deployment_path.join(file_name)
+    file = write_path(:manifests).join(file_name)
 
     YAML.load_file(file).keys
   end
@@ -61,7 +61,7 @@ class Runtime::Native < Runtime
   def procfile
     [
       '--procfile',
-      deployment_path.join(procfile_name)
+      write_path(:manifests).join(procfile_name)
     ].join ' '
   end
 

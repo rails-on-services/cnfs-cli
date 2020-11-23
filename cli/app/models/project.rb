@@ -48,16 +48,6 @@ class Project < ApplicationRecord
     @manifest ||= Manifest.new(project: self, config_files_paths: [paths.config])
   end
 
-  # Used by all runtime templates; Returns a path relative from the write path to the project root
-  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
-  def relative_path(path_type = :deployment)
-    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(write_path(path_type)))
-  end
-
-  def x_relative_path(path)
-    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path))
-  end
-
   # TODO: This may be unnecessary or a very important method/scope. Think about this
   def services; namespace.services end
   def runtime; environment.runtime end 
@@ -84,24 +74,35 @@ class Project < ApplicationRecord
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
 
-  # Returns a path relative from the project root
-  # Example: write_path(:deployment) # => #<Pathname:tmp/cache/development/main>
-  def write_path(type = :deployment)
-    type = type.to_sym
-    case type
-    when :deployment
-      paths.tmp.join('cache', *context_attrs)
-    when :infra
-      paths.data.join('infra', environment.name)
-    when :runtime
-      paths.tmp.join('runtime', *context_attrs)
-    when :fixtures
-      paths.tmp.join('dump')
-    when :repositories
-      paths.src
+  # Example: write_path(:manifests) # => #<Pathname:tmp/cache/development/main>
+  def write_path(type = :manifests)
+    case type.to_sym
     when :config
       paths.config.join('environments', *context_attrs)
+    when :manifests
+      paths.tmp.join('manifests', *context_attrs)
+    when :repository
+      repository&.path
+    when :repositories
+      paths.src
+    when :runtime
+      paths.tmp.join('runtime', *context_attrs)
+    when :services
+      paths.data.join('services', *context_attrs)
+    when :templates
+      # paths.data.join('templates', *context_attrs)
+      paths.data.join('templates', environment.name)
     end
+  end
+
+  # Used by all runtime templates; Returns a path relative from the write path to the project root
+  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
+  def relative_path(path_type = :manifests)
+    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(write_path(path_type)))
+  end
+
+  def x_relative_path(path)
+    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path))
   end
 
   # Used by runtime generators for templates by runtime to query services
