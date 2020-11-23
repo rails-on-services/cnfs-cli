@@ -6,7 +6,7 @@ module Services
     attr_accessor :service
 
     def execute
-      command.run(*service.attach)
+      system(*service.attach.take(2))
     end
   end
 end

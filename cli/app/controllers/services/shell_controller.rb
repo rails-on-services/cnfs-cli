@@ -10,7 +10,7 @@ module Services
         raise Cnfs::Error, "#{service.name} does not implement the shell command"
       end
 
-      command.run(*service.shell)
+      system(*service.shell.take(2))
     end
   end
 end

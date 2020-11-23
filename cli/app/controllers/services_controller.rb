@@ -220,8 +220,8 @@ class ServicesController < Thor
 
   private
 
-  def execute(xargs = {})
-    super_execute(xargs, nil, 3) do
+  def execute(xargs = {}, command_name = nil, location = 3)
+    super_execute(xargs, command_name, location) do
       if options.build
         remove_option(:build)
         cmd.images.build(args.services)

@@ -61,7 +61,6 @@ module CommandHelper
     private
 
     def initialize_project
-      puts "INITIALIZE"
       Cnfs.require_deps
       Cnfs.with_timer('loading project configuration') do
         # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
