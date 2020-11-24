@@ -12,6 +12,7 @@ module Aws
       #   aliases: '-n', type: :string
       cnfs_class_options :dry_run, :logging
 
+      # NOTE: Here is where to try TTY::Prompt
       desc 'ec2 NAME', 'Add a CNFS compatible blueprint for AWS EC2'
       option :alb, desc: 'Frontend EC2 with an ALB',
                    aliases: '-a', type: :boolean

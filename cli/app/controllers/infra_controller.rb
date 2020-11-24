@@ -7,7 +7,7 @@ class InfraController < Thor
   cnfs_class_options :environment
   class_option :namespace, desc: 'Target namespace',
                            aliases: '-n', type: :string
-  cnfs_class_options :dry_run, :logging
+  cnfs_class_options :quiet, :dry_run, :logging
 
   register Infra::AddController, 'add', 'add SUBCOMMAND [options]', 'Add a new infrastructure blueprint'
   # desc 'add PROVIDER NAME', 'Add a blueprint to the environment or namespace'
@@ -19,8 +19,10 @@ class InfraController < Thor
 
   # TODO: Refactor commands
   desc 'generate', 'Generate target infrastructure'
+  before :initialize_project
+  before :prepare_runtime
   def generate(*_args)
-    run(:generate)
+    execute
   end
 
   desc 'plan', 'Show the terraform infrastructure plan'
@@ -28,15 +30,18 @@ class InfraController < Thor
                  type: :boolean
   option :init, desc: 'Force to download latest modules from TF registry',
                 type: :boolean
+  before :initialize_project
+  before :prepare_runtime
   def plan(*args)
-    run(:plan, args)
+    execute(args: args)
   end
 
   desc 'apply', 'Apply the terraform infrastructure plan'
   option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
                  type: :boolean
   def apply(*args)
-    run(:apply, args)
+    execute(x_args: args)
+    # run(:apply, args)
   end
 
   # desc 'show', 'Show infrastructure details'

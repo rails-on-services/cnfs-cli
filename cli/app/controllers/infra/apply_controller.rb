@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
-module Targets
-  class ApplyController < ApplicationController
-    cattr_reader :command_group, default: :service_manifest
+module Infra
+  class ApplyController
+    #include ExecHelper
+    include EnvironmentsHelper
 
     def execute
-      context.each_target do |_target|
-        before_execute_on_target
-        execute_on_target
-      end
+      binding.pry
     end
 
     def execute_on_target
-      Dir.chdir(context.write_path(:infra)) do
-        context.runtime.init.run! if context.options.init
-        # system_cmd('rm -f .terraform/terraform.tfstate')
-        context.runtime.apply.run!
+      Dir.chdir(project.write_path(:templates)) do
+        binding.pry
+        # context.runtime.init.run! if context.options.init
+        # # system_cmd('rm -f .terraform/terraform.tfstate')
+        # context.runtime.apply.run!
         # system_cmd('terraform output -json > output.json', cmd_environment)
         # show_json
       end

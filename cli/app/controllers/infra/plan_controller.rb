@@ -1,20 +1,15 @@
 # frozen_string_literal: true
 
-module Targets
-  class PlanController < ApplicationController
-    cattr_reader :command_group, default: :service_manifest
+module Infra
+  class PlanController
+    include InfraHelper
 
     def execute
-      context.each_target do |_target|
-        before_execute_on_target
-        execute_on_target
-      end
-    end
-
-    def execute_on_target
-      Dir.chdir(context.write_path(:infra)) do
-        context.runtime.init.run! if context.options.init
-        context.runtime.plan.run!
+      # project.path(to: :templates).mkpath
+      Dir.chdir(project.path(to: :templates)) do
+        cmd_array = project.environment.infra_runtime.plan
+        result = command.run!(*cmd_array)
+        raise Cnfs::Error, result.err if result.failure?
       end
     end
   end

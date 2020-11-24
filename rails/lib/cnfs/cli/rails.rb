@@ -15,7 +15,7 @@ module Cnfs
         end
 
         # NOTE: This is specific to a CNFS Rails project
-        # Create a softlink in repo/services/.env to the write_path dir so that iam.env, etc is available
+        # Create a softlink in repo/services/.env to manifests dir so that iam.env, etc is available
         # rubocop:disable Metrics/AbcSize
         def on_runtime_switch
           return unless Cnfs.project.repository&.services_path&.exist?

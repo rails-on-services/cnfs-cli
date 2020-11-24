@@ -39,4 +39,10 @@ class EnvironmentsController < Thor
   def init
     run(:init)
   end
+
+  private
+
+  def x_infra
+    Pry.start(InfraController.new(args || [], options))
+  end
 end

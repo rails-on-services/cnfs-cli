@@ -1,36 +1,45 @@
 # frozen_string_literal: true
 
-class Runtime::Terraform < Runtime
+class Builder::Terraform < Builder
   store :config, accessors: %i[custom_providers], coder: YAML
 
   def custom_providers
     super || {}
   end
 
-  def before_execute_on_target
+  def prepare
     fetch_custom_providers
   end
 
-  # TODO: this is specific to AWS
-  def cmd_environment
-    { 'AWS_DEFAULT_REGION' => context.target.provider.aws_region }
+  def required_tools
+    %w[terraform]
   end
 
+  # Commands called by ExecControllers
   def init
-    response.add(exec: 'terraform init', env: cmd_environment, pty: true)
+    rv('terraform init')
   end
 
   def plan
-    response.add(exec: 'terraform plan', env: cmd_environment, pty: true)
+    rv('terraform plan')
   end
 
   def apply
-    response.add(exec: 'terraform apply', env: cmd_environment, pty: true)
+    rv('terraform apply')
   end
 
   def destroy
-    response.add(exec: 'terraform destroy', env: cmd_environment, pty: true)
+    rv('terraform destroy')
   end
+
+  # command support methods
+  # TODO: this is specific to AWS
+  def command_env
+    # TODO: relook at how the aws creds and details are loaded and referenced
+    { 'AWS_DEFAULT_REGION' => project.environment.provider.config['region'] }
+  end
+
+  private
 
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength

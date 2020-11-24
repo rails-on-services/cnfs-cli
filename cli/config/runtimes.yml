@@ -1,14 +1,9 @@
 # runtimes.yml
 ---
-DEFAULTS: &DEFAULTS
-  name: $LABEL
-
 compose:
-  <<: *DEFAULTS
   type: Runtime::Compose
   config:
     version: 3.2
 
 native:
-  <<: *DEFAULTS
   type: Runtime::Native

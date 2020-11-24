@@ -92,7 +92,7 @@ class Runtime::Compose < Runtime
     # filters.merge!(profile: profile_name) if profile_name
     services = running_services(filters)
     modifier = services.empty? ? 'run --rm' : 'exec'
-    [compose_env, compose(command, modifier, service.name), { pty: pty }]
+    [command_env, compose(command, modifier, service.name), { pty: pty }]
     # response.add(exec: compose(command, modifier, service.name), pty: pty)
   end
 
@@ -105,6 +105,11 @@ class Runtime::Compose < Runtime
 
   #### Support Methods
 
+  # NOTE: This is an interface with CommandHelper
+  def prepare
+    switch!
+  end
+
   def switch!
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
@@ -116,7 +121,7 @@ class Runtime::Compose < Runtime
   end
 
   def running_service_id(service)
-    command.run(compose_env, "docker-compose ps -q #{service.name}", command_options).out.strip
+    command.run(command_env, "docker-compose ps -q #{service.name}", command_options).out.strip
   end
 
   def running_services_names(status: :running)
@@ -130,26 +135,15 @@ class Runtime::Compose < Runtime
 
   private
 
-  # Simplified syntax to return a command array
-  def rv(command_string)
-    tool_check
-    [compose_env, command_string, command_options]
-  end
-
-  def tool_check
-    missing_tools = required_tools - Cnfs.capabilities
-    raise Cnfs::Error, "Missing #{missing_tools}" if missing_tools.any?
-  end
-
   def required_tools
-    %i[docker docker-compose]
+    %w[docker docker-compose]
   end
 
   def compose(command, *modifiers)
     modifiers.unshift('docker-compose').append(command).join(' ')
   end
 
-  def compose_env
+  def command_env
     @compose_env ||= set_compose_env
   end
 
@@ -177,14 +171,6 @@ class Runtime::Compose < Runtime
     %w[start]
   end
 
-  # options returned to the TTY command
-  def command_options
-    opts = {}
-    opts.merge!(pty: true) if 1 == 2
-    opts.merge!(only_output_on_error: true) if project.options.quiet
-    opts
-  end
-
   # TODO: commands need to handle profiles
   # def exec_string
   #   application.services.each_with_object([]) do |service, ary|
@@ -210,7 +196,7 @@ class Runtime::Compose < Runtime
     filter.append("--filter 'status=#{status}'") if status
     filter.append("--format '#{format}'") if format
 
-    silent_command.run(compose_env, "docker ps #{filter.join(' ')}", command_options).out.split("\n")
+    silent_command.run(command_env, "docker ps #{filter.join(' ')}", command_options).out.split("\n")
     # return an array of service strings minus the header
     # result
     # Cnfs.logger.info(result)
@@ -222,7 +208,7 @@ class Runtime::Compose < Runtime
   end
 
   def clean(services)
-    [compose_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
+    [command_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
   end
 
   # TODO: Only referenced in terraform_generator; after refactoring all that see if this is needed

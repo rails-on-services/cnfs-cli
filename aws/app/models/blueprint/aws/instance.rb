@@ -43,7 +43,7 @@ class Blueprint::Aws::Instance < Blueprint::Aws
   # TODO: aws_ should be aws/ and in the parent model
   # instance should be demodulize.underscore and in parent
   def template
-    'aws_instance'
+    'aws/instance'
   end
 
   def modules

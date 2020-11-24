@@ -11,7 +11,10 @@ class ApplicationRecord < ActiveRecord::Base
     def parse
       begin
         output = dirs.each_with_object({}) do |dir, output|
-          next unless (yaml = YAML.load_file("#{dir}/#{table_name}.yml"))
+          file = "#{dir}/#{table_name}.yml"
+          next unless File.exist?(file)
+
+          yaml = YAML.load_file(file)
           yaml.each_with_object(output) do |(k, v), h|
             h[k] = v.merge(name: k, project: 'app')
             yield h[k] if block_given?
@@ -19,7 +22,7 @@ class ApplicationRecord < ActiveRecord::Base
         end
         write_fixture(output)
       rescue => e
-        binding.pry
+        binding.pry if Cnfs.cli_mode.development?
       end
     end
 

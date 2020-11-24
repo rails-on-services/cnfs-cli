@@ -3,7 +3,7 @@
 class Runtime::ComposeGenerator < RuntimeGenerator
 
   def generate_nginx_conf
-    template('nginx.conf.erb', "#{write_path}/nginx.conf") if template_types.include?(:nginx)
+    template('nginx.conf.erb', "#{path}/nginx.conf") if template_types.include?(:nginx)
   end
 
   def generate_compose_environment
@@ -13,7 +13,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   private
 
   def excluded_files
-    ["#{write_path}/nginx.conf"]
+    ["#{path}/nginx.conf"]
   end
 
   def expose_ports(port = nil)
@@ -41,7 +41,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   def compose_environment
     # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
-      compose_file: Dir["#{write_path}/**/*.yml"].map { |f| f.gsub("#{Cnfs.project_root}/", '') }.join(':'),
+      compose_file: Dir["#{path}/**/*.yml"].map { |f| f.gsub("#{Cnfs.project_root}/", '') }.join(':'),
       compose_project_name: project.full_context_name,
       # context_dir: '../../../../../../..',
       # ros_context_dir: '../../../../../../../ros',

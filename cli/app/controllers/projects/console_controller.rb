@@ -28,9 +28,9 @@ module Projects
     # rubocop:disable Metrics/MethodLength
     def execute
       project = Pry::Helpers::Text.blue(Cnfs.project.name)
-      environment_name = Cnfs.project.environment.name
-      environment_color = environment_name.eql?('production') ? 'red' : 'green'
-      environment = Pry::Helpers::Text.send(environment_color, environment_name)
+      env = Cnfs.project.environment.name
+      environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
+      environment = Pry::Helpers::Text.send(environment_color, env)
       prompt = proc do |obj, _nest_level, _|
         "[#{project}][#{environment}] " \
           "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')})> "
@@ -45,7 +45,8 @@ module Projects
       def shortcuts
         return {} unless defined?(ActiveRecord)
 
-        { b: Blueprint, e: Environment, k: Key, n: Namespace, p: Provider, r: Repository, s: Service, u: User }
+        { b: Builder, bp: Blueprint, d: Dependency, e: Environment, k: Key, n: Namespace, pr: Provider,
+          re: Registry, repo: Repository, rt: Runtime, s: Service, u: User }
       end
 
       def commands
@@ -93,6 +94,14 @@ module Projects
 
     def o
       options
+    end
+
+    def t
+      cache[:t] ||= Runtime::Infra::Terraform.new
+    end
+
+    def g
+      cache[:g] ||= t.generator
     end
 
     def oa(opts = {})

@@ -130,7 +130,7 @@ module Cnfs
     end
 
     def reload
-      load_config
+      reset
       loader.reload
       Cnfs::Configuration.reload
     end
@@ -264,6 +264,7 @@ module Cnfs
       @cwd = Pathname.new(Dir.pwd)
       @project_root = nil
       @paths = nil
+      @capabilities = nil
       Dir.chdir(project_root) { load_config }
     end
 
@@ -290,6 +291,10 @@ module Cnfs
       @capabilities ||= set_capabilities
     end
 
+    def plugin_lib
+      self
+    end
+
     def set_capabilities
       cmd = TTY::Command.new(printer: :null)
       installed_tools = []
@@ -306,7 +311,7 @@ module Cnfs
     end
 
     def tools
-      %i[docker skaffold git ansible docker-compose terraform]
+      Dependency.pluck(:name)
     end
 
     def platform
@@ -321,6 +326,13 @@ module Cnfs
       ActiveSupport::StringInquirer.new(os)
     end
 
+    def cli_mode
+      @cli_mode ||= (
+        mode = config.dig(:cli, :dev) ? 'development' : 'production'
+        ActiveSupport::StringInquirer.new(mode)
+      )
+    end
+
     # def git
     #   return Config::Options.new unless system('git rev-parse --git-dir > /dev/null 2>&1')
 
@@ -331,6 +343,7 @@ module Cnfs
     #   )
     # end
 
+    # Cnfs.logger.compare_levels(:info, :debug) => :gt
     def silence_output(unless_logging_at = :debug)
       rs = $stdout
       $stdout = StringIO.new if logger.compare_levels(config.logging, unless_logging_at).eql?(:gt)

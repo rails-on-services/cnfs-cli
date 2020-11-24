@@ -1,43 +1,31 @@
 # frozen_string_literal: true
 
 class Runtime < ApplicationRecord
-  include BelongsToProject
-  include TtyHelper
-  has_many :environments
-
-  class << self
-    def dirs
-      [Cnfs.gem_root.join('config').to_s]
-    end
-  end
+  include Concerns::BuilderRuntime
 
   store :config, accessors: %i[version], coder: YAML
 
-  # method inherited from A/R base interferes with controller#destroy
-  undef_method :destroy
-
-  def supported_commands
-    raise NotImplementedError, 'To implement: returns an array of command names supported by this runtime'
-  end
-
-  # Sub-classes, e.g. compose, skaffold override to implement, e.g. switch!
-  def before_execute
-    raise NotImplementedError, 'this needs to be done'
-  end
-
+  # Content related commands
   def labels(labels)
     project.labels.merge(labels)
   end
 
+  def path(path = :runtime)
+    project.path(to: path)
+  end
+
+  private
+
+  # TODO: Move these methods out or remove them
   def clean_cache
     # NOTE: Who calls this method?
     if application.selected_services.empty?
-      FileUtils.rm_rf(write_path)
+      FileUtils.rm_rf(path)
       return
     end
 
     context_service_names.each do |service_name|
-      migration_file = "#{write_path}/#{service_name}-migrated"
+      migration_file = "#{path}/#{service_name}-migrated"
       FileUtils.rm(migration_file) if File.exist?(migration_file)
       FileUtils.rm(credentials[:local_file]) if service_name.eql?('iam') && File.exist?(credentials[:local_file])
     end
@@ -45,19 +33,7 @@ class Runtime < ApplicationRecord
 
   def credentials
     { remote_file: '/home/rails/services/app/tmp/mounted/credentials.json',
-      local_file: "#{write_path}/target/credentials.json",
-      local_path: "#{write_path}/target" }
-  end
-
-  def generator_class
-    "Runtime::#{type.demodulize}Generator".safe_constantize
-  end
-
-  def write_path(path = :runtime)
-    project.write_path(path)
-  end
-
-  def project_name
-    project.name
+      local_file: "#{path}/target/credentials.json",
+      local_path: "#{path}/target" }
   end
 end

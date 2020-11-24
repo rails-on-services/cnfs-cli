@@ -28,4 +28,16 @@ RSpec.describe ProjectPath, type: :model do
   it 'returns the correct relative path from manifests to the current repository' do
     expect(subject.path(from: :manifests, to: :repository).to_s).to eq('../../../../src/ros')
   end
+
+  it 'returns the correct relative path from an absolute custom dir' do
+    expect(subject.path(from: cwd.join('four/part/custom/dir').to_s).to_s).to eq('../../../..')
+  end
+
+  it 'returns the correct relative path from an absolute custom dir to the current repository' do
+    expect(subject.path(from: cwd.join('four/part/custom/dir').to_s, to: :repository).to_s).to eq('../../../../src/ros')
+  end
+
+  it 'returns the correct relative path from a relative custom dir to the current repository' do
+    expect(subject.path(from: 'four/part/custom/dir', to: :repository).to_s).to eq('../../../../src/ros')
+  end
 end

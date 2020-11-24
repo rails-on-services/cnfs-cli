@@ -46,7 +46,7 @@ module TtyHelper
   # @see http://www.rubydoc.info/gems/tty-file
   #
   # @api public
-  def generator
+  def tty_generator
     require 'tty-file'
     TTY::File
   end

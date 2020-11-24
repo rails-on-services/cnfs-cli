@@ -9,6 +9,7 @@ module ServicesHelper
   end
 
   def before_execute
+    project.process_manifests 
     if respond_to?(:service)
       unless (self.service = project.services.find_by(name: args.service))
         raise Cnfs::Error, "Service not found #{args.service}"

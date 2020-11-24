@@ -2,7 +2,7 @@
 
 class Runtime::SkaffoldGenerator < RuntimeGenerator
   def files
-    directory('files', target.write_path(:deployment))
+    directory('files', path)
   end
 
   private

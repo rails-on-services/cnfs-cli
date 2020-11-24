@@ -7,43 +7,43 @@ class RuntimeGenerator < ApplicationGenerator
   # look for the existence of those files
   def generate_service_environments
     project.services.reject { |service| service.environment.empty? }.each do |service|
-      file_name = write_path(path_type).join("#{service.name}.env")
+      file_name = path.join("#{service.name}.env")
       environment = Config::Options.new.merge!(service.environment)
       generated_files << template('env.erb', file_name, env: environment)
     end
   end
 
-  def invoke_parent_methods
-    generate_entity_manifests
+  def generate_entity_manifests
+    project.services.each do |service|
+      @service = service
+      generated_files << template("#{entity_to_template(service)}.yml.erb", "#{path}/#{service.name}.yml")
+    end
+  rescue StandardError => e
+    # TODO: add to errors array and have controller output the result
+    raise Cnfs::Error, "\nError generating template for #{@service.name}: #{e}\n#{error_on.to_json}"
+  ensure
     remove_stale_files
   end
 
   private
 
+  def entity_to_template(entity = nil)
+    entity ||= instance_variable_get("@#{entity_name}")
+    # binding.pry
+    key = entity.template || entity.type&.demodulize&.underscore || entity.name
+    entity_template_map[key.to_sym] || key
+  end
+
+  def entity_template_map
+    {}
+  end
+
+  # Used by the ApplicationGenerator#plugin_paths
+  def caller_path; 'runtime' end
+
+  # List of services to be configured on the proxy server (nginx for compose)
   def proxy_services
     project.services.select { |service| service.profiles.key?(:server) }
-  end
-
-  # Is a given service enabled?
-  # def service_enabled?(name)
-  #   application.selected_services.pluck(:name).include? name.to_s
-  # end
-
-  def entity_name
-    :service
-  end
-
-  def entities
-    project.services
-  end
-
-  # Render template
-  def generate
-    template("#{entity_to_template}.yml.erb", "#{write_path(path_type)}/#{service.name}.yml")
-  end
-
-  def path_type
-    :manifests
   end
 
   def template_types
@@ -69,7 +69,17 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    files << "./#{service.name}.env" if File.exist?(write_path(path_type).join("#{service.name}.env"))
+    files << "./#{service.name}.env" if File.exist?(path.join("#{service.name}.env"))
     files
+  end
+
+  # Used by all runtime templates; Returns a path relative from the write path to the project root
+  # Example: relative_path(:manifests) # => #<Pathname:../../../..>
+  def relative_path(path_type = :manifests)
+    project.path(from: path_type)
+  end
+
+  def path(to: :manifests)
+    project.path(to: to)
   end
 end

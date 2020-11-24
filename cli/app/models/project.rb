@@ -37,7 +37,7 @@ class Project < ApplicationRecord
   # NOTE: If this method is called more than once it will get a new manifest instance each time
   def process_manifests
     @manifest = nil
-    manifest.purge! if options.clean
+    manifest.purge! if options.force
     return if manifest.valid?
 
     manifest.generate
@@ -51,6 +51,7 @@ class Project < ApplicationRecord
   # TODO: This may be unnecessary or a very important method/scope. Think about this
   def services; namespace.services end
   def runtime; environment.runtime end 
+  def blueprints; environment.blueprints end
 
   # NOTE: Not yet in use; decide where this should go
   def user_root

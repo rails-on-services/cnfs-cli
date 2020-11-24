@@ -39,6 +39,8 @@ class NamespacesController < Thor
   cnfs_options :namespace
   option :clean, desc: 'Delete all existing manifests before generating',
                  aliases: '-c', type: :boolean
+  before :initialize_project
+  before :prepare_runtime
   def generate
     execute
   end

@@ -1,11 +1,7 @@
 # <% name %> blueprints.yml
 ---
-DEFAULTS: &DEFAULTS
-  name: $LABEL
-
 aws_instance:
-  <<: *DEFAULTS
-  type: Blueprint::AwsInstance
+  type: Blueprint::Aws::Instance
   version: 1.0.1
   config:
     vpc:

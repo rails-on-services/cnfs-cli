@@ -26,8 +26,7 @@ class Manifest
   def generate
     purge! unless valid?
     Cnfs.logger.info "Generating files"
-    generator = runtime.generator_class.new([project], {}) # options)
-    generator.invoke_all
+    runtime.generate
     files
   end
 

@@ -4,7 +4,7 @@ bp = @blueprint
 -%>{
   "provider": {
     "aws": {
-      "region": "<%= @context.target.provider.aws_region %>"
+      "region": "<%= bp.environment.provider.config['region'] %>"
     }
   },
   "provider": {

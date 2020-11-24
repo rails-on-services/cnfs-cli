@@ -9,16 +9,15 @@ class ProjectGenerator < Thor::Group
     config.merge!(name: name).transform_keys! { |k| k.to_s }
     create_file(Cnfs::PROJECT_FILE, config.to_yaml)
     directory('files', '.')
-    # template('../component/templates/services.yml.erb', 'config/environments/services.yml')
-    # binding.pry
-    fixture_names.sort.each do |fixture_file|
-      template("templates/#{fixture_file}", fixture_file.delete_suffix('.erb'))
+    # template('README.md')
+    template_files.sort.each do |template|
+      template("templates/#{template}", template.delete_suffix('.erb'))
     end
   end
 
   private
 
-  def fixture_names
+  def template_files
     Dir.chdir(views_path.join('templates')) { Dir['**/*.erb'] }
   end
 
@@ -27,7 +26,6 @@ class ProjectGenerator < Thor::Group
   end
 
   def views_path
-    # @views_path ||= internal_path.join('../views/new')
     @views_path ||= internal_path.join('project')
   end
 

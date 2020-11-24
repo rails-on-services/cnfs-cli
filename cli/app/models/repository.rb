@@ -74,8 +74,10 @@ class Repository < ApplicationRecord
     def parse
       src = Pathname.new('src')
       output = dirs.each_with_object({}) do |dir, hash|
-        next unless (yaml = YAML.load_file("#{dir}/#{table_name}.yml"))
+        file = "#{dir}/#{table_name}.yml"
+        next unless File.exist?(file)
 
+        yaml = YAML.load_file(file)
         yaml.each do |k, v|
           repo_path = src.join(k)
           Cnfs.logger.info "Scanning repository path #{repo_path}"
@@ -89,8 +91,6 @@ class Repository < ApplicationRecord
           hash[k] = v.merge(name: k, project: 'app').merge(repo_yaml)
         end
       end
-      # require 'pry'
-      # binding.pry
       write_fixture(output)
     end
   end

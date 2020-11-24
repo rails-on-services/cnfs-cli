@@ -49,6 +49,8 @@ module CommandHelper
                                         aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
     add_cnfs_option :logging,           desc: 'Display loggin information with degree of verbosity',
                                         aliases: '-l', type: :string, default: Cnfs.config.logging
+    add_cnfs_option :quiet,             desc: 'Do not output execute commands',
+                                        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
 
     Cnfs.extensions.select { |e| e.extension_point.eql?(name) }.each do |extension|
       if extension.klass < Thor
@@ -99,7 +101,7 @@ module CommandHelper
     end
 
     def prepare_runtime
-      project.runtime.switch!
+      project.runtime.prepare
     end
 
     def ensure_valid_project

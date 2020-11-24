@@ -1,0 +1,4 @@
+# builders.yml
+---
+terraform:
+  type: Builder::Terraform

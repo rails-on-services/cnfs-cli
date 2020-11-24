@@ -24,107 +24,128 @@ module Cnfs
     end
 
     def self.models
-      [Project, Environment, Key, Namespace, Provider, Repository, Runtime, Service, User]
+      [Blueprint, Builder, Dependency, Environment, Key, Namespace, Project,
+       Provider, Registry, Repository, Runtime, Service, User]
     end
 
     # Set up database tables and columns
     def self.create_schema
       ActiveRecord::Schema.define do
-        create_table :projects, force: true do |t|
-          t.references :repository
-          t.references :source_repository
-          t.references :environment
-          t.references :namespace
-          t.string :name
-          t.string :config
-          t.string :paths
-          t.string :options
-          t.string :tags
-        end
-        Project.reset_column_information
-
-        create_table :assets, force: true do |t|
-          t.string :name
-          t.string :type
-          t.string :path
-          t.string :owner_type
-          t.string :owner_id
-          t.string :tags
-        end
-        Asset.reset_column_information
+        # create_table :assets, force: true do |t|
+        #   t.string :name
+        #   t.string :type
+        #   t.string :path
+        #   t.string :owner_type
+        #   t.string :owner_id
+        #   t.string :tags
+        # end
+        # Asset.reset_column_information
 
         create_table :blueprints, force: true do |t|
-          t.string :name
-          t.string :type
-          t.string :source
-          t.string :version
+          t.references :environment
           t.string :config
           t.string :environment
+          t.string :name
+          t.string :source
           t.string :tags
+          t.string :type
+          t.string :version
         end
         Blueprint.reset_column_information
 
-        create_table :environments, force: true do |t|
+        create_table :builders, force: true do |t|
           t.references :project
-          t.references :key
-          t.references :runtime
-          t.references :infra_runtime
-          t.references :provider
+          t.string :config
+          t.string :environment
+          t.string :name
+          t.string :tags
+          t.string :type
+        end
+        Builder.reset_column_information
+
+        create_table :dependencies, force: true do |t|
+          t.references :project
+          t.string :name
+          t.string :linux
+          t.string :mac
+          t.string :tags
+        end
+        Key.reset_column_information
+
+        create_table :environments, force: true do |t|
+          t.references :builder
           t.references :blueprint
+          t.references :key
+          t.references :project
+          t.references :provider
+          t.references :runtime
           t.string :name
           t.string :config
-          t.string :tf_config
           t.string :environment
-          t.string :type
-          t.string :dns_root_domain
           t.string :tags
+          t.string :tf_config
+          t.string :type
+          # t.string :dns_root_domain
         end
         Environment.reset_column_information
 
         create_table :keys, force: true do |t|
           t.string :name
-          t.string :value
           t.string :tags
+          t.string :value
         end
         Key.reset_column_information
 
         create_table :namespaces, force: true do |t|
           t.references :environment
           t.references :key
-          t.string :name
           t.string :config
           t.string :environment
+          t.string :name
           t.string :tags
         end
         Namespace.reset_column_information
 
-        create_table :providers, force: true do |t|
-          t.references :project
+        create_table :projects, force: true do |t|
+          t.references :environment
+          t.references :namespace
+          t.references :repository
+          t.references :source_repository
           t.string :name
           t.string :config
-          t.string :environment
-          t.string :type
+          t.string :options
+          t.string :paths
           t.string :tags
+        end
+        Project.reset_column_information
+
+        create_table :providers, force: true do |t|
+          t.references :project
+          t.string :config
+          t.string :environment
+          t.string :name
+          t.string :tags
+          t.string :type
           # t.string :kubernetes
         end
         Provider.reset_column_information
 
-        # create_table :registries, force: true do |t|
-        #   t.string :name
-        #   t.string :config
-        #   t.string :type
-        # end
-        # Registry.reset_column_information
-
-        create_table :repositories, force: true do |t|
-          t.references :project
+        create_table :registries, force: true do |t|
           t.string :name
           t.string :config
           t.string :type
-          t.string :service_type
-          t.string :path
+        end
+        Registry.reset_column_information
+
+        create_table :repositories, force: true do |t|
+          t.references :project
+          t.string :config
+          t.string :name
           t.string :namespace
+          t.string :path
+          t.string :service_type
           t.string :test_framework
+          t.string :type
           t.string :tags
         end
         Repository.reset_column_information
