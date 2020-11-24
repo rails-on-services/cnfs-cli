@@ -39,9 +39,10 @@ class InfraController < Thor
   desc 'apply', 'Apply the terraform infrastructure plan'
   option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
                  type: :boolean
+  before :initialize_project
+  before :prepare_runtime
   def apply(*args)
     execute(x_args: args)
-    # run(:apply, args)
   end
 
   # desc 'show', 'Show infrastructure details'
@@ -53,7 +54,7 @@ class InfraController < Thor
 
   desc 'destroy', 'Destroy infrastructure'
   def destroy
-    run(:destroy)
+    execute
   end
 
   private
@@ -72,19 +73,5 @@ class InfraController < Thor
       Ros::Be::Infra::Generator.new([], {}, behavior: :revoke).invoke_all
       Ros::Be::Infra::Generator.new.invoke_all
     end
-  end
-
-  def show_json
-    return unless File.exist?('output.json')
-
-    json = JSON.parse(File.read('output.json'))
-    # TODO: This will need to change for two things:
-    # 1. when deploying to cluster these values will be different
-    # 2. when deploying to another provider these keys will be different
-    if json['ec2-eip']
-      ip = json['ec2-eip']['value']['public_ip']
-      STDOUT.puts "ssh -A admin@#{ip}"
-    end
-    STDOUT.puts "API endpoint: #{json['lb_route53_record']['value'][0]['fqdn']}" if json['lb_route53_record']
   end
 end

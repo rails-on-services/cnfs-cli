@@ -38,7 +38,7 @@ module Concerns
     def command_options
       opts = {}
       opts.merge!(pty: true) if 1 == 2
-      binding.pry
+      # binding.pry
       opts.merge!(only_output_on_error: true) if project.options.quiet
       opts
     end
@@ -64,6 +64,10 @@ module Concerns
 
     def generator_class
       "#{self.class.name}Generator".safe_constantize
+    end
+
+    def path(from: nil, to: :templates, absolute: false)
+      project.path(from: from, to: to, absolute: absolute)
     end
 
     def project_name

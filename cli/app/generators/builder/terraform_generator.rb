@@ -10,7 +10,7 @@ class Builder::TerraformGenerator < BuilderGenerator
       end
 
       @blueprint = blueprint
-      generated_files << template("#{blueprint.template}.tf.json.erb", "#{path}/#{blueprint.template}.tf.json")
+      generated_files << template("#{blueprint.template}.tf.json.erb", "#{path}/#{blueprint.template.split('/').last}.tf.json")
     end
     remove_stale_files
   end

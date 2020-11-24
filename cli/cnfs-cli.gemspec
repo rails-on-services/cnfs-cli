@@ -47,7 +47,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "tty-config", "~> 0.3.2"
   # spec.add_dependency "tty-cursor", "~> 0.7"
   # spec.add_dependency "tty-editor", "~> 0.5"
-  # spec.add_dependency "tty-file", "~> 0.8.0"
+  spec.add_dependency 'tty-file', '~> 0.10.0'
   # spec.add_dependency "tty-font", "~> 0.4.0"
   spec.add_dependency 'tty-logger', '~> 0.5'
   # spec.add_dependency "tty-markdown", "~> 0.6.0"
@@ -57,7 +57,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "tty-progressbar", "~> 0.17"
   spec.add_dependency 'tty-prompt', '~> 0.22'
   # spec.add_dependency "tty-screen", "~> 0.7"
-  # spec.add_dependency "tty-spinner", "~> 0.9"
+  spec.add_dependency 'tty-spinner', '~> 0.9'
   spec.add_dependency 'tty-table', '~> 0.12.0'
   # spec.add_dependency "tty-tree", "~> 0.3"
   # spec.add_dependency "tty-which", "~> 0.4"

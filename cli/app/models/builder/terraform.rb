@@ -25,7 +25,8 @@ class Builder::Terraform < Builder
   end
 
   def apply
-    rv('terraform apply')
+    # rv('terraform apply')
+    [command_env, 'terraform apply', command_options.merge(pty: true)]
   end
 
   def destroy
@@ -48,49 +49,30 @@ class Builder::Terraform < Builder
 
     if Cnfs.platform.nil?
       errors.add(:platform, 'not supported')
-      exit
+      return
     end
+    require 'tty-file'
+    require 'tty-spinner'
 
-    system_cmd('rm -rf .terraform/modules/') if context.options.clean
 
-    Dir.chdir(context.write_path(:infra)) do
-      custom_providers.each do |_name, url|
+    Dir.chdir(path) do
+      system_cmd('rm -rf .terraform/modules/') if options.clean
+      spinner = TTY::Spinner.new("[:spinner] Downloading modules ...", format: :pulse_2)
+      custom_providers.each do |provider|
+        name = provider['name']
+        url = provider['url']
+
         url = url.gsub('{platform}', Cnfs.platform)
-        f = url.split(%r{/}).last
-        if File.exist?(f) && !context.options.clean
-          context.output.puts "Terraform provider #{f} exists locally." \
-            ' To overwrite run command with --clean flag.'
+        file = url.split(%r{/}).last
+        if File.exist?(file) && !options.clean
+          puts "Terraform provider #{file} exists locally. To overwrite run command with --clean flag."
           next
         end
-        download_provider(f, url)
-      end
-    end
-  end
 
-  # TODO: Use TTY::Progress here
-  def download_provider(provider, url)
-    bytes_total = nil
-    STDOUT.puts "Downloading terraform provider #{provider}..."
-    open(url, 'rb', 'Accept' => 'application/vnd.github.v4.raw',
-                    :content_length_proc => lambda { |content_length|
-                                              bytes_total = content_length
-                                            },
-                    :progress_proc => lambda { |bytes_transferred|
-                                        if bytes_total
-                                          print("\r#{bytes_transferred / 1024 / 1024}MB/#{bytes_total / 1024 / 1024}MB")
-                                        else
-                                          print("\r#{bytes_transferred / 1024 / 1024}MB (total size unknown)")
-                                        end
-                                      }) do |page|
-      File.open(provider, 'wb') do |file|
-        while (chunk = page.read(1024))
-          file.write(chunk)
-        end
-        File.chmod(0o755, file)
+        spinner.run { |spinner| TTY::File.download_file(url) }
       end
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def fetch_data_repo
     STDOUT.puts "Fetching data source v#{data.config.data_version}..."

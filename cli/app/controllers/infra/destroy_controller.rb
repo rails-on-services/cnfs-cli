@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
-module Targets
-  class DestroyController < ApplicationController
-    cattr_reader :command_group, default: :service_manifest
+module Infra
+  class DestroyController
 
     def execute
-      context.each_target do |_target|
-        before_execute_on_target
-        execute_on_target
-      end
-    end
-
-    def execute_on_target
-      Dir.chdir(context.write_path(:infra)) do
-        context.runtime.init.run! if context.options.init
-        context.runtime.destroy.run!
+      run_in_path(:destroy) do |result|
+        binding.pry
       end
     end
   end

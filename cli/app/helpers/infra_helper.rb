@@ -11,7 +11,19 @@ module InfraHelper
   def before_execute
     raise Cnfs::Error, "No builder configured for '#{project.environment.name}' environment" unless builder
 
+    # project.path(to: :templates).rmtree
     builder.generate
+    builder.prepare if builder.respond_to?(:prepare)
+  end
+
+  def run_in_path(cmd)
+    Dir.chdir(project.path(to: :templates)) do
+      cmd_array = project.environment.builder.send(cmd)
+      binding.pry
+      result = command.run!(*cmd_array)
+      yield result if block_given?
+      raise Cnfs::Error, result.err if result.failure?
+    end
   end
 
   def builder
