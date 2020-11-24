@@ -74,25 +74,16 @@ class Project < ApplicationRecord
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
 
-  # Example: write_path(:manifests) # => #<Pathname:tmp/cache/development/main>
   def write_path(type = :manifests)
-    case type.to_sym
-    when :config
-      paths.config.join('environments', *context_attrs)
-    when :manifests
-      paths.tmp.join('manifests', *context_attrs)
-    when :repository
-      repository&.path
-    when :repositories
-      paths.src
-    when :runtime
-      paths.tmp.join('runtime', *context_attrs)
-    when :services
-      paths.data.join('services', *context_attrs)
-    when :templates
-      # paths.data.join('templates', *context_attrs)
-      paths.data.join('templates', environment.name)
-    end
+    @write_path ||= pather.write_path(type)
+  end
+
+  def pather
+    @pather ||= WritePath.new(project: self)
+  end
+
+  def root
+    Cnfs.project_root
   end
 
   # Used by all runtime templates; Returns a path relative from the write path to the project root

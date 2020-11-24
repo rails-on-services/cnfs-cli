@@ -3,6 +3,13 @@
 require 'bundler/setup'
 require 'cnfs'
 
+@path = '/home/vagrant/p3/scratch/crud/nunce'
+Dir.chdir(@path) do
+  Cnfs.initialize!(without_cli: true)
+  Cnfs.require_deps
+  Cnfs::Configuration.initialize!
+end
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = '.rspec_status'

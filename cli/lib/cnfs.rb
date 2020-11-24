@@ -20,7 +20,7 @@ module Cnfs
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
-    def initialize!
+    def initialize!(without_cli: false)
       @timers = {}
       @cwd = Pathname.new(Dir.pwd)
       validate_command if project_root.nil?
@@ -32,7 +32,7 @@ module Cnfs
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
         setup_extensions
-        MainController.start
+        MainController.start unless without_cli
       end
       Cnfs.logger.info(timers.map { |k, v| "#{k}: #{v}" }.join("\n"))
       Cnfs.logger.info("wall time: #{Time.now - start_time}")
