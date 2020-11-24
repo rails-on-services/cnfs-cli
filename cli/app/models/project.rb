@@ -75,11 +75,11 @@ class Project < ApplicationRecord
   end
 
   def write_path(type = :manifests)
-    @write_path ||= pather.write_path(type)
+    project_path.path_to(type)
   end
 
-  def pather
-    @pather ||= WritePath.new(project: self)
+  def project_path
+    @project_path ||= ProjectPath.new(self)
   end
 
   def root
