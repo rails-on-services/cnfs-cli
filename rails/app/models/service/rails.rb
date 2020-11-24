@@ -40,7 +40,6 @@ class Service::Rails < Service
   end
 
   def build_context_path
-    # application.relative_path.join(Cnfs.paths.src, self.build_args['source_path'])
-    project.relative_path.join(Cnfs.paths.src)
+    project.path(from: :manifests, to: :repositories)
   end
 end

@@ -20,14 +20,12 @@ module Cnfs
         def on_runtime_switch
           return unless Cnfs.project.repository&.services_path&.exist?
 
-          Dir.chdir(Cnfs.project.repository.services_path) do
+          services_path = Cnfs.project.repository.services_path
+          Dir.chdir(services_path) do
             Cnfs.logger.info "Rails plugin configuring on runtime switch #{Dir.pwd}"
             FileUtils.rm_f('.env')
-            path = Dir.pwd
-            r_path = Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path)).join(Cnfs.project.write_path)
-            return unless r_path.exist?
-
-            FileUtils.ln_s(r_path, '.env')
+            path = Cnfs.project.path(from: services_path, to: :manifests)
+            FileUtils.ln_s(path, '.env')
           end
         end
         # rubocop:enable Metrics/AbcSize

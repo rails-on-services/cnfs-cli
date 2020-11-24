@@ -48,6 +48,7 @@ class Runtime::Compose < Runtime
 
   # Service Process Operations
   def ps(xargs)
+    switch!
     rv compose('ps')
     # tool_check
     # running_services(format: options.format, status: options.status, **xargs)

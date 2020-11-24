@@ -58,6 +58,7 @@ class Runtime::Terraform < Runtime
     end
   end
 
+  # TODO: Use TTY::Progress here
   def download_provider(provider, url)
     bytes_total = nil
     STDOUT.puts "Downloading terraform provider #{provider}..."

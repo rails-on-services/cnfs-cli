@@ -74,8 +74,13 @@ class Project < ApplicationRecord
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
 
+  # maintain api for now
   def write_path(type = :manifests)
-    project_path.path_to(type)
+    path(to: type)
+  end
+
+  def path(from: nil, to: nil, absolute: false)
+    project_path.path(from: from, to: to, absolute: absolute)
   end
 
   def project_path
@@ -84,16 +89,6 @@ class Project < ApplicationRecord
 
   def root
     Cnfs.project_root
-  end
-
-  # Used by all runtime templates; Returns a path relative from the write path to the project root
-  # Example: relative_path(:deployment) # => #<Pathname:../../../..>
-  def relative_path(path_type = :manifests)
-    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(write_path(path_type)))
-  end
-
-  def x_relative_path(path)
-    Cnfs.project_root.relative_path_from(Cnfs.project_root.join(path))
   end
 
   # Used by runtime generators for templates by runtime to query services
