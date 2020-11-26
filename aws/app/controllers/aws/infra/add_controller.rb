@@ -19,7 +19,11 @@ module Aws
           if cluster.eql?('ec2')
             # binding.pry
             results[:ec2] = {}
-            offerings = ec2_client(region: 'ap-southeast-1').describe_instance_type_offerings[0].map { |o| o.instance_type }
+            begin
+              offerings = ec2_client(region: 'ap-southeast-1').describe_instance_type_offerings[0].map { |o| o.instance_type }
+            rescue Aws::EC2::Errors::AuthFailure => e
+              raise Cnfs::Error, e.message
+            end
             choices = offerings.map {|c| c.split('.').first[0..1]}.uniq.sort
             family = prompt.enum_select('Instance type:', choices, per_page: choices.size)
             types = offerings.select {|c| c.start_with?(family) }.sort
