@@ -3,8 +3,8 @@
 class EnvironmentsController < Thor
   include CommandHelper
 
-  map %w[i] => :infra
-  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
+  # map %w[i] => :infra
+  # register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
 
   desc 'add NAME', 'Add environment to project'
   def add(name)

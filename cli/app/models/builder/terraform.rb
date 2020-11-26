@@ -25,12 +25,11 @@ class Builder::Terraform < Builder
   end
 
   def apply
-    # rv('terraform apply')
-    [command_env, 'terraform apply', command_options.merge(pty: true)]
+    rv('terraform apply -auto-approve')
   end
 
   def destroy
-    rv('terraform destroy')
+    rv('terraform destroy -auto-approve')
   end
 
   # command support methods

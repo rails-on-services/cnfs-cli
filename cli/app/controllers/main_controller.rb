@@ -9,10 +9,10 @@ class MainController < Thor
   register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
   register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
   register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
+  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
   register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
   register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
   register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
-  # register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Add a blueprint to environment or namespace'
 
   def self.exit_on_failure?
     true

@@ -27,6 +27,7 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
     def execute
+      Cnfs.config.is_cli = true
       project = Pry::Helpers::Text.blue(Cnfs.project.name)
       env = Cnfs.project.environment.name
       environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
@@ -50,7 +51,7 @@ module Projects
       end
 
       def commands
-        %i[projects repositories environments namespaces images services]
+        %i[projects repositories infra environments namespaces images services]
       end
     end
 

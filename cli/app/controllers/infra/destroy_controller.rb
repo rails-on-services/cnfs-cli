@@ -2,10 +2,11 @@
 
 module Infra
   class DestroyController
+    include InfraHelper
 
     def execute
       run_in_path(:destroy) do |result|
-        binding.pry
+        raise Cnfs::Error, result.err if result.failure?
       end
     end
   end

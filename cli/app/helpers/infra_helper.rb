@@ -19,7 +19,6 @@ module InfraHelper
   def run_in_path(cmd)
     Dir.chdir(project.path(to: :templates)) do
       cmd_array = project.environment.builder.send(cmd)
-      binding.pry
       result = command.run!(*cmd_array)
       yield result if block_given?
       raise Cnfs::Error, result.err if result.failure?

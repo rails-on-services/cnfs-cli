@@ -4,7 +4,6 @@ require_relative 'lib/cnfs/cli/angular/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-angular'
-  # spec.version       = File.read('VERSION').strip
   spec.version       = Cnfs::Cli::Angular::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']

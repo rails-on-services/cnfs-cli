@@ -4,6 +4,16 @@ class Blueprint::Aws::Instance < Blueprint::Aws
   MODULES = %i[vpc ec2 acm alb cdn].freeze
   store :config, accessors: MODULES
 
+  def content
+    MODULES.each_with_object([]) do |key, ary|
+      next unless send(key)
+
+      ary << ",\n\"module\":" +
+        JSON.pretty_generate({ key => { 'source' => source }.merge(
+          send(key)).transform_values { |v| v.is_a?(String) ? v.cnfs_sub : v }.sort.to_h })
+    end
+  end
+
   # NOTE: If the output is an array and the input expects and array then don't enclose in an array, ie []
   # NOTE: ${} notation is required to reference outputs from other modules
   def set_defaults

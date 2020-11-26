@@ -14,6 +14,7 @@ module Infra
     private
 
     def execute
+      require 'tty-prompt'
       # generator = Component::EnvironmentGenerator.new([arguments.name], options)
       # generator.behavior = options.behavior
       # generator.invoke_all

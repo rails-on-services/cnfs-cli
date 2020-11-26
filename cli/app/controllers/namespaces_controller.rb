@@ -8,8 +8,8 @@ class NamespacesController < Thor
   cnfs_class_options :dry_run, :logging, :force
   # class_around :timer
 
-  map %w[i] => :infra
-  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure. (short-cut: i)'
+  # map %w[i] => :infra
+  # register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure. (short-cut: i)'
 
   desc 'add NAME', 'Add namespace to environment configuration'
   def add(name)

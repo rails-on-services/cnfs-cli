@@ -1,8 +1,10 @@
 # frozen_string_literal: true
+#
+require_relative 'lib/cnfs/cli/rails/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-rails'
-  spec.version       = File.read('VERSION').strip
+  spec.version       = Cnfs::Cli::Rails::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 

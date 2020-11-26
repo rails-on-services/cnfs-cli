@@ -1,10 +1,7 @@
-<%
-bp = @blueprint
-# binding.pry 
--%>{
+{
   "provider": {
     "aws": {
-      "region": "<%= bp.environment.provider.config['region'] %>"
+      "region": "<%= @blueprint.environment.provider.config['region'] %>"
     }
   },
   "provider": {
@@ -12,9 +9,5 @@ bp = @blueprint
       "region": "us-east-1",
       "alias": "us-east-1"
     }
-    <%# NOTE: the MODULES should be a method on the @blueprint instance %>
-  }<% Blueprint::Aws::Instance::MODULES.each_with_index do |key, index|
-  next unless bp.send(key)
-  -%><%= ",\n\"module\":" + JSON.pretty_generate({ key => { 'source' => source }.merge(bp.send(key)).transform_values { |v| v.is_a?(String) ? v.cnfs_sub : v }.sort.to_h }) %>
-<% end %>
+  }<%= @blueprint.content.join("\n") %>
 }
