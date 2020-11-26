@@ -11,5 +11,5 @@
 
 # rspec failure tracking
 **.rspec_status
-**environment.rb
+*/config/environment.rb
 *.gem
