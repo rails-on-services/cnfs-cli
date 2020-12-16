@@ -211,7 +211,7 @@ class ServicesController < Thor
     super_execute(xargs, command_name, location) do
       if options.build
         remove_option(:build)
-        cmd.images.build(args.services)
+        cmd(:images).build(args.services)
       end
     end
     # Run any post execute command based on options passed in

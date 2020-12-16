@@ -19,8 +19,13 @@ class RuntimeGenerator < ApplicationGenerator
       generated_files << template("#{entity_to_template(service)}.yml.erb", "#{path}/#{service.name}.yml")
     end
   rescue StandardError => e
+    msg = e
+    if Cnfs.config.dig(:cli, :dev)
+      msg = "#{e}\n#{e.backtrace}"
+      binding.pry
+    end
     # TODO: add to errors array and have controller output the result
-    raise Cnfs::Error, "\nError generating template for #{@service.name}: #{e}\n#{error_on.to_json}"
+    raise Cnfs::Error, "\nError generating template for #{@service.name}: #{msg}"
   ensure
     remove_stale_files
   end
@@ -51,13 +56,13 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   def version
-    project.runtime.version
+    Cnfs.project.runtime.version
   end
 
   # Default space_count is for compose
   # Template is expected to pass in a hash for example for profile
   def labels(labels: {}, space_count: 6)
-    project.runtime.labels(labels.merge(service: service.name)).map do |key, value|
+    Cnfs.project.runtime.labels(labels.merge(service: service.name)).map do |key, value|
       "\n#{' ' * space_count}#{key}: #{value}"
     end.join
   end

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Project < ApplicationRecord
-  attr_accessor :manifest
+  PARSE_NAME = 'project'
+  attr_accessor :manifest, :runtime
 
   belongs_to :environment
   belongs_to :namespace
@@ -9,8 +10,10 @@ class Project < ApplicationRecord
   belongs_to :source_repository, class_name: 'Repository'
 
   has_many :providers
+  has_many :builders
   has_many :runtimes
   has_many :repositories
+  has_many :users
   has_many :environments
   has_many :namespaces, through: :environments
 
@@ -20,15 +23,19 @@ class Project < ApplicationRecord
   # If options were passed in then ensure the values are valid (names found in the config)
   validates :environment, presence: { message: 'not found' } #, if: -> { options.environment }
   validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
+  validate :associations_are_valid
+
   # TODO: Should there be validations for repository and source_repository?
   # validates :service, presence: { message: 'not found' }, if: -> { arguments.service }
   # validate :all_services, if: -> { arguments.services }
   # validates :runtime, presence: true
 
-  validate :repository_is_valid
+  def associations_are_valid
+    # errors.copy!(environment.errors) unless environment.valid?
+  end
 
   def repository_is_valid
-    # binding.pry
+    binding.pry
     #aise Cnfs::Error, "Unknown repository '#{options.repository}'." \
     #  " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
   end
@@ -50,7 +57,7 @@ class Project < ApplicationRecord
 
   # TODO: This may be unnecessary or a very important method/scope. Think about this
   def services; namespace.services end
-  def runtime; environment.runtime end 
+  # def runtime; environment.runtime end 
   def blueprints; environment.blueprints end
 
   # NOTE: Not yet in use; decide where this should go
@@ -109,25 +116,30 @@ class Project < ApplicationRecord
     [environment&.name, namespace&.name].compact
   end
 
-  # TODO: See what to do about this
-    # scope is either :namespace or :environment
-    def encrypt(plaintext, scope)
-      send(scope).encrypt(plaintext)
-    end
+  # TODO: See what to do about encrypt/decrypt per env/ns
 
-    def decrypt(ciphertext)
-      namespace.decrypt(ciphertext)
-    rescue Lockbox::DecryptionError => e
-      environment.decrypt(ciphertext)
-    end
+  # Returns an encrypted string
+  # 
+  # ==== Parameters
+  # plaintext<String>:: the string to be encrypted
+  # scope<String>:: the encryption key to be used: environment or namespace
+  def encrypt(plaintext, scope)
+    send(scope).encrypt(plaintext)
+  end
+
+  def decrypt(ciphertext)
+    namespace.decrypt(ciphertext)
+  rescue Lockbox::DecryptionError => e
+    environment.decrypt(ciphertext)
+  end
 
   class << self
     def parse
       content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags))
       namespace = "#{content[:environment]}_#{content[:namespace]}"
       options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
-      output = { app: content.merge(namespace: namespace, options: options) }
-      write_fixture(output)
+      output = { PARSE_NAME => content.merge(namespace: namespace, options: options) }
+      create_all(output)
     end
 
     # Determine the current repository from where the user is in the project filesystem
@@ -143,5 +155,19 @@ class Project < ApplicationRecord
       app.repositories.find_by(name: repo_name)
     end
     # rubocop:enable Metrics/AbcSize
+
+    def create_table(s)
+      s.create_table :projects, force: true do |t|
+        t.references :environment
+        t.references :namespace
+        t.references :repository
+        t.references :source_repository
+        t.string :name
+        t.string :config
+        t.string :options
+        t.string :paths
+        t.string :tags
+      end
+    end
   end
 end

@@ -4,7 +4,7 @@ version: '<%= version %>'
 services:
   <%= service.name %>:
     labels:<%= labels %>
-    image: <%= service.image || 'mdillon/postgis:latest' %>
+    image: <%= service.image[:name] || 'mdillon/postgis:latest' %>
     ports:<%= expose_ports %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>

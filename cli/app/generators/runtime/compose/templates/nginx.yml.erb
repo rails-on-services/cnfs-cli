@@ -7,7 +7,7 @@ version: '<%= version %>'
 services:
   <%= service.name %>:
     labels:<%= labels %>
-    image: <%= service.image || 'nginx:latest' %>
+    image: <%= service.image[:name] || 'nginx:latest' %>
     ports:
       # expose host port 3000 and fwd to port 80 of the nginx container
       - "${NGINX_HOST_PORT:-3000}:80"

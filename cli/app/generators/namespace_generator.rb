@@ -4,24 +4,23 @@ class NamespaceGenerator < Thor::Group
   include Thor::Actions
   argument :name
 
-  def generate_key
-    # binding.pry
-    # template(views_path.join('keys.yml.erb'), Cnfs.user_root.join(options.project_name, 'config/environments', options.environment, name, 'keys.yml'))
-    # template(internal_path.join('templates/keys.yml.erb'), Cnfs.user_root.join(Cnfs.config.name, 'config/environments', options.environment, name, 'keys.yml'))
-    template(internal_path.join('key/keys.yml.erb'), Cnfs.user_root.join(Cnfs.config.name, 'config/environments', options.environment, name, 'keys.yml'))
+  def generate_user_files
+    user_file_path = Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, ns_file)
+    empty_directory(user_file_path.split.first)
+    template('user_namespace.yml.erb', user_file_path) if behavior.eql?(:invoke)
   end
 
   def generate_project_files
-    inside(Cnfs.paths.config.join('environments', options.environment)) do
-      # Directory is required for Namespace parser to pick up valid namespaces
-      empty_directory(name)
-      template(views_path.join('namespace.yml.erb'), "#{name}.yml")
-      # template(views_path.join('templates/keys.yml.erb'), Cnfs.user_root.join(options.environment, name, 'config/keys.yml'))
-      #template(views_path.join('templates/services.yml.erb'), "#{name}/services.yml")
-    end
+    project_file_path = Cnfs.paths.config.join(ns_file)
+    empty_directory(project_file_path.split.first)
+    template('namespace.yml.erb', project_file_path) if behavior.eql?(:invoke)
   end
 
   private
+
+  def ns_file
+    ['environments', options.environment, name, 'namespace.yml'].join('/')
+  end
 
   def source_paths
     [views_path, views_path.join('templates')]

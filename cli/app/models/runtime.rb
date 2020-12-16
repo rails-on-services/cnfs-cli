@@ -5,6 +5,8 @@ class Runtime < ApplicationRecord
 
   store :config, accessors: %i[version], coder: YAML
 
+  parse_sources :cli
+
   # Content related commands
   def labels(labels)
     project.labels.merge(labels)
@@ -35,5 +37,16 @@ class Runtime < ApplicationRecord
     { remote_file: '/home/rails/services/app/tmp/mounted/credentials.json',
       local_file: "#{path}/target/credentials.json",
       local_path: "#{path}/target" }
+  end
+
+  def self.create_table(s)
+    s.create_table :runtimes, force: true do |t|
+      t.references :project
+      t.string :name
+      t.string :config
+      t.string :environment
+      t.string :type
+      t.string :tags
+    end
   end
 end

@@ -1,0 +1,38 @@
+# # Environment: <%= name %>
+---
+# linux_vm:
+#   type: Resource::Cli::Instance
+#   provider: localstack
+#   runtime: compose
+#   # blueprint: local
+# 
+# local_bucket:
+#   type: Resource::Aws::S3
+#   provider: localstack
+# 
+# acm_cert:
+#   type: Resource::Aws::ACM
+#   provider: aws_singapore
+# 
+# instance:
+#   stuff:
+#   - what: now
+#     good: bad
+#   - hi: 123
+#   - this: that
+#     floppy: hat
+#   config:
+#     key_name: cool
+#   # environment: {}
+#   tags:
+#     nicest: work
+#     good: job
+#   type: Resource::Aws::EC2
+#   # blueprint: local
+#   provider: aws_singapore
+#   # runtime: compose
+# 
+# sg_bucket:
+#   type: Resource::Aws::S3
+#   provider: aws_singapore
+#   # blueprint: local

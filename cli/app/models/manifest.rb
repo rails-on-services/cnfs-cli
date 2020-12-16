@@ -6,7 +6,7 @@ class Manifest
 
   attr_accessor :project, :config_files_paths
 
-  delegate :runtime, :write_path, to: :project
+  delegate :environment, :write_path, to: :project
 
   validate :outdated?
 
@@ -26,7 +26,10 @@ class Manifest
   def generate
     purge! unless valid?
     Cnfs.logger.info "Generating files"
-    runtime.generate
+    environment.runtimes.each do |runtime|
+      Cnfs.project.runtime = runtime
+      runtime.generate
+    end
     files
   end
 

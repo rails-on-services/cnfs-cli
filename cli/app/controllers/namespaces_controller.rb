@@ -12,26 +12,29 @@ class NamespacesController < Thor
   # register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage namespace infrastructure. (short-cut: i)'
 
   desc 'add NAME', 'Add namespace to environment configuration'
+  before :initialize_project
+  before :ensure_valid_project
   def add(name)
-    Namespaces::AddRemoveController.new(options: options.merge(behavior: :invoke), args: { name: name }).execute
+    execute({ name: name }, :crud, 2, :add)
   end
 
   desc 'list', 'Lists configured namespaces'
   before :initialize_project
-  # TODO: Look at Repository for how to delegate to the model
   def list
-    binding.pry
-    paths = Cnfs.paths.config.join('environments', options.environment).children.select(&:directory?)
-    return unless paths.any?
+    require 'tty-tree'
+    puts TTY::Tree.new(Cnfs.paths.config.join('environments').to_s, only_dirs: true).render
+    true
+  end
 
-    puts options.environment
-    puts paths.sort.map { |path| "> #{path.split.last}" }
+  desc 'update NAME', 'Update namespace'
+  def update(name)
+    execute({ name: name }, :crud, 2, :update)
   end
 
   desc 'remove NAME', 'Remove namespace from environment configuration'
   map %w[rm] => :remove
   def remove(name)
-    Namespaces::AddRemoveController.new(options: options.merge(behavior: :revoke), arguments: { name: name }).execute
+    execute({ name: name, behavior: :revoke }, :crud, :remove)
   end
 
   # Deployment Manifests

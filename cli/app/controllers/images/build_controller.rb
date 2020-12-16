@@ -6,6 +6,7 @@ module Images
     attr_accessor :services
 
     def execute
+      # TODO: each_runtime
       result = command.run!(*project.runtime.build(services))
       raise Cnfs::Error, result.err if result.failure?
     end

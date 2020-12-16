@@ -10,13 +10,31 @@ module ExecHelper
   def initialize(options:, args:)
     @options = options
     @args = args
-    # project.process_manifests if command_set_requires_manifests?
     before_execute if respond_to?(:before_execute)
   end
 
-  # def command_set_requires_manifests?
-  #   %w[namespaces services images].include?(self.class.module_parent.to_s.underscore)
-  # end
+  def each_runtime
+    environment.runtimes.each do |runtime|
+      runtime.queue = queue
+      # TODO: See if update works; it writes a bunch of stuff to config/project.yml
+      # If it requires reload then that is pretty useless
+      # project.update(runtime: runtime)
+      project.runtime = runtime
+      # Prepare should be handled by the CommandController
+      # project.runtime.prepare
+      # binding.pry
+      runtime_services = respond_to?(:services) ? services.where(type: runtime.supported_service_types) : []
+      yield runtime, runtime_services
+    end
+  end
+
+  def queue
+    @queue ||= CommandQueue.new # (halt_on_failure: true)
+  end
+
+  def environment
+    project.environment
+  end
 
   def project
     Cnfs.project

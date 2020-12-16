@@ -6,7 +6,13 @@ module Services
 
     def execute
       xargs = args.args.empty? ? {} : args.args
-      command.run(*project.runtime.ps(**xargs))
+      each_runtime do |runtime, runtime_services|
+        Cnfs.project.runtime.ps(**xargs)
+        queue.execute_all
+        # Cnfs.project.runtime = runtime
+        # Cnfs.project.runtime.prepare
+        # command.run(*Cnfs.project.runtime.ps(**xargs))
+      end
       # list = project.runtime.ps(**xargs)
       # puts list
     end

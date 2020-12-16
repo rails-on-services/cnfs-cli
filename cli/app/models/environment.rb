@@ -2,58 +2,95 @@
 
 class Environment < ApplicationRecord
   include BelongsToProject
+  include Concerns::Key
 
-  belongs_to :builder
-  belongs_to :key
-  belongs_to :provider
-  belongs_to :runtime
+  # belongs_to :builder
 
   has_many :blueprints
+  has_many :resources, through: :blueprints
+  has_many :runtimes, through: :blueprints
+  # has_many :resources
+  # has_many :runtimes, through: :resources
   has_many :namespaces
   has_many :services, through: :namespaces
 
-  delegate :encrypt, :decrypt, to: :key
+  store :config, accessors: %i[domain], coder: YAML
+  # store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
+  # store :config, accessors: %i[application_environment]
+  # store :tf_config, accessors: %i[tags], coder: YAML
 
-  store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
-  store :config, accessors: %i[application_environment]
-  store :tf_config, accessors: %i[tags], coder: YAML
+  # validates :builder, presence: true
+  validate :no_duplicated_runtimes
 
-  # validates :runtime, presence: true
-  # validates :provider, presence: true
+  parse_scopes :environment
+  parse_sources :project, :user
+  parse_options fixture_name: :environment
 
-  after_initialize do
-    self.lb_dns_hostnames ||= []
+  def no_duplicated_runtimes
+    def_runtimes = runtimes.pluck(:type)
+    unique_runtimes = def_runtimes.dup.uniq!
+    return if unique_runtimes.nil?
+
+    duplicate_runtimes = unique_runtimes.select{ |e| def_runtimes.count(e) > 1 }
+    errors.add(:runtimes, "Must be unique. Multiple resources with identical runtime(s) #{duplicate_runtimes.join(', ')}")
   end
 
+  # Override to provide a path alternative to config/table_name.yml
+  def file_path
+    Cnfs.project.paths.config.join('environments', name, 'environment.yml')
+  end
+
+  def user_file_path
+    Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', name, 'environment.yml')
+  end
+
+  # Given a service, return the runtime that supports its type
+  def runtime_for(service)
+    runtimes.select { |r| r.supported_service_types.include?(service.type) }.first
+  end
+
+  # after_initialize do
+  #   self.lb_dns_hostnames ||= []
+  # end
+
   # Default intitialze of target is to do nothing
-  def init(options); end
+  # def init(options); end
 
   # def to_env
   #   infra_env = { platform: { infra: { provider: provider_type_to_s } } }
   #   Config::Options.new.merge_many!(infra_env, environment, provider.environment, namespace&.environment || {}).to_hash
   # end
 
-  def provider_type_to_s
-    provider.type.demodulize.underscore
-  end
+  # def provider_type_to_s
+  #   provider.type.demodulize.underscore
+  # end
 
-  def domain_slug
-    @domain_slug ||= domain_name.gsub('.', '-')
-  end
+  # def domain_slug
+  #   @domain_slug ||= domain_name.gsub('.', '-')
+  # end
 
-  def domain_name
-    @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
+  # def domain_name
+  #   @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
+  # end
+
+  def as_save
+    attributes.slice('config', 'name', 'tags', 'type')
   end
 
   class << self
-    def parse
-      output = environments.each_with_object({}) do |e, h|
-        env = e.split.last.to_s
-        env_file = "config/environments/#{env}.yml"
-        yaml = File.exist?(env_file) ? YAML.load_file(env_file) : {}
-        h[env] = { name: env, project: 'app' }.merge(yaml)
+    def create_table(s)
+      s.create_table :environments, force: true do |t|
+        t.references :builder
+        t.references :project
+        t.string :config
+        # t.string :dns_root_domain
+        t.string :environment
+        t.string :key
+        t.string :name
+        t.string :tags
+        # t.string :tf_config
+        t.string :type
       end
-      write_fixture(output)
     end
   end
 end

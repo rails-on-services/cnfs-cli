@@ -6,13 +6,16 @@ class MainController < Thor
   # Activate common options
   cnfs_class_options :dry_run, :logging
 
-  register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
-  register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
-  register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
-  register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
-  register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
-  register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
-  register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
+  unless Cnfs.project_root.eql?('.')
+    register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
+    register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
+    register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
+    register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Manage environment infrastructure blueprints (k8s clusters, storage, etc)'
+    register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
+    register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
+    register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
+    register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
+  end
 
   def self.exit_on_failure?
     true
@@ -47,8 +50,10 @@ class MainController < Thor
 
       This generates a skeletal CNFS project in ~/Projects/todo.
     DESC
-    option :force, desc: 'Force creation even if the project directory already exists',
-                   aliases: '-f', type: :boolean
+    option :force,  desc: 'Force creation even if the project directory already exists',
+                    aliases: '-f', type: :boolean
+    option :config, desc: 'Create project with a working configuration (instead of commented examples)',
+                    aliases: '-c', type: :boolean
     def new(name)
       if Dir.exist?(name) and not validate_destroy('Directory already exists. Destroy and recreate?')
         raise Cnfs::Error, set_color('Directory exists. exiting.', :red)

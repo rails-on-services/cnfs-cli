@@ -6,7 +6,7 @@ module Services
     attr_accessor :service
 
     def execute
-      unless service.shell_command
+      unless service.commands[:shell]
         raise Cnfs::Error, "#{service.name} does not implement the shell command"
       end
 

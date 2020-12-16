@@ -3,8 +3,8 @@ version: '<%= version %>'
 services:
   <%= service.name %>:
     labels:
-      <%= labels %><% if service.image%>
-    image: <%= service.image %><% end %><% if env_files.size.positive? %>
+      <%= labels %><% if service.image[:name] %>
+    image: <%= service.image[:name] %><% end %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %><% if service.path %>
     build:

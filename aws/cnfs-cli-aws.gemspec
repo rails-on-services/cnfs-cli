@@ -29,7 +29,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # spec.add_dependency 'cnfs-cli', '~> 0.1.0'
-  spec.add_dependency 'aws-sdk-ec2', '~> 1.211.0'
+  spec.add_dependency 'aws-sdk-acm', '~> 1.38'
+  spec.add_dependency 'aws-sdk-ec2', '~> 1.211'
+  spec.add_dependency 'aws-sdk-eks', '~> 1.46'
+  spec.add_dependency 'aws-sdk-rds', '~> 1.107'
+  spec.add_dependency 'aws-sdk-redshift', '~> 1.51'
+  spec.add_dependency 'aws-sdk-route53', '~> 1.44'
+  spec.add_dependency 'aws-sdk-s3', '~> 1.86'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'pry', '~> 0.12'

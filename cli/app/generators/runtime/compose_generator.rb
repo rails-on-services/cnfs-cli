@@ -7,7 +7,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   end
 
   def generate_compose_environment
-    template('env.erb', project.runtime.compose_file, env: compose_environment)
+    template('env.erb', Cnfs.project.runtime.compose_file, env: compose_environment)
   end
 
   private

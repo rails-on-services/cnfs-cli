@@ -1,21 +1,57 @@
 # frozen_string_literal: true
 
 class Hcl
-  def output_type
-    if deploy_type.eql?(:instance)
-      'this'
-    elsif deploy_type.eql?(:kubernetes)
-      '*'
+  attr_accessor :content, :buffer
+
+  def initialize(content, opts = {})
+    opts = opts.with_indifferent_access.merge!(buffer: 2)
+    @content = content
+    @buffer = opts[:buffer]
+  end
+
+  # rubocop:disable Metrics/AbcSize
+  def render(hash = content, spacer = buffer, ary = [])
+    max_key_length = hash.keys.max_by(&:length).length
+    hash.stringify_keys!.sort.to_h.reject { |_k, v| v.nil? }.each_with_object(ary) do |(key, value), cary|
+      val = compute_val(value, spacer)
+      key_join = ' ' * (max_key_length - key.length) + ' = '
+      cary << ["#{' ' * spacer}#{key}", val].join(key_join)
     end
   end
 
-  def title(name = nil)
-    [@module_name, resource.name.gsub('_', '-'), name].compact.join('-')
+  def compute_val(value, spacer)
+    case value
+    when Array
+      nary = value.each_with_object([]) { |item, ary| ary << compute_val(item, spacer) }.join(', ')
+      "[#{nary}]"
+    when Hash
+      value.any? ? "{\n#{render(value, spacer + buffer).join("\n")}\n#{' ' * spacer}}" : '{}'
+    when Integer, TrueClass, FalseClass
+      value
+    else
+      "\"#{value.to_s.cnfs_sub}\""
+    end
   end
+  # rubocop:enable Metrics/AbcSize
+end
 
-  def resource_config(target, resource, template, config = nil)
-    ResourceRender.new(target, resource, template, config)
-  end
+# rubocop:disable Style/BlockComments
+=begin
+  # def output_type
+  #   if deploy_type.eql?(:instance)
+  #     'this'
+  #   elsif deploy_type.eql?(:kubernetes)
+  #     '*'
+  #   end
+  # end
+
+  # def title(name = nil)
+  #   [@module_name, resource.name.gsub('_', '-'), name].compact.join('-')
+  # end
+
+  # def resource_config(target, resource, template, config = nil)
+  #   ResourceRender.new(target, resource, template, config)
+  # end
 
   # def render_attributes(hash, spacer = 2, ary = [])
   #   rr = ResourceRender.new(nil, nil, nil)
@@ -37,7 +73,6 @@ class Hcl
       render_attributes(config)
     end
 
-    # rubocop:disable Metrics/AbcSize
     def render_attributes(hash, spacer = 2, ary = [])
       max_key_length = hash.to_h.keys.max_by(&:length).length
       hash.transform_keys!(&:to_s).sort.to_h.each_with_object(ary) do |(key, value), cary|
@@ -47,7 +82,6 @@ class Hcl
         cary << ["#{' ' * spacer}#{key}", val].join(key_join)
       end
     end
-    # rubocop:enable Metrics/AbcSize
 
     def compute_val(value, spacer)
       if value.is_a?(Array)
@@ -63,3 +97,5 @@ class Hcl
     end
   end
 end
+=end
+# rubocop:enable Style/BlockComments

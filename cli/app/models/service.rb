@@ -1,36 +1,78 @@
 # frozen_string_literal: true
 
 class Service < ApplicationRecord
+  attr_accessor :command_queue
   include Taggable
 
   belongs_to :namespace
+  belongs_to :repository, required: false
 
-  delegate :project, :runtime, to: :namespace
+  store :commands, accessors: %i[console shell test], coder: YAML
+  store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
+  # store :config, accessors: %i[path image depends_on ports mount], coder: YAML
+  store :config, accessors: %i[path depends_on ports mount], coder: YAML
+  store :image, accessors: %i[build_args dockerfile repository_name tag], coder: YAML
+  store :profiles, coder: YAML
 
+  serialize :volumes, Array
+
+  delegate :project, to: :namespace
+  delegate :runtime, to: :project
   delegate :full_context_name, :write_path, to: :project
+  delegate :git, to: :repository
 
   validates :name, presence: true
 
-  store :config, accessors: %i[path image depends_on ports mount], coder: YAML
-  store :config, accessors: %i[shell_command], coder: YAML
-  store :profiles, coder: YAML
+  validate :image_values
+
+  def volumes
+    super.map(&:with_indifferent_access)
+  end
+
+  def image_values
+    %i[source_path target_path].each do |path|
+      next unless build_args.try(:[], path)
+
+      source_path = Cnfs.paths.src.join(build_args[path])
+      errors.add(:source_path_does_not_exist, "'#{source_path}'") unless source_path.exist?
+    end
+    if dockerfile
+      source_path = Cnfs.paths.src.join(dockerfile)
+      errors.add(:dockerfile_path_does_not_exist, "'#{source_path}'") unless source_path.exist?
+    end
+  end
 
   # depends_on is used by compose to set order of container starts
   after_initialize do
+    self.command_queue ||= []
     self.depends_on ||= []
+    self.profiles ||= {}
   end
 
-  def update_state(state)
-    file_path = write_path(:runtime).join('services.yml')
-    FileUtils.touch(file_path) unless File.exist?(file_path)
-    o = Config.load_file(file_path)
-    hash = { name => { state: state } }
-    Cnfs.logger.info "State for service #{name} updated to #{hash}"
-    method = "after_#{state}"
-    additional_commands = respond_to?(method) ? send(method, hash) : []
-    o.merge!(hash)
-    o.save
-    additional_commands
+  parse_scopes :environments, :environment, :namespace
+  parse_sources :project, :user
+
+  # Custom callbacks
+  { start: :running, stop: :stopped, terminate: :terminated }.each do |command, state|
+    define_model_callbacks command
+    define_method(command) do
+      run_callbacks(command) do
+        update_runtime(state: state)
+      end
+    end
+  end
+
+  after_start { add_commands_to_queue(after_service_starts) }
+  before_stop { add_commands_to_queue(before_service_stops) }
+  before_terminate { add_commands_to_queue(before_service_terminates) }
+
+  def add_commands_to_queue(commands_array)
+    return unless commands_array&.any?
+
+    commands_array.each do |command|
+      command_queue.append(Cnfs.project.runtime.exec(self, command, true))
+      Cnfs.logger.debug "#{name} command_queue add: #{command}"
+    end
   end
 
   # NOTE: Commands that execute on only one service are implemented here
@@ -40,7 +82,7 @@ class Service < ApplicationRecord
   end
 
   def console
-    runtime.exec(self, console_command, true)
+    runtime.exec(self, commands[:console], true)
   end
 
   def copy(src, dest)
@@ -56,11 +98,33 @@ class Service < ApplicationRecord
   end
 
   def shell
-    runtime.exec(self, shell_command, true)
+    project.environment.runtime_for(self).exec(self, commands[:shell], true)
   end
 
   def test_commands(_options = nil)
-    []
+    runtime.exec(self, commands[:test], true)
+  end
+
+  private
+
+  # State handling
+  def update_runtime(values)
+    runtime_config = YAML.load_file(runtime_path) || {}
+    Cnfs.logger.info "Current runtime state for service #{name} is #{runtime_config}"
+    runtime_config.merge!(name => values).deep_stringify_keys!
+    Cnfs.logger.info "Updated runtime state for service #{name} is #{runtime_config}"
+    File.open(runtime_path, 'w') { |file| file.write(runtime_config.to_yaml) }
+  end
+
+  # File handling
+  def runtime_path
+    @runtime_path ||= (
+      file_path = write_path(:runtime)
+      file_path.mkpath unless file_path.exist?
+      file_path = file_path.join('services.yml')
+      FileUtils.touch(file_path) unless File.exist?(file_path)
+      file_path
+    )
   end
 
   class << self
@@ -68,30 +132,34 @@ class Service < ApplicationRecord
       where("profiles LIKE ?", profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
-    # rubocop:disable Metrics/MethodLength
     def parse
-      file_name = 'config/environments/services.yml'
-      files = File.exist?(file_name) ? [file_name] : []
-      output = environments.each_with_object({}) do |env_path, hash|
-        file_name = env_path.join('services.yml')
-        env_files = File.exist?(file_name) ? files + [file_name] : files
-        env = env_path.split.last.to_s
-        env_path.children.select(&:directory?).each do |ns_path|
-          file_name = ns_path.join('services.yml')
-          ns_files = File.exist?(file_name) ? env_files + [file_name] : env_files
-          ns = ns_path.split.last.to_s
-          o_config = ns_files.each_with_object(Config::Options.new) do |file, cfg|
-            cfg.merge!(Config.load_files(file).to_hash)
-          end
-          o_config.keys.each do |key|
-            o_config[key].name = key.to_s
-            o_config[key].namespace = "#{env}_#{ns}"
-          end
-          ns_services_hash = o_config.to_hash.except(:DEFAULTS).transform_keys! { |key| "#{env}_#{ns}_#{key}" }.deep_stringify_keys
-          hash.merge!(ns_services_hash)
-        end
+      # key: 'environments/staging/main/namespace.yml'
+      super do |key, output, opts|
+        keys = output.keys.select{ |key| key.end_with?('DEFAULTS') }
+        output.except!(*keys)
       end
-      write_fixture(output)
+    end
+
+    def create_table(s)
+      s.create_table :services, force: true do |t|
+        t.references :namespace
+        t.references :repository
+        # TODO: Perhaps these are better as strings that can be inherited
+        # t.references :source_repo
+        # t.references :image_repo
+        # t.references :chart_repo
+        t.string :commands
+        t.string :config
+        t.string :environment
+        t.string :image
+        t.string :name
+        t.string :path
+        t.string :profiles
+        t.string :tags
+        t.string :template
+        t.string :type
+        t.string :volumes
+      end
     end
     # rubocop:enable Metrics/MethodLength
   end

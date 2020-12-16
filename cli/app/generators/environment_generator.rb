@@ -4,44 +4,34 @@ class EnvironmentGenerator < Thor::Group
   include Thor::Actions
   argument :name
 
-  def generate_key
-    key_file_path = Cnfs.user_root.join(Cnfs.config.name, 'config/environments', name, 'keys.yml')
-    # binding.pry
-    # TODO: Make the key generator or template under ../keys
-    # template(views_path.join('keys.yml.erb'), key_file_path)
+  def generate_user_files
+    user_file_path = Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, env_path, 'environment.yml')
+    template('user_environment.yml.erb', user_file_path)
   end
 
   def generate_project_files
-    inside(Cnfs.paths.config.join('environments')) do
-      # empty_directory(name)
-      # binding.pry
-      # template(views_path.join('services.yml.erb'), "#{name}/services.yml")
-      # template('environment.yml.erb', "#{name}.yml")
-      template(views_path.join('templates/environment.yml.erb'), "#{name}.yml")
+    project_file_path = Cnfs.paths.config.join(env_path)
+    if behavior.eql?(:revoke)
+      return empty_directory(project_file_path)
+    end
+
+    %w[environment.yml resources.yml].each do |file|
+      template("#{file}.erb", project_file_path.join(file))
+      gsub_file(project_file_path.join(file), /^#./, '') if options.config
     end
   end
 
   private
 
-  #   def another
-  #     "
-  #   # services: localstack, postgres, redis, wait, nginx
-  #   # resources: postgres, vpc_with_db, storage
-  #   blueprint: aws_instance
-  #   dns_root_domain: localhost
-  #   # config:
-  #   #   # dns_sub_domain: development
-  #   #   # lb_dns_hostnames: ['api']
-  #   #   # root_domain_managed_in_route53: yes
-  # "
-  #   end
+  def env_path
+    ['environments', name].join('/')
+  end
 
   def source_paths
     [views_path, views_path.join('templates')]
   end
 
   def views_path
-    # @views_path ||= internal_path.join('../views/component/templates')
     @views_path ||= internal_path.join('environment')
   end
 

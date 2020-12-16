@@ -3,9 +3,9 @@
 require 'bundler/setup'
 require 'cnfs'
 
-@path = '/home/vagrant/p3/scratch/crud/nunce'
+@path = '/home/vagrant/p3/projects/cli-dev'
 Dir.chdir(@path) do
-  Cnfs.initialize!(without_cli: true)
+  Cnfs.initialize!
   Cnfs.require_deps
   Cnfs::Configuration.initialize!
 end

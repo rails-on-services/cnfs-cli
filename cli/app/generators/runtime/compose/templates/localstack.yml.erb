@@ -4,7 +4,7 @@ version: '<%= version %>'
 services:
   <%= service.name %>:
     labels:<%= labels %>
-    image: <%= service.image || 'localstack/localstack' %><% if env_files.size.positive? %>
+    image: <%= service.image[:name] || 'localstack/localstack' %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %>
     ports:

@@ -17,10 +17,15 @@ class RepositoriesController < Thor
 
   desc 'list', 'List repositories and services'
   def list
-    Repository.all.each do |repo|
-      puts repo.name
-      puts repo.services.sort.map { |s| "> #{s}" }
+    require 'tty-tree'
+    data = Repository.order(:name).each_with_object({}) do |repo, hash|
+      hash[repo.name] = repo.services_path.children.select(&:directory?)
     end
+    puts TTY::Tree.new(data).render
+    # Repository.all.each do |repo|
+    #   puts repo.name
+    #   puts repo.services.sort.map { |s| "> #{s}" }
+    # end
   end
 
   desc 'remove NAME', 'Remove a repository from the project'

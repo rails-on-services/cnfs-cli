@@ -4,7 +4,7 @@ version: '<%= version %>'
 services:<% service.profiles.each_pair do |profile, command| %><% xname = profile.eql?('server') ? '' : "_#{profile}" %>
   <%= service.name %><%= xname %>:
     labels: <%= labels(labels: { profile: profile }) %>
-    image: <%= "#{service.image_repository}/#{service.name}:#{service.image_tag}".cnfs_sub(self) %>
+    image: <%= "#{service.image[:repository_name]}/#{service.name}:#{service.image[:tag]}".cnfs_sub(self) %>
     command: <%= command %><% if env_files.size.positive? %>
     env_file:
       - <%= env_files %><% end %><% if service.depends_on.any? %>

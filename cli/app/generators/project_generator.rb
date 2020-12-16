@@ -5,13 +5,17 @@ class ProjectGenerator < Thor::Group
   argument :name
 
   def generate_project_files
+    user_project_dir = Cnfs.user_root.join(name)
+    user_project_dir.rmtree if user_project_dir.exist?
     config = YAML.load_file(Cnfs.gem_root.join(Cnfs::PROJECT_FILE))
-    config.merge!(name: name).transform_keys! { |k| k.to_s }
+    config.merge!(name: name).stringify_keys!
     create_file(Cnfs::PROJECT_FILE, config.to_yaml)
     directory('files', '.')
     # template('README.md')
     template_files.sort.each do |template|
-      template("templates/#{template}", template.delete_suffix('.erb'))
+      destination = template.delete_suffix('.erb')
+      template("templates/#{template}", destination)
+      gsub_file(destination, /^#./, '') if options.config
     end
   end
 

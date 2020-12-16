@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
-class Blueprint::Aws::Instance < Blueprint::Aws
+class Blueprint::Aws::Terraform::Instance < Blueprint::Aws
   MODULES = %i[vpc ec2 acm alb cdn].freeze
   store :config, accessors: MODULES
+
+  def resource_list
+    %w[Resource::Aws::EC2 Resource::Aws::S3]
+  end
 
   def content
     MODULES.each_with_object([]) do |key, ary|
@@ -14,7 +18,7 @@ class Blueprint::Aws::Instance < Blueprint::Aws
     end
   end
 
-  # NOTE: If the output is an array and the input expects and array then don't enclose in an array, ie []
+  # NOTE: If the output is an array and the input expects an array then don't enclose in an array, ie []
   # NOTE: ${} notation is required to reference outputs from other modules
   def set_defaults
     if vpc

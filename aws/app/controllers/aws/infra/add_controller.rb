@@ -6,77 +6,95 @@ module Aws
   module Infra
     module AddController
       extend ActiveSupport::Concern
+      attr_reader :region
 
       included do
         desc 'aws', 'Add AWS infrastructure to the environment'
         def aws
           require 'tty-prompt'
-				  require 'aws-sdk-ec2'
-          choices = %w(ec2 eks)
-          cluster = prompt.enum_select('Cluster:', choices)
-          results = {}
-
-          if cluster.eql?('ec2')
-            # binding.pry
-            results[:ec2] = {}
-            begin
-              offerings = ec2_client(region: 'ap-southeast-1').describe_instance_type_offerings[0].map { |o| o.instance_type }
-            rescue Aws::EC2::Errors::AuthFailure => e
-              raise Cnfs::Error, e.message
-            end
-            choices = offerings.map {|c| c.split('.').first[0..1]}.uniq.sort
-            family = prompt.enum_select('Instance type:', choices, per_page: choices.size)
-            types = offerings.select {|c| c.start_with?(family) }.sort
-            type = results[:ec2][:instance_type] = prompt.enum_select('Intance type:', types, per_page: types.size)
-            results[:ec2][:key_name] = prompt.ask('key name:')
-            results[:ec2][:eip] = prompt.yes?('Add an elastic IP?')
-
-            if (alb = prompt.yes?('Add an ALB?'))
-              results[:alb] = {}
-            end
-          elsif cluster.eql?('eks')
-            results[:eks] = {}
-            choices = %w(global_accelerator)
-            results[:eks][:choices] = prompt.multi_select('Instance Options:', choices)
-          end
-
-          if (vpc = prompt.yes?('Add a VPC?'))
-            results[:vpc] = {}
-            regions = ec2_client.describe_regions[0].map { |r| r.region_name }
-            region = results[:vpc][:region] = prompt.enum_select('Region:', regions, per_page: regions.size)
-            azs = ec2_client(region: region).describe_availability_zones[0].map { |z| z.zone_name }
-            results[:vpc][:azs] = prompt.multi_select('Availabiity Zones:', azs)
-          end
-
-          #   choices = %w(alb acm eip)
-
-          if (db = prompt.yes?('Add a Database?'))
-            results[:db] = {}
-            choices = %w(rds aurora)
-            results[:db][:type] = prompt.enum_select('Database:', choices)
-          end
-
-          if (dw = prompt.yes?('Add a Data Warehouse?'))
-            results[:dw] = {}
-            choices = %w(dms glue redshift)
-            results[:dw][:options] = prompt.multi_select('Warehoue infrastructure:', choices)
-          end
-
-          bp = Blueprint::Aws::Instance.new
-          bp.vpc = results[:vpc]
-          # TODO: Write this out at as a blueprint which can be converted to JSON for terraform
-          # binding.pry
-          puts results
+          do_it if prompt.yes?('Are you sure?')
         end
       end
 
       private
+
+      def do_it
+        begin
+          regions = ec2_client.describe_regions[0].map { |r| r.region_name }.sort
+          @region = prompt.enum_select('Region:', regions, per_page: regions.size)
+        rescue Aws::EC2::Errors::AuthFailure => e
+          raise Cnfs::Error, e.message
+        end
+        res = Aws::Resource::Acm.new
+        res.configure(region: region)
+        certs = res.list_certificates
+        binding.pry
+        res = Aws::Resource::Route53.new
+        res.configure(region: region)
+        zones = res.hosted_zones.map {|zone| zone.name }
+        this = prompt.enum_select('Zone:', zones, per_page: zones.size)
+        # res.save
+        binding.pry
+        choices = %w(ec2 eks)
+        cluster = prompt.enum_select('Cluster:', choices)
+
+        configure_ec2 if cluster.eql?('ec2')
+        configure_eks if cluster.eql?('eks')
+
+        configure_vpc if prompt.yes?('Add a VPC?')
+        configure_rds if prompt.yes?('Add a Database?')
+        configure_redshift if prompt.yes?('Add a Data Warehouse?')
+      end
+
+      def configure_ec2
+        res = Aws::Resource::Instance.new
+        res.configure(region: region)
+        res.save
+        # if (alb = prompt.yes?('Add an ALB?'))
+        #   results[:alb] ||= {}
+        # end
+      end
+
+      def configure_eks
+        results[:eks] ||= {}
+        choices = %w(global_accelerator)
+        results[:eks][:choices] = prompt.multi_select('Instance Options:', choices)
+      end
+
+      def configure_vpc
+        res = Aws::Resource::Vpc.new
+        res.configure(region: region)
+        binding.pry
+        res.save
+      end
+
+      def configure_rds
+        res = Aws::Resource::Database.new
+        res.configure(region: region)
+        res.save
+        binding.pry
+      end
+
+      def configure_redshift
+        res = Aws::Resource::Redshift.new
+        res.configure(region: region)
+        res.save
+        binding.pry
+      end
+
+      # choices = %w(dms glue redshift)
+      # bp = Blueprint::Aws::Instance.new
+      # bp.vpc = results[:vpc]
+      # # TODO: Write this out at as a blueprint which can be converted to JSON for terraform
+      # # binding.pry
+      # puts results
 
       def prompt
         TTY::Prompt.new
       end
 
       def ec2_client(region: 'us-east-1')
+				require 'aws-sdk-ec2'
         Aws::EC2::Client.new(region: region)
       end
 

@@ -4,7 +4,7 @@ version: '<%= version %>'
 services:
   sftp:
     labels:<%= labels %>
-    image: <%= service.image || 'railsonservices/sftp' %><% if service.depends_on.any? %>
+    image: <%= service.image[:name] || 'railsonservices/sftp' %><% if service.depends_on.any? %>
     depends_on:<% service.depends_on.each do |dependency| %>
       - <%= dependency %><% end %><% end %><% if env_files.size.positive? %>
     env_file:

@@ -23,23 +23,24 @@ class ProjectPath
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/AbcSize
   def path_to(type, absolute_path = false)
-    relative_path = case type.to_sym
-                    when :config
-                      project.paths.config.join('environments', *project.context_attrs)
-                    when :manifests
-                      project.paths.tmp.join('manifests', *project.context_attrs)
-                    when :repository
-                      project.repository&.path
-                    when :repositories
-                      project.paths.src
-                    when :runtime
-                      project.paths.tmp.join('runtime', *project.context_attrs)
-                    when :services
-                      project.paths.data.join('services', *project.context_attrs)
-                    when :templates
-                      # paths.data.join('templates', *context_attrs)
-                      project.paths.data.join('templates', project.environment.name)
-                    end
+    relative_path =
+      case type.to_sym
+      when :config
+        project.paths.config.join('environments', *project.context_attrs)
+      when :manifests
+        project.paths.tmp.join('manifests', *project.context_attrs)
+      when :repository
+        project.repository&.path
+      when :repositories
+        project.paths.src
+      when :runtime
+        project.paths.tmp.join('runtime', *project.context_attrs)
+      when :services
+        project.paths.data.join('services', *project.context_attrs)
+      when :templates
+        # paths.data.join('templates', *context_attrs)
+        project.paths.data.join('templates', project.environment.name)
+      end
     absolute_path ? project.root.join(relative_path) : relative_path
   end
   # rubocop:enable Metrics/CyclomaticComplexity

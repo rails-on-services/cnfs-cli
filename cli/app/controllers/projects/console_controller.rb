@@ -32,8 +32,9 @@ module Projects
       env = Cnfs.project.environment.name
       environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
       environment = Pry::Helpers::Text.send(environment_color, env)
+      namespace = Cnfs.project.namespace.name
       prompt = proc do |obj, _nest_level, _|
-        "[#{project}][#{environment}] " \
+        "[#{project}][#{environment}][#{namespace}] " \
           "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')})> "
       end
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [prompt])
@@ -46,12 +47,12 @@ module Projects
       def shortcuts
         return {} unless defined?(ActiveRecord)
 
-        { b: Builder, bp: Blueprint, d: Dependency, e: Environment, k: Key, n: Namespace, pr: Provider,
-          re: Registry, repo: Repository, rt: Runtime, s: Service, u: User }
+        { b: Builder, bl: Blueprint, d: Dependency, e: Environment, n: Namespace, pr: Provider,
+          res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
       end
 
       def commands
-        %i[projects repositories infra environments namespaces images services]
+        %i[projects repositories infra environments blueprints namespaces images services]
       end
     end
 

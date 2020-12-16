@@ -74,13 +74,13 @@ module CommandHelper
       end
     end
 
-    def execute(command_args = {}, command_name = nil, location = 2)
+    def execute(command_args = {}, command_name = nil, location = 2, command_method = :execute)
       @args = Thor::CoreExt::HashWithIndifferentAccess.new(command_args)
       yield if block_given?
       Cnfs.logger.info("execute: #{command_name}")
       command_name ||= command_method(location)
       exec_instance = command_class(command_name)
-      exec_instance.new(options: options, args: args).execute
+      exec_instance.new(options: options, args: args).send(command_method)
     end
 
     # Can be called directory by the command, e.g. 'console' with no params and will return 'console'
@@ -100,8 +100,10 @@ module CommandHelper
       klass
     end
 
+    # Hollaback Callbacks
     def prepare_runtime
-      project.runtime.prepare
+      project.available_runtimes.each(&:prepare)
+      # project.runtime.prepare
     end
 
     def ensure_valid_project
@@ -125,6 +127,11 @@ module CommandHelper
     # NOTE: Not currently in use; intended as a class_around option
     def timer
       Cnfs.with_timer('command processing') { yield }
+    end
+
+    # Run a command on another command_set controller
+    def cmd(command_set)
+      "#{command_set}_controller".classify.safe_constantize.new(args, options)
     end
 
     def project

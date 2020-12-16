@@ -20,7 +20,7 @@ module Cnfs
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
-    def initialize!(without_cli: false)
+    def initialize!
       @timers = {}
       @cwd = Pathname.new(Dir.pwd)
       validate_command if project_root.nil?
@@ -32,13 +32,33 @@ module Cnfs
         config.dig(:cli, :dev) ? initialize_development : initialize_plugins
         setup_loader
         setup_extensions
-        MainController.start unless without_cli
+        yield if block_given? # exe/cnfs calls MainController.start
       end
       Cnfs.logger.info(timers.map { |k, v| "#{k}: #{v}" }.join("\n"))
       Cnfs.logger.info("wall time: #{Time.now - start_time}")
     end
     # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
+    #
+
+    def parsable_files
+      @parsable_files ||= source_files.group_by { |path| path.split('/').last.delete_suffix('.yml') }
+    end
+
+    def source_files
+      @source_files ||= source_paths_map.values.flatten.map { |path| Dir[path.join('config', '**/*.yml')] }.flatten
+    end
+
+    # For each valid key, return an internal list of paths to search including all plugins
+    # NOTE: Could include repositories
+    def source_paths_map
+      @source_paths_map ||= {
+        cli: [gem_root],
+        plugins: plugins.values.map{ |p| p.plugin_lib.gem_root },
+        project: [project_root],
+        user: [user_root.join(config.name)]
+      }
+    end
 
     def require_minimum_deps
       with_timer('loading core dependencies') { require_relative 'cnfs/minimum_dependencies' }
@@ -126,6 +146,13 @@ module Cnfs
       add_repository_autoload_paths
       autoload_dirs.each { |dir| loader.push_dir(dir) }
       loader.enable_reloading
+      # TODO: Move to AWS plugin
+      loader.inflector.inflect(
+        'acm' => 'ACM',
+        'ec2' => 'EC2',
+        'eks' => 'EKS',
+        'rds' => 'RDS',
+      )
       loader.setup
     end
 
@@ -184,7 +211,7 @@ module Cnfs
     # rubocop:enable Metrics/MethodLength
 
     def default_load_paths
-      %w[controllers generators helpers models]
+      %w[controllers generators helpers models views]
     end
 
     # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
@@ -333,15 +360,15 @@ module Cnfs
       )
     end
 
-    # def git
-    #   return Config::Options.new unless system('git rev-parse --git-dir > /dev/null 2>&1')
-
-    #   Config::Options.new(
-    #     tag_name: `git tag --points-at HEAD`.chomp,
-    #     branch_name: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),
-    #     sha: `git rev-parse --short HEAD`.chomp
-    #   )
-    # end
+    def git
+      return OpenStruct.new(sha: '', branch: '') unless system('git rev-parse --git-dir > /dev/null 2>&1')
+     
+      OpenStruct.new(
+        tag: `git tag --points-at HEAD`.chomp,
+        branch: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),
+        sha: `git rev-parse --short HEAD`.chomp
+      )
+    end
 
     # Cnfs.logger.compare_levels(:info, :debug) => :gt
     def silence_output(unless_logging_at = :debug)

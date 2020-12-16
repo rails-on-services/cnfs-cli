@@ -1,29 +1,56 @@
 # services.yml
 # ---
-# sftp:
-#   tags: core, storage
-
 DEFAULTS: &base_service
-  type: Service::Rails
-  config: &base_config
-    image_repository: railsonservices
-    # TODO: read image_tag version from somewhere
-    # like File.read('path to version file')
-    # image_tag: '0.1.0-{service.git.branch_name}-{service.git.sha}'
-    image_tag: '0.1.0-git-sha'
-    # image_tag: '0.1.0-{service.git.sha}-{service.git.sha}'
-    console_command: rails console
-    database_seed_commands:
-      - rails ros:db:reset:seed # non cnfs services
-    test_commands:
+  commands:
+    after_service_starts:
+      # - rails ros:db:reset:seed # non cnfs services
+      - rails app:ros:db:reset:seed # cnfs services
+    before_service_stops:
+      - echo 'hi'
+    console: rails console
+    shell: bash
+    test:
       - bundle exec rubocop
       - rails db:test:prepare
       - bin/spring rspec # NOTE: missing options
-    profiles: &base_profiles
-      server: '["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]'
-      scheduler: '["bundle", "exec", "rails", "runner", "./lib/scheduler.rb"]'
-      worker: '["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]' # for non cnfs services
-    image_gems:
+  # config: &base_config
+  environment: &base_environment
+    rails_database_host: postgres
+    rails_database_user: admin
+    rails_database_password: admin
+    secret_key_base: "<%= Cnfs.project.encrypt(SecureRandom.hex(64), :environment).to_yaml.gsub("\n", "\\n") %>"
+    rails_master_key: "<%= Cnfs.project.encrypt(SecureRandom.hex, :environment).to_yaml.gsub("\n", "\\n") %>"
+    # rails_master_key: "<%= SecureRandom.hex.ciphertext.gsub("\n", "\\n") %>"
+    platform:
+      api_docs:
+        server:
+          host: 'https://api.${project.environment.domain}'
+      connection:
+        type: host
+        external_connection_type: path
+        # feature_set: mounted
+        hosts: 'api.${project.environment.domain}'
+      jwt:
+        encryption_key: "<%= Cnfs.project.encrypt(SecureRandom.hex, :environment).to_yaml.gsub("\n", "\\n") %>"
+        aud: 'https://api.${project.environment.domain}'
+        iss: 'https://iam.api.${project.environment.domain}'
+      partition_name: what
+      postman:
+        workspace: 'api.${project.environment.domain}'
+      storage:
+        image:
+          services: ['images']
+        app:
+          services: ['documents', 'reports', 'sftp']
+  image:
+    build_args:
+      bundle_string: --without production
+      os_packages: 'libpq5 tree curl git sudo vim less tcpdump net-tools iputils-ping graphviz'
+      rails_env: development
+      source_path: ros
+      # target_path: ../..
+    dockerfile: ros/Dockerfile.dev
+    gems:
       bundler: 2.0.1
       eventmachine: 1.2.7
       ffi: 1.10.0
@@ -33,31 +60,18 @@ DEFAULTS: &base_service
       nokogiri: 1.10.4
       pg: 1.1.4
       puma: 3.12.1
-    build_args:
-      rails_env: development
-      bundle_string: --without production
-      os_packages: ['libpq5', 'tree', 'curl', 'git', 'sudo', 'vim', 'less', 'tcpdump', 'net-tools', 'iputils-ping', 'graphviz']
-      source_path: <%= repo %>
-      # target_path: ../..
-
-  environment: &base_environment
-    platform:
-      api_docs:
-        server:
-          host: 'https://api.{domain}'
-      connection:
-        type: host
-        external_connection_type: path
-        # feature_set: mounted
-        hosts: 'api.{domain}'
-      jwt:
-        aud: 'https://api.{domain}'
-        iss: 'https://iam.api.{domain}'
-      partition_name: what
-      postman:
-        workspace: 'api.{domain}'
-      storage:
-        image:
-          services: ['images']
-        app:
-          services: ['documents', 'reports', 'sftp']
+    repository_name: railsonservices
+    # TODO: read tag version from somewhere like File.read('path to version file')
+    tag: '0.1.0-${service.git.branch}-${service.git.sha}'
+  profiles: &base_profiles
+    server: '["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]'
+    scheduler: '["bundle", "exec", "rails", "runner", "./lib/scheduler.rb"]'
+    worker: '["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]' # for non cnfs services
+  repository: ros
+  type: Service::Rails
+  volumes:
+    - { source: 'services/${service.name}', target: services/app }
+    - { source: lib, target: lib }
+    - { source: sre, target: sre }
+    # Below for NON cnfs services:
+    - { source: ../ros/lib, target: ../ros/lib }

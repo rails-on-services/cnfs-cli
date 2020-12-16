@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class Runtime::Compose < Runtime
+  attr_accessor :queue
+
+  def supported_service_types
+    ['Service::Rails', nil]
+  end
+
   # What to do about this one?
   def x_method_missing(method, *args)
     binding.pry
@@ -48,23 +54,26 @@ class Runtime::Compose < Runtime
 
   # Service Process Operations
   def ps(xargs)
+    # TODO: queue.add(switch!)
     switch!
-    rv compose('ps')
+    queue.add(rv(compose('ps')))
     # tool_check
     # running_services(format: options.format, status: options.status, **xargs)
   end
 
   # Service Admin Operations
   def start(services)
-    rv compose("up #{compose_options} #{services.pluck(:name).join(' ')}")
+    queue.add(rv(compose("up #{compose_options} #{services.pluck(:name).join(' ')}")))
   end
 
   def stop(services)
-    rv compose("stop #{services.pluck(:name).join(' ')}")
+    queue.add(rv(compose("stop #{services.pluck(:name).join(' ')}")))
   end
 
   def restart(services)
-    [stop(services), start(services)]
+    stop(services)
+    start(services)
+    # [stop(services), start(services)]
     # TODO: Implement this; If a service has a method then it gets called
     # if options.clean
     #   clean
@@ -73,7 +82,9 @@ class Runtime::Compose < Runtime
   end
 
   def terminate(services)
-    [stop(services), clean(services)]
+    stop(services)
+    clean(services)
+    # [stop(services), clean(services)]
   end
 
   # Service Runtime
@@ -113,11 +124,13 @@ class Runtime::Compose < Runtime
   def switch!
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
+    Cnfs.logger.debug("Linked #{compose_file} to .env")
     Cnfs.invoke_plugins_with(:on_runtime_switch)
+    true
   end
 
   def compose_file
-    @compose_file ||= write_path.join('compose.env')
+    @compose_file ||= write_path(:runtime).join('compose.env')
   end
 
   def running_service_id(service)
@@ -208,7 +221,7 @@ class Runtime::Compose < Runtime
   end
 
   def clean(services)
-    [command_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
+    queue.add [command_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
   end
 
   # TODO: Only referenced in terraform_generator; after refactoring all that see if this is needed
