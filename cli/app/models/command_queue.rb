@@ -15,26 +15,29 @@ class CommandQueue
   # TODO: Raise an error if the command is not properly formatted
   def add(command)
     raise ArgumentError, 'Incorrect command format' unless all_good(command)
+
     queue.append(command)
   end
 
   def all_good(command)
-    return unless command.class.eql? Array
+    return unless command.instance_of?(Array)
 
-    command.first.class.eql?(Hash) and command.second.class.eql?(String) and command.third.class.eql?(Hash)
+    command.first.instance_of?(Hash) and command.second.instance_of?(String) and command.third.instance_of?(Hash)
   end
 
   def execute_all
-    while queue.any? do
-      break if not execute and halt_on_failure
+    # rubocop:disable Style/WhileUntilModifier
+    while queue.any?
+      break if !execute && halt_on_failure
     end
+    # rubocop:enable Style/WhileUntilModifier
   end
 
   def execute
     current_command = queue.shift
     result = command.run!(*current_command)
     results.append(result)
-    if result.failure? 
+    if result.failure?
       raise Cnfs::Error, result.err if raise_on_failure
       return false if halt_on_failure
     end
@@ -50,18 +53,18 @@ class CommandQueue
   end
 
   def failure_messages
-    failures.map { |result| result.err }
+    failures.map(&:err)
   end
 
   def failures
-    results.select{ |result| result.failure? }
+    results.select(&:failure?)
   end
 
   def successes
-    results.select{ |result| result.success? }
+    results.select(&:success?)
   end
 
   def runtime
-    results.map{ |result| result.runtime }.reduce(:+)
+    results.map(&:runtime).reduce(:+)
   end
 end

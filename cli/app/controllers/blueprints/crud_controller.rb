@@ -5,7 +5,15 @@ module Blueprints
     include ExecHelper
     include TtyHelper
 
-    def add
+    # Creates the infrastructure using the selected blueprint
+    def apply
+      environment = Environment.find_by(name: options.environment)
+      return unless (blueprint = environment.blueprints.find_by(name: args.name))
+
+      blueprint.builder.apply
+    end
+
+    def create
       return unless (blueprint_klass = blueprint_klass_name.safe_constantize) &&
         (view_klass = view_klass_name.safe_constantize)
 
@@ -26,16 +34,42 @@ module Blueprints
       end
     end
 
-    # def update
-    #   return unless (env = Environment.find_by(name: args.name))
-    #   result = Environments::View.new.render(env)
-    #   env.update(result)
-    # end
-
     # # TODO: Test this method
-    # def destroy
+    # def delete
     #   Environment.find_by(name: options.environment).blueprints.find_by(name: args.name).destroy
     # end
+
+    def describe
+      environment = Environment.find_by(name: options.environment)
+      return unless (blueprint = environment.blueprints.find_by(name: args.name))
+
+      puts blueprint.as_save.except(:name)
+    end
+
+    # TODO: Use TTY-tree to list all envs
+    def list
+      require 'tty-tree'
+      data = Environment.order(:name).each_with_object({}) do |env, hash|
+        hash[env.name] = env.blueprints.pluck(:name)
+      end
+      puts TTY::Tree.new(data).render
+    end
+
+    def update
+      bps = project.environment.blueprints.pluck(:name)
+      bp_name = args.name # prompt.enum_select('Blueprint:', bps)
+      blueprint = project.environment.blueprints.find_by(name: bp_name)
+
+      blueprint.resources.each do |resource|
+        prompt.say("\n#{resource.type.demodulize}:", color: :yellow)
+        view_klass = "#{resource.type}::View".safe_constantize
+        view_klass.new.render(resource)
+        resource.save
+      end
+      blueprint.write_template
+    end
+
+    private
 
     def blueprint_klass_name
       @blueprint_klass_name ||= set_blueprint_klass_name

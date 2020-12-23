@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 
-class Resource::Cli < Resource
+class Builder::Ansible < Builder
 end

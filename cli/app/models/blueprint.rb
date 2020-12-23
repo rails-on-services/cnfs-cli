@@ -2,38 +2,46 @@
 
 class Blueprint < ApplicationRecord
   # include Concerns::HasEnv
-  # include Taggable
+  # include Concerns::Taggable
   belongs_to :environment
   belongs_to :provider
   belongs_to :runtime
   has_many :resources
 
   delegate :project, to: :environment
-  delegate :paths, to: :project
+  delegate :paths, :path, to: :project
 
   parse_sources :project, :user
   parse_scopes :environment
 
+  # List of resources that are managed by this blueprint
   def resource_list
     []
   end
 
+  # Used by builder to set the template's context to this blueprint
+  def _binding
+    binding
+  end
+
   def builder
-    ::Builder.find_by(name: builder_name)
+    @builder ||= ::Builder.find_by(name: builder_name)
   end
 
   def builder_name
-    # Blueprint::Aws::Terraform::Instance
+    # example: Blueprint::Aws::Terraform::Instance
     self.class.name.underscore.split('/')[2]
   end
 
   def as_save
-    attributes.slice('config', 'envs', 'name', 'source', 'tags', 'type', 'version').merge({
-      name: "#{environment&.name}_#{name}",
-      environment: environment&.name,
-      provider: provider&.name,
-      runtime: runtime&.name
-    })
+    attributes.slice('config', 'envs', 'name', 'source', 'tags', 'type', 'version').merge(
+      {
+        name: "#{environment&.name}_#{name}",
+        environment: environment&.name,
+        provider: provider&.name,
+        runtime: runtime&.name
+      }
+    )
   end
 
   def file_path
@@ -41,9 +49,8 @@ class Blueprint < ApplicationRecord
   end
 
   class << self
-    def create_table(s)
-      s.create_table :blueprints, force: true do |t|
-        # t.references :builder
+    def create_table(schema)
+      schema.create_table :blueprints, force: true do |t|
         t.references :environment
         t.references :provider
         t.references :runtime
@@ -53,7 +60,6 @@ class Blueprint < ApplicationRecord
         t.string :source
         # t.string :tags
         t.string :type
-        t.string :version
       end
     end
   end

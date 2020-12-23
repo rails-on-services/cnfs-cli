@@ -1,26 +1,19 @@
-Metrics/LineLength:
+AllCops:
+  NewCops: enable
+Layout/LineLength:
   Max: 120
-Metrics/ClassLength:
-  Exclude:
-    - 'cnfs-core/lib/cnfs/core/schema.rb'
-Metrics/MethodLength:
-  Exclude:
-    - 'cnfs-core/lib/cnfs/core/schema.rb'
-Metrics/BlockLength:
-  Exclude:
-    - 'cnfs-core/lib/cnfs/core/schema.rb'
-Metrics/AbcSize:
-  Exclude:
-    - 'cnfs-core/lib/cnfs/core/schema.rb'
-Style/ClassAndModuleChildren:
-  Enabled: false
-Style/Documentation:
-  Enabled: false
 Layout/SpaceAroundMethodCallOperator:
   Enabled: false
 Lint/RaiseException:
   Enabled: false
 Lint/StructNewOverride:
+  Enabled: false
+Metrics/MethodLength:
+  IgnoredMethods:
+    - create_table
+Style/ClassAndModuleChildren:
+  Enabled: false
+Style/Documentation:
   Enabled: false
 Style/ExponentialNotation:
   Enabled: false

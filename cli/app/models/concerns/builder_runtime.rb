@@ -5,8 +5,10 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      include BelongsToProject
+      include Concerns::BelongsToProject
       include TtyHelper
+
+      attr_accessor :queue
 
       has_many :environments
     end
@@ -31,7 +33,7 @@ module Concerns
     end
 
     def command_env
-      {}
+      @command_env ||= {}
     end
 
     # options returned to the TTY command
@@ -46,6 +48,7 @@ module Concerns
     def tool_check
       missing_tools = required_tools - Cnfs.capabilities
       raise Cnfs::Error, "Missing #{missing_tools}" if missing_tools.any?
+
       true
     end
 
@@ -74,10 +77,10 @@ module Concerns
       project.name
     end
 
-    class_methods do
-      def dirs
-        [Cnfs.gem_root.join('config').to_s]
-      end
-    end
+    # class_methods do
+    #   def dirs
+    #     [Cnfs.gem_root.join('config').to_s]
+    #   end
+    # end
   end
 end

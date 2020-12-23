@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  include BelongsToProject
-  include Taggable
+  include Concerns::BelongsToProject
+  include Concerns::Taggable
 
   parse_sources :project, :user
 
@@ -11,8 +11,8 @@ class User < ApplicationRecord
   end
 
   class << self
-    def create_table(s)
-      s.create_table :users, force: true do |t|
+    def create_table(schema)
+      schema.create_table :users, force: true do |t|
         t.references :project
         t.string :name
         t.string :role

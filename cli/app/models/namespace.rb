@@ -2,7 +2,7 @@
 
 class Namespace < ApplicationRecord
   include Concerns::Key
-  include Taggable
+  include Concerns::Taggable
 
   belongs_to :environment
   has_many :services
@@ -31,8 +31,8 @@ class Namespace < ApplicationRecord
   end
 
   class << self
-    def create_table(s)
-      s.create_table :namespaces, force: true do |t|
+    def create_table(schema)
+      schema.create_table :namespaces, force: true do |t|
         t.references :environment
         t.string :config
         t.string :environment

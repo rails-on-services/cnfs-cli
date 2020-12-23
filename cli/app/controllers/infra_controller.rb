@@ -11,9 +11,6 @@ class InfraController < Thor
   #                          aliases: '-n', type: :string
   cnfs_class_options :quiet, :dry_run, :logging
 
-  before :initialize_project
-  register Infra::AddController, 'add', 'add SUBCOMMAND [options]', 'Add a new infrastructure blueprint'
-
   desc 'remove PROVIDER NAME', 'Remove an infrastructure blueprint'
   def remove(provider, name)
     # Infra::AddRemoveController.new(options: options.merge(behavior: :revoke), arguments: { provider: provider, name: name }).execute
@@ -70,23 +67,5 @@ class InfraController < Thor
     validate_destroy("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
                      "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
     execute
-  end
-
-  private
-
-  # TODO: this needs to be per provider and region comes from deployment.yml
-  def cmd_environment
-    { 'AWS_DEFAULT_REGION' => 'ap-southeast-1' }
-  end
-
-  def config_files
-    Dir["#{Ros.root.join(infra.deploy_path)}/*.tf"]
-  end
-
-  def generate_config
-    silence_output do
-      Ros::Be::Infra::Generator.new([], {}, behavior: :revoke).invoke_all
-      Ros::Be::Infra::Generator.new.invoke_all
-    end
   end
 end

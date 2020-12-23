@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
   attr_accessor :command_queue
-  include Taggable
+
+  include Concerns::Taggable
+  include Concerns::HasEnvs
 
   belongs_to :namespace
   belongs_to :repository, required: false
@@ -29,6 +32,7 @@ class Service < ApplicationRecord
     super.map(&:with_indifferent_access)
   end
 
+  # rubocop:disable Metrics/AbcSize
   def image_values
     %i[source_path target_path].each do |path|
       next unless build_args.try(:[], path)
@@ -36,11 +40,12 @@ class Service < ApplicationRecord
       source_path = Cnfs.paths.src.join(build_args[path])
       errors.add(:source_path_does_not_exist, "'#{source_path}'") unless source_path.exist?
     end
-    if dockerfile
-      source_path = Cnfs.paths.src.join(dockerfile)
-      errors.add(:dockerfile_path_does_not_exist, "'#{source_path}'") unless source_path.exist?
-    end
+    return unless dockerfile
+
+    source_path = Cnfs.paths.src.join(dockerfile)
+    errors.add(:dockerfile_path_does_not_exist, "'#{source_path}'") unless source_path.exist?
   end
+  # rubocop:enable Metrics/AbcSize
 
   # depends_on is used by compose to set order of container starts
   after_initialize do
@@ -118,30 +123,30 @@ class Service < ApplicationRecord
 
   # File handling
   def runtime_path
-    @runtime_path ||= (
+    @runtime_path ||= begin
       file_path = write_path(:runtime)
       file_path.mkpath unless file_path.exist?
       file_path = file_path.join('services.yml')
-      FileUtils.touch(file_path) unless File.exist?(file_path)
+      FileUtils.touch(file_path) unless file_path.exist?
       file_path
-    )
+    end
   end
 
   class << self
     def by_profiles(profiles = project.profiles)
-      where("profiles LIKE ?", profiles.map { |k, v| "%#{k}: #{v}%" }.join)
+      where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
     def parse
       # key: 'environments/staging/main/namespace.yml'
-      super do |key, output, opts|
-        keys = output.keys.select{ |key| key.end_with?('DEFAULTS') }
+      super do |_key, output, _opts|
+        keys = output.keys.select { |output_key| output_key.end_with?('DEFAULTS') }
         output.except!(*keys)
       end
     end
 
-    def create_table(s)
-      s.create_table :services, force: true do |t|
+    def create_table(schema)
+      schema.create_table :services, force: true do |t|
         t.references :namespace
         t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
@@ -161,6 +166,6 @@ class Service < ApplicationRecord
         t.string :volumes
       end
     end
-    # rubocop:enable Metrics/MethodLength
   end
 end
+# rubocop:enable Metrics/ClassLength

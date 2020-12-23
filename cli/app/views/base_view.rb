@@ -12,8 +12,8 @@ class BaseView < TTY::Prompt
   #   end
   # end
 
-  def random_string
-    (0...12).map { (65 + rand(26)).chr }.join.downcase
+  def random_string(length = 12)
+    (0...length).map { (65 + rand(26)).chr }.join.downcase
   end
 
   # def attributes

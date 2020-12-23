@@ -17,20 +17,6 @@ class MainController < Thor
     register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
   end
 
-  def self.exit_on_failure?
-    true
-  end
-
-  # This command will not show up in a list; the user has to know it exists and call it directly
-  if Cnfs.config.dig(:cli, :dev) && ARGV[0].eql?('dev')
-    cnfs_options :environment, :namespace
-    desc 'dev', 'Placeholder command for development of new commands'
-    def dev
-      binding.pry
-      # run(:dev)
-    end
-  end
-
   # Project Management
   if Cnfs.project_root.eql?('.')
     desc 'new NAME', 'Create a new CNFS project'
@@ -66,5 +52,11 @@ class MainController < Thor
   desc 'version', 'Show cnfs version'
   def version
     Main::VersionController.new([], options).execute
+  end
+
+  class << self
+    def exit_on_failure?
+      true
+    end
   end
 end

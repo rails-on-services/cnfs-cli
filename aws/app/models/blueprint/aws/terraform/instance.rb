@@ -1,12 +1,19 @@
 # frozen_string_literal: true
 
 class Blueprint::Aws::Terraform::Instance < Blueprint::Aws
+  def resource_list
+    %w[Resource::Aws::Route53 Resource::Aws::Vpc Resource::Aws::EC2 Resource::Aws::S3]
+    %w[Resource::Aws::Vpc Resource::Aws::EC2]
+  end
+
+  def internal_path
+    Pathname.new(__FILE__)
+  end
+end
+
+=begin
   MODULES = %i[vpc ec2 acm alb cdn].freeze
   store :config, accessors: MODULES
-
-  def resource_list
-    %w[Resource::Aws::EC2 Resource::Aws::S3]
-  end
 
   def content
     MODULES.each_with_object([]) do |key, ary|
@@ -72,20 +79,4 @@ class Blueprint::Aws::Terraform::Instance < Blueprint::Aws
       @comma
     end
   end
-
-  # def write
-  #   File.open(Request.new(base: Context.first).write_path(:infra).join('main.tf.json'), 'w') { |f| f.write(erb) }
-  # end
-
-  # def erb
-  #   ERB.new(erbs, trim_mode: '-').result(binding)
-  # end
-
-  # # TODO:
-  # def erbs
-  #   # ERB.new(IO.read(Cnfs.gem_root.join('app/models/fart.erb')), trim_mode: '-').result(binding)
-  #   '<% MODULES.each do |key| -%>
-  #     <%= { module: { key => { source: "./modules/#{key}", version: version }.merge(send(key)) } }.to_json %>
-  #   <% end %>'
-  # end
-end
+=end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
@@ -36,7 +37,7 @@ class ApplicationRecord < ActiveRecord::Base
   end
 
   class << self
-    # Public interface; called by models to list the search paths for their config files 
+    # Public interface; called by models to list the search paths for their config files
     def parse_scopes(*scopes)
       requested = scopes.to_set
       permitted = %i[config environments environment namespace].to_set
@@ -70,13 +71,17 @@ class ApplicationRecord < ActiveRecord::Base
 
     # Public interface; loads the class' config files across scopes+sources and optionally yields
     # back to the class on each object added to the configuration fixture
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/PerceivedComplexity
     def parse
       return unless eligible_files
 
       opts = {}
       opts.merge!(project: Project::PARSE_NAME) if column_names.include?('project_id')
       parse_scopes(:config) if parse_scopes.empty?
-      fixture_file = "#{parse_options[:fixture_name]}.yml"
+      # fixture_file = "#{parse_options[:fixture_name]}.yml"
 
       sorted_files = pf_map.keys.group_by { |b| b.split('/').size }.sort
       leaf_files = sorted_files.pop.last
@@ -93,6 +98,7 @@ class ApplicationRecord < ActiveRecord::Base
       end
 
       files_loaded = []
+      # rubocop:disable Metrics/BlockLength
       output = loadable_files.each_with_object({}) do |(path_key, files), hash|
         Cnfs.logger.info "Loading #{parse_options[:fixture_name]} from #{path_key}"
         Cnfs.logger.debug files.join("\n")
@@ -113,13 +119,13 @@ class ApplicationRecord < ActiveRecord::Base
             config = { environment_key => config.merge(opts.merge(name: environment_key)) }
           else
             merger = column_names.include?('environment_id') ? { environment: environment_key } : {}
-            config.each { |key, value| value.merge!(opts).merge!(name: key).merge!(merger) } # , environment: environment_key)) }
+            config.each { |key, value| value.merge!(opts).merge!(name: key).merge!(merger) }
             # TODO
             config.transform_keys! { |key| "#{environment_key}_#{key}" }
           end
         elsif parse_scopes.include?(:config)
           if fixture_is_singular?
-            binding.pry
+            # binding.pry
           else
             config.each { |key, value| value.merge!(opts.merge(name: key)) }
           end
@@ -127,10 +133,15 @@ class ApplicationRecord < ActiveRecord::Base
         config = yield(path_key, config, opts) if block_given?
         hash.merge!(config)
       end
+      # rubocop:enable Metrics/BlockLength
       create_all(output)
       files_loaded
       # binding.pry if Cnfs.config.is_cli
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/PerceivedComplexity
 
     def fixture_is_singular?
       fp = parse_options[:fixture_name].to_s
@@ -139,14 +150,14 @@ class ApplicationRecord < ActiveRecord::Base
 
     def pf_map
       permitted_files.group_by do |path|
-        path.delete_prefix(permitted_paths.find{ |root_path| path.start_with?(root_path) })
+        path.delete_prefix(permitted_paths.find { |root_path| path.start_with?(root_path) })
       end
     end
 
     # Limit eligible files to those found on the parse_sources path(s)
     def permitted_files
       eligible_files.select do |eligible|
-        permitted_paths.find{ |permitted| eligible.start_with?(permitted) }
+        permitted_paths.find { |permitted| eligible.start_with?(permitted) }
       end
     end
 
@@ -155,13 +166,15 @@ class ApplicationRecord < ActiveRecord::Base
       Cnfs.parsable_files[parse_options[:fixture_name].to_s]
     end
 
+    # rubocop:disable Style/MultilineBlockChain
     def permitted_paths
-      @permitted_paths ||= (
+      @permitted_paths ||= begin
         Cnfs.source_paths_map.select do |type|
           parse_sources.include?(type)
         end.values.flatten.map { |path| path.join('config/').to_s }
-      )
+      end
     end
+    # rubocop:enable Style/MultilineBlockChain
 
     def create_all(content)
       File.open(Cnfs::Configuration.dir.join("#{table_name}.yml"), 'w') do |file|
@@ -183,3 +196,4 @@ class ApplicationRecord < ActiveRecord::Base
   #   JSONSchemer.schema(schema)
   # end
 end
+# rubocop:enable Metrics/ClassLength

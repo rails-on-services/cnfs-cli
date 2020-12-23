@@ -3,19 +3,18 @@
 class Resource::Aws < Resource
   attr_accessor :provider
 
-  def ec2_client(region: 'us-east-1')
-    require 'aws-sdk-ec2'
-    Aws::EC2::Client.new(region: region)
-  end
-
   def client
-    require "aws-sdk-#{resource_name.underscore}"
-    config = provider.client_config(resource_name.underscore)
-    "Aws::#{resource_name}::Client".constantize.new(config)
+    service = service_name.underscore
+    require "aws-sdk-#{service}"
+    klass = "Aws::#{service_name}::Client".safe_constantize
+    raise Cnfs::Error, "AWS SDK client class not found for: #{service}" unless klass
+
+    klass.new(client_config)
+  rescue LoadError => e
+    raise Cnfs::Error, "AWS SDK not found for: #{service}"
   end
 
-  # TODO: This should be removed b/c all UI takes place in the controllers
-  def prompt
-    TTY::Prompt.new
+  def client_config
+    provider.client_config(service_name.underscore)
   end
 end

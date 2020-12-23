@@ -22,6 +22,7 @@ class ProjectPath
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Style/OptionalBooleanParameter
   def path_to(type, absolute_path = false)
     relative_path =
       case type.to_sym
@@ -43,13 +44,14 @@ class ProjectPath
       end
     absolute_path ? project.root.join(relative_path) : relative_path
   end
+  # rubocop:enable Style/OptionalBooleanParameter
   # rubocop:enable Metrics/CyclomaticComplexity
   # rubocop:enable Metrics/MethodLength
 
   # Used by all runtime templates; Returns a path relative from the 'from' path to the project root
   # or optionally from the 'from' path to the 'to' path in the project
   def relative_path(from, to = nil)
-    if from.class.eql?(Symbol)
+    if from.instance_of?(Symbol)
       return path_to(to).relative_path_from(path_to(from)) if to
 
       return project.root.relative_path_from(project.root.join(path_to(from)))

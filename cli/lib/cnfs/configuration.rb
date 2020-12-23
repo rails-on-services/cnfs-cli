@@ -7,18 +7,15 @@ module Cnfs
       # https://stackoverflow.com/questions/58649529/how-to-create-multiple-memory-databases-in-sqlite3
       # "file:memdb1?mode=memory&cache=shared"
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-      initialize
-      # TODO: move the below code; but it needs to happen after ActiveRecord is loaded
-      # Cnfs.loader.preload(Dir[Cnfs.gem_root.join('app/models/**/*.rb')])
-      # Cnfs.plugins.values.each do |p|
-      #   Cnfs.loader.preload(Dir[p.plugin_lib.gem_root.join('app/models/**/*.rb')])
-      # end
+      Cnfs.with_timer('initialize') { initialize }
     end
 
     def self.reload
+      # Remove any A/R Cached Classes (e.g. STI classes)
+      ActiveSupport::Dependencies::Reference.clear!
       # Re-seed fixtures
       ActiveRecord::FixtureSet.reset_cache
-      Cnfs.with_timer('reinit') { initialize }
+      Cnfs.with_timer('reload') { initialize }
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -37,10 +34,6 @@ module Cnfs
       dir.rmtree if dir.exist?
       dir.mkpath
       models.each(&:parse)
-      # files_loaded = 0
-      # files_loaded += models.each(&:parse).size
-      # Cnfs.logger.info "Files found: #{files_loaded}"
-      # Cnfs.logger.info "Files loaded: #{Cnfs.source_files.size}"
       load_fixtures
     end
 

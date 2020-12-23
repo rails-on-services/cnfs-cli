@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class Runtime::Compose < Runtime
   attr_accessor :queue
 
@@ -8,20 +9,19 @@ class Runtime::Compose < Runtime
   end
 
   # What to do about this one?
-  def x_method_missing(method, *args)
-    binding.pry
-    # response.output.puts('command not supported in compose runtime')
-    raise Cnfs::Error, 'command not supported in compose runtime'
-  end
+  # def method_missing(method, *args)
+  #   Cnfs.logger.warn 'command not supported in compose runtime'
+  #   raise Cnfs::Error, 'command not supported in compose runtime'
+  # end
 
-  def supported_commands
-    %w[build test push pull publish
-       destroy deploy redeploy 
-       start restart stop terminate
-       ps status
-       attach command console copy credentials exec logs shell]
-    # list show generate
-  end
+  # def supported_commands
+  #   %w[build test push pull publish
+  #      destroy deploy redeploy
+  #      start restart stop terminate
+  #      ps status
+  #      attach command console copy credentials exec logs shell]
+  #   # list show generate
+  # end
 
   # Image Operations
   def build(services)
@@ -53,7 +53,7 @@ class Runtime::Compose < Runtime
   def status; end
 
   # Service Process Operations
-  def ps(xargs)
+  def ps(_xargs)
     # TODO: queue.add(switch!)
     switch!
     queue.add(rv(compose('ps')))
@@ -157,7 +157,7 @@ class Runtime::Compose < Runtime
   end
 
   def command_env
-    @compose_env ||= set_compose_env
+    @command_env ||= set_compose_env
   end
 
   def set_compose_env
@@ -168,17 +168,17 @@ class Runtime::Compose < Runtime
   end
 
   # options embedded in the compose command string
+  # rubocop:disable Metrics/AbcSize
   def compose_options
     location = 1
-    method = caller_locations(1, location)[location -1].label
+    method = caller_locations(1, location)[location - 1].label
     opts = []
-    if server_commands.include?(method)
-      opts.append('-d') unless options.foreground
-    end
+    opts.append('-d') if server_commands.include?(method) && !options.foreground
     opts.append('-f') if options.tail
     Cnfs.logger.debug "compose options set to #{opts.join(' ')}"
     opts.join(' ')
   end
+  # rubocop:enable Metrics/AbcSize
 
   def server_commands
     %w[start]
@@ -229,3 +229,4 @@ class Runtime::Compose < Runtime
   #   :instance
   # end
 end
+# rubocop:enable Metrics/ClassLength

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Environment < ApplicationRecord
-  include BelongsToProject
+  include Concerns::BelongsToProject
   include Concerns::Key
 
   # belongs_to :builder
@@ -31,8 +31,8 @@ class Environment < ApplicationRecord
     unique_runtimes = def_runtimes.dup.uniq!
     return if unique_runtimes.nil?
 
-    duplicate_runtimes = unique_runtimes.select{ |e| def_runtimes.count(e) > 1 }
-    errors.add(:runtimes, "Must be unique. Multiple resources with identical runtime(s) #{duplicate_runtimes.join(', ')}")
+    duplicate_runtimes = unique_runtimes.select { |e| def_runtimes.count(e) > 1 }
+    errors.add(:runtimes, "Must be unique. Multiple resources with identical runtime #{duplicate_runtimes.join(', ')}")
   end
 
   # Override to provide a path alternative to config/table_name.yml
@@ -57,8 +57,8 @@ class Environment < ApplicationRecord
   # def init(options); end
 
   # def to_env
-  #   infra_env = { platform: { infra: { provider: provider_type_to_s } } }
-  #   Config::Options.new.merge_many!(infra_env, environment, provider.environment, namespace&.environment || {}).to_hash
+  #  infra_env = { platform: { infra: { provider: provider_type_to_s } } }
+  #  Config::Options.new.merge_many!(infra_env, environment, provider.environment, namespace&.environment || {}).to_hash
   # end
 
   # def provider_type_to_s
@@ -78,8 +78,8 @@ class Environment < ApplicationRecord
   end
 
   class << self
-    def create_table(s)
-      s.create_table :environments, force: true do |t|
+    def create_table(schema)
+      schema.create_table :environments, force: true do |t|
         t.references :builder
         t.references :project
         t.string :config
@@ -89,7 +89,6 @@ class Environment < ApplicationRecord
         t.string :name
         t.string :tags
         # t.string :tf_config
-        t.string :type
       end
     end
   end

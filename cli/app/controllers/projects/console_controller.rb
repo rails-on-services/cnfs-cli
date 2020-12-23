@@ -38,38 +38,51 @@ module Projects
           "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')})> "
       end
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [prompt])
+      self.class.reload
       Pry.start(self)
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
     class << self
-      def shortcuts
-        return {} unless defined?(ActiveRecord)
+      def reload
+        commands.each do |command_set|
+          define_method(command_set) do
+            Pry.start("#{command_set}_controller".classify.safe_constantize.new(args, options))
+            true
+          end
+        end
 
-        { b: Builder, bl: Blueprint, d: Dependency, e: Environment, n: Namespace, pr: Provider,
-          res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
+        plugin_shortcuts.each_pair do |key, klass|
+          define_method(key) { klass } unless %w[p r].include?(key)
+        end
+
+        model_shortcuts.each_pair do |key, klass|
+          define_method(key) { klass } unless %w[p r].include?(key)
+          define_method("#{key}a") { klass.all }
+          define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
+          define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
+          define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
+          define_method("#{key}fb") { |name| klass.find_by(name: name) }
+        end
       end
 
       def commands
         %i[projects repositories infra environments blueprints namespaces images services]
       end
-    end
 
-    commands.each do |command_set|
-      define_method(command_set) do
-        Pry.start("#{command_set}_controller".classify.safe_constantize.new(args, options))
-        true
+      def plugin_shortcuts
+        shortcuts = {}
+        Cnfs.invoke_plugins_with(:add_console_shortcuts, shortcuts)
+        shortcuts
       end
-    end
 
-    shortcuts.each_pair do |key, klass|
-      define_method(key) { klass } unless %w[p r].include?(key)
-      define_method("#{key}a") { klass.all }
-      define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
-      define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
-      define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
-      define_method("#{key}fb") { |name| klass.find_by(name: name) }
+      def model_shortcuts
+        return {} unless defined?(ActiveRecord)
+
+        { bu: Builder, bl: Blueprint, d: Dependency, e: Environment, n: Namespace, pr: Provider,
+          res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
+      end
     end
 
     def cache
@@ -83,6 +96,7 @@ module Projects
     def reload!
       reset_cache
       Cnfs.reload
+      self.class.reload
       true
     end
 

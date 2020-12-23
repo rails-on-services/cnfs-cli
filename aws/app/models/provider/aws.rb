@@ -7,13 +7,16 @@ class Provider::Aws < Provider
     config.slice(:access_key_id, :secret_access_key, :region).merge(config[resource_type] || {})
   end
 
-  def resource_to_terraform_template_map
-    {
-      object_storage: :s3,
-      cdn: :cloudfront,
-      cert: :acm,
-      dns: :route53,
-      redis: 'elasticache-redis'
-    }
+  # NOTE: For terraform
+  def command_env
+    { 'AWS_DEFAULT_REGION' => region }
   end
+
+  # NOTE: Code to configure the provider; may or may not be used in future
+  #   begin
+  #     regions = ec2_client.describe_regions[0].map { |r| r.region_name }.sort
+  #     @region = prompt.enum_select('Region:', regions, per_page: regions.size)
+  #   rescue Aws::EC2::Errors::AuthFailure => e
+  #     raise Cnfs::Error, e.message
+  #   end
 end

@@ -25,7 +25,7 @@ class Manifest
 
   def generate
     purge! unless valid?
-    Cnfs.logger.info "Generating files"
+    Cnfs.logger.info 'Generating files'
     environment.runtimes.each do |runtime|
       Cnfs.project.runtime = runtime
       runtime.generate

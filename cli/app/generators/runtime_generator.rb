@@ -6,9 +6,9 @@ class RuntimeGenerator < ApplicationGenerator
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
   def generate_service_environments
-    project.services.reject { |service| service.environment.empty? }.each do |service|
+    project.services.reject { |service| service.envs.empty? }.each do |service|
       file_name = path.join("#{service.name}.env")
-      environment = Config::Options.new.merge!(service.environment)
+      environment = Config::Options.new.merge!(service.envs)
       generated_files << template('env.erb', file_name, env: environment)
     end
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Provider < ApplicationRecord
-  include BelongsToProject
+  include Concerns::BelongsToProject
 
   belongs_to :project
 
@@ -10,13 +10,13 @@ class Provider < ApplicationRecord
   # store :config, accessors: %i[tf_version], coder: YAML
 
   class << self
-    def create_table(s)
-      s.create_table :providers, force: true do |t|
+    def create_table(schema)
+      schema.create_table :providers, force: true do |t|
         t.references :project
         t.string :config # client configuration details to be used as a hash to initialize SDK clients
-        t.string :environment
+        # t.string :envs
         t.string :name
-        t.string :tags
+        # t.string :tags
         t.string :type
       end
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Repository < ApplicationRecord
-  include BelongsToProject
+  include Concerns::BelongsToProject
 
   has_many :services
 
@@ -12,7 +12,9 @@ class Repository < ApplicationRecord
 
   after_destroy :remove_tree
   # TODO: Validate the url is a proper git pattern:
+  # rubocop:disable Layout/LineLength
   # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
+  # rubocop:enable Layout/LineLength
 
   parse_sources :project, :user
 
@@ -32,6 +34,7 @@ class Repository < ApplicationRecord
     Dir.chdir(path) { Cnfs.git }
   end
 
+  # rubocop:disable Metrics/AbcSize
   def clone
     # Ensure the project's repositories directory exists
     paths.src.mkpath
@@ -46,6 +49,7 @@ class Repository < ApplicationRecord
     Dir.chdir(paths.src) { `#{cmd}` } unless options.noop
     true
   end
+  # rubocop:enable Metrics/AbcSize
 
   # for save/delete
   def as_save
@@ -61,18 +65,20 @@ class Repository < ApplicationRecord
   end
 
   class << self
+    # rubocop:disable Metrics/AbcSize
     def add(url, name)
       if (mapped_url = url_map[url.to_sym])
         url = mapped_url
       end
       name ||= url.split('/').last&.delete_suffix('.git')
       repo = new(name: name, url: url)
-      return unless repo.valid? and repo.clone
+      return unless repo.valid? && repo.clone
 
       repo.save
       # If this is the first source repository added to the project then make it the default
       repo.project.update(source_repository: repo.name) if repo.project.source_repository.nil?
     end
+    # rubocop:enable Metrics/AbcSize
 
     # Shortcuts for CNFS repos
     def url_map
@@ -110,8 +116,8 @@ class Repository < ApplicationRecord
     #   write_fixture(output)
     # end
 
-    def create_table(s)
-      s.create_table :repositories, force: true do |t|
+    def create_table(schema)
+      schema.create_table :repositories, force: true do |t|
         t.references :project
         t.string :config
         t.string :name

@@ -91,7 +91,7 @@ module Cnfs
     end
 
     def initialize_development
-      require 'pry'
+      # require 'pry'
       initialize_dev_plugins
     end
 
@@ -146,13 +146,7 @@ module Cnfs
       add_repository_autoload_paths
       autoload_dirs.each { |dir| loader.push_dir(dir) }
       loader.enable_reloading
-      # TODO: Move to AWS plugin
-      loader.inflector.inflect(
-        'acm' => 'ACM',
-        'ec2' => 'EC2',
-        'eks' => 'EKS',
-        'rds' => 'RDS',
-      )
+      invoke_plugins_with(:before_loader_setup, loader)
       loader.setup
     end
 

@@ -17,12 +17,14 @@ module Concerns
 
     def write_key
       user_file_path.split.first.mkpath
-      File.open(user_file_path, 'w') { |f| f.write("---\nkey: #{key}\n")}
+      File.open(user_file_path, 'w') { |f| f.write("---\nkey: #{key}\n") }
     end
 
     def remove_paths
-      file_path.split.first.rmtree if file_path.split.first.exist?
-      user_file_path.split.first.rmtree if user_file_path.split.first.exist?
+      [file_path, user_file_path].each do |path|
+        path = path.split.first
+        path.rmtree if path.exist?
+      end
     end
 
     def encrypt(plaintext)

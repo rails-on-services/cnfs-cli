@@ -1,0 +1,55 @@
+# Blueprint: <%= name %>
+<%-
+# The binding is the blueprint which can directly access
+# blueprint (self), environment, runtime, builder and provider
+
+def output(resource, key)
+  "output \"#{title(resource.name, key)}\" {
+  value = #{module_attr(resource, key)}
+}"
+end
+
+def module_attr(resource, key)
+  "module.#{title(resource.name)}.#{key}"
+end
+
+# Convert any '-' in the keys to '_' then join each key with '-' so can use split('-') to parse keys
+def title(*vars)
+  vars.unshift(name).map { |key| key.gsub('-', '_') }.join('-')
+end
+
+resources.all.each do |resource|
+-%>
+
+module "<%= title(resource.name) %>" {
+<%= resource.to_hcl %>
+}
+<%- end -%>
+
+<%-
+vpc = resources.find_by(type: 'Resource::Aws::Vpc')
+ec2 = resources.find_by(type: 'Resource::Aws::EC2')
+-%>
+
+module "web_server_sg" {
+  source = "terraform-aws-modules/security-group/aws//modules/http-80"
+
+  name        = "web-server"
+  description = "Security group for web-server with HTTP ports open within VPC"
+  vpc_id      = <%= module_attr(vpc, 'vpc_id') %>
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+}
+
+module "ssh_security_group" {
+  source  = "terraform-aws-modules/security-group/aws//modules/ssh"
+  version = "~> 3.0"
+
+  name        = "ssh-server"
+  description = "Security group for web-server with SSH"
+  vpc_id      = <%= module_attr(vpc, 'vpc_id') %>
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+}
+
+<%= output(ec2, 'public_ip') %>

@@ -2,6 +2,7 @@
 
 require 'base64'
 
+# rubocop:disable all
 class Runtime::Skaffold < Runtime
   # TODO: is there a detach keymap like with compose?
   # TODO: attach is actually shell (via exec)
@@ -252,3 +253,4 @@ class Runtime::Skaffold < Runtime
     'app.kubernetes.io'
   end
 end
+# rubocop:enable all

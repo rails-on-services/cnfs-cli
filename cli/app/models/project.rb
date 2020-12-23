@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class Project < ApplicationRecord
   PARSE_NAME = 'project'
-  attr_accessor :manifest, :runtime
+  attr_accessor :runtime
+  attr_writer :manifest
 
   belongs_to :environment
   belongs_to :namespace
@@ -21,7 +23,7 @@ class Project < ApplicationRecord
   store :options, coder: YAML
 
   # If options were passed in then ensure the values are valid (names found in the config)
-  validates :environment, presence: { message: 'not found' } #, if: -> { options.environment }
+  validates :environment, presence: { message: 'not found' } # , if: -> { options.environment }
   validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
   validate :associations_are_valid
 
@@ -35,9 +37,14 @@ class Project < ApplicationRecord
   end
 
   def repository_is_valid
-    binding.pry
-    #aise Cnfs::Error, "Unknown repository '#{options.repository}'." \
+    # binding.pry
+    # raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
     #  " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
+  end
+
+  # TODO: Implement validation
+  def platform_is_valid
+    errors.add(:platform, 'not supported') if Cnfs.platform.unknown?
   end
 
   # TODO: Implement options.clean
@@ -56,9 +63,14 @@ class Project < ApplicationRecord
   end
 
   # TODO: This may be unnecessary or a very important method/scope. Think about this
-  def services; namespace.services end
-  # def runtime; environment.runtime end 
-  def blueprints; environment.blueprints end
+  def services
+    namespace.services
+  end
+
+  # def runtime; environment.runtime end
+  def blueprints
+    environment.blueprints
+  end
 
   # NOTE: Not yet in use; decide where this should go
   def user_root
@@ -101,7 +113,7 @@ class Project < ApplicationRecord
 
   # Used by runtime generators for templates by runtime to query services
   def labels
-    { project: full_context_name, environment: environment&.name,  namespace: namespace&.name }
+    { project: full_context_name, environment: environment&.name, namespace: namespace&.name }
   end
 
   def full_context_name
@@ -119,7 +131,7 @@ class Project < ApplicationRecord
   # TODO: See what to do about encrypt/decrypt per env/ns
 
   # Returns an encrypted string
-  # 
+  #
   # ==== Parameters
   # plaintext<String>:: the string to be encrypted
   # scope<String>:: the encryption key to be used: environment or namespace
@@ -129,13 +141,15 @@ class Project < ApplicationRecord
 
   def decrypt(ciphertext)
     namespace.decrypt(ciphertext)
-  rescue Lockbox::DecryptionError => e
+  rescue Lockbox::DecryptionError => _e
     environment.decrypt(ciphertext)
   end
 
   class << self
     def parse
-      content = Cnfs.config.to_hash.slice(*reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags))
+      content = Cnfs.config.to_hash.slice(
+        *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
+      )
       namespace = "#{content[:environment]}_#{content[:namespace]}"
       options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
       output = { PARSE_NAME => content.merge(namespace: namespace, options: options) }
@@ -144,7 +158,6 @@ class Project < ApplicationRecord
 
     # Determine the current repository from where the user is in the project filesystem
     # Returns the default repository unless the user is in the path of another project repository
-    # rubocop:disable Metrics/AbcSize
     def current_repository
       current_path = Cnfs.cwd.to_s
       src_path = Cnfs.project_root.join(paths.src).to_s
@@ -154,10 +167,9 @@ class Project < ApplicationRecord
       repo_name = current_path.delete_prefix(src_path).split('/')[1]
       app.repositories.find_by(name: repo_name)
     end
-    # rubocop:enable Metrics/AbcSize
 
-    def create_table(s)
-      s.create_table :projects, force: true do |t|
+    def create_table(schema)
+      schema.create_table :projects, force: true do |t|
         t.references :environment
         t.references :namespace
         t.references :repository
@@ -171,3 +183,4 @@ class Project < ApplicationRecord
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

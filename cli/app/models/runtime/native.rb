@@ -30,11 +30,13 @@ class Runtime::Native < Runtime
     system(@env, cmd)
   end
 
+  # rubocop:disable Lint/UnusedMethodArgument
   def services(status: :running, file_name: procfile_name)
     file = write_path(:manifests).join(file_name)
 
     YAML.load_file(file).keys
   end
+  # rubocop:enable Lint/UnusedMethodArgument
 
   def service_names(status: :running)
     services(status: status).map { |a| a.gsub("#{project_name}_", '').chomp('_1') }
