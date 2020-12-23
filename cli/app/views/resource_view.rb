@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
-class BaseView < TTY::Prompt
-  # attr_accessor :obj
+class ResourceView < ApplicationView
+  extend Forwardable
+
+  def_delegator :model, :blueprint
+  %i[builder environment provider runtime].each do |meth|
+    def_delegator :blueprint, meth
+  end
 
   # def render(obj)
   #   @obj = obj

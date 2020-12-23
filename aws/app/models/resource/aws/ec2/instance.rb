@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EC2 < Resource::Aws
+class Resource::Aws::EC2::Instance < Resource::Aws
   store :config, accessors: %i[family size instance_count ami key_name monitoring
   vpc_security_group_ids subnet_id subnet_ids], coder: YAML
   store :envs, accessors: %i[public_ip], coder: YAML

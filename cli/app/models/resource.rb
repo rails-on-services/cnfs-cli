@@ -7,7 +7,7 @@ class Resource < ApplicationRecord
 
   store :config, accessors: %i[source version], coder: YAML
 
-  delegate :environment, to: :blueprint
+  delegate :builder, :environment, :provider, :runtime, to: :blueprint
   delegate :services, to: :environment
 
   parse_sources :project, :user
@@ -33,7 +33,7 @@ class Resource < ApplicationRecord
   end
 
   def as_save
-    attributes.except('blueprint_id', 'id').merge(blueprint: blueprint&.name)
+    attributes.except('blueprint_id', 'id', 'name').merge(blueprint: blueprint&.name)
   end
 
   # From Resource::Aws::RDS to RDS

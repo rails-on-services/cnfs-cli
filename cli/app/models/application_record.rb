@@ -7,6 +7,15 @@ class ApplicationRecord < ActiveRecord::Base
   after_destroy :destroy_in_file
   after_save :save_in_file
 
+  def edit
+    view_class.new(model: self).edit
+    update(attributes)
+  end
+
+  def view_class
+    self.class::View
+  end
+
   def destroy_in_file
     content = YAML.load_file(file_path).to_h
     content = content.except(name).to_yaml

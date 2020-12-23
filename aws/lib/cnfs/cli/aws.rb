@@ -20,11 +20,11 @@ module Cnfs
           Cnfs.logger.info '[Aws] Adding console shortcuts'
           shortcuts = options.shift
           shortcuts.merge!({
-            acm: Resource::Aws::ACM.new(provider: Provider::Aws.first).client,
-            ec2: Resource::Aws::EC2.new(provider: Provider::Aws.first).client,
-            eks: Resource::Aws::EKS.new(provider: Provider::Aws.first).client,
-            rds: Resource::Aws::RDS.new(provider: Provider::Aws.first).client,
-            vpc: Resource::Aws::Vpc.new(provider: Provider::Aws.first).client,
+            # acm: Resource::Aws::ACM.new(provider: Provider::Aws.first).client,
+            ec2: Resource::Aws::EC2::Instance,
+            # eks: Resource::Aws::EKS.new(provider: Provider::Aws.first).client,
+            # rds: Resource::Aws::RDS.new(provider: Provider::Aws.first).client,
+            vpc: Resource::Aws::EC2::Vpc,
           })
         end
 

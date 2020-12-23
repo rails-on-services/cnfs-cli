@@ -1,7 +1,6 @@
 # frozen_string_literal: false
 
 class Hash
-
   # rubocop:disable Metrics/AbcSize
   def to_hcl(hash = self, spacer = 2, ary = [])
     max_key_length = hash.keys.max_by(&:length).length
@@ -11,6 +10,8 @@ class Hash
       cary << ["#{' ' * spacer}#{key}", val].join(key_join)
     end
   end
+
+  private
 
   # rubocop:disable Metrics/MethodLength
   def __compute_hcl(value, spacer)

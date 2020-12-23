@@ -53,11 +53,7 @@ module Projects
           end
         end
 
-        plugin_shortcuts.each_pair do |key, klass|
-          define_method(key) { klass } unless %w[p r].include?(key)
-        end
-
-        model_shortcuts.each_pair do |key, klass|
+        shortcuts.each_pair do |key, klass|
           define_method(key) { klass } unless %w[p r].include?(key)
           define_method("#{key}a") { klass.all }
           define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
@@ -71,15 +67,15 @@ module Projects
         %i[projects repositories infra environments blueprints namespaces images services]
       end
 
-      def plugin_shortcuts
-        shortcuts = {}
+      def shortcuts
+        return {} unless defined?(ActiveRecord)
+
+        shortcuts = model_shortcuts
         Cnfs.invoke_plugins_with(:add_console_shortcuts, shortcuts)
         shortcuts
       end
 
       def model_shortcuts
-        return {} unless defined?(ActiveRecord)
-
         { bu: Builder, bl: Blueprint, d: Dependency, e: Environment, n: Namespace, pr: Provider,
           res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
       end

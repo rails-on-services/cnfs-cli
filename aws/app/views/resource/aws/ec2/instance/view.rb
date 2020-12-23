@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EC2::View < BaseView
+class Resource::Aws::EC2::Instance::View < ResourceView
   attr_accessor :model, :selected_family
 
-  def render(model)
-    @model = model
-    blueprint = model.blueprint
-    provider = blueprint.provider
-    model.provider = provider
-
+  def edit
     @selected_family = select('Instance family:', per_page: TTY::Screen.rows - 3, filter: true, show_help: :always) do |menu|
       menu.choices offers_by_family
       menu.default ((offers_by_family.index(model.family) || 0) + 1) if model.family

@@ -57,7 +57,6 @@ class Blueprint < ApplicationRecord
         t.string :config
         # t.string :envs
         t.string :name
-        t.string :source
         # t.string :tags
         t.string :type
       end

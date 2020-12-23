@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Resource::Aws::RDS::View < BaseView
+class Resource::Aws::RDS::DBInstance::View < BaseView
 
   def render(model)
     @model = model

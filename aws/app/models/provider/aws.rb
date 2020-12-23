@@ -12,11 +12,15 @@ class Provider::Aws < Provider
     { 'AWS_DEFAULT_REGION' => region }
   end
 
-  # NOTE: Code to configure the provider; may or may not be used in future
-  #   begin
-  #     regions = ec2_client.describe_regions[0].map { |r| r.region_name }.sort
-  #     @region = prompt.enum_select('Region:', regions, per_page: regions.size)
-  #   rescue Aws::EC2::Errors::AuthFailure => e
-  #     raise Cnfs::Error, e.message
-  #   end
+  def regions
+    begin
+      regions = client.describe_regions[0].map { |r| r.region_name }.sort
+    rescue Aws::EC2::Errors::AuthFailure => e
+      raise Cnfs::Error, e.message
+    end
+  end
+
+  def client
+    @client ||= Resource::Aws::EC2::Instance.client(self)
+  end
 end

@@ -2,8 +2,8 @@
 
 class Blueprint::Aws::Terraform::Instance < Blueprint::Aws
   def resource_list
-    %w[Resource::Aws::Route53 Resource::Aws::Vpc Resource::Aws::EC2 Resource::Aws::S3]
-    %w[Resource::Aws::Vpc Resource::Aws::EC2]
+    # %w[Resource::Aws::Route53 Resource::Aws::Vpc Resource::Aws::EC2 Resource::Aws::S3]
+    %w[Resource::Aws::EC2::Vpc Resource::Aws::EC2::Instance]
   end
 
   def internal_path

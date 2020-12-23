@@ -5,9 +5,13 @@ class Provider < ApplicationRecord
 
   belongs_to :project
 
+  # store :config, accessors: %i[tf_version], coder: YAML
+
   parse_sources :project, :user
 
-  # store :config, accessors: %i[tf_version], coder: YAML
+  def as_save
+    attributes.except('id', 'name', 'project_id')
+  end
 
   class << self
     def create_table(schema)
