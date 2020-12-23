@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EC2::Instance < Resource::Aws
+class Resource::Aws::EC2::Instance < Resource::Aws::EC2
   store :config, accessors: %i[family size instance_count ami key_name monitoring
   vpc_security_group_ids subnet_id subnet_ids], coder: YAML
-  store :envs, accessors: %i[public_ip], coder: YAML
+  store :envs, accessors: %i[public_ip os_type], coder: YAML
 
   def source
     super || 'terraform-aws-modules/ec2-instance/aws'
@@ -18,6 +18,13 @@ class Resource::Aws::EC2::Instance < Resource::Aws
   end
 
   def shell
-    system("ssh -A admin@#{public_ip}")
+    system("ssh -A #{ssh_user_map(os_type)}@#{public_ip}")
+  end
+
+  def ssh_user_map
+    {
+      debian: :admin,
+      ubuntu: :ubuntu,
+    }.with_indifferent_access
   end
 end
