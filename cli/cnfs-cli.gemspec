@@ -61,7 +61,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "tty-progressbar", "~> 0.17"
   # spec.add_dependency "tty-which", "~> 0.4"
 
-  spec.add_dependency 'xdg', '~> 4.0'
+  spec.add_dependency 'xdg', '~> 4.5'
   spec.add_dependency 'zeitwerk', '~> 2.4'
 
   spec.add_development_dependency 'bump', '~> 0.10'

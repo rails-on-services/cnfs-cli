@@ -1,28 +1,13 @@
 # frozen_string_literal: true
 
 class Resource::Aws::EC2::Instance::View < ResourceView
-  attr_accessor :selected_family
-
   def edit
-    @selected_family = select('Instance family:', per_page: per_page(model.offers_by_family), filter: true, show_help: :always) do |menu|
-      menu.choices model.offers_by_family
-      menu.default ((model.offers_by_family.index(model.family) || 0) + 1) if model.family
-      menu.help 'Type to filter results'
-    end
+    model.family = view_select(:instance_family, model.offers_by_family, model.family)
+    instance_types = model.instance_types(model.family)
+    model.size = view_select(:instance_type, instance_types, model.size)
 
-    instance_types = model.instance_types(selected_family)
-
-    size = select('Instance type:', per_page: per_page(instance_types), filter: true, show_help: :always) do |menu|
-      menu.default ((instance_types.index(model.size) || 0) + 1) if model.size
-      menu.choices instance_types
-      menu.help 'Type to filter results'
-    end
-
-    model.family = selected_family
-    model.size = size
-    model.name ||= ask('Instance name:', value: "#{blueprint.name}_#{random_string}")
-    model.key_name = ask('Key pair:', value: model.key_name)
-    # model.eip = yes?('Attach an elastic IP?')
+    model.name ||= ask('Instance name:', value: random_string(blueprint.name))
+    model.key_name = ask('Key pair:', value: model.key_name || '')
     os = enum_select('OS', os_values.keys)
     model.ami = os_images(os).sort_by{ |image| image.creation_date }.reverse.first.image_id
     model.instance_count = ask('Instance count:', value: model.instance_count.to_s, convert: :integer)

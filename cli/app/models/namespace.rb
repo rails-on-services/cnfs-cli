@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class Namespace < ApplicationRecord
+  # include Concerns::HasEnvs
+  # include Concerns::Taggable
   include Concerns::Key
-  include Concerns::Taggable
 
   belongs_to :environment
   has_many :services
@@ -35,10 +36,10 @@ class Namespace < ApplicationRecord
       schema.create_table :namespaces, force: true do |t|
         t.references :environment
         t.string :config
-        t.string :environment
+        # t.string :envs
         t.string :key
         t.string :name
-        t.string :tags
+        # t.string :tags
       end
     end
   end

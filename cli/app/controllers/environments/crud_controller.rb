@@ -31,13 +31,13 @@ module Environments
       env.update(result)
     end
 
-    # def execute
-    #   # prompt for type of Environment
-    #   # The type determines the questions
-    #   # binding.pry
-    #   generator = EnvironmentGenerator.new([args.name], options)
-    #   generator.behavior = args.behavior if args.behavior
-    #   generator.invoke_all
+    # TODO: Remove this code and generators
+    # Used by Main::NewController
+    # def add
+    #   Environment.create(name: args.name)
+    #   # generator = EnvironmentGenerator.new([args.name], options)
+    #   # generator.behavior = args.behavior if args.behavior
+    #   # generator.invoke_all
     # end
   end
 end

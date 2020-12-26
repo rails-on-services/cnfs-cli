@@ -8,11 +8,11 @@ class EnvironmentsController < Thor
   class_before :initialize_project
   class_before :ensure_valid_project
 
-  no_commands do
-    def create(name)
-      execute({ name: name }, :crud, 2, :create)
-    end
-  end
+  # no_commands do
+  #   def add(name)
+  #     execute({ name: name }, :crud, 2, :add)
+  #   end
+  # end
 
   desc 'create NAME', 'Add environment to project'
   def create

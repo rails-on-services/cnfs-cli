@@ -15,8 +15,8 @@ gem install cnfs-cli
 git clone https://github.com/rails-on-services/cnfs-cli
 
 cd cnfs-cli
-./build
+./setup
 
-export PATH=$PATH:`pwd`/cli/exe
+source `pwd`/set_path
 export CNFS_CLI_DEV=1
 ```

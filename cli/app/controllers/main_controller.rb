@@ -40,11 +40,18 @@ class MainController < Thor
                     aliases: '-f', type: :boolean
     option :config, desc: 'Create project with a working configuration (instead of commented examples)',
                     aliases: '-c', type: :boolean
+    option :guided, desc: 'Create project with a guided configuration',
+                    aliases: '-g', type: :boolean
     def new(name)
       if Dir.exist?(name) and not validate_destroy('Directory already exists. Destroy and recreate?')
         raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
       end
       execute(name: name)
+      Dir.chdir(name) do
+        Cnfs.reset
+        initialize_project
+        execute({ blueprints: cmd(:blueprints) }, :new, 2, :configure)
+      end
     end
   end
 

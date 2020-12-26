@@ -17,6 +17,7 @@ class Resource::Aws::EC2::Instance < Resource::Aws::EC2
     super.except(:family, :size).merge(instance_type: instance_type)
   end
 
+  # TODO: See if public_ip and os_type or ssh_user can be retrieved from aws ec2 client calls
   def shell
     system("ssh -A #{ssh_user_map(os_type)}@#{public_ip}")
   end

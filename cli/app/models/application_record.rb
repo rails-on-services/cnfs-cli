@@ -10,6 +10,7 @@ class ApplicationRecord < ActiveRecord::Base
   def edit
     view_class.new(model: self).edit
     update(attributes)
+    self
   end
 
   def view_class

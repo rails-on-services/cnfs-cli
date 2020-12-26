@@ -376,6 +376,10 @@ module Cnfs
       @user_root ||= xdg.config_home.join('cnfs')
     end
 
+    def user_data_root
+      @user_data_root ||= xdg.data_home.join('cnfs')
+    end
+
     def xdg
       @xdg ||= XDG::Environment.new
     end

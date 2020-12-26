@@ -17,10 +17,6 @@ class ResourceView < ApplicationView
   #   end
   # end
 
-  def random_string(length = 12)
-    (0...length).map { (65 + rand(26)).chr }.join.downcase
-  end
-
   # def attributes
   #   obj.class.stored_attributes[:config]
   # end

@@ -3,24 +3,25 @@
 module Main
   class NewController
     include ExecHelper
+    include TtyHelper
 
     def execute
       FileUtils.rm_rf(args.name) if Dir.exist?(args.name)
       generator = ProjectGenerator.new([args.name], options)
       generator.destination_root = args.name
       generator.invoke_all
-
-      Dir.chdir(args.name) do
-        Cnfs.reset
-        add_environments
-      end
     end
 
-    def add_environments
+    def configure
       %w[development staging production].each do |env|
-        EnvironmentsController.new([], options).add(env)
-        NamespacesController.new([], options.merge(environment: env)).add('main')
+        env = Environment.create(name: env)
+        env.namespaces.create(name: 'main')
       end
+      return unless options.guided
+
+      prompt.say('Starting guided project configuration')
+      require 'pry'
+      args.blueprints.create
     end
   end
 end

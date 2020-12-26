@@ -14,8 +14,8 @@ class Blueprint < ApplicationRecord
   parse_sources :project, :user
   parse_scopes :environment
 
-  # List of resources that are managed by this blueprint
-  def resource_list
+  # List of resource classes that are managed by this blueprint
+  def resource_classes
     []
   end
 
@@ -34,10 +34,9 @@ class Blueprint < ApplicationRecord
   end
 
   def as_save
-    attributes.slice('config', 'envs', 'name', 'source', 'tags', 'type', 'version').merge(
+    # attributes.slice('config', 'envs', 'tags', 'type').merge(
+    attributes.slice('config', 'type').merge(
       {
-        name: "#{environment&.name}_#{name}",
-        environment: environment&.name,
         provider: provider&.name,
         runtime: runtime&.name
       }

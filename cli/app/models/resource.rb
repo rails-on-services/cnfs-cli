@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Resource < ApplicationRecord
+  include Concerns::HasEnvs
   include Concerns::Taggable
 
   belongs_to :blueprint

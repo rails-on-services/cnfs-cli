@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Environment < ApplicationRecord
+  # include Concerns::HasEnvs
   include Concerns::BelongsToProject
   include Concerns::Key
 
@@ -80,14 +81,14 @@ class Environment < ApplicationRecord
   class << self
     def create_table(schema)
       schema.create_table :environments, force: true do |t|
-        t.references :builder
+        # t.references :builder
         t.references :project
         t.string :config
         # t.string :dns_root_domain
-        t.string :environment
+        # t.string :envs
         t.string :key
         t.string :name
-        t.string :tags
+        # t.string :tags
         # t.string :tf_config
       end
     end

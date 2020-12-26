@@ -20,7 +20,7 @@ class Resource::Aws::RDS::DBInstance::View < ResourceView
 
     model.family = selected_family
     model.size = size
-    model.name ||= ask('Instance name:', value: "#{blueprint.name}_#{random_string}")
+    model.name ||= ask('Instance name:', value: random_string(blueprint.name))
   end
 
   def configure
