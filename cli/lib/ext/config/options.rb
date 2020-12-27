@@ -13,23 +13,24 @@ module Config
     attr_accessor :__path__
 
     # Return an array representation of the Config hash
+    # rubocop:disable Metrics/MethodLength
     def to_array(key = '', value = self, ary = [])
-      if value.is_a?(Config::Options)
-        value.each_pair do |skey, value|
+      case value
+      when Config::Options
+        value.each_pair do |skey, svalue|
           # TODO: __ should not be hard coded
-          to_array("#{key}#{key.empty? ? '' : '__'}#{skey}", value, ary)
+          to_array("#{key}#{key.empty? ? '' : '__'}#{skey}", svalue, ary)
         end
+      when Array
+        ary.append("#{key.upcase}=#{value.join(',')}")
       else
-        if value.is_a? Array
-          ary.append("#{key.upcase}=#{value.join(',')}")
-        else
-          # TODO: cnfs_sub now takes an array of objects to send against
-          value = value.plaintext.cnfs_sub if value.is_a? String
-          ary.append("#{key.upcase}=#{value}") unless value.nil?
-        end
+        # TODO: cnfs_sub now takes an array of objects to send against
+        value = value.plaintext.cnfs_sub if value.is_a? String
+        ary.append("#{key.upcase}=#{value}") unless value.nil?
       end
       ary
     end
+    # rubocop:enable Metrics/MethodLength
 
     def merge_many!(*ary)
       ary.each { |hash| merge!(Config::Options.new.merge!(hash).to_hash) }

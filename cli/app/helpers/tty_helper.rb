@@ -118,19 +118,4 @@ module TtyHelper
     output.puts "\n"
     output.puts table.render(:basic, alignments: %i[left left], padding: [0, 4, 0, 0])
   end
-
-  # TODO: Test
-  def with_spinner(spin_msg)
-    if options.quiet
-      require 'tty-spinner'
-      spinner = TTY::Spinner.new("[:spinner] #{spin_msg}", format: :pulse_2)
-      spinner.auto_spin # Automatic animation with default interval
-    end
-    result = yield
-    if options.quiet
-      spinner_msg = result.failure? ? 'Failed!' : 'Done!'
-      spinner.stop(spinner_msg)
-    end
-    errors.add(:build, result.err.chomp) if result.failure?
-  end
 end

@@ -9,7 +9,7 @@ module ServicesHelper
   end
 
   def before_execute
-    project.process_manifests 
+    project.process_manifests
     if respond_to?(:service)
       unless (self.service = project.services.find_by(name: args.service))
         raise Cnfs::Error, "Service not found #{args.service}"
@@ -20,7 +20,7 @@ module ServicesHelper
       # TODO: Modify to take tags and profiles
       # where_params.merge!(options.tags) if options.tags
       self.services = where_params.empty? ? project.services : project.services.where(where_params)
-      unless self.services.any?
+      unless services.any?
         raise Cnfs::Error, "No services selected. Filtered by: #{where_params.map { |k, v| "#{k} = #{v}" }.join(', ')}"
       end
     end

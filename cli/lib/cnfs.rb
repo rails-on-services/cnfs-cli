@@ -11,12 +11,12 @@ module Cnfs
   PROJECT_FILE = 'config/project.yml'
   extend LittlePlugger
   module Plugins; end
+
   class Error < StandardError; end
 
   class << self
     attr_accessor :repository, :project
-    attr_reader :config
-    attr_reader :timers, :logger, :cwd
+    attr_reader :config, :timers, :logger, :cwd
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
@@ -54,7 +54,7 @@ module Cnfs
     def source_paths_map
       @source_paths_map ||= {
         cli: [gem_root],
-        plugins: plugins.values.map{ |p| p.plugin_lib.gem_root },
+        plugins: plugins.values.map { |p| p.plugin_lib.gem_root },
         project: [project_root],
         user: [user_root.join(config.name)]
       }
@@ -68,6 +68,7 @@ module Cnfs
     end
 
     # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
     def load_config
       Config.env_separator = '_'
       Config.env_prefix = 'CNFS'
@@ -81,6 +82,7 @@ module Cnfs
     rescue StandardError => _e
       raise Cnfs::Error, "Error parsing config. Environment:\n#{`env | grep CNFS`}"
     end
+    # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
     def configure_logger
@@ -98,6 +100,7 @@ module Cnfs
     # Emulate LittlePlugger's initialize process when in development mode
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/CyclomaticComplexity
     def initialize_dev_plugins
       gem_root.join('..').children.select(&:directory?).each do |dir|
         plugin_dir = dir.join('lib/cnfs/plugins')
@@ -116,6 +119,7 @@ module Cnfs
         end
       end
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
     # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
 
@@ -183,6 +187,8 @@ module Cnfs
     # Scan plugins for subdirs in <plugin_root>/app and add them to autoload_dirs
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/PerceivedComplexity
     def add_plugin_autoload_paths
       plugins.sort.each do |namespace, plugin|
         next unless (plugin = "cnfs/cli/#{namespace}".classify.safe_constantize)
@@ -201,6 +207,8 @@ module Cnfs
         end
       end
     end
+    # rubocop:enable Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/CyclomaticComplexity
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
@@ -233,6 +241,8 @@ module Cnfs
     # Extensions found in autoload_dirs are configured to be loaded at a pre-defined extension point
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/PerceivedComplexity
     def setup_extensions
       # Ignore the extension points which are the controllers in the cli core gem
       Cnfs.logger.debug 'Loaded Extensions:'
@@ -256,6 +266,8 @@ module Cnfs
         end
       end
     end
+    # rubocop:enable Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/CyclomaticComplexity
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
@@ -316,6 +328,7 @@ module Cnfs
       self
     end
 
+    # rubocop:disable Metrics/MethodLength
     def set_capabilities
       cmd = TTY::Command.new(printer: :null)
       installed_tools = []
@@ -330,33 +343,35 @@ module Cnfs
       Cnfs.logger.warn "Missing dependency tools: #{missing_tools.join(', ')}" if missing_tools.any?
       installed_tools
     end
+    # rubocop:enable Metrics/MethodLength
 
     def tools
       Dependency.pluck(:name)
     end
 
     def platform
-      os = case RbConfig::CONFIG['host_os']
-      when /linux/
-        'linux'
-      when /darwin/
-        'darwin'
-      else
-        'unknown'
-      end
+      os =
+        case RbConfig::CONFIG['host_os']
+        when /linux/
+          'linux'
+        when /darwin/
+          'darwin'
+        else
+          'unknown'
+        end
       ActiveSupport::StringInquirer.new(os)
     end
 
     def cli_mode
-      @cli_mode ||= (
+      @cli_mode ||= begin
         mode = config.dig(:cli, :dev) ? 'development' : 'production'
         ActiveSupport::StringInquirer.new(mode)
-      )
+      end
     end
 
     def git
       return OpenStruct.new(sha: '', branch: '') unless system('git rev-parse --git-dir > /dev/null 2>&1')
-     
+
       OpenStruct.new(
         tag: `git tag --points-at HEAD`.chomp,
         branch: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),

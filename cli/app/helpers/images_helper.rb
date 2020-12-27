@@ -9,6 +9,6 @@ module ImagesHelper
   end
 
   def before_execute
-    project.process_manifests 
+    project.process_manifests
   end
 end

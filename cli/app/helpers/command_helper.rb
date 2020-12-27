@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
 module CommandHelper
   extend ActiveSupport::Concern
 
@@ -28,6 +29,7 @@ module CommandHelper
     end
   end
 
+  # rubocop:disable Metrics/BlockLength
   included do |_base|
     add_cnfs_option :environment,       desc: 'Target environment',
                                         aliases: '-e', type: :string, default: Cnfs.config.environment
@@ -67,13 +69,14 @@ module CommandHelper
       Cnfs.with_timer('loading project configuration') do
         # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
         # Merge options also under options key for Project to pick up
-        @options.merge!("tags" => Hash[*options.tags.flatten]) if options.tags
+        @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
         # binding.pry
         Cnfs.config.merge!(options).merge!(options: options)
         Cnfs::Configuration.initialize!
       end
     end
 
+    # rubocop:disable Metrics/ParameterLists
     def execute(command_args = {}, command_name = nil, location = 2, command_method = :execute)
       @args = Thor::CoreExt::HashWithIndifferentAccess.new(command_args)
       yield if block_given?
@@ -82,10 +85,11 @@ module CommandHelper
       exec_instance = command_class(command_name)
       exec_instance.new(options: options, args: args).send(command_method)
     end
+    # rubocop:enable Metrics/ParameterLists
 
     # Can be called directory by the command, e.g. 'console' with no params and will return 'console'
     def command_method(location = 1)
-      method = caller_locations(1, location)[location -1].label
+      method = caller_locations(1, location)[location - 1].label
       Cnfs.logger.info("command_method: #{method}")
       method
     end
@@ -125,8 +129,8 @@ module CommandHelper
     end
 
     # NOTE: Not currently in use; intended as a class_around option
-    def timer
-      Cnfs.with_timer('command processing') { yield }
+    def timer(&block)
+      Cnfs.with_timer('command processing', &block)
     end
 
     # Run a command on another command_set controller
@@ -138,4 +142,6 @@ module CommandHelper
       Cnfs.project
     end
   end
+  # rubocop:enable Metrics/BlockLength
 end
+# rubocop:enable Metrics/ModuleLength

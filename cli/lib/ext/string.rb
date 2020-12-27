@@ -4,7 +4,7 @@ class String
   YAML_STRING = "--- !binary |-\n  ".freeze
 
   # Return an encrypted string
-  # 
+  #
   # ==== Examples
   # 'abc'.ciphertext
   #
@@ -16,7 +16,7 @@ class String
   end
 
   # Convert an encrypted string to a plaintext string
-  # 
+  #
   # ==== Examples
   # ciphertext.plaintext
   #
@@ -24,7 +24,9 @@ class String
   # strip<Boolean>:: Remove the leading YAML binary text
   #
   def plaintext(force: false)
-    encrypted? ? decrypt(self) : (force ? decrypt("#{YAML_STRING} #{self}\n") : self)
+    return decrypt(self) if encrypted?
+
+    force ? decrypt("#{YAML_STRING} #{self}\n") : self
   end
 
   def encrypted?
@@ -33,7 +35,7 @@ class String
 
   # Custom string interpolation using the ${<text>} pattern
   # For each interpolation, pass an object reference (default is Cnfs module) to send the referenced values
-  # 
+  #
   # ==== Examples
   # '${project.name}'.cnfs_sub
   # '${project.environment.name}'.cnfs_sub
@@ -42,10 +44,13 @@ class String
   # Assuming that service is a referencable object, return service.name:
   # '${name}'.cnfs_sub(service)
   #
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength
   def cnfs_sub(*references, skip_raise: false)
     return self unless (interpolations_to_replace = scan(/\${(.*?)}/).flatten)
 
-    if interpolations_to_replace.size > references.size 
+    if interpolations_to_replace.size > references.size
       reference_to_append = references.size.positive? ? references.last : Cnfs
       (interpolations_to_replace.size - references.size).times { references.append(reference_to_append) }
     end
@@ -60,12 +65,16 @@ class String
       return_string = return_string.gsub("${#{interpolation}}", reference)
     end
     return_string
-  rescue TypeError => e
-     nil
+  rescue TypeError => _e
+    nil
   rescue NoMethodError => e
     raise e unless skip_raise
+
     self
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/MethodLength
 
   private
 
