@@ -76,7 +76,7 @@ module Projects
       end
 
       def model_shortcuts
-        { bu: Builder, bl: Blueprint, d: Dependency, e: Environment, n: Namespace, pr: Provider,
+        { bl: Blueprint, bu: Builder, d: Dependency, e: Environment, l: Location, n: Namespace, pr: Provider,
           res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
       end
     end

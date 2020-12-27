@@ -87,6 +87,7 @@ class ApplicationRecord < ActiveRecord::Base
     # rubocop:disable Metrics/PerceivedComplexity
     def parse
       return unless eligible_files
+      # TODO: Raise unldess parse_sources.size.positive?
 
       opts = {}
       opts.merge!(project: Project::PARSE_NAME) if column_names.include?('project_id')
@@ -137,7 +138,7 @@ class ApplicationRecord < ActiveRecord::Base
           if fixture_is_singular?
             # binding.pry
           else
-            config.each { |key, value| value.merge!(opts.merge(name: key)) }
+            config.each { |key, value| value&.merge!(opts.merge(name: key)) }
           end
         end
         config = yield(path_key, config, opts) if block_given?
@@ -192,6 +193,7 @@ class ApplicationRecord < ActiveRecord::Base
       end
     end
 
+    def after_parse; end
     # Provides a default empty hash to validate against
     # Override in model to validate against a specific schema
     # def schema

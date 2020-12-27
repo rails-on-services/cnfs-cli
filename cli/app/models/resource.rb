@@ -5,6 +5,7 @@ class Resource < ApplicationRecord
   include Concerns::Taggable
 
   belongs_to :blueprint
+  belongs_to :location
 
   store :config, accessors: %i[source version], coder: YAML
 
@@ -60,6 +61,7 @@ class Resource < ApplicationRecord
     def create_table(schema)
       schema.create_table :resources, force: true do |t|
         t.references :blueprint
+        t.references :location
         t.string :config
         t.string :envs
         t.string :name

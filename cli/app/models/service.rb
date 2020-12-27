@@ -8,6 +8,7 @@ class Service < ApplicationRecord
   include Concerns::HasEnvs
 
   belongs_to :namespace
+  belongs_to :location
   belongs_to :repository, required: false
 
   store :commands, accessors: %i[console shell test], coder: YAML
@@ -147,6 +148,7 @@ class Service < ApplicationRecord
 
     def create_table(schema)
       schema.create_table :services, force: true do |t|
+        t.references :location
         t.references :namespace
         t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
@@ -155,6 +157,7 @@ class Service < ApplicationRecord
         # t.references :chart_repo
         t.string :commands
         t.string :config
+        # TODO: Change to envs
         t.string :environment
         t.string :image
         t.string :name
