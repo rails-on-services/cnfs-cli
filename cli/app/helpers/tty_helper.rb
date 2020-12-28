@@ -78,7 +78,7 @@ module TtyHelper
   # @api public
   def prompt(**options)
     require 'tty-prompt'
-    TTY::Prompt.new(options)
+    TTY::Prompt.new(**options)
   end
 
   # Get terminal screen properties

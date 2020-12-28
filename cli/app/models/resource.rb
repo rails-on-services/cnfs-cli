@@ -20,6 +20,11 @@ class Resource < ApplicationRecord
     resource_name.underscore
   end
 
+  # The fields that the builder should output upon creating the resource
+  def outputs
+    []
+  end
+
   def to_hcl
     as_hcl.to_hcl.join("\n")
   end

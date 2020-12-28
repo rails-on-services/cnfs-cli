@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Blueprint::Aws::Terraform::Instance < Blueprint::Aws
+class Blueprint::Aws::Instance < Blueprint::Aws
   def resource_classes
     [Resource::Aws::EC2::Vpc, Resource::Aws::EC2::Instance]
   end

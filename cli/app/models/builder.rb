@@ -5,8 +5,6 @@ class Builder < ApplicationRecord
 
   attr_accessor :blueprint
 
-  # TODO: providers is for TF; this should not be in this base class
-  store :providers, accessors: %i[aws gcp azure], coder: YAML
   serialize :dependencies, Array
 
   parse_scopes :config
@@ -64,16 +62,18 @@ class Builder < ApplicationRecord
   #   `tar xzf "data.tar.gz"`
   # end
 
-  def self.create_table(schema)
-    schema.create_table :builders, force: true do |t|
-      t.references :project
-      t.string :config
-      t.string :dependencies
-      # t.string :envs
-      t.string :name
-      t.string :providers
-      # t.string :tags
-      t.string :type
+  class << self
+    def create_table(schema)
+      schema.create_table :builders, force: true do |t|
+        t.references :project
+        t.string :config
+        t.string :dependencies
+        # t.string :envs
+        t.string :name
+        t.string :providers
+        # t.string :tags
+        t.string :type
+      end
     end
   end
 end

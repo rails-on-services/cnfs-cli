@@ -8,6 +8,7 @@ module Cnfs
       # "file:memdb1?mode=memory&cache=shared"
       ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
       Cnfs.with_timer('initialize') { initialize }
+      Builder::Ansible.clone_repo
     end
 
     def self.reload

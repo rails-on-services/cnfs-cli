@@ -3,9 +3,9 @@
 class Blueprint < ApplicationRecord
   # include Concerns::HasEnv
   # include Concerns::Taggable
+  belongs_to :builder
   belongs_to :environment
   belongs_to :provider
-  belongs_to :runtime
   has_many :resources
 
   delegate :project, to: :environment
@@ -24,21 +24,12 @@ class Blueprint < ApplicationRecord
     binding
   end
 
-  def builder
-    @builder ||= ::Builder.find_by(name: builder_name)
-  end
-
-  def builder_name
-    # example: Blueprint::Aws::Terraform::Instance
-    self.class.name.underscore.split('/')[2]
-  end
-
   def as_save
     # attributes.slice('config', 'envs', 'tags', 'type').merge(
     attributes.slice('config', 'type').merge(
       {
+        builder: builder&.name,
         provider: provider&.name,
-        runtime: runtime&.name
       }
     )
   end
@@ -48,11 +39,32 @@ class Blueprint < ApplicationRecord
   end
 
   class << self
+    def available_types(platform)
+      defined_types.select{ |p| p.start_with?(platform.to_s) }.map { |p| p.split('/').second }.sort
+    end
+
+    def available_platforms
+      defined_types.map { |p| p.split('/').first }.uniq.sort
+    end
+
+    def defined_types
+      @defined_types ||= defined_files.select { |p| p.split('/').size > 1  }.map { |p| p.delete_suffix('.rb') }
+    end
+
+    def defined_files
+      Cnfs.plugins.values.append(Cnfs).each_with_object([]) do |p, ary|
+        path = p.plugin_lib.gem_root.join('app/models/blueprint')
+        next unless path.exist?
+
+        Dir.chdir(path) { ary.concat(Dir['**/*.rb']) }
+      end
+    end
+
     def create_table(schema)
       schema.create_table :blueprints, force: true do |t|
+        t.references :builder
         t.references :environment
         t.references :provider
-        t.references :runtime
         t.string :config
         # t.string :envs
         t.string :name

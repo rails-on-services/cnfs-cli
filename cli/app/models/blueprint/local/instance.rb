@@ -1,23 +1,15 @@
 # frozen_string_literal: true
 
-class Blueprint::Local::Ansible::Instance < Blueprint
+class Blueprint::Local::Instance < Blueprint
   store :config, accessors: %i[blah], coder: YAML
-
-  after_save :clone_repo, unless: -> { packages_path.join('setup').exist? }
 
   validates :name, presence: true
 
-  def clone_repo
-    Dir.chdir(packages_path) do
-      system('git clone https://github.com/rails-on-services/setup')
-    end
-  end
+  # after_save :clone_repo, unless: -> { packages_path.join('setup').exist? }
 
-  def packages_path
-    packages_path = Cnfs.user_data_root.join('packages')
-    packages_path.mkpath unless packages_path.exist?
-    packages_path
-  end
+  # def clone_repo
+  #   builder(:clone_repo) if builder.respond_to?(:clone_repo)
+  # end
 
   # 1. Ansible is the builder. It provisions and configures all requested resources
   # 2. Like with TF, the blueprint has an ERB template which creates the configuration for
@@ -44,4 +36,9 @@ class Blueprint::Local::Ansible::Instance < Blueprint
 
   # TODO: invoke ansible with conifgurations for these resources that ansible can use
   # to provision them; This is very much like using TF to provision an RDS instance
+  class << self
+    def builder_types
+      %w[ansible]
+    end
+  end
 end

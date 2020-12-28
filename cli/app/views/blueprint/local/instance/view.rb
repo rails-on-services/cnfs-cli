@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Blueprint::Local::Ansible::Instance::View < ApplicationView
+class Blueprint::Local::Instance::View < Blueprint::View
   def edit
     model.name = ask('Blueprint name:', value: "instance-#{random_string}")
     # provider_name = enum_select('Provider:', Provider.where(type: 'Provider::Local').pluck(:name))

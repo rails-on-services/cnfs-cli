@@ -1,6 +1,25 @@
 # frozen_string_literal: true
 
 class Builder::Terraform < Builder
+  store :providers, accessors: %i[aws gcp azure], coder: YAML
+
+  # Template helpers
+  def output(resource, key)
+    "output \"#{title(resource.name, key)}\" {
+    value = #{module_attr(resource, key)}
+  }"
+  end
+
+  def module_attr(resource, key)
+    "module.#{title(resource.name)}.#{key}"
+  end
+
+  # Convert any '-' in the keys to '_' then join each key with '-' so can use split('-') to parse keys
+  def title(*vars)
+    vars.unshift(name).map { |key| key.gsub('-', '_') }.join('-')
+  end
+  # End Template helpers
+
   def prepare
     download_dependencies
   end
@@ -23,7 +42,7 @@ class Builder::Terraform < Builder
   end
 
   def template_file
-    blueprint.internal_path.to_s.gsub('/models/', '/views/').delete_suffix('.rb').concat('/main.tf.erb')
+    blueprint.internal_path.to_s.gsub('/models/', '/views/').delete_suffix('.rb').concat('/terraform/main.tf.erb')
   end
 
   # def required_tools
