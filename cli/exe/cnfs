@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+start_time = Time.now
 lib_path = File.expand_path('../lib', __dir__)
 $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 
@@ -8,7 +9,7 @@ ENV['CNFS_CLI_DEV'] ||= ARGV.delete('--cli-dev')
 dval = ARGV.index('--logging') || ARGV.index('-l')
 ENV['CNFS_LOGGING'] = ARGV[dval + 1] if dval
 
-require 'cnfs'
+require 'cnfs_cli'
 
 # Signal.trap('INT') do
 #   warn("\n#{caller.join("\n")}: interrupted")
@@ -16,7 +17,8 @@ require 'cnfs'
 # end
 
 begin
-  Cnfs.initialize! { MainController.start }
+  CnfsCli.initialize! { MainController.start }
+  Cnfs.logger.info("wall time: #{Time.now - start_time}")
 rescue Cnfs::Error => e
   puts e.message
   exit 2

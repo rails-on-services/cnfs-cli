@@ -10,12 +10,12 @@ module Main
     end
 
     def execute
-      pad = Cnfs.plugins.keys.max_by(&:length).size + 5
+      pad = CnfsCli.plugins.keys.max_by(&:length).size + 10
       puts "Component#{' ' * (pad - 9)}Version"
       puts "cli_core#{' ' * (pad - 8)}#{Cnfs::VERSION}"
-      Cnfs.plugins.keys.sort.each do |namespace|
+      CnfsCli.plugins.each do |namespace, plugin_class|
         print "#{namespace}#{' ' * (pad - namespace.length)}"
-        puts "Cnfs::Cli::#{namespace.to_s.classify}::VERSION".safe_constantize || 'Error loading'
+        puts plugin_class.plugin_lib::VERSION
       end
     end
   end

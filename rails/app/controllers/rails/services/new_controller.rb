@@ -20,8 +20,9 @@ module Rails
         #                     aliases: '-g', type: :string
         # option :gem_source, desc: 'Source path to a gem in the project filesystem, e.g. ros/iam (used for development of source gem)',
         #                     aliases: '-s', type: :string
-        option :type,       desc: 'The service type to generate, application or plugin',
-                            aliases: '-t', type: :string, default: Cnfs.repository&.service_type
+        # TODO: removed the next option when refactored cnfs to cnfs_core gem; put it back when repository is active
+        # option :type,       desc: 'The service type to generate, application or plugin',
+        #                     aliases: '-t', type: :string, default: Cnfs.repository&.service_type
         cnfs_options :force
         # TODO: Add before for type
         def rails(name)
