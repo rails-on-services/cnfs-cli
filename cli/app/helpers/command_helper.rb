@@ -73,6 +73,7 @@ module CommandHelper
         # binding.pry
         Cnfs.config.merge!(options).merge!(options: options)
         Cnfs::Configuration.initialize!
+        Builder::Ansible.clone_repo
       end
     end
 

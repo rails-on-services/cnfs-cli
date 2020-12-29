@@ -26,4 +26,5 @@ each_dir do
   system('bundle install')
   FileUtils.rm('Gemfile')
   FileUtils.rm('Gemfile.lock')
+  FileUtils.rm_rf('.bundle')
 end
