@@ -9,14 +9,19 @@ module Main
       @options = options
     end
 
+    # rubocop:disable Metrics/AbcSize
     def execute
-      pad = CnfsCli.plugins.keys.max_by(&:length).size + 10
+      name = Cnfs.plugin_root.name.underscore
+      keys = Cnfs.plugin_root.plugins.keys.append(name)
+      pad = keys.max_by(&:length).size + 10
       puts "Component#{' ' * (pad - 9)}Version"
+      puts "#{name}#{' ' * (pad - name.length)}#{Cnfs.plugin_root::VERSION}"
       puts "cli_core#{' ' * (pad - 8)}#{Cnfs::VERSION}"
-      CnfsCli.plugins.each do |namespace, plugin_class|
+      Cnfs.plugin_root.plugins.each do |namespace, plugin_class|
         print "#{namespace}#{' ' * (pad - namespace.length)}"
         puts plugin_class.plugin_lib::VERSION
       end
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

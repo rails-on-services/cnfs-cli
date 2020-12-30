@@ -4,6 +4,9 @@ Layout/LineLength:
   Max: 120
 Layout/SpaceAroundMethodCallOperator:
   Enabled: false
+Lint/EmptyFile:
+  Exclude:
+    - '**/config/environment.rb'
 Lint/RaiseException:
   Enabled: false
 Lint/StructNewOverride:

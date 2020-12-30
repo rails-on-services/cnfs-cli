@@ -87,6 +87,7 @@ class ApplicationRecord < ActiveRecord::Base
     # rubocop:disable Metrics/PerceivedComplexity
     def parse
       return unless eligible_files
+
       # TODO: Raise unldess parse_sources.size.positive?
 
       opts = {}

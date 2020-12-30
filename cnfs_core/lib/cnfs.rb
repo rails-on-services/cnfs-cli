@@ -149,6 +149,8 @@ module Cnfs
     end
 
     def autoload_all(path)
+      return [] unless path.join('app').exist?
+
       path.join('app').children.select(&:directory?).select { |m| default_load_paths.include?(m.split.last.to_s) }
     end
 
@@ -246,7 +248,9 @@ module Cnfs
     end
 
     def plugins_responding_to(method)
-      plugin_root.plugins.values.append(plugin_root).select { |klass| klass.plugin_lib.respond_to?(method) }.collect(&:plugin_lib)
+      plugin_root.plugins.values.append(plugin_root).select do |klass|
+        klass.plugin_lib.respond_to?(method)
+      end.collect(&:plugin_lib)
     end
 
     def validate_command

@@ -1,0 +1,6 @@
+---
+inherit_from:
+  - ../.rubocop.yml
+Lint/EmptyClass:
+  Exclude:
+    - 'lib/cnfs/plugins/core.rb'
