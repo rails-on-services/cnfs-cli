@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ApplicationView < TTY::Prompt
+class Cnfs::ApplicationView < TTY::Prompt
   attr_accessor :model
 
   def initialize(model:, **options)
@@ -13,7 +13,7 @@ class ApplicationView < TTY::Prompt
   end
 
   # Set an attribute from a Prompt.select result
-  # 
+  #
   # ==== Examples
   # view_select(:instance_family, model.offers_by_family, model.family)
   #
@@ -26,7 +26,7 @@ class ApplicationView < TTY::Prompt
     result = select(title.to_s.humanize, per_page: per_page(data), filter: true, show_help: :always) do |menu|
       menu.help 'Type to filter results'
       menu.choices data
-      menu.default ((data.index(current) || 0) + 1) if current
+      menu.default((data.index(current) || 0) + 1) if current
       yield menu if block_given?
     end
     attribute = "#{title}="
@@ -39,7 +39,7 @@ class ApplicationView < TTY::Prompt
   end
 
   def random_string(name = nil, length: 12)
-    rnd = (0...length).map { (65 + rand(26)).chr }.join.downcase
+    rnd = (0...length).map { rand(65..90).chr }.join.downcase
     [name, rnd].compact.join('-')
   end
 end

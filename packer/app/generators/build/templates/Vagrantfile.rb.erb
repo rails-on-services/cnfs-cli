@@ -6,7 +6,6 @@
 # Its purpose is to run the *exact same* provisioner that packer will run, i.e. the same ansible playbook
 # NOTE: This is designed to run exactly one machine at a time. Destroy a machine before starting another
 
-
 args = ARGV
 args.delete('--provision')
 action, type = args
@@ -19,13 +18,12 @@ box_url = "file://#{Dir.pwd}/#{box}"
 # STDOUT.puts box_url
 #
 # If action is 'up' or 'provision' then test for valid type, conflicting directories and box is available
-vagrantfile_dir = Pathname(__FILE__).dirname.to_s
-current_dir = Dir.pwd
+# current_dir = Dir.pwd
 if %w(up provision clean).include?(action)
   # vexit("Invalid machine type: '#{type}'. Available types are: #{valid_types.join(', ')}", 2) unless valid_types.include?(type)
 
   conflict_dirs = [
-    "#{vagrantfile_dir}/.vagrant",
+    "#{__dir__}/.vagrant",
     "#{Dir.home}/.vagrant.d/boxes/#{box_name}",
     "#{Dir.home}/VirtualBox VMs/#{box_name}"
     # "#{Dir.home}/.vagrant.d/boxes/#{box_prefix}-VAGRANTSLASH-#{os_string}"
@@ -33,12 +31,14 @@ if %w(up provision clean).include?(action)
 
   # Prompt user to remove potentially conflicting directories
   conflict_dirs.each do |dir|
-    next unless Dir.exists?(dir)
+    path = Pathname.new(dir)
+    next unless path.exist?
+
     if action.eql?('clean')
-      FileUtils.rm_rf(dir)
+      path.rmtree
     else
       STDOUT.puts "Potential conflicting directory '#{dir} exists. Remove? (y/n)"
-      FileUtils.rm_rf(dir) if STDIN.gets.chomp.eql?('y')
+      path.rmtree if STDIN.gets.chomp.eql?('y')
     end
   end
 
@@ -61,6 +61,12 @@ Vagrant.configure(2) do |config|
   config.vm.box_url = box_url
   config.vm.box_check_update = false
   config.vm.network :private_network, ip: '192.168.21.12'
+
+  <% build.provisioners.where(type: 'Provisioner::Ansible').each do |ansible| %>
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "<%= ansible.playbook_file %>"
+    ansible.groups = <%= ansible_roles %>
+  end<% end %>
 
   # See:
   # https://www.vagrantup.com/docs/provisioning/ansible.html

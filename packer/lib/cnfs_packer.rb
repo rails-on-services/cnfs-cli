@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'bump'
-require 'packer-config'
+require 'net/http'
+# require 'packer-config'
+require 'uri'
 
 require_relative 'cnfs_packer/version'
 require_relative 'cnfs'
@@ -44,11 +46,16 @@ module CnfsPacker
     end
 
     def before_project_configuration
+      # binding.pry
       Cnfs::Configuration.models = models_to_parse
     end
 
     def models_to_parse
-      [Build, Builder, Project, Push]
+      Dir.chdir(gem_root.join('app/models')) do
+        # Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify.safe_constantize }
+        Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify }.reject { |r| r.eql?('ApplicationRecord') }
+      end
+      [Build, Builder, OperatingSystem, PostProcessor, Project, Provisioner]
     end
 
     def initialize_development

@@ -8,7 +8,7 @@ module Projects
       end
 
       def shortcuts
-        { b: Build, bu: Builder, pu: Push }
+        { b: Build, bu: Builder, os: OperatingSystem, pr: Provisioner, po: PostProcessor }
       end
     end
 

@@ -1,7 +1,7 @@
 ---
 paths:
   config: config
-  data: data
+  data: builds
   lib: lib
   src: src
   tmp: tmp

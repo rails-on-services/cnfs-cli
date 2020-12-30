@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/ClassLength
-class ApplicationRecord < ActiveRecord::Base
+class Cnfs::ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
   after_destroy :destroy_in_file

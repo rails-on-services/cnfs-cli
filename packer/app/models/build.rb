@@ -4,11 +4,47 @@ class Build < ApplicationRecord
   include Concerns::BelongsToProject
 
   belongs_to :source, class_name: 'Build', required: false
+  has_many :children, class_name: 'Build', foreign_key: 'source_id'
 
-  store :config, accessors: %i[distribution version disk_size push provision_path playbook]
-  store :config, accessors: %i[dist_version]
+  has_many :builders
+  has_many :provisioners
+  has_many :post_processors
+
+  # store :config, accessors: %i[distribution version disk_size push provision_path playbook]
+  # store :config, accessors: %i[dist_version]
+  store :config, accessors: %i[ansible_groups]
 
   parse_sources :project
+
+  def packer_file
+    'packer.json'
+  end
+
+  def full_name
+    "#{project.name.tr('_', '-')}-#{packer_name}"
+  end
+
+  def render
+    File.open(packer_file, 'w') { |f| f.write(to_packer) }
+  end
+
+  def execute_path
+    Cnfs.paths.data.join(packer_name)
+  end
+
+  def to_packer
+    JSON.pretty_generate(as_packer)
+  end
+
+  # rubocop:disable Metrics/AbcSize
+  def as_packer
+    {
+      builders: builders.sort_by(&:order).each_with_object([]) { |o, ary| ary.append(o.to_packer) },
+      provisioners: provisioners.sort_by(&:order).each_with_object([]) { |o, ary| ary.append(o.to_packer) },
+      'post-processors': [post_processors.sort_by(&:order).each_with_object([]) { |o, ary| ary.append(o.to_packer) }]
+    }
+  end
+  # rubocop:enable Metrics/AbcSize
 
   def provision_playbook
     provision_path.join(playbook || '')
@@ -31,9 +67,7 @@ class Build < ApplicationRecord
   end
 
   def as_save
-    attributes.except('id', 'name', 'source_id').merge({
-                                                         source: source&.name
-                                                       })
+    attributes.except('id', 'name', 'project_id', 'source_id').merge(source: source&.name)
   end
 
   class << self
@@ -41,8 +75,8 @@ class Build < ApplicationRecord
       schema.create_table table_name, force: true do |t|
         t.references :project
         t.references :source
-        t.string :name
         t.string :config
+        t.string :name
       end
     end
   end

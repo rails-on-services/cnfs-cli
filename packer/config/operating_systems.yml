@@ -1,0 +1,19 @@
+---
+debian_buster:
+  type: OperatingSystem::Debian
+  boot_command:
+  - "<esc><wait>"
+  - 'install '
+  - 'preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg '
+  - 'debian-installer=en_US '
+  - 'auto '
+  - 'locale=en_US '
+  - 'kbd-chooser/method=us '
+  - 'netcfg/get_hostname={{ .Name }} '
+  - 'netcfg/get_domain=vagrantup.com '
+  - 'fb=false '
+  - 'debconf/frontend=noninteractive '
+  - 'console-setup/ask_detect=false '
+  - 'console-keymaps-at/keymap=us '
+  - 'keyboard-configuration/xkb-keymap=us '
+  - "<enter><wait>"

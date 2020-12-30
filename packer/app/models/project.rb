@@ -16,6 +16,15 @@ class Project < ApplicationRecord
     Cnfs.user_data_root.join('packages')
   end
 
+  def cache_path
+    Cnfs.user_data_root.join('packer/cache')
+  end
+
+  def self.hello
+    Pathname(__FILE__).dirname.to_s
+    __dir__
+  end
+
   def paths
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end

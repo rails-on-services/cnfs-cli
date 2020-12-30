@@ -1,17 +1,22 @@
 # frozen_string_literal: true
 
-class Push < ApplicationRecord
-  store :config, accessors: %i[manifest box_dir]
-  store :aws, accessors: %i[s3_bucket profile region], prefix: true
+class Provisioner < ApplicationRecord
+  belongs_to :build
 
   parse_sources :project
+
+  def as_save
+    attributes.except('id', 'name', 'builder_id').merge(build: build&.name)
+  end
 
   class << self
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
+        t.references :build
         t.string :name
         t.string :config
-        t.string :aws
+        t.integer :order
+        t.string :type
       end
     end
   end
