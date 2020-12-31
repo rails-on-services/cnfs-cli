@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Projects
-  class ConsoleController < ConsoleControllerBase
+  class ConsoleController < CnfsConsoleController
     class << self
 
       def commands

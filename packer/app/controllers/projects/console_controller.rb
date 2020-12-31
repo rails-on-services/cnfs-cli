@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Projects
-  class ConsoleController < ConsoleControllerBase
+  class ConsoleController < CnfsConsoleController
     class << self
       def commands
-        %i[]
+        %i[builds projects]
       end
 
       def shortcuts

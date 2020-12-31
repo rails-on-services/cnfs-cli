@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class Provisioner::Ansible < Provisioner
-  store :config, coder: YAML,
-                 accessors: %i[ansible_env_vars extra_arguments host_alias playbook_file user]
+  store :config, coder: YAML, accessors: %i[
+    ansible_env_vars extra_arguments host_alias playbook_file user
+  ]
 
   def ansible_env_vars
     super || [

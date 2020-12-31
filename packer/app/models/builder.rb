@@ -6,6 +6,7 @@ class Builder < ApplicationRecord
   delegate :project, to: :build
 
   parse_sources :project
+  parse_scopes :build
 
   def as_save
     attributes.except('id', 'name', 'builder_id').merge(build: build&.name)

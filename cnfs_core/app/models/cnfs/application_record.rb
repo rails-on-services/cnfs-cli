@@ -50,13 +50,16 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
     # Public interface; called by models to list the search paths for their config files
     def parse_scopes(*scopes)
       requested = scopes.to_set
-      permitted = %i[config environments environment namespace].to_set
-      unless requested.subset?(permitted)
-        raise ArgumentError, "Invalid key(s) #{requested.difference(permitted).to_a.join(' ')}"
+      unless requested.subset?(permitted_scopes)
+        raise ArgumentError, "Invalid key(s) #{requested.difference(permitted_scopes).to_a.join(' ')}"
       end
 
       @parse_scopes ||= Set.new
       @parse_scopes.merge(scopes) # NOTE: Set.merge is equivalent to Hash.merge!
+    end
+
+    def permitted_scopes
+      @permitted_scopes ||= %i[config environments environment namespace].to_set
     end
 
     # Public interface; called by models to list the search sources, e.g. :cli, :plugins, :project, :user
@@ -93,7 +96,6 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
       opts = {}
       opts.merge!(project: Project::PARSE_NAME) if column_names.include?('project_id')
       parse_scopes(:config) if parse_scopes.empty?
-      # fixture_file = "#{parse_options[:fixture_name]}.yml"
 
       sorted_files = pf_map.keys.group_by { |b| b.split('/').size }.sort
       leaf_files = sorted_files.pop.last
@@ -116,6 +118,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
         Cnfs.logger.debug files.join("\n")
         config = Config.load_files(files).to_hash.deep_stringify_keys
         files_loaded.append(files)
+        # TODO: This should probably yield to Cli/Packer ApplicationRecord
         if parse_scopes.include?(:namespace)
           environment, namespace = path_key.split('/')[1..2]
           namespace_key = "#{environment}_#{namespace}"
@@ -131,6 +134,17 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
             config = { environment_key => config.merge(opts.merge(name: environment_key)) }
           else
             merger = column_names.include?('environment_id') ? { environment: environment_key } : {}
+            config.each { |key, value| value.merge!(opts).merge!(name: key).merge!(merger) }
+            # TODO
+            config.transform_keys! { |key| "#{environment_key}_#{key}" }
+          end
+        elsif parse_scopes.include?(:build)
+          # binding.pry
+          environment_key = path_key.split('/').second
+          if fixture_is_singular?
+            config = { environment_key => config.merge(opts.merge(name: environment_key)) }
+          else
+            merger = column_names.include?('build_id') ? { build: environment_key } : {}
             config.each { |key, value| value.merge!(opts).merge!(name: key).merge!(merger) }
             # TODO
             config.transform_keys! { |key| "#{environment_key}_#{key}" }

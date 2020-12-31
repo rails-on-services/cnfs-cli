@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
 class OperatingSystem < ApplicationRecord
-  store :config, coder: YAML, accessors:
-    %i[guest_os_type iso_checksum iso_checksum_type iso_url]
+  store :config, coder: YAML, accessors: %i[
+    guest_os_type iso_checksum iso_checksum_type iso_url
+  ]
 
   serialize :boot_command, Array
 
   parse_sources :cli, :project
 
   def as_packer
-    # super.except('operating_system_id', 'type').merge(guest_os_type: guest_os_type,
-    super.except('type').merge(guest_os_type: guest_os_type,
-                               iso_checksum: iso_checksum, iso_checksum_type: iso_checksum_type, iso_url: iso_url)
+    super.except('type')
+         .merge(guest_os_type: guest_os_type, iso_checksum: iso_checksum,
+                iso_checksum_type: iso_checksum_type, iso_url: iso_url)
   end
 
   def as_save

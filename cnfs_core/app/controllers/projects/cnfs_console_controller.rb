@@ -21,7 +21,7 @@ CnfsCommandSet.add_command(Console)
 Pry.config.commands.import CnfsCommandSet
 
 module Projects
-  class ConsoleControllerBase
+  class CnfsConsoleController
     include ExecHelper
 
     def execute

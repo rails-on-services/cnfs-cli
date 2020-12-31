@@ -3,8 +3,6 @@
 class MainController < Thor
   include CommandHelper
 
-  register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
-
   # Project Management
   if Cnfs.project_root.eql?('.')
     desc 'new NAME', 'Create a new CNFS project'
@@ -31,11 +29,12 @@ class MainController < Thor
     option :guided, desc: 'Create project with a guided configuration',
                     aliases: '-g', type: :boolean
     def new(name)
-      if Dir.exist?(name) && !validate_destroy('Directory already exists. Destroy and recreate?')
+      path = Pathname.new(name)
+      if path.exist? && !validate_destroy('Directory already exists. Destroy and recreate?')
         raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
       end
 
-      FileUtils.rm_rf(name) if Dir.exist?(name)
+      path.rmtree if path.exist?
       execute(name: name)
       # Dir.chdir(name) do
       #   puts Dir.pwd
@@ -44,17 +43,19 @@ class MainController < Thor
       #   # execute({ blueprints: cmd(:blueprints) }, :new, 2, :configure)
       # end
     end
-  end
 
-  unless Cnfs.project_root.eql?('.')
+  else
+
+    register BuildsController, 'build', 'build SUBCOMMAND [options]', 'Manage project'
+    register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
     cnfs_class_options :dry_run, :logging
 
-    desc 'build NAME', 'Build a packer config for a build'
-    before :initialize_project
-    def build(name)
-      execute(name: name)
-      # BuildGenerator.new(args, options).invoke_all
-    end
+    # desc 'build NAME', 'Build a packer config for a build'
+    # before :initialize_project
+    # def build(name)
+    #   execute(name: name)
+    #   # BuildGenerator.new(args, options).invoke_all
+    # end
   end
 
   # Utility

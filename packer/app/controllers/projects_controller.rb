@@ -28,7 +28,6 @@ class ProjectsController < Thor
   # before :ensure_valid_project
   map %w[c] => :console
   def console
-    # Cnfs.initialize_project
     execute
   end
 

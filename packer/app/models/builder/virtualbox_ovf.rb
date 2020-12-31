@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 class Builder::VirtualboxOvf < Builder
-  store :config, coder: YAML, accessors:
-        %i[guest_additions_mode headless
-           shutdown_command source_path
-           ssh_password ssh_username ssh_wait_timeout]
+  store :config, coder: YAML, accessors: %i[
+    guest_additions_mode headless
+    shutdown_command source_path
+    ssh_password ssh_username ssh_wait_timeout
+  ]
   # output_directory shutdown_command source_path
 
   def source_path

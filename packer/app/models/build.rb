@@ -15,6 +15,8 @@ class Build < ApplicationRecord
   store :config, accessors: %i[ansible_groups]
 
   parse_sources :project
+  parse_scopes :build
+  parse_options fixture_name: :build
 
   def packer_file
     'packer.json'

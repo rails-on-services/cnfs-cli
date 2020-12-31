@@ -26,4 +26,10 @@ class ApplicationRecord < Cnfs::ApplicationRecord
       hash[accessor] = send(accessor)
     end
   end
+
+  class << self
+    def permitted_scopes
+      @permitted_scopes ||= %i[config build].to_set
+    end
+  end
 end
