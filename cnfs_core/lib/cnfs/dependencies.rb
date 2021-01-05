@@ -14,3 +14,5 @@ require 'tty-prompt'
 require 'tty-table'
 
 require_relative 'configuration'
+require_relative 'tty/prompt'
+require_relative 'tty/prompt/answers_collector'

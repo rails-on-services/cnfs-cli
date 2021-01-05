@@ -34,7 +34,7 @@ class Blueprint < ApplicationRecord
     )
   end
 
-  def file_path
+  def save_path
     paths.config.join('environments', environment.name, 'blueprints.yml')
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/ModuleLength
-module CommandHelper
+module CnfsCommandHelper
   extend ActiveSupport::Concern
 
   class_methods do
@@ -31,24 +31,10 @@ module CommandHelper
 
   # rubocop:disable Metrics/BlockLength
   included do |_base|
-    add_cnfs_option :environment,       desc: 'Target environment',
-                                        aliases: '-e', type: :string, default: Cnfs.config.environment
-    add_cnfs_option :namespace,         desc: 'Target namespace',
-                                        aliases: '-n', type: :string, default: Cnfs.config.namespace
-    add_cnfs_option :repository,        desc: 'The repository in which to run the command',
-                                        aliases: '-r', type: :string, default: Cnfs.config.repository
-    add_cnfs_option :source_repository, desc: 'The source repository to link to',
-                                        aliases: '-s', type: :string, default: Cnfs.config.source_repository
-
-    add_cnfs_option :tags,              desc: 'Filter by tags',
-                                        aliases: '-t', type: :array
-    add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
-                                        aliases: '-f', type: :boolean
-    add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
-                                        aliases: '--ff', type: :boolean
-
     add_cnfs_option :dry_run,           desc: 'Do not execute commands',
                                         aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
+    add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
+                                        aliases: '-f', type: :boolean
     add_cnfs_option :logging,           desc: 'Display loggin information with degree of verbosity',
                                         aliases: '-l', type: :string, default: Cnfs.config.logging
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',

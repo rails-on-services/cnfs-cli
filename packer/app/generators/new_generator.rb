@@ -7,7 +7,6 @@ class NewGenerator < ApplicationGenerator
     directory('files', '.')
     copy_file(CnfsPacker.gem_root.join('config/project.yml'), 'config/project.yml')
     append_file('config/project.yml', "name: #{name}\n")
-    template('Vagrantfile.rb.erb', 'Vagrantfile')
   end
 
   private

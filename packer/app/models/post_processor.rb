@@ -1,19 +1,7 @@
 # frozen_string_literal: true
 
 class PostProcessor < ApplicationRecord
-  belongs_to :build
-
-  parse_sources :project
-  parse_scopes :build
-
-  def as_save
-    attributes.except('id', 'name', 'builder_id')
-              .merge(build: build&.name)
-  end
-
-  def as_packer
-    super.merge(output: "post-processors/#{packer_name}/output/#{packer_name}.box")
-  end
+  include Concerns::BelongsToBuild
 
   class << self
     def create_table(schema)

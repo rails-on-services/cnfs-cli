@@ -48,7 +48,7 @@ class Resource < ApplicationRecord
     self.class.name.demodulize
   end
 
-  def file_path
+  def save_path
     Cnfs.project.paths.config.join('environments', environment.name, "#{self.class.table_name}.yml")
   end
 

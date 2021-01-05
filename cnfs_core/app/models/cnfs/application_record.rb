@@ -8,9 +8,13 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
   after_save :save_in_file
 
   def edit
-    view_class.new(model: self).edit
+    view.edit
     update(attributes)
     self
+  end
+
+  def view
+    view_class.new(model: self)
   end
 
   def view_class
@@ -18,27 +22,27 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
   end
 
   def destroy_in_file
-    content = YAML.load_file(file_path).to_h
+    content = YAML.load_file(save_path).to_h
     content = content.except(name).to_yaml
-    File.open(file_path, 'w') { |file| file.write(content) }
+    File.open(save_path, 'w') { |file| file.write(content) }
   end
 
   def save_in_file
-    content = YAML.load_file(file_path) if file_path.exist?
+    content = YAML.load_file(save_path) if save_path.exist?
     content ||= {}
     new_content = fixture_is_singular? ? as_save : { name => as_save }
     new_content = JSON.parse(new_content.to_json)
     content.merge!(new_content)
-    File.open(file_path, 'w') { |file| file.write(content.to_yaml) }
+    File.open(save_path, 'w') { |file| file.write(content.to_yaml) }
   end
 
   def fixture_is_singular?
-    fp = file_path.split.last.to_s.delete_suffix('.yml')
+    fp = save_path.split.last.to_s.delete_suffix('.yml')
     fp.eql?(fp.singularize)
   end
 
   # Override to provide a path alternative to config/table_name.yml
-  def file_path
+  def save_path
     Cnfs.project.paths.config.join("#{self.class.table_name}.yml")
   end
 

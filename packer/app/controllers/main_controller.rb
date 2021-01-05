@@ -46,16 +46,11 @@ class MainController < Thor
 
   else
 
-    register BuildsController, 'build', 'build SUBCOMMAND [options]', 'Manage project'
+    register BuildsController, 'build', 'build SUBCOMMAND [options]', 'Manage project builds'
+    map %w[vm] => :machine
+    register MachinesController, 'machine', 'machine SUBCOMMAND [options]', 'Manage and interact with built VMs (short-cut: vm)'
     register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
     cnfs_class_options :dry_run, :logging
-
-    # desc 'build NAME', 'Build a packer config for a build'
-    # before :initialize_project
-    # def build(name)
-    #   execute(name: name)
-    #   # BuildGenerator.new(args, options).invoke_all
-    # end
   end
 
   # Utility

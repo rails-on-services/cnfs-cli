@@ -39,4 +39,8 @@ class OperatingSystem::Debian < OperatingSystem
   def iso_url_file_name
     'amd64-xfce-CD-1.iso'
   end
+
+  def template(generator, builder)
+    generator.template('builder/debian/buster64/preseed.cfg', "builders/#{builder.packer_name}/input/preseed.cfg")
+  end
 end

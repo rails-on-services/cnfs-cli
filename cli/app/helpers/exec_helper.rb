@@ -2,15 +2,10 @@
 
 module ExecHelper
   extend ActiveSupport::Concern
+  include CnfsExecHelper
 
   included do
-    attr_accessor :options, :args
-  end
-
-  def initialize(options:, args:)
-    @options = options
-    @args = args
-    before_execute if respond_to?(:before_execute)
+    extend CnfsExecHelper
   end
 
   def each_runtime
@@ -28,15 +23,7 @@ module ExecHelper
     end
   end
 
-  def queue
-    @queue ||= CommandQueue.new # (halt_on_failure: true)
-  end
-
   def environment
     project.environment
-  end
-
-  def project
-    Cnfs.project
   end
 end

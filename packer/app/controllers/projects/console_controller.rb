@@ -4,7 +4,7 @@ module Projects
   class ConsoleController < CnfsConsoleController
     class << self
       def commands
-        %i[builds projects]
+        %i[builds projects machines]
       end
 
       def shortcuts

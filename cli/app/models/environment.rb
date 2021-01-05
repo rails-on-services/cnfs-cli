@@ -37,11 +37,11 @@ class Environment < ApplicationRecord
   end
 
   # Override to provide a path alternative to config/table_name.yml
-  def file_path
+  def save_path
     Cnfs.project.paths.config.join('environments', name, 'environment.yml')
   end
 
-  def user_file_path
+  def user_save_path
     Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', name, 'environment.yml')
   end
 

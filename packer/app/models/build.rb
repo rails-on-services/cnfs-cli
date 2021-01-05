@@ -14,6 +14,15 @@ class Build < ApplicationRecord
   # store :config, accessors: %i[dist_version]
   store :config, accessors: %i[ansible_groups]
 
+  before_save :ensure_directory
+  after_destroy :remove_tree
+
+  def remove_tree
+    execute_path.rmtree if execute_path.exist?
+    config_path = save_path.split.first
+    config_path.rmtree if config_path.exist?
+  end
+
   parse_sources :project
   parse_scopes :build
   parse_options fixture_name: :build
@@ -56,20 +65,16 @@ class Build < ApplicationRecord
     packages_path.join(super || '')
   end
 
-  def bump(type)
-    type = type.to_s.downcase
-    return unless %w[major minor pach pre].include?(type)
-
-    Dir.chdir(Cnfs.paths.tmp) do
-      File.open('VERSION', 'w') { |f| f.write(version) }
-      nv = Bump::Bump.next_version(type)
-      FileUtils.rm('VERSION')
-      nv
-    end
+  def as_save
+    attributes.except('id', 'name', 'project_id', 'source_id').merge(source: source&.name) 
   end
 
-  def as_save
-    attributes.except('id', 'name', 'project_id', 'source_id').merge(source: source&.name)
+  def ensure_directory
+    save_path.split.first.mkpath unless save_path.split.first.exist?
+  end
+
+  def save_path
+    Cnfs.project.paths.config.join('builds', name, "#{self.class.table_name.singularize}.yml")
   end
 
   class << self

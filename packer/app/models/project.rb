@@ -4,6 +4,7 @@ class Project < ApplicationRecord
   PARSE_NAME = 'project'
 
   has_many :builds
+  belongs_to :build, required: false
 
   store :paths, coder: YAML
   store :options, coder: YAML
@@ -20,11 +21,6 @@ class Project < ApplicationRecord
     Cnfs.user_data_root.join('packer/cache')
   end
 
-  def self.hello
-    Pathname(__FILE__).dirname.to_s
-    __dir__
-  end
-
   def paths
     @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
   end
@@ -38,7 +34,6 @@ class Project < ApplicationRecord
       content = Cnfs.config.to_hash.slice(
         *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
       )
-      # namespace = "#{content[:environment]}_#{content[:namespace]}"
       options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
       output = { PARSE_NAME => content.merge(options: options) }
       create_all(output)
@@ -46,6 +41,7 @@ class Project < ApplicationRecord
 
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
+        t.references :build
         t.string :name
         t.string :config
         t.string :options

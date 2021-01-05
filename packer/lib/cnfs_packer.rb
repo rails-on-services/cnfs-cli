@@ -7,6 +7,7 @@ require 'uri'
 
 require_relative 'cnfs_packer/version'
 require_relative 'cnfs'
+require 'pry'
 
 # Documentation
 module CnfsPacker
@@ -19,7 +20,7 @@ module CnfsPacker
   module Plugins; end
 
   class << self
-    attr_accessor :repository
+    attr_accessor :__build
 
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
@@ -51,10 +52,10 @@ module CnfsPacker
     end
 
     def models_to_parse
-      Dir.chdir(gem_root.join('app/models')) do
-        # Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify.safe_constantize }
-        Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify }.reject { |r| r.eql?('ApplicationRecord') }
-      end
+      # Dir.chdir(gem_root.join('app/models')) do
+      #   # Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify.safe_constantize }
+      #   Dir['*.rb'].map { |file| file.delete_suffix('.rb').classify }.reject { |r| r.eql?('ApplicationRecord') }
+      # end
       [Build, Builder, OperatingSystem, PostProcessor, Project, Provisioner]
     end
 

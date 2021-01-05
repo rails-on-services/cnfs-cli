@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
 class Provisioner::Shell < Provisioner
-  store :config, coder: YAML, accessors: %i[inline]
+  store :config, accessors: %i[inline]
+
+  validates :inline, presence: true
+
+  # def set_defaults; end
 end
