@@ -15,6 +15,7 @@ class Build < ApplicationRecord
   store :config, accessors: %i[ansible_groups]
 
   before_save :ensure_directory
+  after_save :write_it
   after_destroy :remove_tree
 
   def remove_tree
@@ -75,6 +76,15 @@ class Build < ApplicationRecord
 
   def save_path
     Cnfs.project.paths.config.join('builds', name, "#{self.class.table_name.singularize}.yml")
+  end
+
+  def write_it
+    execute_path.mkpath unless execute_path.exist?
+    Dir.chdir(execute_path) do
+      BuildGenerator.new([self], Cnfs.project.options).invoke_all
+      render
+      yield if block_given?
+    end
   end
 
   class << self

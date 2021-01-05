@@ -11,7 +11,8 @@ class Builder < ApplicationRecord
   # def set_defaults; end
 
   def as_save
-    attributes.except('id', 'build_id', 'builder_id').merge(builder: builder&.name)
+    b_hash = builder ? { builder: builder.name } : {}
+    attributes.except('id', 'build_id', 'builder_id', 'name').merge(b_hash)
   end
 
   def as_packer
@@ -19,6 +20,18 @@ class Builder < ApplicationRecord
   end
 
   class << self
+   def parse
+      # key: 'builds/hey/builders.yml'
+      super do |key, output, _opts|
+        build = key.split('/')[1]
+        output.each do |_key, value|
+          next unless value['builder']
+
+          value['builder'] = "#{build}_#{value['builder']}"
+        end
+      end
+    end
+
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :build

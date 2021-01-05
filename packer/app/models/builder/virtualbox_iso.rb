@@ -11,6 +11,10 @@ class Builder::VirtualboxIso < Builder
     ssh_username ssh_wait_timeout vboxmanage vm_name
   ]
 
+  def as_save
+    super.except('operating_system_id').merge(operating_system: operating_system&.name)
+  end
+
   # Used only by the next build's builder for its input
   # TODO: This should be an API of the builder base class
   def output_file

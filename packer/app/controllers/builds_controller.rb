@@ -8,8 +8,9 @@ class BuildsController < Thor
   # class_before :ensure_valid_project
 
   desc 'apply', 'Run packer on a configured build'
-  def apply(name)
-    execute({ name: name }, :crud, 2, :apply)
+  cnfs_options :build
+  def apply
+    execute({}, :crud, 2, :apply)
   end
 
   desc 'create', 'Create a new build configuration'
@@ -23,6 +24,7 @@ class BuildsController < Thor
   end
 
   desc 'describe NAME', 'Describe an build configuration'
+  # cnfs_options :build
   def describe(name)
     execute({ name: name }, :crud, 2, :describe)
   end

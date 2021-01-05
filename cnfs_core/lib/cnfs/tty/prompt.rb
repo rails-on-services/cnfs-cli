@@ -10,6 +10,12 @@ module Cnfs::TTY
       super(**options.merge(default_options))
     end
 
+    def p_ask(key, title: nil, value: nil, **options)
+      d_value = value || model.send(key)
+      value_hash = d_value ? { value: d_value } : {}
+      prompt.key(key).ask("#{(title || key).to_s.humanize}:", **options.merge(value_hash))
+    end
+
     def default_options
       { help_color: :cyan }
     end
@@ -21,7 +27,7 @@ module Cnfs::TTY
     def next_record(type, noop = false)
       name = "@#{type}"
       taken_name = "@#{type}_taken"
-      records = instance_variable_get(name) || instance_variable_set(name, model.send(type).order(:order).each)
+      records = instance_variable_get(name) || instance_variable_set(name, record_set(model.send(type)).each)
       taken = instance_variable_get(taken_name) || instance_variable_set(taken_name, 0)
       return taken < records.size if noop
 
@@ -29,6 +35,11 @@ module Cnfs::TTY
 
       instance_variable_set(taken_name, taken + 1)
       records.next
+    end
+
+    # Override this method to modify the query of returned rows; e.g. base.order(:column_name)
+    def record_set(base)
+      base
     end
 
     def collect_model(**options, &block)

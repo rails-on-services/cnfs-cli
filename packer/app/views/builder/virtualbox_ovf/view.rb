@@ -10,8 +10,8 @@ class Builder::VirtualboxOvf::View < Cnfs::TTY::Prompt
 
   def update
     if build_sources.any?
-      name = prompt.key(:source).enum_select('Source Builder:', build_sources)
-      prompt.answer_set(:source, model.build.builders.find_by(name: name))
+      name = prompt.key(:builder).enum_select('Source Builder:', build_sources)
+      prompt.answer_set(:builder, model.build.builders.find_by(name: name))
     end
     prompt.key(:headless).ask('Headless?', value: model.headless.to_s, convert: :boolean)
   end

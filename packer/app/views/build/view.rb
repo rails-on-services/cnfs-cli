@@ -34,6 +34,10 @@ class Build::View < Cnfs::TTY::Prompt
     end
   end
 
+  def record_set(base)
+    base.order(:order)
+  end
+
   def update_child(prompt, view_for, method)
     prompt.answer_set(:build, model)
     child_model = next_record(view_for.to_s.pluralize)
