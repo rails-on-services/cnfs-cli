@@ -12,16 +12,16 @@ module Concerns
 
     def prepare_for_create
       self.key ||= Lockbox.generate_key
-      file_path.split.first.mkpath
+      save_path.split.first.mkpath
     end
 
     def write_key
-      user_file_path.split.first.mkpath
-      File.open(user_file_path, 'w') { |f| f.write("---\nkey: #{key}\n") }
+      user_save_path.split.first.mkpath
+      File.open(user_save_path, 'w') { |f| f.write("---\nkey: #{key}\n") }
     end
 
     def remove_paths
-      [file_path, user_file_path].each do |path|
+      [save_path, user_save_path].each do |path|
         path = path.split.first
         path.rmtree if path.exist?
       end

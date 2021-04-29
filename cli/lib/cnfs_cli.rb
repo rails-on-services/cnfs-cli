@@ -12,11 +12,13 @@ module CnfsCli
     attr_accessor :repository
 
     def initialize!
+      # Initialize plugins in the Cnfs namespace
       Cnfs.initialize_dev_plugins(gem_root) if Cnfs.initialize_plugins.empty?
       Cnfs.project_file = 'config/project.yml'
       Cnfs.plugin_root = self
       Cnfs.initialize! do |event|
         if event.eql?(:before_loader)
+          # Initialize plugins in the CnfsCli namespace
           Cnfs.config.dig(:cli, :dev) ? initialize_development : initialize_plugins
           Cnfs.autoload_dirs.concat(Cnfs.autoload_all(gem_root))
         elsif event.eql?(:after_loader)

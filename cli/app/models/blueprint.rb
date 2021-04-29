@@ -52,7 +52,8 @@ class Blueprint < ApplicationRecord
     end
 
     def defined_files
-      Cnfs.plugins.values.append(Cnfs).each_with_object([]) do |p, ary|
+      # binding.pry
+      CnfsCli.plugins.values.append(CnfsCli).each_with_object([]) do |p, ary|
         path = p.plugin_lib.gem_root.join('app/models/blueprint')
         next unless path.exist?
 

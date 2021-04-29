@@ -28,6 +28,6 @@ module CnfsExecHelper
     obj.view.send(method)
     return obj if obj.save
 
-    puts obj.errors.join("\n")
+    $stdout.puts obj.errors.map(&:full_message).join("\n")
   end
 end

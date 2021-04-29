@@ -19,7 +19,8 @@ module Blueprints
       environment = Environment.find_by(name: options.environment)
       blueprint = blueprint_class.new(name: args.name, environment: environment)
       blueprint_view = blueprint.view_class.new(model: blueprint)
-      blueprint_view.edit
+      binding.pry
+      blueprint_view.create
       blueprint.save
 
       blueprint.resource_classes.each do |resource_class|
@@ -49,7 +50,7 @@ module Blueprints
       data = Environment.order(:name).each_with_object({}) do |env, hash|
         hash[env.name] = env.blueprints.pluck(:name)
       end
-      puts TTY::Tree.new(data).render
+      puts data.any? ? TTY::Tree.new(data).render : 'none found'
     end
 
     def update

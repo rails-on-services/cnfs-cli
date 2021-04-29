@@ -9,7 +9,8 @@ class Environment < ApplicationRecord
 
   has_many :blueprints
   has_many :resources, through: :blueprints
-  has_many :runtimes, through: :blueprints
+  # has_many :runtimes, through: :blueprints
+  def runtimes; [] end
   # has_many :resources
   # has_many :runtimes, through: :resources
   has_many :namespaces

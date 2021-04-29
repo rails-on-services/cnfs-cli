@@ -10,30 +10,73 @@ module Cnfs::TTY
       super(**options.merge(default_options))
     end
 
-    def p_ask(key, title: nil, value: nil, **options)
-      d_value = value || model.send(key)
-      value_hash = d_value ? { value: d_value } : {}
-      prompt.key(key).ask("#{(title || key).to_s.humanize}:", **options.merge(value_hash))
-    end
-
     def default_options
       { help_color: :cyan }
     end
 
-    def has_next?(record_set)
-      next_record(record_set, true)
+    def p_ask(key, title: nil, value: nil, **options)
+      value ||= model.send(key)
+      prompt.key(key).ask("#{title || key.to_s.humanize}:", **modified_options(key, value, **options))
     end
 
-    def next_record(type, noop = false)
+    def p_enum_select(key, title: nil, value: nil, choices: [], **options)
+      value ||= model.send(key)
+      # modified_options(key, value, **options)
+      prompt.key(key).enum_select("#{title || key.to_s.humanize}:", choices, **options) do |menu|
+        menu.default(value) if value
+      end
+    end
+
+    def p_select(key, title: nil, value: nil, choices: [], **options)
+      value ||= model.send(key)
+      # modified_options(key, value, **options)
+      prompt.key(key).select("#{title || key.to_s.humanize}:", choices, **options) do |menu|
+        menu.default(value) if value
+      end
+    end
+
+    def p_multi_select(key, title: nil, values: nil, choices: [], **options)
+      values ||= model.send(key).map(&:to_s)
+      prompt.key(key).multi_select("#{title || key.to_s.humanize}:", choices.map(&:to_s), **options) do |menu|
+        menu.default(*values) if values.any?
+      end
+    end
+
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/CyclomaticComplexity
+    def modified_options(key, value, **options)
+      if value.is_a?(Array)
+        value = value.join(', ')
+        options.merge!(convert: :array)
+      end
+      value = (value || '').to_s if options.key?(:convert) && options[:convert].eql?(:boolean)
+      options.merge!(value: value) if value
+      required = model.class.validators_on(key).select do |v|
+        v.is_a?(ActiveRecord::Validations::PresenceValidator)
+      end.size.positive?
+      options.merge!(required: true) if required
+      options
+    end
+    # rubocop:enable Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+
+    def next?(type)
+      next_record(type, take: false)
+    end
+
+    def next_record(type, take: true)
       name = "@#{type}"
       taken_name = "@#{type}_taken"
       records = instance_variable_get(name) || instance_variable_set(name, record_set(model.send(type)).each)
       taken = instance_variable_get(taken_name) || instance_variable_set(taken_name, 0)
-      return taken < records.size if noop
+      return taken < records.size unless take
 
       return if taken.eql?(records.size)
 
       instance_variable_set(taken_name, taken + 1)
+      # binding.pry
       records.next
     end
 
@@ -42,6 +85,7 @@ module Cnfs::TTY
       base
     end
 
+    # rubocop:disable Metrics/AbcSize
     def collect_model(**options, &block)
       # Original code from TTY::Prompt#collect
       collector = AnswersCollector.new(self, **options)
@@ -52,9 +96,11 @@ module Cnfs::TTY
       association_names.select { |name| ret_val.keys.include?(name) }.each do |name|
         klass = name.to_s.classify.safe_constantize
         ret_val[name].map! { |params| klass.new(params.merge(model.class.name.underscore => model)) }
+        # binding.pry
       end
       model.assign_attributes(ret_val)
       model
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

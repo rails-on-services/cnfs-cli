@@ -7,9 +7,9 @@ class ProjectGenerator < Thor::Group
   def generate_project_files
     user_project_dir = Cnfs.user_root.join(name)
     user_project_dir.rmtree if user_project_dir.exist?
-    config = YAML.load_file(Cnfs.gem_root.join(Cnfs::PROJECT_FILE))
+    config = YAML.load_file(CnfsCli.gem_root.join(Cnfs.project_file))
     config.merge!(name: name).stringify_keys!
-    create_file(Cnfs::PROJECT_FILE, config.to_yaml)
+    create_file(Cnfs.project_file, config.to_yaml)
     directory('files', '.')
     # template('README.md')
     template_files.sort.each do |template|

@@ -7,6 +7,7 @@ require 'little-plugger'
 # by loading plugins from a directory path for development
 # Plugins are loaded if found under the enclosing module's namespace
 module CnfsPlugger
+  # included when a class/module extends this module
   module ClassMethods
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
@@ -15,8 +16,10 @@ module CnfsPlugger
       plugin_path = LittlePlugger.default_plugin_path(self) # cnfs_core/plugins
       gem_root.join('..').children.select(&:directory?).each do |dir|
         plugin_dir = dir.join('lib', plugin_path)
-        # puts "* #{name} - #{plugin_dir}"
-        next unless plugin_dir.directory? && plugin_dir.children.any?
+        unless plugin_dir.directory? && plugin_dir.children.any?
+          # puts "* #{name} - #{plugin_dir}"
+          next
+        end
 
         $LOAD_PATH.unshift(dir.join('lib'))
         plugin_dir.children.each do |file|
@@ -39,14 +42,19 @@ module CnfsPlugger
 
   class << self
     def extended(base)
+      # puts "x: #{base} y"
       base.extend(ClassMethods)
     end
   end
 end
 
+# Stub of Cnfs module
 module Cnfs
   extend LittlePlugger
   extend CnfsPlugger
+
+  # Required by LittlePlugger
   module Plugins; end
+
   class Error < StandardError; end
 end

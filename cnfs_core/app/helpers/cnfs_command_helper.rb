@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
 module CnfsCommandHelper
   extend ActiveSupport::Concern
 
@@ -131,4 +130,3 @@ module CnfsCommandHelper
   end
   # rubocop:enable Metrics/BlockLength
 end
-# rubocop:enable Metrics/ModuleLength

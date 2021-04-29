@@ -13,9 +13,14 @@ class Location < ApplicationRecord
 
     def after_parse
       location_names = %w[resources services].each_with_object([]) do |item, ary|
-        yaml = YAML.load_file(Cnfs::Configuration.dir.join("#{item}.yml"))
+        file = Cnfs::Configuration.dir.join("#{item}.yml")
+        next unless file.exist?
+
+        # If got here then the file was found which needs to be tested
+        yaml = YAML.load_file(file)
         locations = yaml.each_value.map { |m| m['location'] }.compact
         ary.concat(locations)
+        # binding.pry
       end
       location_names.uniq.each do |location_name|
         id = ActiveRecord::FixtureSet.identify(location_name)

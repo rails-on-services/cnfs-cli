@@ -13,9 +13,7 @@ class ProjectsController < Thor
   option :local, desc: 'Display local overrides',
                  aliases: '-l', type: :boolean
   def config
-    # puts Cnfs.app.attributes
-    # puts "-----"
-    YAML.load_file('cnfs.yml').each do |key, value|
+    YAML.load_file(Cnfs.project_file).each do |key, value|
       puts "#{key}: #{value}"
     end
   end
