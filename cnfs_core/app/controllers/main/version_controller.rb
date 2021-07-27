@@ -19,7 +19,8 @@ module Main
       puts "cli_core#{' ' * (pad - 8)}#{Cnfs::VERSION}"
       Cnfs.plugin_root.plugins.each do |namespace, plugin_class|
         print "#{namespace}#{' ' * (pad - namespace.length)}"
-        puts plugin_class.plugin_lib::VERSION
+        lib_class = plugin_class.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize
+        puts lib_class::VERSION
       end
     end
     # rubocop:enable Metrics/AbcSize

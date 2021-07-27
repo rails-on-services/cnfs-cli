@@ -28,14 +28,16 @@ module Projects
 
     # rubocop:disable Metrics/AbcSize
     def __prompt
-      project = Pry::Helpers::Text.blue(Cnfs.project.name)
+      prompt = []
+      prompt << Pry::Helpers::Text.blue(Cnfs.project.name)
       env = Cnfs.project.environment.name
       environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
-      environment = Pry::Helpers::Text.send(environment_color, env)
-      namespace = Cnfs.project.namespace.name
+      prompt << Pry::Helpers::Text.send(environment_color, env)
+      prompt << Cnfs.project.namespace.name
       proc do |obj, _nest_level, _|
-        "[#{project}][#{environment}][#{namespace}] " \
-          "(#{Pry.view_clip(obj.class.name.demodulize.delete_suffix('Controller').underscore).gsub('"', '')})> "
+        klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
+        label = klass.eql?('console') ? '' : " (#{klass})"
+        "[#{prompt.join('][')}]#{label}> "
       end
     end
     # rubocop:enable Metrics/AbcSize

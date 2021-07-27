@@ -26,6 +26,7 @@ module Cnfs
         configure_logger
         require_minimum_deps
         yield :before_loader if block_given? # client's call to initialize_plugins
+        # ActiveSupport::Notifications.instrument 'before_loader_setup.cnfs', { loader: loader }
         setup_loader
         setup_extensions
         yield :after_loader if block_given? # client's call to cli
@@ -48,7 +49,9 @@ module Cnfs
     def source_paths_map
       @source_paths_map ||= {
         cli: [plugin_root.gem_root],
-        plugins: plugin_root.plugins.values.map { |p| p.plugin_lib.gem_root },
+        plugins: plugin_root.plugins.values.map { |p|
+          p.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize.gem_root
+        },
         project: [project_root],
         user: [user_root.join(config.name)]
       }
@@ -118,7 +121,7 @@ module Cnfs
       add_repository_autoload_paths
       autoload_dirs.each { |dir| loader.push_dir(dir) }
       loader.enable_reloading
-      invoke_plugins_with(:before_loader_setup, loader)
+      ActiveSupport::Notifications.instrument 'before_loader_setup.cnfs', { loader: loader }
       loader.setup
     end
 
@@ -161,7 +164,7 @@ module Cnfs
     # rubocop:disable Metrics/PerceivedComplexity
     def add_plugin_autoload_paths
       plugin_root.plugins.values.each do |plugin_class|
-        next unless plugin_class.respond_to?(:plugin_lib) && (plugin = plugin_class.plugin_lib)
+        next unless (plugin = plugin_class.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize)
 
         gem_load_paths = plugin.respond_to?(:load_paths) ? plugin.load_paths : %w[app]
         plugin_load_paths = plugin.respond_to?(:plugin_load_paths) ? plugin.plugin_load_paths : default_load_paths
@@ -241,18 +244,6 @@ module Cnfs
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/MethodLength
 
-    def invoke_plugins_with(method, *options)
-      plugins_responding_to(method).each do |plugin|
-        options.empty? ? plugin.send(method) : plugin.send(method, options)
-      end
-    end
-
-    def plugins_responding_to(method)
-      plugin_root.plugins.values.append(plugin_root).select do |klass|
-        klass.plugin_lib.respond_to?(method)
-      end.collect(&:plugin_lib)
-    end
-
     def validate_command
       # Display help for new command when no arguments are passed
       ARGV.append('help', 'new') if ARGV.size.zero?
@@ -284,7 +275,7 @@ module Cnfs
     # OS methods
     def gid
       ext_info = OpenStruct.new
-      if RbConfig::CONFIG['host_os'] =~ /linux/ && Etc.getlogin
+      if platform.linux? && Etc.getlogin
         shell_info = Etc.getpwnam(Etc.getlogin)
         ext_info.puid = shell_info.uid
         ext_info.pgid = shell_info.gid
@@ -294,10 +285,6 @@ module Cnfs
 
     def capabilities
       @capabilities ||= set_capabilities
-    end
-
-    def plugin_lib
-      self
     end
 
     # rubocop:disable Metrics/MethodLength

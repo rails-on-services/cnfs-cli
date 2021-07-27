@@ -22,17 +22,12 @@ module CnfsCli
           Cnfs.config.dig(:cli, :dev) ? initialize_development : initialize_plugins
           Cnfs.autoload_dirs.concat(Cnfs.autoload_all(gem_root))
         elsif event.eql?(:after_loader)
+          ActiveSupport::Notifications.subscribe('before_project_configuration.cnfs') do |_event|
+            Cnfs::Configuration.models = models_to_parse
+          end
           yield if block_given?
         end
       end
-    end
-
-    def plugin_lib
-      self
-    end
-
-    def before_project_configuration
-      Cnfs::Configuration.models = models_to_parse
     end
 
     def models_to_parse

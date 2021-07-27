@@ -23,10 +23,10 @@ module Cnfs
     end
 
     def self.initialize
-      Cnfs.invoke_plugins_with(:before_project_configuration)
+      ActiveSupport::Notifications.instrument('before_project_configuration.cnfs')
       setup_database_tables
       load_configuration
-      Cnfs.invoke_plugins_with(:after_project_configuration)
+      ActiveSupport::Notifications.instrument('after_project_configuration.cnfs')
     end
 
     def self.setup_database_tables

@@ -125,7 +125,7 @@ class Runtime::Compose < Runtime
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
     Cnfs.logger.debug("Linked #{compose_file} to .env")
-    Cnfs.invoke_plugins_with(:on_runtime_switch)
+    ActiveSupport::Notifications.instrument('on_runtime_switch.cli')
     true
   end
 
@@ -162,8 +162,8 @@ class Runtime::Compose < Runtime
 
   def set_compose_env
     hash = {}
-    # Call each plugin passing in the command object and the env hash
-    Cnfs.invoke_plugins_with(:set_compose_env, silent_command, hash)
+    # Notify listeners passing in the command object and the env hash
+    ActiveSupport::Notifications.instrument 'set_compose_env.cli', { command: silent_command, hash: hash }
     hash
   end
 

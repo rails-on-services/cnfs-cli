@@ -5,6 +5,8 @@ require 'active_support/core_ext/enumerable'
 require 'active_support/core_ext/hash'
 require 'active_support/core_ext/module/introspection'
 require 'active_support/inflector'
+require 'active_support/notifications'
+require 'active_support/time'
 
 require 'fileutils'
 require 'lockbox'

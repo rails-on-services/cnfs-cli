@@ -58,7 +58,7 @@ module Projects
         return {} unless defined?(ActiveRecord)
 
         shortcuts = model_shortcuts
-        Cnfs.invoke_plugins_with(:add_console_shortcuts, shortcuts)
+        ActiveSupport::Notifications.instrument 'add_console_shortcuts.cnfs', { shortcuts: shortcuts }
         shortcuts
       end
     end
@@ -93,6 +93,10 @@ module Projects
     def od(key)
       @options = Thor::CoreExt::HashWithIndifferentAccess.new(options.except(key.to_s))
       options
+    end
+
+    def method_missing(method)
+      puts "Invalid command '#{method}'"
     end
   end
 end
