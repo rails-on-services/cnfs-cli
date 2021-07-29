@@ -93,6 +93,9 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/PerceivedComplexity
     def parse
+    end
+
+    def x_parse
       return unless eligible_files
 
       # TODO: Raise unldess parse_sources.size.positive?
@@ -166,7 +169,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
       # rubocop:enable Metrics/BlockLength
       create_all(output)
       files_loaded
-      # binding.pry if Cnfs.config.is_cli
+      # binding.pry if Cnfs.config.is_console
     end
     # rubocop:enable Metrics/AbcSize
     # rubocop:enable Metrics/CyclomaticComplexity
@@ -207,7 +210,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
     # rubocop:enable Style/MultilineBlockChain
 
     def create_all(content)
-      File.open(Cnfs::Configuration.dir.join("#{table_name}.yml"), 'w') do |file|
+      File.open(Cnfs::Configuration.fixtures_dir.join("#{table_name}.yml"), 'w') do |file|
         file.write(content.deep_stringify_keys.to_yaml)
       end
     end

@@ -50,16 +50,10 @@ module CnfsCommandHelper
     private
 
     def initialize_project
-      Cnfs.require_deps
-      Cnfs.with_timer('loading project configuration') do
-        # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
-        # Merge options also under options key for Project to pick up
-        @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
-        # binding.pry
-        Cnfs.config.merge!(options).merge!(options: options)
-        Cnfs::Configuration.initialize!
-        # Builder::Ansible.clone_repo
-      end
+      # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
+      # Merge options also under options key for Project to pick up
+      @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
+      Cnfs::Boot.load_configuration(options)
     end
 
     # rubocop:disable Metrics/ParameterLists
@@ -90,6 +84,7 @@ module CnfsCommandHelper
       klass
     end
 
+    # TODO: Most of these are specific to CLI gem so move them there
     # Hollaback Callbacks
     def prepare_runtime
       project.available_runtimes.each(&:prepare)
@@ -124,6 +119,7 @@ module CnfsCommandHelper
       "#{command_set}_controller".classify.safe_constantize.new(args, options)
     end
 
+    # TODO: Move to CLI gem
     def project
       Cnfs.project
     end

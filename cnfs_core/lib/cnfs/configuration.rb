@@ -24,12 +24,12 @@ module Cnfs
 
     def self.initialize
       ActiveSupport::Notifications.instrument('before_project_configuration.cnfs')
-      setup_database_tables
-      load_configuration
+      create_database_tables
+      load_project_config_into_tables
       ActiveSupport::Notifications.instrument('after_project_configuration.cnfs')
     end
 
-    def self.setup_database_tables
+    def self.create_database_tables
       Cnfs.silence_output do
         ActiveRecord::Schema.define do |s|
           Cnfs::Configuration.models.each do |model|
@@ -42,20 +42,23 @@ module Cnfs
 
     # Convert configruation into fixtures and load them into the DB
     # rubocop:disable Metrics/AbcSize
-    def self.load_configuration
-      dir.rmtree if dir.exist?
-      dir.mkpath
-      models.each(&:parse)
-      fixtures = Dir.chdir(dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
-      ActiveRecord::FixtureSet.create_fixtures(dir, fixtures)
+    def self.load_project_config_into_tables
+      fixtures_dir.rmtree if fixtures_dir.exist?
+      fixtures_dir.mkpath
+      # What and how configurations are parsed is project specific so this should be a callback to the gem's code to implememt parse
+      Cnfs.prepare_fixtures(models)
+      # models.each(&:parse)
+      fixtures = Dir.chdir(fixtures_dir) { Dir['**/*.yml'] }.map { |f| f.gsub('.yml', '') }.sort
+      ActiveRecord::FixtureSet.create_fixtures(fixtures_dir, fixtures)
       models.each(&:after_parse)
+      # TODO: This has to be moved to CLI gem
       Cnfs.project = Project.first
     ensure
-      FileUtils.rm_rf(dir) unless Cnfs.config.retain # _artifacts
+      FileUtils.rm_rf(fixtures_dir) unless Cnfs.config.retain # _artifacts
     end
     # rubocop:enable Metrics/AbcSize
 
-    def self.dir
+    def self.fixtures_dir
       @dir ||= Cnfs.paths.tmp.join('fixtures')
     end
 

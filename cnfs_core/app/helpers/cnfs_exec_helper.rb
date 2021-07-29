@@ -10,6 +10,7 @@ module CnfsExecHelper
   def initialize(options:, args:)
     @options = options
     @args = args
+    # TODO: See about using AS notification
     before_execute if respond_to?(:before_execute)
   end
 
@@ -17,6 +18,7 @@ module CnfsExecHelper
     @queue ||= CommandQueue.new # (halt_on_failure: true)
   end
 
+  # TODO: Move this to CLI
   def project
     Cnfs.project
   end

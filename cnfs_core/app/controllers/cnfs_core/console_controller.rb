@@ -8,8 +8,9 @@ class Console < Pry::ClassCommand
   description 'List commands available in the current command set'
 
   def process(_command_set)
-    if target_self.instance_of?(Projects::ConsoleController)
-      puts "#{target_self.class.commands.join("\n")}\n\nreload!"
+    # if target_self.instance_of?(CnfsCore::ConsoleController)
+    if target_self.class.respond_to?(:add_commands)
+      puts "#{target_self.class.commands.join("\n")}\n\n#{target_self.class.add_commands.join("\n")}"
     else
       puts target_self.class.instance_methods(false).join("\n")
     end
@@ -20,18 +21,22 @@ CnfsCommandSet = Pry::CommandSet.new
 CnfsCommandSet.add_command(Console)
 Pry.config.commands.import CnfsCommandSet
 
-module Projects
-  class CnfsConsoleController
+module CnfsCore
+  class ConsoleController
     include ExecHelper
 
     def execute
-      Cnfs.config.is_cli = true
+      Cnfs.config.is_console = true
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
       self.class.reload
       Pry.start(self)
     end
 
     class << self
+      def add_commands
+        %i[reload!]
+      end
+
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/MethodLength
       def reload
@@ -45,6 +50,7 @@ module Projects
         shortcuts.each_pair do |key, klass|
           define_method(key) { klass } unless %w[p r].include?(key)
           define_method("#{key}a") { klass.all }
+          define_method("#{key}c") { |**attributes| klass.create(attributes) }
           define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
           define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
           define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
