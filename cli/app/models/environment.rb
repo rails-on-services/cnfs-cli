@@ -2,19 +2,21 @@
 
 class Environment < ApplicationRecord
   # include Concerns::HasEnvs
-  include Concerns::BelongsToProject
+  # include Concerns::BelongsToProject
+  include Concerns::Component
   include Concerns::Key
 
   # belongs_to :builder
+  belongs_to :owner, polymorphic: true
 
   has_many :blueprints
-  has_many :resources, through: :blueprints
+  # has_many :resources, through: :blueprints
   # has_many :runtimes, through: :blueprints
   def runtimes; [] end
   # has_many :resources
   # has_many :runtimes, through: :resources
   has_many :namespaces
-  has_many :services, through: :namespaces
+  # has_many :services, through: :namespaces
 
   store :config, accessors: %i[domain], coder: YAML
   # store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
@@ -80,8 +82,12 @@ class Environment < ApplicationRecord
   end
 
   class << self
+
     def create_table(schema)
       schema.create_table :environments, force: true do |t|
+        t.string :context
+        t.references :owner, polymorphic: true
+        t.string :__source
         # t.references :builder
         t.references :project
         t.string :config

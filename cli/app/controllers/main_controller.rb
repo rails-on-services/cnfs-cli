@@ -58,7 +58,7 @@ class MainController < Thor
   # Utility
   desc 'version', 'Show cnfs version'
   def version
-    Main::VersionController.new([], options).execute
+    CnfsCore::VersionController.new([], options).execute
   end
 
   class << self

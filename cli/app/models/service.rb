@@ -7,8 +7,9 @@ class Service < ApplicationRecord
   include Concerns::Taggable
   include Concerns::HasEnvs
 
-  belongs_to :namespace
-  belongs_to :location
+  # belongs_to :namespace
+  # belongs_to :location
+  belongs_to :owner, polymorphic: true
   belongs_to :repository, required: false
 
   store :commands, accessors: %i[console shell test], coder: YAML
@@ -28,6 +29,12 @@ class Service < ApplicationRecord
   validates :name, presence: true
 
   validate :image_values
+
+  default_scope { where(context: Cnfs.context) }
+
+  def as_save
+    attributes.except('id', 'name', 'owner_id', 'owner_type').merge('owner' => "#{owner.name} (#{owner_type})")
+  end
 
   def volumes
     super.map(&:with_indifferent_access)
@@ -148,8 +155,9 @@ class Service < ApplicationRecord
 
     def create_table(schema)
       schema.create_table :services, force: true do |t|
-        t.references :location
-        t.references :namespace
+        # t.references :location
+        # t.references :namespace
+        t.references :owner, polymorphic: true
         t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
         # t.references :source_repo
@@ -161,6 +169,7 @@ class Service < ApplicationRecord
         t.string :environment
         t.string :image
         t.string :name
+        t.string :context
         t.string :path
         t.string :profiles
         t.string :tags

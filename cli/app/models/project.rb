@@ -3,6 +3,9 @@
 # rubocop:disable Metrics/ClassLength
 class Project < ApplicationRecord
   PARSE_NAME = 'project'
+
+  include Concerns::Component
+
   attr_accessor :runtime
   attr_writer :manifest
 
@@ -11,21 +14,23 @@ class Project < ApplicationRecord
   belongs_to :repository
   belongs_to :source_repository, class_name: 'Repository'
 
-  has_many :providers
-  has_many :builders
-  has_many :runtimes
-  has_many :repositories
-  has_many :users
-  has_many :environments
-  has_many :namespaces, through: :environments
+  has_many :environments, as: :owner
+  has_many :providers, as: :owner
+  has_many :stacks, as: :owner
+  has_many :users, as: :owner
+
+  # has_many :builders
+  # has_many :runtimes
+  # has_many :repositories
+  # has_many :namespaces, through: :environments
 
   store :paths, coder: YAML
   store :options, coder: YAML
 
   # If options were passed in then ensure the values are valid (names found in the config)
-  validates :environment, presence: { message: 'not found' } # , if: -> { options.environment }
-  validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
-  validate :associations_are_valid
+  # validates :environment, presence: { message: 'not found' } # , if: -> { options.environment }
+  # validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
+  # validate :associations_are_valid
 
   # TODO: Should there be validations for repository and source_repository?
   # validates :service, presence: { message: 'not found' }, if: -> { arguments.service }
@@ -63,9 +68,9 @@ class Project < ApplicationRecord
   end
 
   # TODO: This may be unnecessary or a very important method/scope. Think about this
-  def services
-    namespace.services
-  end
+  # def services
+  #   namespace.services
+  # end
 
   # def runtime; environment.runtime end
   def blueprints
@@ -170,6 +175,7 @@ class Project < ApplicationRecord
 
     def create_table(schema)
       schema.create_table :projects, force: true do |t|
+        t.string :context
         t.references :environment
         t.references :namespace
         t.references :repository
@@ -179,6 +185,8 @@ class Project < ApplicationRecord
         t.string :options
         t.string :paths
         t.string :tags
+        t.string :logging
+        t.string :__source
       end
     end
   end

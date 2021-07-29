@@ -6,11 +6,12 @@ class Resource < ApplicationRecord
 
   belongs_to :blueprint
   belongs_to :location
+  belongs_to :owner, polymorphic: true
 
   store :config, accessors: %i[source version], coder: YAML
 
   delegate :builder, :environment, :provider, :runtime, to: :blueprint
-  delegate :services, to: :environment
+  # delegate :services, to: :environment
 
   parse_sources :project, :user
   parse_scopes :environment
@@ -65,6 +66,7 @@ class Resource < ApplicationRecord
 
     def create_table(schema)
       schema.create_table :resources, force: true do |t|
+        t.references :owner, polymorphic: true
         t.references :blueprint
         t.references :location
         t.string :config
@@ -72,6 +74,7 @@ class Resource < ApplicationRecord
         t.string :name
         t.string :tags
         t.string :type
+        t.string :__source
       end
     end
   end

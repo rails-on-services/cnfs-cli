@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  include Concerns::BelongsToProject
+  # include Concerns::BelongsToProject
   include Concerns::Taggable
 
-  parse_sources :project, :user
+  belongs_to :owner, polymorphic: true
+  # parse_sources :project, :user
 
   def as_save
-    attributes.except('id', 'project_id')
+    attributes.except('id') # , 'project_id')
   end
 
   class << self
     def create_table(schema)
       schema.create_table :users, force: true do |t|
-        t.references :project
+        t.references :owner, polymorphic: true
+        t.string :__source
         t.string :name
         t.string :role
         t.string :tags

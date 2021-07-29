@@ -17,7 +17,7 @@ require 'cnfs_cli'
 # end
 
 begin
-  CnfsCli.initialize! { MainController.start }
+  CnfsCli.run! { MainController.start }
   Cnfs.logger.info("wall time: #{Time.now - start_time}")
 rescue Cnfs::Error => e
   puts e.message
