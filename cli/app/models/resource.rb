@@ -4,17 +4,22 @@ class Resource < ApplicationRecord
   include Concerns::HasEnvs
   include Concerns::Taggable
 
-  belongs_to :blueprint
-  belongs_to :location
   belongs_to :owner, polymorphic: true
+  belongs_to :provider, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
 
+  default_scope { where(context: Cnfs.context) }
+
+  # TODO:
+  # Need a provider
+  # runtime is now part of this model not delegated to blueprint
+  # builder is from the project
   delegate :builder, :environment, :provider, :runtime, to: :blueprint
   # delegate :services, to: :environment
 
-  parse_sources :project, :user
-  parse_scopes :environment
+  # parse_sources :project, :user
+  # parse_scopes :environment
 
   # NOTE: used in TF templates
   def module_name
@@ -49,32 +54,34 @@ class Resource < ApplicationRecord
     self.class.name.demodulize
   end
 
-  def save_path
-    Cnfs.project.paths.config.join('environments', environment.name, "#{self.class.table_name}.yml")
-  end
+  # def save_path
+  #   Cnfs.project.paths.config.join('environments', environment.name, "#{self.class.table_name}.yml")
+  # end
 
   class << self
-    def parse
-      # key: 'environments/staging/resources.yml'
-      super do |key, output, _opts|
-        env = key.split('/')[1]
-        output.each do |_key, value|
-          value['blueprint'] = "#{env}_#{value['blueprint']}"
-        end
-      end
-    end
+    # def parse
+    #   # key: 'environments/staging/resources.yml'
+    #   super do |key, output, _opts|
+    #     env = key.split('/')[1]
+    #     output.each do |_key, value|
+    #       value['blueprint'] = "#{env}_#{value['blueprint']}"
+    #     end
+    #   end
+    # end
 
     def create_table(schema)
       schema.create_table :resources, force: true do |t|
         t.references :owner, polymorphic: true
-        t.references :blueprint
-        t.references :location
+        t.references :provider
+        t.string :context
+        t.string :_source
+        # t.references :blueprint
+        # t.references :location
         t.string :config
         t.string :envs
         t.string :name
         t.string :tags
         t.string :type
-        t.string :__source
       end
     end
   end

@@ -39,8 +39,8 @@ module CnfsCli
     def models_to_parse
       # [Blueprint, Builder, Dependency, Environment, Location, Namespace, Project,
       #  Provider, Registry, Repository, Resource, Runtime, Service, User]
-      [Dependency, Environment, Stack, Namespace, Project,
-       Provider, Repository, Resource, Runtime, Service, User]
+      [Blueprint, Builder, Dependency, Environment, Stack, Namespace, Project,
+       Provider, Repository, Image, Resource, Runtime, Service, User]
     end
 
     def initialize_development

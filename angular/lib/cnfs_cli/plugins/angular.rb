@@ -6,11 +6,15 @@ module CnfsCli
       class << self
         def initialize_angular
           require 'cnfs_cli/angular'
-          Cnfs.logger.info "[Angular] Initializing from #{CnfsCli::Angular.gem_root}"
+          Cnfs.logger.info "[Angular] Initializing from #{gem_root}"
+        end
+
+        def gem_root
+          CnfsCli::Angular.gem_root
         end
 
         def customize
-          src = CnfsCli::Angular.gem_root.join('app/generators/angular')
+          src = gem_root.join('app/generators/angular')
           dest = Cnfs.paths.lib.join('generators/angualr')
           FileUtils.rm_rf(dest)
           FileUtils.mkdir_p(dest)

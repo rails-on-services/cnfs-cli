@@ -5,7 +5,7 @@ class Runtime < ApplicationRecord
 
   store :config, accessors: %i[version], coder: YAML
 
-  parse_sources :cli
+  # parse_sources :cli
 
   # Content related commands
   def labels(labels)
@@ -41,7 +41,8 @@ class Runtime < ApplicationRecord
 
   def self.create_table(schema)
     schema.create_table :runtimes, force: true do |t|
-      t.references :project
+      t.string :_source
+      # t.references :project
       t.string :name
       t.string :config
       t.string :dependencies

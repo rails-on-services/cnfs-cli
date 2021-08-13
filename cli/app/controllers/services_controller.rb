@@ -23,9 +23,9 @@ class ServicesController < Thor
   cnfs_class_options :dry_run, :logging
   class_before :initialize_project
 
-  register Services::NewController, 'new', 'new SUBCOMMAND [options]',
+  register Services::CreateController, 'create', 'create SUBCOMMAND [options]',
            'Create a new service in the default (or specified) repository'
-  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
+  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service configuration to the project'
 
   desc 'list', 'Lists services configured in the project'
   option :environment, desc: 'Target environment',

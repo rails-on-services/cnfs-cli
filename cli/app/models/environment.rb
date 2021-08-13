@@ -26,9 +26,9 @@ class Environment < ApplicationRecord
   # validates :builder, presence: true
   validate :no_duplicated_runtimes
 
-  parse_scopes :environment
-  parse_sources :project, :user
-  parse_options fixture_name: :environment
+  # parse_scopes :environment
+  # parse_sources :project, :user
+  # parse_options fixture_name: :environment
 
   def no_duplicated_runtimes
     def_runtimes = runtimes.pluck(:type)
@@ -40,9 +40,9 @@ class Environment < ApplicationRecord
   end
 
   # Override to provide a path alternative to config/table_name.yml
-  def save_path
-    Cnfs.project.paths.config.join('environments', name, 'environment.yml')
-  end
+  # def save_path
+  #   Cnfs.project.paths.config.join('environments', name, 'environment.yml')
+  # end
 
   def user_save_path
     Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', name, 'environment.yml')
@@ -87,7 +87,7 @@ class Environment < ApplicationRecord
       schema.create_table :environments, force: true do |t|
         t.string :context
         t.references :owner, polymorphic: true
-        t.string :__source
+        t.string :_source
         # t.references :builder
         t.references :project
         t.string :config

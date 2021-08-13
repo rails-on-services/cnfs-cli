@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'lib/cnfs/cli/angular/version'
+require_relative 'lib/cnfs_cli/angular/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-angular'
-  spec.version       = Cnfs::Cli::Angular::VERSION
+  spec.version       = CnfsCli::Angular::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 

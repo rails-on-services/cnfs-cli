@@ -2,11 +2,9 @@
 
 # rubocop:disable Metrics/ClassLength
 class Project < ApplicationRecord
-  PARSE_NAME = 'project'
-
   include Concerns::Component
 
-  attr_accessor :runtime
+  # attr_accessor :runtime
   attr_writer :manifest
 
   belongs_to :environment
@@ -15,11 +13,13 @@ class Project < ApplicationRecord
   belongs_to :source_repository, class_name: 'Repository'
 
   has_many :environments, as: :owner
-  has_many :providers, as: :owner
   has_many :stacks, as: :owner
+
+  # TODO: Review if these models should have an owner; do they belong to project? or any component? or none?
+  has_many :builders, as: :owner
+  has_many :providers, as: :owner
   has_many :users, as: :owner
 
-  # has_many :builders
   # has_many :runtimes
   # has_many :repositories
   # has_many :namespaces, through: :environments
@@ -82,13 +82,15 @@ class Project < ApplicationRecord
     @user_root ||= Cnfs.user_root.join(name)
   end
 
-  def update(opts)
-    file_config.merge!(opts)
-    file_config.save
+  def as_save
+    base = attributes.slice('name', 'config', 'paths', 'logging')
+    # base.merge!('repository' => "#{repository.name} (#{repository.type})") if repository
+    base.merge!('repository' => repository.name) if repository
+    base
   end
 
-  def file_config
-    @file_config ||= Config.load_file(Cnfs::PROJECT_FILE)
+  def _source
+    'config/project.yml'
   end
 
   def options
@@ -151,27 +153,15 @@ class Project < ApplicationRecord
   end
 
   class << self
-    def parse
-      content = Cnfs.config.to_hash.slice(
-        *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
-      )
-      namespace = "#{content[:environment]}_#{content[:namespace]}"
-      options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
-      output = { PARSE_NAME => content.merge(namespace: namespace, options: options) }
-      create_all(output)
-    end
-
-    # Determine the current repository from where the user is in the project filesystem
-    # Returns the default repository unless the user is in the path of another project repository
-    def current_repository
-      current_path = Cnfs.cwd.to_s
-      src_path = Cnfs.project_root.join(paths.src).to_s
-      # return app.repository if current_path.eql?(src_path) || !current_path.start_with?(src_path)
-      return if current_path.eql?(src_path) || !current_path.start_with?(src_path)
-
-      repo_name = current_path.delete_prefix(src_path).split('/')[1]
-      app.repositories.find_by(name: repo_name)
-    end
+    # def parse
+    #   content = Cnfs.config.to_hash.slice(
+    #     *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
+    #   )
+    #   namespace = "#{content[:environment]}_#{content[:namespace]}"
+    #   options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
+    #   output = { 'project' => content.merge(namespace: namespace, options: options) }
+    #   create_all(output)
+    # end
 
     def create_table(schema)
       schema.create_table :projects, force: true do |t|
@@ -186,7 +176,7 @@ class Project < ApplicationRecord
         t.string :paths
         t.string :tags
         t.string :logging
-        t.string :__source
+        t.string :_source
       end
     end
   end

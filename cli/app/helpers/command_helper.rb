@@ -12,8 +12,8 @@ module CommandHelper
                                         aliases: '-n', type: :string, default: Cnfs.config.namespace
     add_cnfs_option :repository,        desc: 'The repository in which to run the command',
                                         aliases: '-r', type: :string, default: Cnfs.config.repository
-    add_cnfs_option :source_repository, desc: 'The source repository to link to',
-                                        aliases: '-s', type: :string, default: Cnfs.config.source_repository
+    # add_cnfs_option :source_repository, desc: 'The source repository to link to',
+    #                                     aliases: '-s', type: :string, default: Cnfs.config.source_repository
 
     add_cnfs_option :tags,              desc: 'Filter by tags',
                                         aliases: '-t', type: :array

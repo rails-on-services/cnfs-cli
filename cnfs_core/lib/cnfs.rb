@@ -201,9 +201,9 @@ module Cnfs
       return OpenStruct.new(sha: '', branch: '') unless system('git rev-parse --git-dir > /dev/null 2>&1')
 
       OpenStruct.new(
-        tag: `git tag --points-at HEAD`.chomp,
         branch: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),
-        sha: `git rev-parse --short HEAD`.chomp
+        sha: `git rev-parse --short HEAD`.chomp,
+        tag: `git tag --points-at HEAD`.chomp
       )
     end
 

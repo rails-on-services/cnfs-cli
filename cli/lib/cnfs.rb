@@ -23,7 +23,14 @@ module Cnfs
       end
 
       @model_names = models.map(&:table_name)
+      Cnfs.paths.src.each_child do |repository|
+        path = repository.join('.cnfs/config')
+        next unless path.exist?
+
+        load_config(path)
+      end
       load_config(Cnfs.paths.config)
+      # binding.pry
       fixture_resources.each do |fixture_file, values|
         yaml_file = Cnfs::Configuration.fixtures_dir.join(fixture_file)
         File.open(yaml_file, 'w') { |f| f.write(values.to_yaml) }
@@ -31,6 +38,7 @@ module Cnfs
       end
     end
 
+    # TODO: fix bug when using reload!
     def load_config(path)
       path.each_child do |node|
         if (data = node_data(node))
@@ -49,12 +57,21 @@ module Cnfs
       parent_ref = node_sub.parent
       content = nil
       if model_names.include?(node_name.pluralize)
-        content = YAML.load_file(node) if node.file?
+        if node.file?
+          content = YAML.load_file(node)
+          unless content.nil? || node_name.eql?('project')
+            content.each { |key, value| value.merge!('name' => key) }
+            content.transform_keys! { |key| node_sub.to_s.tr('/', '_').sub(node.extname, "_#{key}") }
+            content.each { |key, values| values.merge!('_id' => key) } if node_name.eql?('repositories')
+          end
+        end
       else
         # TODO: Parse content using has_many and make it recursive
         # TODO: Maybe also use this to validate names of dirs/files
         # parent_klass.reflect_on_all_associations(:has_many).map(&:name).include?(node_name)
-        content = node.file? ? { node_name => YAML.load_file(node) } : { node_name => {} }
+        node_key = node_sub.to_s.tr('/', '_').delete_suffix(node.extname)
+        content = { node_key => { 'name' => node_name } }
+        content[node_key].merge!(YAML.load_file(node) || {}) if node.file?
         node_name = node_sub.parent.basename.to_s
         parent_ref = node_sub.parent.parent
       end
@@ -66,15 +83,17 @@ module Cnfs
     # rubocop:enable Metrics/MethodLength
 
     def node_content(node, node_name, parent_ref, content)
-      return { project: content } if node_name.eql?('project')
+      return { 'project_project' => content } if node_name.eql?('project')
 
       # TODO: owner_name is not correct
-      owner_name = parent_ref.basename.to_s
+      # owner_name = parent_ref.basename.to_s
+      owner_name = parent_ref.to_s.tr('/', '_')
       owner_type = parent_ref.parent.basename.to_s.classify
-      # owner_id = ActiveRecord::FixtureSet.identify(owner_name)
-      # TODO: AR::Base should turn __source into Pathname automagically
-      attr_hash = { 'owner' => "#{owner_name} (#{owner_type})", '__source' => node.to_s }
-      content.each { |key, value| value.merge!(attr_hash.merge('name' => key)) }
+      # TODO: AR::Base should turn _source into Pathname automagically
+      hash = { '_source' => node.to_s }
+      attr_hash = no_owner_models.include?(node_name) ? {} : { 'owner' => "#{owner_name} (#{owner_type})" }
+      # binding.pry if node_name.eql?('builders')
+      content.each { |key, value| value.merge!(attr_hash.merge(hash)) } # .merge('name' => key)) }
     end
 
     # rubocop:disable Metrics/AbcSize
@@ -96,6 +115,10 @@ module Cnfs
 
     def fixture_resources
       @fixture_resources ||= {}
+    end
+
+    def no_owner_models
+      %w[builders runtimes]
     end
 
     def repositories

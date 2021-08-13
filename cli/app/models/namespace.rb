@@ -14,9 +14,9 @@ class Namespace < ApplicationRecord
 
   store :config, accessors: %i[main], coder: YAML
 
-  parse_scopes :namespace
-  parse_sources :project, :user
-  parse_options fixture_name: :namespace
+  # parse_scopes :namespace
+  # parse_sources :project, :user
+  # parse_options fixture_name: :namespace
 
   # Override to provide a path alternative to config/table_name.yml
   def save_path

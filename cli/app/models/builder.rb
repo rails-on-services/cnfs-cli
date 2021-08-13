@@ -5,10 +5,12 @@ class Builder < ApplicationRecord
 
   attr_accessor :blueprint
 
+  belongs_to :owner, polymorphic: true
+
   serialize :dependencies, Array
 
-  parse_scopes :config
-  parse_sources :cli
+  # parse_scopes :config
+  # parse_sources :cli
 
   def dependencies
     super.map(&:with_indifferent_access)
@@ -65,7 +67,10 @@ class Builder < ApplicationRecord
   class << self
     def create_table(schema)
       schema.create_table :builders, force: true do |t|
-        t.references :project
+        t.references :owner, polymorphic: true
+        # t.string :context
+        t.string :_source
+        # t.references :project
         t.string :config
         t.string :dependencies
         # t.string :envs

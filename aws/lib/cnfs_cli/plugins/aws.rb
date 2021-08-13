@@ -6,7 +6,7 @@ module CnfsCli
       class << self
         def initialize_aws
           require 'cnfs_cli/aws'
-          Cnfs.logger.info "[Aws] Initializing from #{CnfsCli::Aws.gem_root}"
+          Cnfs.logger.info "[Aws] Initializing from #{gem_root}"
           ActiveSupport::Notifications.subscribe('before_loader_setup.cnfs') do |event|
             add_inflectors(event.payload[:loader])
           end
@@ -14,6 +14,7 @@ module CnfsCli
             add_console_shortcuts(event.payload[:shortcuts])
           end
         end
+
         def add_inflectors(loader)
           Cnfs.logger.info '[Aws] Configuring loader'
 
@@ -38,9 +39,13 @@ module CnfsCli
           })
         end
 
-        # TODO: Copy in blueprints, etc
-        def customize; end
+        def gem_root
+          CnfsCli::Aws.gem_root
+        end
 
+        # TODO: Copy in blueprints, etc
+        def customize
+        end
       end
     end
   end

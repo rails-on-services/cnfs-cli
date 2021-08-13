@@ -55,6 +55,7 @@ module CnfsCore
           define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
           define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
           define_method("#{key}fb") { |name| klass.find_by(name: name) }
+          define_method("#{key}w") { |**attributes| klass.where(attributes) }
         end
       end
       # rubocop:enable Metrics/MethodLength

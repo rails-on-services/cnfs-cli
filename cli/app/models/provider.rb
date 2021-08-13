@@ -8,7 +8,7 @@ class Provider < ApplicationRecord
   belongs_to :owner, polymorphic: true
   # store :config, accessors: %i[tf_version], coder: YAML
 
-  parse_sources :project, :user
+  # parse_sources :project, :user
 
   def as_save
     attributes.except('id', 'name', 'project_id')
@@ -18,7 +18,7 @@ class Provider < ApplicationRecord
     def create_table(schema)
       schema.create_table :providers, force: true do |t|
         t.references :owner, polymorphic: true
-        t.string :__source
+        t.string :_source
         # t.references :project
         t.string :config # client configuration details to be used as a hash to initialize SDK clients
         # t.string :envs

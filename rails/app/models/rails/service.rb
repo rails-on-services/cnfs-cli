@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-class Service::Rails < Service
+class Rails::Service < Service
+  # belongs_to :repository, required: true
   # attr_accessor :images
   # NOTE: project_path, e.g. 'whistler' is relative to build_context_path which is 'project_root/src'
   # NOTE: dockerfile is also relative to build_context_path

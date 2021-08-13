@@ -28,8 +28,11 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
   end
 
   def save_in_file
+    save_path.split.first.mkpath unless save_path.split.first.exist?
     content = YAML.load_file(save_path) if save_path.exist?
     content ||= {}
+    # binding.pry
+    # as_save = as_save.except('_source_path')
     new_content = fixture_is_singular? ? as_save : { name => as_save }
     new_content = JSON.parse(new_content.to_json)
     content.merge!(new_content)
@@ -43,7 +46,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
 
   # Override to provide a path alternative to config/table_name.yml
   def save_path
-    Cnfs.project.paths.config.join("#{self.class.table_name}.yml")
+    Cnfs.project_root.join(Cnfs.project.paths.config).join("#{self.class.table_name}.yml")
   end
 
   def as_save
@@ -51,6 +54,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
   end
 
   class << self
+=begin
     # Public interface; called by models to list the search paths for their config files
     def parse_scopes(*scopes)
       requested = scopes.to_set
@@ -214,6 +218,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
         file.write(content.deep_stringify_keys.to_yaml)
       end
     end
+=end
 
     def after_parse; end
     # Provides a default empty hash to validate against

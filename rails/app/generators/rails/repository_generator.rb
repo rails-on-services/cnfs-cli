@@ -11,31 +11,41 @@ module Rails
     include Thor::Actions
     include GeneratorConcern
     argument :project_name
-    argument :repository_name
+    argument :repository
 
     def root_files
       in_root do
-        template('cnfs/repository.yml.erb', 'cnfs/repository.yml')
+        template('cnfs/repository.yml.erb', ".cnfs/config/repositories/#{repository.name}.yml")
+        @repository = ::Repository::Rails.new(YAML.load_file(".cnfs/config/repositories/#{repository.name}.yml"))
         directory('files', '.')
       end
     end
 
     def services_gemfiles
-      gemfile_extensions = ['', '.prod']
-      gemfile_extensions.append('.dev') if options.source_repository
+      gemfile_extensions = ['', '.local', '.upstream']
+      path = Pathname.new('services/Gemfile')
       in_root do
-        gemfile_extensions.each do |env|
-          template("services/Gemfile#{env}.erb", "services/Gemfile#{env}")
+        gemfile_extensions.each do |extension|
+          template_file = "#{path}#{extension}.erb"
+          @extension = extension
+          template(template_file, "#{path}#{@extension}")
+          next if @extension.blank?
+
+          @extension = ".dev#{extension}"
+          template(template_file, "#{path}#{@extension}")
         end
       end
     end
 
     def dockerfiles
-      dockerfile_extensions = ['']
-      dockerfile_extensions.append('.dev') if options.source_repository
+      dockerfile_extensions = ['', '.dev']
+      if repository.upstream_repo_name && repository.upstream_repo_path
+        dockerfile_extensions.append('.dev.upstream')
+      end
       in_root do
-        dockerfile_extensions.each do |env|
-          template("Dockerfile#{env}.erb", "Dockerfile#{env}")
+        dockerfile_extensions.each do |extension|
+          @extension = extension
+          template("Dockerfile.erb", "Dockerfile#{extension}")
         end
       end
     end
@@ -58,10 +68,10 @@ module Rails
         system(env, exec_string.join(' '))
         FileUtils.mv(sdk_name, 'sdk') unless sdk_name.eql?('sdk')
         inside 'sdk' do
-          remove_directory('.git')
-          remove_file('bin/console')
-          str = v.size.positive? ? "require '#{v[0]}_sdk'" : ''
-          template('bin/console.erb', 'bin/console')
+          remove_dir('.git')
+          # remove_file('bin/console')
+          # str = v.size.positive? ? "require '#{v[0]}_sdk'" : ''
+          # template('sdk/templates/bin/console.erb', 'bin/console')
           # TODO: Decide how to handle versioning
           # remove_file("lib/#{sdk_path}/version.rb")
         end
@@ -141,24 +151,28 @@ module Rails
       @dockerfile_bundler ||= "bundler:#{`bundler version`.split[2]}"
     end
 
-    # TODO: remove nokogiri
     def dockerfile_gems
-      return 'nokogiri:1.10.10'
-
       @dockerfile_gems ||= begin
-        gem_list.map do |gem|
-          gem_name, version = `gem list -r "^#{gem}$" |tail -1`.strip.split
-          "#{gem_name}:#{version.gsub('(', '').gsub(')', '')}"
+        repository.static_gems.each_with_object([]) do |gem, ary|
+          gem_name, version = gem.split(':')
+          version ||= `gem list -r "^#{gem}$" |tail -1`.strip.split[1].gsub('(', '').gsub(')', '')
+          ary.append("#{gem_name}:#{version}")
         end.join(" \\\n    ")
       end
     end
 
-    def gem_list
-      %w[nokogiri ffi grpc mini_portile2 msgpack pg nio4r puma eventmachine]
-    end
+    # def gemfile_gems
+    #   @gemfile_gems ||= begin
+    #     repository.static_gems.each_with_object([]) do |gem, ary|
+    #       gem_name, version = gem.split(':')
+    #       version ||= `gem list -r "^#{gem}$" |tail -1`.strip.split[1].gsub('(', '').gsub(')', '')
+    #       ary.append("#{gem_name}:#{version}")
+    #     end.join(" \\\n    ")
+    #   end
+    # end
 
     def base_envs
-      { repo_name: repository_name, repo_path: '../..', name: core_name }
+      { repo_name: repository.name, repo_path: '../..', name: core_name }
     end
 
     def core_name
@@ -182,9 +196,9 @@ module Rails
     def set_namespace
       case options.namespace
       when 'project'
-        [project_name, repository_name]
+        [project_name, repository.name]
       when 'repository'
-        [repository_name]
+        [repository.name]
       else
         []
       end

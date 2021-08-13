@@ -3,7 +3,7 @@
 # Create a new Angular service in a CNFS Angular repository; add an angular service configuration to the project
 module Angular
   module Services
-    module NewController
+    module CreateController
       extend ActiveSupport::Concern
 
       included do

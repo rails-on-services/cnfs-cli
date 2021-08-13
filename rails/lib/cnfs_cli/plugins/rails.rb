@@ -6,11 +6,15 @@ module CnfsCli
       class << self
         def initialize_rails
           require 'cnfs_cli/rails'
-          Cnfs.logger.info "[Rails] Initializing from #{CnfsCli::Rails.gem_root}"
+          Cnfs.logger.info "[Rails] Initializing from #{gem_root}"
           ActiveSupport::Notifications.subscribe('on_runtime_switch.cli') { |_event| on_runtime_switch }
           ActiveSupport::Notifications.subscribe('set_compose_env.cli') do |event|
             set_compose_env(event.payload[:command], event.payload[:hash])
           end
+        end
+
+        def gem_root
+          CnfsCli::Rails.gem_root
         end
 
         # NOTE: This is specific to a CNFS Rails project
@@ -42,7 +46,7 @@ module CnfsCli
         end
 
         def customize
-          src = CnfsCli::Rails.gem_root.join('app/generators/rails')
+          src = gem_root.join('app/generators/rails')
           dest = Cnfs.paths.lib.join('generators/rails')
           FileUtils.rm_rf(dest)
           FileUtils.mkdir_p(dest)

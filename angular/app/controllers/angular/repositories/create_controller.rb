@@ -4,11 +4,11 @@
 # To make this a registered subcommand class do this: class ServiceController < Thor
 module Angular
   module Repositories
-    module NewController
+    module CreateController
       extend ActiveSupport::Concern
 
       included do
-        desc 'angular NAME', 'Add a CNFS compatible services repository based on the Angular Framework'
+        desc 'angular NAME', 'Create a CNFS compatible repository for services based on the Angular Framework'
         def angular(name)
           create_repository(:angular, name)
         end

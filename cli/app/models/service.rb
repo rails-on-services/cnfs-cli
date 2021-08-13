@@ -10,7 +10,9 @@ class Service < ApplicationRecord
   # belongs_to :namespace
   # belongs_to :location
   belongs_to :owner, polymorphic: true
-  belongs_to :repository, required: false
+  belongs_to :origin, class_name: 'Service'
+  has_many :services, as: :origin # , class_name: 'Service'
+  # belongs_to :repository, required: false
 
   store :commands, accessors: %i[console shell test], coder: YAML
   store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
@@ -33,7 +35,8 @@ class Service < ApplicationRecord
   default_scope { where(context: Cnfs.context) }
 
   def as_save
-    attributes.except('id', 'name', 'owner_id', 'owner_type').merge('owner' => "#{owner.name} (#{owner_type})")
+    attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
+      .merge('origin' => origin&.name, 'owner' => "#{owner.name} (#{owner_type})")
   end
 
   def volumes
@@ -62,8 +65,8 @@ class Service < ApplicationRecord
     self.profiles ||= {}
   end
 
-  parse_scopes :environments, :environment, :namespace
-  parse_sources :project, :user
+  # parse_scopes :environments, :environment, :namespace
+  # parse_sources :project, :user
 
   # Custom callbacks
   { start: :running, stop: :stopped, terminate: :terminated }.each do |command, state|
@@ -118,6 +121,10 @@ class Service < ApplicationRecord
     runtime.exec(self, commands[:test], true)
   end
 
+  # def full_path
+  #   repository.services_path.join(name)
+  # end
+
   private
 
   # State handling
@@ -145,20 +152,20 @@ class Service < ApplicationRecord
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
-    def parse
-      # key: 'environments/staging/main/namespace.yml'
-      super do |_key, output, _opts|
-        keys = output.keys.select { |output_key| output_key.end_with?('DEFAULTS') }
-        output.except!(*keys)
-      end
-    end
+    # def parse
+    #   # key: 'environments/staging/main/namespace.yml'
+    #   super do |_key, output, _opts|
+    #     keys = output.keys.select { |output_key| output_key.end_with?('DEFAULTS') }
+    #     output.except!(*keys)
+    #   end
+    # end
 
     def create_table(schema)
       schema.create_table :services, force: true do |t|
-        # t.references :location
-        # t.references :namespace
         t.references :owner, polymorphic: true
-        t.references :repository
+        t.references :origin # , polymorphic: true
+        t.string :_source
+        # t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
         # t.references :source_repo
         # t.references :image_repo

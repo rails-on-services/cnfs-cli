@@ -4,11 +4,11 @@
 # To make this a registered subcommand class do this: class ServiceController < Thor
 module Rails
   module Repositories
-    module NewController
+    module CreateController
       extend ActiveSupport::Concern
 
       included do
-        desc 'rails NAME', 'Add a CNFS compatible services repository based on the Ruby on Rails Framework'
+        desc 'rails NAME', 'Create a CNFS compatible repository for services based on the Ruby on Rails Framework'
         option :database,  desc: 'Preconfigure for selected database (options: postgresql)',
                            aliases: '-D', type: :string, default: 'postgresql'
         option :test_with, desc: 'Testing framework',
@@ -17,8 +17,10 @@ module Rails
                            type: :string, default: 'service'
         # TODO: Add options that carry over to the rails plugin new command
         def rails(name)
-          generator = Rails::RepositoryGenerator.new([Cnfs.config.name], options.merge(type: 'plugin'))
-          invoke(generator, name)
+          # TODO: fix this issue with url being blank
+          repo = ::Repository::Rails.create(name: name, url: 'h')
+          generator = Rails::RepositoryGenerator.new([Cnfs.config.name, repo], options.merge(type: 'plugin')) # , source_repository: 'cnfs'))
+          invoke(generator, repo)
         end
       end
     end

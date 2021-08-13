@@ -11,8 +11,8 @@ class Blueprint < ApplicationRecord
   delegate :project, to: :environment
   delegate :paths, :path, to: :project
 
-  parse_sources :project, :user
-  parse_scopes :environment
+  # parse_sources :project, :user
+  # parse_scopes :environment
 
   # List of resource classes that are managed by this blueprint
   def resource_classes
@@ -52,9 +52,9 @@ class Blueprint < ApplicationRecord
     end
 
     def defined_files
-      # binding.pry
-      CnfsCli.plugins.values.append(CnfsCli).each_with_object([]) do |p, ary|
-        path = p.plugin_lib.gem_root.join('app/models/blueprint')
+      # CnfsCli.plugins.values.map(&:to_s).sort.each_with_object([]) do |p, ary|
+      CnfsCli.plugins.values.each_with_object([]) do |p, ary|
+        path = p.gem_root.join('app/models/blueprint')
         next unless path.exist?
 
         Dir.chdir(path) { ary.concat(Dir['**/*.rb']) }

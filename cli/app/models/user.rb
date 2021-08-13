@@ -15,7 +15,7 @@ class User < ApplicationRecord
     def create_table(schema)
       schema.create_table :users, force: true do |t|
         t.references :owner, polymorphic: true
-        t.string :__source
+        t.string :_source
         t.string :name
         t.string :role
         t.string :tags

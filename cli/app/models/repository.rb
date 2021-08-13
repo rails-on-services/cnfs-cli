@@ -1,59 +1,40 @@
 # frozen_string_literal: true
 
+# require 'active_record'
 class Repository < ApplicationRecord
-  include Concerns::BelongsToProject
+  # include Concerns::BelongsToProject
 
-  has_many :services
+  belongs_to :owner, polymorphic: true
+  has_many :services, as: :owner
 
-  store :config, accessors: %i[url repo_type], coder: YAML
+  # store :config, accessors: %i[url repo_type], coder: YAML
+  store :config, accessors: %i[url], coder: YAML
 
   validates :name, presence: true
   validates :url, presence: true
 
-  after_destroy :remove_tree
-  # TODO: Validate the url is a proper git pattern:
-  # rubocop:disable Layout/LineLength
-  # git_url_regex = /^(([A-Za-z0-9]+@|http(|s)\:\/\/)|(http(|s)\:\/\/[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|\/)([\d\/\w.-]+?)(\.git){1}$/i
-  # rubocop:enable Layout/LineLength
+  default_scope { where(context: Cnfs.context) }
 
-  parse_sources :project, :user
+  # after_destroy :remove_tree
 
   # def services
   #   services_path.exist? ? services_path.children.select(&:directory?).map { |p| p.split.last.to_s } : []
   # end
 
   def services_path
-    path.join('services')
+    full_path.join('services')
   end
 
-  def path
-    @path ||= paths.src.join(name)
-  end
+  # def git
+  #   Dir.chdir(full_path) { Cnfs.git }
+  # end
 
-  def git
-    Dir.chdir(path) { Cnfs.git }
-  end
-
-  # rubocop:disable Metrics/AbcSize
-  def clone
-    # Ensure the project's repositories directory exists
-    paths.src.mkpath
-    if paths.src.join(name).exist?
-      Cnfs.logger.info("Repository already exists at #{name}")
-      return
-    end
-
-    cmd = "git clone #{url} #{name}"
-    Cnfs.logger.debug(cmd)
-    # TODO: Use the response object to run the command?
-    Dir.chdir(paths.src) { `#{cmd}` } unless options.noop
-    true
-  end
-  # rubocop:enable Metrics/AbcSize
-
-  # for save/delete
   def as_save
-    { name => attributes.slice('name', 'config') }
+    attributes.slice('name', 'config', 'type')
+  end
+
+  def clone_cmd
+    "git clone #{url} #{name}"
   end
 
   def remove_tree
@@ -64,67 +45,73 @@ class Repository < ApplicationRecord
     paths.src.join(name)
   end
 
-  class << self
-    # rubocop:disable Metrics/AbcSize
-    def add(url, name)
-      if (mapped_url = url_map[url.to_sym])
-        url = mapped_url
-      end
-      name ||= url.split('/').last&.delete_suffix('.git')
-      repo = new(name: name, url: url)
-      return unless repo.valid? && repo.clone
+  def paths
+    Cnfs.project.paths
+  end
 
-      repo.save
-      # If this is the first source repository added to the project then make it the default
-      repo.project.update(source_repository: repo.name) if repo.project.source_repository.nil?
+  class << self
+    def add(param1, param2 = nil)
+      url = name = nil
+      if param1.match(git_url_regex)
+        url = param1
+        name = param2
+      elsif (url = url_map[param1] || url_from_name(param1))
+        # binding.pry
+        name = param1.split('/').last
+      end
+      name ||= url.split('/').last&.delete_suffix('.git') if url
+      new(name: name, url: url)
     end
-    # rubocop:enable Metrics/AbcSize
+
+    # rubocop:disable Layout/LineLength
+    def git_url_regex
+      %r{^(([A-Za-z0-9]+@|http(|s)://)|(http(|s)://[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|/)([\d/\w.-]+?)(\.git){1}$}i
+    end
+    # rubocop:enable Layout/LineLength
 
     # Shortcuts for CNFS repos
     def url_map
       {
         cnfs: 'git@github.com:rails-on-services/ros.git',
         generic: 'git@github.com:rails-on-services/generic.git'
-      }
+      }.with_indifferent_access
     end
 
-    # def dirs
-    #   ['config']
-    # end
+    def url_from_name(name)
+      path = name.eql?('.') ? Cnfs.cwd.relative_path_from(Cnfs.project.root) : Pathname.new(name)
+      Dir.chdir(path) { remote.fetch_url } if path.directory?
+    end
 
-    # TODO: Does still need to read the repoistory info
-    # def x_parse
-    #   src = Pathname.new('src')
-    #   output = dirs.each_with_object({}) do |dir, hash|
-    #     file = "#{dir}/#{table_name}.yml"
-    #     next unless File.exist?(file)
+    def remote
+      remote = `git remote -v`.split("\t")
+      return OpenStruct.new if remote.blank?
 
-    #     yaml = YAML.load_file(file)
-    #     yaml.each do |k, v|
-    #       repo_path = src.join(k)
-    #       Cnfs.logger.info "Scanning repository path #{repo_path}"
-    #       repo_config_path = repo_path.join('cnfs/repository.yml')
-    #       repo_yaml = {}
-    #       if repo_config_path.exist?
-    #         Cnfs.logger.info "Loading repository path #{repo_path}"
-    #         repo_yaml = YAML.load_file(repo_config_path).merge(path: repo_path.to_s)
-    #         repo_yaml.merge!('type' => "repository/#{repo_yaml['type']}".classify)
-    #       end
-    #       hash[k] = v.merge(name: k, project: 'app').merge(repo_yaml)
-    #     end
-    #   end
-    #   write_fixture(output)
-    # end
+      OpenStruct.new(name: remote[0], fetch_url: remote[1].split[0], push_url: remote[2].split[0])
+    end
+
+    # Returns the default repository unless the the given path is another project repository
+    # in which case return the Repository object that represents the given path
+    # The default path is the directory where the command was invoked
+    def from_path(path = Cnfs.cwd.to_s)
+      src_path = Cnfs.project_root.join(Cnfs.paths.src).to_s
+      return Cnfs.project.repository if path.eql?(src_path) || !path.start_with?(src_path)
+
+      repo_name = path.delete_prefix(src_path).split('/')[1]
+      Cnfs.logger.debug("Identified repo name #{repo_name}")
+      find_by(name: repo_name)
+    end
 
     def create_table(schema)
       schema.create_table :repositories, force: true do |t|
-        t.references :project
+        t.references :owner, polymorphic: true
+        t.string :context
+        t.string :_source
+        t.string :_id
         t.string :config
+        t.string :dockerfile
+        t.string :build
         t.string :name
-        t.string :namespace
-        t.string :path
-        t.string :service_type
-        t.string :test_framework
+        # t.string :path
         t.string :type
         t.string :tags
       end

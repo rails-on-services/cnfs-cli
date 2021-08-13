@@ -3,7 +3,7 @@
 class Dependency < ApplicationRecord
   include Concerns::BelongsToProject
 
-  parse_sources :cli, :project
+  # parse_sources :cli, :project
 
   def self.create_table(schema)
     schema.create_table :dependencies, force: true do |t|

@@ -2,7 +2,7 @@
 
 class Resource::Aws::EC2::Instance < Resource::Aws::EC2
   store :config, accessors: %i[family size instance_count ami key_name monitoring
-  vpc_security_group_ids subnet_id subnet_ids instance_id], coder: YAML
+                               vpc_security_group_ids subnet_id subnet_ids instance_id], coder: YAML
   store :envs, accessors: %i[public_ip os_type], coder: YAML
 
   def outputs
@@ -39,7 +39,7 @@ class Resource::Aws::EC2::Instance < Resource::Aws::EC2
   def ssh_user_map
     {
       debian: :admin,
-      ubuntu: :ubuntu,
+      ubuntu: :ubuntu
     }.with_indifferent_access
   end
 end

@@ -1,20 +1,160 @@
-# Dockerfile
-<%= dockerfile_header -%>
+# Dockerfile<%= @extension %>
+FROM <%= "ruby:#{repository.ruby_version}-#{repository.image_base} as base" %>
 
+# WORKDIR needs to be the same as in the final base image or compiled gems will point to an invalid directory
+# NOTE: For the compiled gems to be shared across services then the WORKDIR needs to be same for all images
+RUN mkdir -p /home/rails/services/app
+WORKDIR /home/rails/services/app
+ENV GEM_HOME=<%= repository.gem_home %>
+ENV PATH $GEM_HOME/bin:$PATH
 
+# Install gems that need compiling first b/c they can take a long time to compile
+RUN gem install \
+    <%= dockerfile_gems %>
 
+RUN gem install <%= dockerfile_bundler %>
 
+<% if @extension.start_with? '.dev' %>
+# Begin: Development
+ENV GEM_ENV=dev
+# source_path is a relative path from the build directory (project_root/src) to the directory that contains the code to copy
+# Example: source_path=whistler
+# target_path is a relative path that the service's Gemfile (project_root/src/NAME/services/SERVICE_NAME) expects to find libs within the container
+# Example: target_path=../..
+# NOTE: Copy in a generic Gemfile and the dependent gem's gemspecs so that their dependencies are also installed
 
+ARG source_path=<%= repository.repo_name %>
+ARG target_path=<%= repository.repo_path %>
 
+COPY ${source_path}/lib/core/*.gemspec ${target_path}/lib/core/
+COPY ${source_path}/lib/sdk/*.gemspec ${target_path}/lib/sdk/
+# COPY ${source_path}/services/Gemfile ./
+COPY ${source_path}/services/Gemfile* ./
 
+<% if @extension.eql? '.dev.upstream' %>
+# Begin: Upstream
+# upstream_source_path is a relative paths from the build directory (project_root/src) to the directory that contains the upstream code to copy
+# Example: upstream_source_path=cnfs
+# upstream_target_path is a relative path that the service's Gemfile (project_root/src/NAME/services/SERVICE_NAME) expects to find libs within the container
+# Example: upstream_target_path=../..
+ARG upstream_source_path=<%= repository.upstream_repo_name %>
+ARG upstream_target_path=<%= repository.upstream_repo_path %>
 
-<%= dockerfile_content -%>
+COPY ${upstream_source_path}/lib/core/*.gemspec ${upstream_target_path}/lib/core/
+COPY ${upstream_source_path}/lib/sdk/*.gemspec ${upstream_target_path}/lib/sdk/
+RUN sed -i '/git/d' ${upstream_target_path}/lib/sdk/*.gemspec
+# End: Upstream
+<% else %>
+<% 11.times do %><%= "\n" %><% end %>
+<% end %>
+# End: Development
+<% else %>
+<% 28.times do %><%= "\n" %><% end %>
+<% end %>
 
+# Don't use the --deployment flag since this is a container. See: http://bundler.io/man/bundle-install.1.html#DEPLOYMENT-MODE
+ARG GEM_SERVER
+ARG bundle_string='development test'
+RUN bundle config set without ${bundle_string}
+# Build a layer with gems from just the common Gemfile
+# Remove reference to git in spec.files
+RUN sed -i '/git/d' ${target_path}/lib/sdk/*.gemspec \
+ && bundle install \
+ && find <%= repository.bundle_home %> -iname '*.o' -exec rm -rf {} \; \
+ && find <%= repository.bundle_home %> -iname '*.a' -exec rm -rf {} \; \
+ && mv Gemfile* ..
+#  && mv Gemfile ..
 
+# Build the project specific gems
+ARG project=user
+COPY ${source_path}/services/${project}/Gemfile* ./
+# TODO: next line not present in Dockerile.dev, but is present in Dockerfile
+# COPY ${source_path}/services/${project}/ros-${project}.gemspec ./
 
+RUN bundle install \
+ && find <%= repository.bundle_home %> -iname '*.o' -exec rm -rf {} \; \
+ && find <%= repository.bundle_home %> -iname '*.a' -exec rm -rf {} \;
 
+# Runtime container
+FROM <%= "ruby:#{repository.ruby_version}-#{repository.image}" %>
 
+# Install OS packages and create a non-root user to run the application
+# To compile pg gem: libpq-dev
+# To install pg client to run via bash: postgresql-client
+# TODO: Remove sudo
+ARG os_packages='libpq5 git less'
 
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends ${os_packages} \
+ && apt-get clean
 
+ARG PUID=1000
+ARG PGID=1000
 
-<%= dockerfile_runtime_content -%>
+RUN [ $(getent group $PGID) ] || addgroup --gid ${PGID} rails \
+ && useradd -ms /bin/bash -d /home/rails --uid ${PUID} --gid ${PGID} --non-unique rails \
+ && mkdir -p /home/rails/services/app \
+ && echo 'set editing-mode vi' > /home/rails/.inputrc.vi \
+ && echo "alias ivi='cp /home/rails/.inputrc.vi /home/rails/.inputrc; set -o vi'" > /home/rails/.bash_aliases \
+ && echo "alias rspec='spring rspec $@'\nalias src='ss; rc'\nalias ss='spring stop'\nalias rs='rails server -b 0.0.0.0 --pid /tmp/server.pid'\nalias rc='ivi; spring rails console'\nalias rk='spring rake'" >> /home/rails/.bash_aliases \
+ && chown ${PUID}:${PGID} /home/rails -R \
+ && echo 'rails ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+# Rails operations
+WORKDIR /home/rails/services/app
+
+ARG source_path=<%= repository.repo_name %>
+ARG target_path=<%= repository.repo_path %>
+
+<% if @extension.start_with? '.dev' %>
+# Begin: Development
+ENV GEM_ENV=dev
+# TODO: Replace rails:rails with ${PUID}:${PGID} when CircleCI is at 19.03
+COPY --chown=rails:rails ${source_path}/lib/core/. ${target_path}/lib/core/
+COPY --chown=rails:rails ${source_path}/lib/sdk/. ${target_path}/lib/sdk/
+COPY --chown=rails:rails ${source_path}/.rubocop.yml ${target_path}/.rubocop.yml
+COPY --chown=rails:rails ${source_path}/.rubocop_todo.yml ${target_path}/.rubocop_todo.yml
+
+# workaround for buildkit not setting correct permissions
+RUN sed -i '/git/d' ${target_path}/lib/sdk/*.gemspec \
+ && chown rails: /home/rails/lib
+
+<% if @extension.eql? '.dev.upstream' %>
+ARG upstream_source_path=<%= repository.upstream_repo_name %>
+ARG upstream_target_path=<%= repository.upstream_repo_path %>
+
+COPY --chown=rails:rails ${upstream_source_path}/lib/core/. ${upstream_target_path}/lib/core/
+COPY --chown=rails:rails ${upstream_source_path}/lib/sdk/. ${upstream_target_path}/lib/sdk/
+RUN sed -i '/git/d' ${upstream_target_path}/lib/sdk/*.gemspec
+# End: Upstream
+<% else %>
+<% 6.times do %><%= "\n" %><% end %>
+<% end %>
+# End: Development
+<% else %>
+<% 20.times do %><%= "\n" %><% end %>
+<% end %>
+
+# COPY --chown=rails:rails ${source_path}/services/Gemfile ../Gemfile
+COPY --chown=rails:rails ${source_path}/services/Gemfile* ../
+
+USER ${PUID}:${PGID}
+
+EXPOSE 3000
+
+# Boot the application; Override this from the command line in order to run other tools
+# CMD ["bundle", "exec", "puma", "config.ru"]
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]
+
+# CircleCI docker version is old, it doesn't expand ARGs or ENVs for "COPY --chown" directive
+# TODO: Replace rails:rails with ${PUID}:${PGID} when CircleCI is at 19.03
+COPY --chown=rails:rails --from=base <%= repository.bundle_home %> <%= repository.bundle_home %>
+
+# Copy in the project files
+ARG project=user
+COPY --chown=rails:rails ${source_path}/services/${project}/. ./
+
+ARG rails_env=production
+ENV GEM_HOME=<%= repository.gem_home %>
+ENV PATH $GEM_HOME/bin:$PATH
+ENV RAILS_ENV=${rails_env} EDITOR=vim TERM=xterm RAILS_LOG_TO_STDOUT=yes

@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+# services/Gemfile<%= @extension %>
+
+<% if @extension.start_with?('.dev') %>
+# Include the project's core and sdk
+# gem '<%= repository.repo_name %>_core', path: '<%= repository.repo_path %>/lib/core'
+# gem '<%= repository.repo_name %>_sdk', path: '<%= repository.repo_path %>/lib/sdk'
+<% else %>
+gem '<%= repository.repo_name %>-core'
+gem '<%= repository.repo_name %>_sdk'
+<% end %>

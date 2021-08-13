@@ -5,7 +5,7 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      include Concerns::BelongsToProject
+      # include Concerns::BelongsToProject
       include TtyHelper
 
       attr_accessor :queue

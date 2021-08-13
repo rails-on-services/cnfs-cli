@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Shared methods for Rails::ServiceGnerator and Rails::RepositoryGenerator
+# Shared methods for Rails::ServiceGenrator and Rails::RepositoryGenerator
 module Rails
   module GeneratorConcern
     extend ActiveSupport::Concern
@@ -59,7 +59,7 @@ module Rails
 
       # If the project has a customized service generator then prefer that over the internal generator
       def rails_template_string(generator_name)
-        relative_path = internal_path.to_s.delete_prefix("#{Cnfs::Cli::Rails.gem_root}/app/")
+        relative_path = internal_path.to_s.delete_prefix("#{CnfsCli::Rails.gem_root}/app/")
         user_path = Cnfs.project_root.join(Cnfs.paths.lib).join(relative_path)
         exec_path = user_path.join(generator_name).exist? ? user_path : internal_path
         "-m #{exec_path.join(generator_name)}"
