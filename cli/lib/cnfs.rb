@@ -28,7 +28,7 @@ module Cnfs
         next unless path.exist?
 
         load_config(path)
-      end
+      end if Cnfs.paths.src.exist?
       load_config(Cnfs.paths.config)
       # binding.pry
       fixture_resources.each do |fixture_file, values|
