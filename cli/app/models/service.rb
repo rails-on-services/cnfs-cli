@@ -4,12 +4,13 @@
 class Service < ApplicationRecord
   attr_accessor :command_queue
 
+  include Concerns::Asset
   include Concerns::Taggable
   include Concerns::HasEnvs
 
   # belongs_to :namespace
   # belongs_to :location
-  belongs_to :owner, polymorphic: true
+  # belongs_to :owner, polymorphic: true
   belongs_to :origin, class_name: 'Service'
   has_many :services, as: :origin # , class_name: 'Service'
   # belongs_to :repository, required: false
@@ -23,16 +24,14 @@ class Service < ApplicationRecord
 
   serialize :volumes, Array
 
-  delegate :project, to: :namespace
-  delegate :runtime, to: :project
+  # delegate :project, to: :namespace
+  # delegate :runtime, to: :project
   delegate :full_context_name, :write_path, to: :project
   delegate :git, to: :repository
 
-  validates :name, presence: true
+  # validates :name, presence: true
 
   validate :image_values
-
-  default_scope { where(context: Cnfs.context) }
 
   def as_save
     attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
@@ -160,22 +159,23 @@ class Service < ApplicationRecord
     #   end
     # end
 
-    def create_table(schema)
-      schema.create_table :services, force: true do |t|
-        t.references :owner, polymorphic: true
+    # def create_table(schema)
+    def add_columns(t)
+      # schema.create_table :services, force: true do |t|
+        # t.references :owner, polymorphic: true
         t.references :origin # , polymorphic: true
-        t.string :_source
+        # t.string :_source
         # t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
         # t.references :source_repo
         # t.references :image_repo
         # t.references :chart_repo
         t.string :commands
-        t.string :config
+        # t.string :config
         # TODO: Change to envs
         t.string :environment
         t.string :image
-        t.string :name
+        # t.string :name
         t.string :context
         t.string :path
         t.string :profiles
@@ -183,7 +183,7 @@ class Service < ApplicationRecord
         t.string :template
         t.string :type
         t.string :volumes
-      end
+      # end
     end
   end
 end

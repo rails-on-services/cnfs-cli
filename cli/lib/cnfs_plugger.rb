@@ -9,10 +9,13 @@ module CnfsPlugger
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
     # rubocop:disable Metrics/CyclomaticComplexity
-    def initialize_dev_plugins(gem_root)
+    def initialize_plugins_from_path(gem_root, logger = nil)
+      binding.pry if ENV['pry'] # 4
       plugin_path = LittlePlugger.default_plugin_path(self) # cnfs_core/plugins
       gem_root.join('..').children.select(&:directory?).each do |dir|
         plugin_dir = dir.join('lib', plugin_path)
+        logger.debug("- #{plugin_path}") if logger
+        logger.debug("* #{dir} - #{plugin_dir}") if logger
         unless plugin_dir.directory? && plugin_dir.children.any?
           # puts "* #{name} - #{plugin_dir}"
           next
@@ -20,7 +23,7 @@ module CnfsPlugger
 
         $LOAD_PATH.unshift(dir.join('lib'))
         plugin_dir.children.each do |file|
-          # puts "> #{name} - #{plugin_dir}"
+          logger.debug("> #{name} - #{plugin_dir}") if logger
           class_name = file.split.last.to_s.delete_suffix('.rb')
           plugin_class = "#{plugin_path}/#{class_name}"
           require plugin_class

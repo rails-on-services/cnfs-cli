@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Image < ApplicationRecord
+  include Concerns::Asset
+
   belongs_to :repository
 
   def as_save
@@ -12,19 +14,19 @@ class Image < ApplicationRecord
   end
 
   class << self
-    def create_table(schema)
-      schema.create_table :images, force: true do |t|
+    def add_columns(t)
+      # schema.create_table :images, force: true do |t|
         # t.references :owner, polymorphic: true
         t.references :repository
-        t.string :_source
-        t.string :config
+        # t.string :_source
+        # t.string :config
         t.string :dockerfile
         t.string :build
-        t.string :name
+        # t.string :name
         # t.string :path
         t.string :type
         t.string :tags
-      end
+      # end
     end
   end
 end

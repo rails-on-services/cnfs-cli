@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+# A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
 class Blueprint < ApplicationRecord
+  include Concerns::Asset
   # include Concerns::HasEnv
   # include Concerns::Taggable
   belongs_to :builder
@@ -61,17 +63,15 @@ class Blueprint < ApplicationRecord
       end
     end
 
-    def create_table(schema)
-      schema.create_table :blueprints, force: true do |t|
-        t.references :builder
-        t.references :environment
-        t.references :provider
-        t.string :config
-        # t.string :envs
-        t.string :name
-        # t.string :tags
-        t.string :type
-      end
+    def add_columns(t)
+      t.references :builder
+      # t.references :environment
+      t.references :provider
+      # t.string :config
+      # t.string :envs
+      # t.string :name
+      # t.string :tags
+      t.string :type
     end
   end
 end

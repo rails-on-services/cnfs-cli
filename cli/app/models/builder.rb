@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 class Builder < ApplicationRecord
+  include Concerns::Asset
   include Concerns::BuilderRuntime
 
   attr_accessor :blueprint
 
-  belongs_to :owner, polymorphic: true
+  # belongs_to :owner, polymorphic: true
 
   serialize :dependencies, Array
 
@@ -65,20 +66,20 @@ class Builder < ApplicationRecord
   # end
 
   class << self
-    def create_table(schema)
-      schema.create_table :builders, force: true do |t|
-        t.references :owner, polymorphic: true
+    def add_columns(t)
+      # schema.create_table :builders, force: true do |t|
+        # t.references :owner, polymorphic: true
         # t.string :context
-        t.string :_source
+        # t.string :_source
         # t.references :project
-        t.string :config
+        # t.string :config
         t.string :dependencies
         # t.string :envs
-        t.string :name
+        # t.string :name
         t.string :providers
         # t.string :tags
         t.string :type
-      end
+      # end
     end
   end
 end

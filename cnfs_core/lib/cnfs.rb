@@ -5,132 +5,76 @@ require 'tty-logger'
 require 'xdg'
 
 require_relative 'cnfs/boot'
+require_relative 'cnfs/context'
+require_relative 'cnfs/loader'
 
 # rubocop:disable Metrics/ModuleLength
 module Cnfs
   # class Error < StandardError; end
 
   class << self
-    # attr_accessor :repository, :project
-    attr_accessor :project
-    # Injected values
-    attr_accessor :project_file, :plugin_root
-    attr_reader :config, :timers, :logger, :cwd
+    attr_accessor :plugin_root
 
-    attr_accessor :project_root, :config, :logger
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
-    def initialize!
-      @timers = {}
-      @cwd = Pathname.new(Dir.pwd)
+    def config
+      @config ||= context.config
     end
 
-    # def prepare_fixtures(models)
-    #   models.each(&:parse)
-    # end
-
-    # return true if the directory from which the command was invoked is not inside an existing project
-    def cwd_outside_project?
-      Cnfs.project_root.nil?
+    def data_store
+      @data_store ||= Cnfs::DataStore.new
     end
 
-    def parsable_files
-      @parsable_files ||= source_files.group_by { |path| path.split('/').last.delete_suffix('.yml') }
+    def logger
+      @logger ||= set_logger
     end
 
-    def source_files
-      @source_files ||= source_paths_map.values.flatten.map { |path| Dir[path.join('config', '**/*.yml')] }.flatten
+    def set_logger
+      TTY::Logger.new do |cfg|
+        level = TTY::Logger::LOG_TYPES.keys.include?(config.logging.to_sym) ? config.logging.to_sym : :warn
+        config.logging = cfg.level = level
+      end
     end
 
-    # For each valid key, return an internal list of paths to search including all plugins
-    # NOTE: Could include repositories
-    def source_paths_map
-      @source_paths_map ||= {
-        cli: [plugin_root.gem_root],
-        plugins: plugin_root.plugins.values.map { |p|
-          p.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize.gem_root
-        },
-        project: [project_root],
-        user: [user_root.join(config.name)]
-      }
+    def timers
+      @timers ||= {}
     end
 
-    def initialize_development
-      # require 'pry'
-      # initialize_dev_plugins
-    end
-
-    # def initialize_repositories
-    #   return unless Cnfs.paths.src.exist?
-
-    #   Cnfs.paths.src.children.select(&:directory?).each do |repo_path|
-    #     repo_config_path = repo_path.join('cnfs/repository.yml')
-    #     Cnfs.logger.info "Scanning repository path #{repo_path}"
-    #     next unless repo_config_path.exist? && (name = YAML.load_file(repo_config_path)['name'])
-
-    #     Cnfs.logger.info "Loading repository path #{repo_path}"
-    #     config = YAML.load_file(repo_config_path).merge(path: repo_path)
-    #     repositories[name.to_sym] = Thor::CoreExt::HashWithIndifferentAccess.new(config)
-    #   end
-    #   @repository = current_repository
-    #   Cnfs.logger.info "Current repository set to #{repository&.name}"
-    # end
+      def require_deps(type = :minimum)
+        Cnfs.with_timer('loading minimum dependencies') { require_relative 'cnfs/minimum_dependencies' }
+        Cnfs.with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
+        # TODO: Refector to move to the appropriate gem using AS Notifications
+        ActiveSupport::Inflector.inflections do |inflect|
+          inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
+        end
+      end
 
     def reload
-      reset
+      @config = nil
+      context.reload
+      binding.pry
       loader.reload
-      Cnfs::Configuration.reload
+      data_store.reload
+    end
+
+    # NOTE: most of this moved to context. Is shift and caps needed?
+    def reset
+      ARGV.shift # remove 'new'
+      # TODO: project_root is in cli gem
+      # @project_root = nil
+      # @paths = nil
+      @capabilities = nil
+      # Dir.chdir(project_root) { load_config }
     end
 
     def loader
-      @loader ||= Zeitwerk::Loader.new
-    end
-
-    def autoload_dirs
-      @autoload_dirs ||= autoload_all(gem_root)
+      @loader ||= Cnfs::Loader.new(logger: logger)
     end
 
     def gem_root
       @gem_root ||= Pathname.new(__dir__).join('..')
     end
 
-    def project_root
-      @project_root ||= cwd.ascend { |path| break path if path.join(project_file).file? }
-    end
-
-    def paths
-      @paths ||= config.paths.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
-    end
-
-    def autoload_all(path)
-      return [] unless path.join('app').exist?
-
-      path.join('app').children.select(&:directory?).select { |m| default_load_paths.include?(m.split.last.to_s) }
-    end
-
-    def default_load_paths
-      %w[controllers generators helpers models views]
-    end
-
     def extensions
       @extensions ||= []
-    end
-
-    def valid_top_level_command?
-      # Display help for new command when no arguments are passed
-      ARGV.append('help', 'new') if ARGV.size.zero?
-      %w[dev help new version].each do |valid_command|
-        break [valid_command] if valid_command.start_with?(ARGV[0])
-      end.size.eql?(1)
-    end
-
-    def reset
-      ARGV.shift # remove 'new'
-      @cwd = Pathname.new(Dir.pwd)
-      @project_root = nil
-      @paths = nil
-      @capabilities = nil
-      Dir.chdir(project_root) { load_config }
     end
 
     def with_timer(title = '', level = :info)
@@ -192,9 +136,9 @@ module Cnfs
 
     def cli_mode
       @cli_mode ||= begin
-        mode = config.dig(:cli, :dev) ? 'development' : 'production'
-        ActiveSupport::StringInquirer.new(mode)
-      end
+                      mode = config.dig(:cli, :dev) ? 'development' : 'production'
+                      ActiveSupport::StringInquirer.new(mode)
+                    end
     end
 
     def git
@@ -215,10 +159,7 @@ module Cnfs
       $stdout = rs
     end
 
-    def config_paths
-      @config_paths = [plugin_root.gem_root.join(project_file), user_root.join('cnfs.yml'), project_file]
-    end
-
+    # TODO: make the 'cnfs' configurable from cnfs-cli
     def user_root
       @user_root ||= xdg.config_home.join('cnfs')
     end

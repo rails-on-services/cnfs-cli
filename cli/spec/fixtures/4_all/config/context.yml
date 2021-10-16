@@ -1,0 +1,5 @@
+---
+stack: backend
+environment: development
+target: cluster
+namespace: default

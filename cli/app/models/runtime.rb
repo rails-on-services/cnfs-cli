@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Runtime < ApplicationRecord
+  include Concerns::Asset
   include Concerns::BuilderRuntime
 
   store :config, accessors: %i[version], coder: YAML
@@ -39,16 +40,17 @@ class Runtime < ApplicationRecord
   #     local_path: "#{path}/target" }
   # end
 
-  def self.create_table(schema)
-    schema.create_table :runtimes, force: true do |t|
-      t.string :_source
+  # def self.create_table(schema)
+  def self.add_columns(t)
+    # schema.create_table :runtimes, force: true do |t|
+      # t.string :_source
       # t.references :project
-      t.string :name
-      t.string :config
+      # t.string :name
+      # t.string :config
       t.string :dependencies
       t.string :environment
       t.string :type
       t.string :tags
-    end
+    # end
   end
 end

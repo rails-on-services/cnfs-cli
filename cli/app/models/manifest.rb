@@ -56,15 +56,15 @@ class Manifest
 
   # @return [DateTime]
   def youngest_config_file_updated_at
-    find_earliest_latest(config_files, :max)
+    file_mtimes(config_files).max
   end
 
   # @return [DateTime]
   def oldest_manifest_file_generated_at
-    find_earliest_latest(files, :min)
+    file_mtimes(files).min
   end
 
-  def find_earliest_latest(list, method)
-    list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }.send(method)
+  def file_mtimes(list)
+    list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }
   end
 end

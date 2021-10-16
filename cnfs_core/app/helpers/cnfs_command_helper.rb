@@ -53,7 +53,8 @@ module CnfsCommandHelper
       # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
       # Merge options also under options key for Project to pick up
       @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
-      Cnfs::Boot.load_configuration(options)
+      # TODO: This is replaced by the Context class
+      # Cnfs::Boot.load_configuration(options)
     end
 
     # rubocop:disable Metrics/ParameterLists
@@ -92,14 +93,16 @@ module CnfsCommandHelper
     end
 
     def ensure_valid_project
+      return true
+      # binding.pry
       raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
     end
 
-    def services_file_path
-      path = [options.environment, options.namespace].compact.join('/')
-      # TODO: just reference project?
-      Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
-    end
+    # def services_file_path
+    #   path = [options.environment, options.namespace].compact.join('/')
+    #   # TODO: just reference project?
+    #   Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
+    # end
 
     # Usage: before: (or class_before:) :validate_destroy
     # Will raise an error unless force option is provided or user confirms the action

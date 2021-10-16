@@ -8,7 +8,7 @@ module Projects
       end
 
       def model_shortcuts
-        { bl: Blueprint, bu: Builder, d: Dependency, e: Environment, l: Location, n: Namespace, pr: Provider,
+        { bl: Blueprint, bu: Builder, c: Context, d: Dependency, e: Environment, l: Location, n: Node, nam: Namespace, pr: Provider,
           res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, st: Stack, u: User }
       end
     end
@@ -28,7 +28,7 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt
       prompt = []
-      prompt << Pry::Helpers::Text.blue(Cnfs.project.name)
+      prompt << Pry::Helpers::Text.blue('happy') #Cnfs.project.name)
       env = 'essay' # Cnfs.project.environment.name
       environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
       prompt << Pry::Helpers::Text.send(environment_color, env)

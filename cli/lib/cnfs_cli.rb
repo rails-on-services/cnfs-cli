@@ -11,41 +11,50 @@ module CnfsCli
   class << self
     attr_accessor :repository
 
-    def run!
-      # Initialize plugins in the Cnfs namespace
-      Cnfs.initialize_dev_plugins(gem_root) if Cnfs.initialize_plugins.empty?
-      Cnfs.project_file = 'config/project.yml'
+    def run!(path = Dir.pwd, load_nodes = true)
+      # Initialize plugins in the *Cnfs* namespace
+      Cnfs.initialize_plugins_from_path(gem_root) if Cnfs.initialize_plugins.empty?
       Cnfs.plugin_root = self
-      Cnfs::Boot.initialize! do # |event|
-        # if event.eql?(:before_loader)
-          # Initialize plugins in the CnfsCli namespace
-          Cnfs.config.dig(:cli, :dev) ? initialize_development : initialize_plugins
-          Cnfs.autoload_dirs.concat(Cnfs.autoload_all(gem_root))
-          # ActiveSupport::Notifications.subscribe('before_loader_push_dirs.cnfs') do |_event|
-          #   binding.pry
-          #   add_repository_autoload_paths
-          # end
-        end
-        # elsif event.eql?(:after_loader)
-        Cnfs::Boot.run! do # |event|
-          ActiveSupport::Notifications.subscribe('before_project_configuration.cnfs') do |_event|
-            Cnfs::Configuration.models = models_to_parse
-          end
+      if Cnfs.path_outside_project?(path)
+        raise Cnfs::Error, "Invalid command '#{ARGV.join(' ')}'" unless valid_top_level_command?
+
+        Cnfs.project_root = Pathname.new(path)
+        # Cnfs.project_root = '.'
+      end
+
+      Cnfs.require_deps(:all)
+      # Initialize plugins in the *CnfsCli* namespace
+      Cnfs.config.dig(:cli, :dev) ? initialize_development : initialize_plugins
+      Cnfs.loader.autoload_all(gem_root)
+      # add_repository_autoload_paths
+
+      Cnfs.config.order ||= 'target'
+      binding.pry
+      Cnfs.config.order = Cnfs.config.order.split(',').map(&:strip).map(&:singularize).unshift('project')
+      Cnfs.config.orders = Cnfs.config.order.map(&:pluralize)
+      Cnfs.config.asset_names = %w[builders context providers resources repositories runtimes services users]
+
+      Cnfs::Boot.run! do
+        Dir.chdir(Cnfs.project_root) do
+          Node.create(path: 'project.yml', asset_class: Project) if load_nodes
           yield if block_given?
-        # end
+        end
       end
     end
 
-    def models_to_parse
-      # [Blueprint, Builder, Dependency, Environment, Location, Namespace, Project,
-      #  Provider, Registry, Repository, Resource, Runtime, Service, User]
-      [Blueprint, Builder, Dependency, Environment, Stack, Namespace, Project,
-       Provider, Repository, Image, Resource, Runtime, Service, User]
-    end
+      def valid_top_level_command?
+        # Display help for new command when no arguments are passed
+        ARGV.append('help', 'new') if ARGV.size.zero?
+        # TODO: Valid commands come from the encolsing app, e.g. cnfs-cli
+        %w[dev help new version].each do |valid_command|
+          break [valid_command] if valid_command.start_with?(ARGV[0])
+        end.size.eql?(1)
+      end
 
+    # Initialize plugins in the *CnfsCli* namespace
     def initialize_development
       require 'pry'
-      initialize_dev_plugins(gem_root)
+      initialize_plugins_from_path(gem_root, Cnfs.logger)
     end
 
     def gem_root
@@ -57,6 +66,7 @@ module CnfsCli
     # So there should just be one method to populate autoload_dirs
     # TODO: This needs to be refactored b/c repositories are not in the Cnfs.repositories array now
     def add_repository_autoload_paths
+      binding.pry
       Cnfs.repositories.each do |_name, config|
         cnfs_load_path = Cnfs.project_root.join(config.path, 'cnfs/app')
         next unless cnfs_load_path.exist?

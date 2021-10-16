@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
 class Resource < ApplicationRecord
+  include Concerns::Asset
   include Concerns::HasEnvs
   include Concerns::Taggable
 
-  belongs_to :owner, polymorphic: true
+  # belongs_to :owner, polymorphic: true
   belongs_to :provider, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
-
-  default_scope { where(context: Cnfs.context) }
 
   # TODO:
   # Need a provider
   # runtime is now part of this model not delegated to blueprint
   # builder is from the project
-  delegate :builder, :environment, :provider, :runtime, to: :blueprint
+  # delegate :builder, :environment, :provider, :runtime, to: :blueprint
   # delegate :services, to: :environment
 
   # parse_sources :project, :user
@@ -69,20 +68,21 @@ class Resource < ApplicationRecord
     #   end
     # end
 
-    def create_table(schema)
-      schema.create_table :resources, force: true do |t|
-        t.references :owner, polymorphic: true
+    # def create_table(schema)
+    def add_columns(t)
+      # schema.create_table :resources, force: true do |t|
+        # t.references :owner, polymorphic: true
         t.references :provider
         t.string :context
-        t.string :_source
+        # t.string :_source
         # t.references :blueprint
         # t.references :location
-        t.string :config
+        # t.string :config
         t.string :envs
-        t.string :name
+        # t.string :name
         t.string :tags
         t.string :type
-      end
+      # end
     end
   end
 end

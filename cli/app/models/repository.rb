@@ -2,9 +2,13 @@
 
 # require 'active_record'
 class Repository < ApplicationRecord
-  # include Concerns::BelongsToProject
+  include Concerns::Asset
 
-  belongs_to :owner, polymorphic: true
+    def search_paths
+      [Cnfs.paths.src.join(name).join('.cnfs/config')]
+    end
+
+  # belongs_to :owner, polymorphic: true
   has_many :services, as: :owner
 
   # store :config, accessors: %i[url repo_type], coder: YAML
@@ -12,8 +16,6 @@ class Repository < ApplicationRecord
 
   validates :name, presence: true
   validates :url, presence: true
-
-  default_scope { where(context: Cnfs.context) }
 
   # after_destroy :remove_tree
 
@@ -78,7 +80,7 @@ class Repository < ApplicationRecord
     end
 
     def url_from_name(name)
-      path = name.eql?('.') ? Cnfs.cwd.relative_path_from(Cnfs.project.root) : Pathname.new(name)
+      path = name.eql?('.') ? Cnfs.context.cwd.relative_path_from(Cnfs.project.root) : Pathname.new(name)
       Dir.chdir(path) { remote.fetch_url } if path.directory?
     end
 
@@ -92,7 +94,7 @@ class Repository < ApplicationRecord
     # Returns the default repository unless the the given path is another project repository
     # in which case return the Repository object that represents the given path
     # The default path is the directory where the command was invoked
-    def from_path(path = Cnfs.cwd.to_s)
+    def from_path(path = Cnfs.context.cwd.to_s)
       src_path = Cnfs.project_root.join(Cnfs.paths.src).to_s
       return Cnfs.project.repository if path.eql?(src_path) || !path.start_with?(src_path)
 
@@ -101,20 +103,21 @@ class Repository < ApplicationRecord
       find_by(name: repo_name)
     end
 
-    def create_table(schema)
-      schema.create_table :repositories, force: true do |t|
-        t.references :owner, polymorphic: true
+    # def create_table(schema)
+    def add_columns(t)
+      # schema.create_table :repositories, force: true do |t|
+        # t.references :owner, polymorphic: true
         t.string :context
-        t.string :_source
+        # t.string :_source
         t.string :_id
-        t.string :config
+        # t.string :config
         t.string :dockerfile
         t.string :build
-        t.string :name
+        # t.string :name
         # t.string :path
         t.string :type
         t.string :tags
-      end
+      # end
     end
   end
 end

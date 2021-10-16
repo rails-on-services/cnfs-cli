@@ -1,16 +1,13 @@
 # frozen_string_literal: true
 
 class Namespace < ApplicationRecord
+  include Concerns::Component
+  # include Concerns::Key
   # include Concerns::HasEnvs
   # include Concerns::Taggable
-  include Concerns::Key
 
-  belongs_to :environment
-  has_many :services
 
-  validates :name, presence: true
-
-  delegate :project, :runtime, to: :environment
+  # delegate :project, :runtime, to: :environment
 
   store :config, accessors: %i[main], coder: YAML
 
@@ -19,28 +16,23 @@ class Namespace < ApplicationRecord
   # parse_options fixture_name: :namespace
 
   # Override to provide a path alternative to config/table_name.yml
-  def save_path
-    Cnfs.project.paths.config.join('environments', environment.name, name, 'namespace.yml')
-  end
+  # def save_path
+  #   Cnfs.project.paths.config.join('environments', environment.name, name, 'namespace.yml')
+  # end
 
-  def user_save_path
-    Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', environment.name, name, 'namespace.yml')
-  end
+  # def user_save_path
+  #   Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', environment.name, name, 'namespace.yml')
+  # end
 
   def as_save
     attributes.slice('config', 'name', 'tags')
   end
 
   class << self
-    def create_table(schema)
-      schema.create_table :namespaces, force: true do |t|
-        t.references :environment
-        t.string :config
-        # t.string :envs
-        t.string :key
-        t.string :name
-        # t.string :tags
-      end
+    def add_columns(t)
+      # t.string :envs
+      t.string :key
+      # t.string :tags
     end
   end
 end

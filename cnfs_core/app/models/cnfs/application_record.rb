@@ -4,8 +4,8 @@
 class Cnfs::ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
-  after_destroy :destroy_in_file
-  after_save :save_in_file
+  # after_destroy :destroy_in_file
+  # after_save :save_in_file
 
   def edit
     view.edit
@@ -46,7 +46,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
 
   # Override to provide a path alternative to config/table_name.yml
   def save_path
-    Cnfs.project_root.join(Cnfs.project.paths.config).join("#{self.class.table_name}.yml")
+    # Cnfs.project_root.join(Cnfs.project.paths.config).join("#{self.class.table_name}.yml")
   end
 
   def as_save

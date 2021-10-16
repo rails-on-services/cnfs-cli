@@ -1,0 +1,11 @@
+---
+paths:
+  config: config
+  data: data
+  lib: lib
+  src: src
+  tmp: tmp
+logging: warn
+name: 1_target
+# order: stack, environment, target, namespace
+config: {}

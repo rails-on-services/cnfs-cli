@@ -3,7 +3,7 @@
 class ApplicationRecord < Cnfs::ApplicationRecord
   self.abstract_class = true
 
-  store :config, coder: YAML
+  # store :config, coder: YAML
 
   class << self
     def combine
@@ -17,6 +17,9 @@ class ApplicationRecord < Cnfs::ApplicationRecord
 
   def _id_is_valid?
     id.eql?(_fid)
+  end
+
+  def save_in_file
   end
 
   # _source is set by parse for existing configurations

@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
 class Environment < ApplicationRecord
-  # include Concerns::HasEnvs
-  # include Concerns::BelongsToProject
   include Concerns::Component
-  include Concerns::Key
+  # include Concerns::Key
+  # include Concerns::HasEnvs
 
   # belongs_to :builder
-  belongs_to :owner, polymorphic: true
+  # belongs_to :owner, polymorphic: true
 
-  has_many :blueprints
+  # has_many :blueprints
   # has_many :resources, through: :blueprints
   # has_many :runtimes, through: :blueprints
   def runtimes; [] end
   # has_many :resources
   # has_many :runtimes, through: :resources
-  has_many :namespaces
+  # has_many :namespaces
   # has_many :services, through: :namespaces
 
   store :config, accessors: %i[domain], coder: YAML
@@ -24,7 +23,7 @@ class Environment < ApplicationRecord
   # store :tf_config, accessors: %i[tags], coder: YAML
 
   # validates :builder, presence: true
-  validate :no_duplicated_runtimes
+  # validate :no_duplicated_runtimes
 
   # parse_scopes :environment
   # parse_sources :project, :user
@@ -44,14 +43,14 @@ class Environment < ApplicationRecord
   #   Cnfs.project.paths.config.join('environments', name, 'environment.yml')
   # end
 
-  def user_save_path
-    Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', name, 'environment.yml')
-  end
+  # def user_save_path
+  #   Cnfs.user_root.join(Cnfs.config.name, Cnfs.paths.config, 'environments', name, 'environment.yml')
+  # end
 
   # Given a service, return the runtime that supports its type
-  def runtime_for(service)
-    runtimes.select { |r| r.supported_service_types.include?(service.type) }.first
-  end
+  # def runtime_for(service)
+  #   runtimes.select { |r| r.supported_service_types.include?(service.type) }.first
+  # end
 
   # after_initialize do
   #   self.lb_dns_hostnames ||= []
@@ -77,27 +76,14 @@ class Environment < ApplicationRecord
   #   @domain ||= [dns_sub_domain, dns_root_domain].compact.join('.')
   # end
 
-  def as_save
-    attributes.slice('config', 'name', 'tags', 'type')
-  end
+  # def as_save
+  #   attributes.slice('config', 'name', 'tags', 'type')
+  # end
 
   class << self
-
-    def create_table(schema)
-      schema.create_table :environments, force: true do |t|
-        t.string :context
-        t.references :owner, polymorphic: true
-        t.string :_source
-        # t.references :builder
-        t.references :project
-        t.string :config
-        # t.string :dns_root_domain
-        # t.string :envs
-        t.string :key
-        t.string :name
-        # t.string :tags
-        # t.string :tf_config
-      end
+    def add_columns(t)
+      t.string :context
+      t.string :key
     end
   end
 end
