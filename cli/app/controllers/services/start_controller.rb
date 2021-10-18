@@ -5,6 +5,27 @@ module Services
     include ServicesHelper
     attr_accessor :services
 
+    # controller asks context for targets
+    # context asks component for targets
+    # namespace returns [target]
+    # target returns [self]
+    # environment returns targets
+    # OR
+    # any component can have activated services
+    # components can be in any order so have to ask context for targets
+    def exec_services
+      Cnfs.context.services.each do |service|
+      end
+    end
+
+    def new_execute
+      Cnfs.context.targets.each do |target|
+        target.services.each do |service|
+          target.runtime.start(service)
+        end
+      end
+    end
+
     def execute
       # queue = CommandQueue.new
       each_runtime do |runtime, runtime_services|

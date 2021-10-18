@@ -9,7 +9,7 @@ class Repository < ApplicationRecord
     end
 
   # belongs_to :owner, polymorphic: true
-  has_many :services, as: :owner
+  # has_many :services, as: :owner
 
   # store :config, accessors: %i[url repo_type], coder: YAML
   store :config, accessors: %i[url], coder: YAML

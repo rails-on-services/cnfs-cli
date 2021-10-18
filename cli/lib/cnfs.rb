@@ -13,32 +13,45 @@ module Cnfs
   class Error < StandardError; end
 
   class << self
-    attr_accessor :project_file, :project_root, :context
+    attr_writer :project_file, :project_root, :context, :translations
 
     def project_file
       @project_file ||= 'project.yml'
     end
 
+    def xdg_name
+      @xdg_name ||= 'cnfs-cli'
+    end
+
     def project_root
-      @project_root ||= context.class.cwd.ascend { |path| break path if path.join(project_file).file? }
+      @project_root ||= Pathname.new(Dir.pwd).ascend { |path| break path if path.join(project_file).file? }
     end
 
     def context
       @context ||= Cnfs::Context.new(
+        cwd: project_root,
         config_parse_settings: { env_separator: '_', env_prefix: 'CNFS' },
-        config_paths: [plugin_root.gem_root.join(project_file), user_root.join('cnfs.yml'), project_file],
-        translations: { env: :environment, ns: :namespace, repo: :repository }
+        config_paths: [CnfsCli.gem_root.join(project_file), user_root.join('cnfs.yml'), project_file],
+        translations: translations
       )
     end
 
+    # TODO: This is going to be a problem when run outside of a project since the file will not be available
+    def translations
+      @translations ||= (
+        yml = YAML.load_file(project_file)['components'] || {}
+        translations = yml.each_with_object({}) do |kv, hash|
+          next unless (env = kv['env'])
+
+          hash[env] = kv['name']
+        end
+      )
+    end
+
+    # The model class list for which tables will be created in the database
     def schema_model_names
       %w[blueprint builder context dependency environment image namespace node node_config node_asset
         project provider repository resource runtime service stack target user]
     end
-
-      # return true if the directory from which the command was invoked is not inside an existing project
-      def path_outside_project?(path)
-        Dir.chdir(path) { Cnfs.project_root.nil? }
-      end
   end
 end

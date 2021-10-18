@@ -6,15 +6,19 @@ class Project < ApplicationRecord
 
   # belongs_to :source_repository, class_name: 'Repository'
 
-  has_many :blueprints, as: :owner
+  # has_many :blueprints, as: :owner
   # has_many :builders, as: :owner
-  has_many :providers, as: :owner
-  has_many :repositories
+  # has_many :providers, as: :owner
+  # has_many :repositories
   # has_many :runtimes
-  has_many :users, as: :owner
+  # has_many :users, as: :owner
 
   store :paths, coder: YAML
+  serialize :components, Array
   # store :options, coder: YAML
+
+  # called by Component concern
+  def owner; end
 
   # TODO: Implement validation
   def platform_is_valid
@@ -81,6 +85,7 @@ class Project < ApplicationRecord
     def add_columns(t)
       t.string :order
       t.string :paths
+      t.string :components
       t.string :tags
       t.string :logging
     end

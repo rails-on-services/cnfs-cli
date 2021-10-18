@@ -11,11 +11,7 @@ class Environment < ApplicationRecord
   # has_many :blueprints
   # has_many :resources, through: :blueprints
   # has_many :runtimes, through: :blueprints
-  def runtimes; [] end
-  # has_many :resources
-  # has_many :runtimes, through: :resources
-  # has_many :namespaces
-  # has_many :services, through: :namespaces
+  # def runtimes; [] end
 
   store :config, accessors: %i[domain], coder: YAML
   # store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
@@ -25,18 +21,14 @@ class Environment < ApplicationRecord
   # validates :builder, presence: true
   # validate :no_duplicated_runtimes
 
-  # parse_scopes :environment
-  # parse_sources :project, :user
-  # parse_options fixture_name: :environment
-
-  def no_duplicated_runtimes
-    def_runtimes = runtimes.pluck(:type)
-    unique_runtimes = def_runtimes.dup.uniq!
-    return if unique_runtimes.nil?
-
-    duplicate_runtimes = unique_runtimes.select { |e| def_runtimes.count(e) > 1 }
-    errors.add(:runtimes, "Must be unique. Multiple resources with identical runtime #{duplicate_runtimes.join(', ')}")
-  end
+  # def no_duplicated_runtimes
+  #   def_runtimes = runtimes.pluck(:type)
+  #   unique_runtimes = def_runtimes.dup.uniq!
+  #   return if unique_runtimes.nil?
+  #
+  #   duplicate_runtimes = unique_runtimes.select { |e| def_runtimes.count(e) > 1 }
+  #   errors.add(:runtimes, "Must be unique. Multiple resources with identical runtime #{duplicate_runtimes.join(', ')}")
+  # end
 
   # Override to provide a path alternative to config/table_name.yml
   # def save_path
@@ -82,7 +74,7 @@ class Environment < ApplicationRecord
 
   class << self
     def add_columns(t)
-      t.string :context
+      # t.string :context
       t.string :key
     end
   end

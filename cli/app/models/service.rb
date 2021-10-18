@@ -5,15 +5,8 @@ class Service < ApplicationRecord
   attr_accessor :command_queue
 
   include Concerns::Asset
-  include Concerns::Taggable
-  include Concerns::HasEnvs
-
-  # belongs_to :namespace
-  # belongs_to :location
-  # belongs_to :owner, polymorphic: true
-  belongs_to :origin, class_name: 'Service'
-  has_many :services, as: :origin # , class_name: 'Service'
-  # belongs_to :repository, required: false
+  # include Concerns::Taggable
+  # include Concerns::HasEnvs
 
   store :commands, accessors: %i[console shell test], coder: YAML
   store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
@@ -24,12 +17,8 @@ class Service < ApplicationRecord
 
   serialize :volumes, Array
 
-  # delegate :project, to: :namespace
-  # delegate :runtime, to: :project
-  delegate :full_context_name, :write_path, to: :project
-  delegate :git, to: :repository
-
-  # validates :name, presence: true
+  # delegate :full_context_name, :write_path, to: :project
+  # delegate :git, to: :repository
 
   validate :image_values
 
@@ -63,9 +52,6 @@ class Service < ApplicationRecord
     self.depends_on ||= []
     self.profiles ||= {}
   end
-
-  # parse_scopes :environments, :environment, :namespace
-  # parse_sources :project, :user
 
   # Custom callbacks
   { start: :running, stop: :stopped, terminate: :terminated }.each do |command, state|
@@ -151,31 +137,15 @@ class Service < ApplicationRecord
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
-    # def parse
-    #   # key: 'environments/staging/main/namespace.yml'
-    #   super do |_key, output, _opts|
-    #     keys = output.keys.select { |output_key| output_key.end_with?('DEFAULTS') }
-    #     output.except!(*keys)
-    #   end
-    # end
-
-    # def create_table(schema)
     def add_columns(t)
-      # schema.create_table :services, force: true do |t|
-        # t.references :owner, polymorphic: true
-        t.references :origin # , polymorphic: true
-        # t.string :_source
-        # t.references :repository
         # TODO: Perhaps these are better as strings that can be inherited
         # t.references :source_repo
         # t.references :image_repo
         # t.references :chart_repo
         t.string :commands
-        # t.string :config
         # TODO: Change to envs
         t.string :environment
         t.string :image
-        # t.string :name
         t.string :context
         t.string :path
         t.string :profiles

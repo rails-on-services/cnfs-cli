@@ -2,13 +2,23 @@
 
 class Resource < ApplicationRecord
   include Concerns::Asset
-  include Concerns::HasEnvs
-  include Concerns::Taggable
+  # include Concerns::HasEnvs
+  # include Concerns::Taggable
 
-  # belongs_to :owner, polymorphic: true
   belongs_to :provider, optional: true
+  belongs_to :runtime, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
+
+  class << self
+    def after_node_load
+      all.each do |res|
+        next unless (rt = Runtime.find_by(name: res.runtime_name))
+
+        res.update(runtime: rt)
+      end
+    end
+  end
 
   # TODO:
   # Need a provider
@@ -58,31 +68,15 @@ class Resource < ApplicationRecord
   # end
 
   class << self
-    # def parse
-    #   # key: 'environments/staging/resources.yml'
-    #   super do |key, output, _opts|
-    #     env = key.split('/')[1]
-    #     output.each do |_key, value|
-    #       value['blueprint'] = "#{env}_#{value['blueprint']}"
-    #     end
-    #   end
-    # end
-
-    # def create_table(schema)
     def add_columns(t)
-      # schema.create_table :resources, force: true do |t|
-        # t.references :owner, polymorphic: true
-        t.references :provider
-        t.string :context
-        # t.string :_source
-        # t.references :blueprint
-        # t.references :location
-        # t.string :config
-        t.string :envs
-        # t.string :name
-        t.string :tags
-        t.string :type
-      # end
+      t.references :provider
+      t.references :runtime
+      t.string :runtime_name
+      t.string :context
+      # t.references :blueprint
+      t.string :envs
+      t.string :tags
+      t.string :type
     end
   end
 end

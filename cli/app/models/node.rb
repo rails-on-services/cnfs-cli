@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Node < ApplicationRecord
-  attr_accessor :yaml_payload, :asset_class
+  attr_writer :yaml_payload, :asset_class
 
   belongs_to :parent, class_name: 'Node'
+  # Move asset to Asset class
   belongs_to :asset, polymorphic: true
   belongs_to :config, class_name: 'NodeConfig'
   has_many :nodes, class_name: 'Node', foreign_key: 'parent_id'
@@ -16,6 +17,7 @@ class Node < ApplicationRecord
     self.realpath ||= Pathname.new(path).realpath.to_s
   end
 
+  # This only applies to Component, ComponentDir and Asset
   def make_asset
     payload = yaml_payload.merge(parent: self).merge(owner_hash(self))
     # binding.pry
@@ -31,6 +33,7 @@ class Node < ApplicationRecord
     parent.owner_hash(obj)
   end
 
+  # AssetGroup, Asset and Component (ComponentDir sort of)
   def yaml_payload
     @yaml_payload ||= yaml.merge!('name' => node_name)
   end
@@ -49,6 +52,7 @@ class Node < ApplicationRecord
     return unless search_path.directory? && search_path.exist?
 
     node_config = NodeConfig.create(asset.search_config)
+    # node_config.pry
     nodes.create(path: search_path.to_s, config: node_config, type: 'Node::SearchPath', calc_type: calc_type)
   end
 

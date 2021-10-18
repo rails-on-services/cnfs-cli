@@ -2,12 +2,12 @@
 
 require 'bundler/setup'
 require 'pry'
+require 'pry-byebug'
 
 lib_path = File.expand_path('../lib', __dir__)
 $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 ENV['RSPEC'] = '1'
-ENV['CNFS_LOGGING'] = 'info'
-ENV['CNFS_ENV'] = 'test'
+# ENV['CNFS_LOGGING'] = 'info'
 # ENV['CNFS_LOGGING'] = 'debug'
 ENV['SPEC_DIR'] = __dir__
 

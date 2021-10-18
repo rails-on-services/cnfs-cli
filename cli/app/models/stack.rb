@@ -11,7 +11,7 @@ class Stack < ApplicationRecord
 
   class << self
     def add_columns(t)
-      t.string :context
+      # t.string :context
       t.string :key
       # t.references :builder
       # t.string :config

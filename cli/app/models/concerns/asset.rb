@@ -26,6 +26,7 @@ module Concerns
           t.references :owner, polymorphic: true
           t.string :name
           t.string :config
+          t.boolean :abstract
           add_columns(t)
         end
       end

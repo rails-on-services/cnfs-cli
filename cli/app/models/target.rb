@@ -6,7 +6,7 @@ class Target < ApplicationRecord
 
   class << self
     def add_columns(t)
-      t.string :runtime_name
+      # t.string :runtime_name
     end
   end
 end

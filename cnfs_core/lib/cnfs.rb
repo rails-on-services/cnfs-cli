@@ -4,18 +4,34 @@ require 'config'
 require 'tty-logger'
 require 'xdg'
 
-require_relative 'cnfs/boot'
+require_relative 'cnfs/utils'
 require_relative 'cnfs/context'
 require_relative 'cnfs/loader'
 
-# rubocop:disable Metrics/ModuleLength
 module Cnfs
   # class Error < StandardError; end
 
   class << self
     attr_accessor :plugin_root
 
+    # rubocop:disable Metrics/AbcSize
+    # Setup the core framework
+    def setup
+      Cnfs.loader.autoload_all(Cnfs.gem_root)
+      Cnfs.loader.add_plugin_autoload_paths(Cnfs.plugin_root.plugins.values)
+      # Cnfs.loader.add_plugin_autoload_paths(CnfsCli.plugins.values)
+      Cnfs.loader.setup
+      Cnfs.data_store.add_models(Cnfs.schema_model_names)
+      Cnfs.data_store.setup
+      Cnfs.loader.setup_extensions
+      Kernel.at_exit do
+        Cnfs.logger.info(Cnfs.timers.map { |k, v| "\n#{k}:#{' ' * (30 - k.length)}#{v.round(2)}" }.join)
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
     def config
+      # binding.pry
       @config ||= context.config
     end
 
@@ -28,41 +44,39 @@ module Cnfs
     end
 
     def set_logger
-      TTY::Logger.new do |cfg|
-        level = TTY::Logger::LOG_TYPES.keys.include?(config.logging.to_sym) ? config.logging.to_sym : :warn
-        config.logging = cfg.level = level
-      end
+      default_level = (config.logging || 'warn').to_sym
+      level = ::TTY::Logger::LOG_TYPES.keys.include?(default_level) ? default_level : :warn
+      ::TTY::Logger.new { |cfg| config.logging = cfg.level = level }
     end
 
     def timers
       @timers ||= {}
     end
 
-      def require_deps(type = :minimum)
-        Cnfs.with_timer('loading minimum dependencies') { require_relative 'cnfs/minimum_dependencies' }
-        Cnfs.with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
-        # TODO: Refector to move to the appropriate gem using AS Notifications
-        ActiveSupport::Inflector.inflections do |inflect|
-          inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
-        end
+    def require_deps(type = :minimum)
+      # require_relative 'cnfs/minimum_dependencies'
+      with_timer('loading minimum dependencies') { require_relative 'cnfs/minimum_dependencies' }
+      with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
+      # TODO: Refector to move to the appropriate gem using AS Notifications
+      ActiveSupport::Inflector.inflections do |inflect|
+        inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
       end
+    end
 
     def reload
-      @config = nil
+      reset
       context.reload
-      binding.pry
       loader.reload
       data_store.reload
     end
 
     # NOTE: most of this moved to context. Is shift and caps needed?
     def reset
-      ARGV.shift # remove 'new'
-      # TODO: project_root is in cli gem
-      # @project_root = nil
-      # @paths = nil
-      @capabilities = nil
-      # Dir.chdir(project_root) { load_config }
+      @logger = nil
+      @config = nil
+      subscribers.each { |sub| ActiveSupport::Notifications.unsubscribe(sub.pattern) }
+      # ARGV.shift # remove 'new'
+      # @capabilities = nil
     end
 
     def loader
@@ -77,95 +91,16 @@ module Cnfs
       @extensions ||= []
     end
 
-    def with_timer(title = '', level = :info)
-      start_time = Time.now
-      logger.send(level, "Start #{title} at #{start_time}")
-      yield
-      timers[title] = Time.now - start_time
-      logger.send(level, "Completed #{title} in #{Time.now - start_time} seconds")
+    def subscribers
+      @subscribers ||= []
     end
 
-    # OS methods
-    def gid
-      ext_info = OpenStruct.new
-      if platform.linux? && Etc.getlogin
-        shell_info = Etc.getpwnam(Etc.getlogin)
-        ext_info.puid = shell_info.uid
-        ext_info.pgid = shell_info.gid
-      end
-      ext_info
-    end
-
-    def capabilities
-      @capabilities ||= set_capabilities
-    end
-
-    # rubocop:disable Metrics/MethodLength
-    def set_capabilities
-      cmd = TTY::Command.new(printer: :null)
-      installed_tools = []
-      missing_tools = []
-      tools.each do |tool|
-        if cmd.run!("which #{tool}").success?
-          installed_tools.append(tool)
-        else
-          missing_tools.append(tool)
-        end
-      end
-      Cnfs.logger.warn "Missing dependency tools: #{missing_tools.join(', ')}" if missing_tools.any?
-      installed_tools
-    end
-    # rubocop:enable Metrics/MethodLength
-
-    def tools
-      Dependency.pluck(:name)
-    end
-
-    def platform
-      os =
-        case RbConfig::CONFIG['host_os']
-        when /linux/
-          'linux'
-        when /darwin/
-          'darwin'
-        else
-          'unknown'
-        end
-      ActiveSupport::StringInquirer.new(os)
-    end
-
-    def cli_mode
-      @cli_mode ||= begin
-                      mode = config.dig(:cli, :dev) ? 'development' : 'production'
-                      ActiveSupport::StringInquirer.new(mode)
-                    end
-    end
-
-    def git
-      return OpenStruct.new(sha: '', branch: '') unless system('git rev-parse --git-dir > /dev/null 2>&1')
-
-      OpenStruct.new(
-        branch: `git rev-parse --abbrev-ref HEAD`.strip.gsub(/[^A-Za-z0-9-]/, '-'),
-        sha: `git rev-parse --short HEAD`.chomp,
-        tag: `git tag --points-at HEAD`.chomp
-      )
-    end
-
-    # Cnfs.logger.compare_levels(:info, :debug) => :gt
-    def silence_output(unless_logging_at = :debug)
-      rs = $stdout
-      $stdout = StringIO.new if logger.compare_levels(config.logging, unless_logging_at).eql?(:gt)
-      yield
-      $stdout = rs
-    end
-
-    # TODO: make the 'cnfs' configurable from cnfs-cli
     def user_root
-      @user_root ||= xdg.config_home.join('cnfs')
+      @user_root ||= xdg.config_home.join(Cnfs.xdg_name)
     end
 
     def user_data_root
-      @user_data_root ||= xdg.data_home.join('cnfs')
+      @user_data_root ||= xdg.data_home.join(Cnfs.xdg_name)
     end
 
     def xdg
@@ -173,4 +108,3 @@ module Cnfs
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

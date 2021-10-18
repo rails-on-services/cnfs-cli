@@ -1,4 +1,5 @@
 ---
+name: 1_users
 paths:
   config: config
   data: data
@@ -6,6 +7,7 @@ paths:
   src: src
   tmp: tmp
 logging: warn
-name: 1_users
 # order: stack, environment, target, namespace
 config: {}
+components:
+  - { name: target, alias: t, default: lambda }

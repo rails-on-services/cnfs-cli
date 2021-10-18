@@ -1,27 +1,41 @@
 # frozen_string_literal: true
-    # def parse
-    #   content = Cnfs.config.to_hash.slice(
-    #     *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
-    #   )
-    #   namespace = "#{content[:environment]}_#{content[:namespace]}"
-    #   options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
-    #   output = { 'project' => content.merge(namespace: namespace, options: options) }
-    #   create_all(output)
-    # end
+# def parse
+#   content = Cnfs.config.to_hash.slice(
+#     *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
+#   )
+#   namespace = "#{content[:environment]}_#{content[:namespace]}"
+#   options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
+#   output = { 'project' => content.merge(namespace: namespace, options: options) }
+#   create_all(output)
+# end
 
 
 class Context < ApplicationRecord
-  # include Singleton
-
   belongs_to :owner, polymorphic: true
-  belongs_to :current, polymorphic: true
+  belongs_to :component, polymorphic: true
   belongs_to :parent, class_name: 'Node'
 
   store :options, coder: YAML
 
-  (Cnfs.config.asset_names - ['context']).each do |asset_name|
-    has_many asset_name.to_sym
+  # (Cnfs.config.asset_names - ['context']).each do |asset_name|
+  # has_many asset_name.to_sym
+  # end
+
+  delegate :runtime, to: :component
+
+  class << self
+    def after_node_load
+      obj = first_or_create(owner: Project.first)
+      parse_options
+      obj.component&.update_context(context: obj)
+    end
+
+    def parse_options
+      # TODO
+      # binding.pry
+    end
   end
+
 
   # Cnfs.config.order.each do |component_name|
   #   belongs_to component_name.to_sym
@@ -127,17 +141,17 @@ class Context < ApplicationRecord
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :owner, polymorphic: true
-        t.references :current, polymorphic: true
+        t.references :component, polymorphic: true
         t.references :parent
-  # Cnfs.config.order.each do |component_name|
-  #   t.references component_name.to_sym
-  # end
+        # Cnfs.config.order.each do |component_name|
+        #   t.references component_name.to_sym
+        # end
         t.string :name
         t.string :options
-        t.string :environment
-        t.string :namespace
-        t.string :stack
-        t.string :target
+        # t.string :environment
+        # t.string :namespace
+        # t.string :stack
+        # t.string :target
       end
     end
   end

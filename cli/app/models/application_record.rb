@@ -3,25 +3,6 @@
 class ApplicationRecord < Cnfs::ApplicationRecord
   self.abstract_class = true
 
-  # store :config, coder: YAML
-
-  class << self
-    def combine
-      group(:name).each(&:combine)
-    end
-  end
-
-  def _fid
-    ActiveRecord::FixtureSet.identify(_id)
-  end
-
-  def _id_is_valid?
-    id.eql?(_fid)
-  end
-
-  def save_in_file
-  end
-
   # _source is set by parse for existing configurations
   # _source needs to be set when saving a new object, but not written to the file
   # TODO: This should take into account Cnfs.context rather than just Cnfs.project.paths.config

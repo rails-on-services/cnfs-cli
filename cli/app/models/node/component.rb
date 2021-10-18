@@ -9,7 +9,8 @@ class Node::Component < Node
     elsif obj.eql?(self) # if this is self referencing then return empty hash if root node, otherwise call parent
       parent.try(:owner_hash, obj) || {}
     else # obj is a child of this component so return the asset
-      { asset.class.name.downcase => asset }
+      { owner: asset }
+      # { asset.class.name.downcase => asset }
     end
   end
 end

@@ -42,15 +42,9 @@ class Runtime < ApplicationRecord
 
   # def self.create_table(schema)
   def self.add_columns(t)
-    # schema.create_table :runtimes, force: true do |t|
-      # t.string :_source
-      # t.references :project
-      # t.string :name
-      # t.string :config
-      t.string :dependencies
-      t.string :environment
-      t.string :type
-      t.string :tags
-    # end
+    t.references :resource
+    t.string :dependencies
+    t.string :type
+    t.string :tags
   end
 end

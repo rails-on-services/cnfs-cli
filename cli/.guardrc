@@ -1,4 +1,3 @@
-
 def ke
   Kernel.exit
 end

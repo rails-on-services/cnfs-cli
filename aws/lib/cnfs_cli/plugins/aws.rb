@@ -11,7 +11,7 @@ module CnfsCli
             add_inflectors(event.payload[:loader])
           end
           ActiveSupport::Notifications.subscribe('add_console_shortcuts.cnfs') do |event|
-            add_console_shortcuts(event.payload[:shortcuts])
+            # add_console_shortcuts(event.payload[:shortcuts])
           end
         end
 

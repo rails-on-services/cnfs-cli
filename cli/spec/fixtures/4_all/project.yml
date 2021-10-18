@@ -1,4 +1,5 @@
 ---
+name: 4_all
 paths:
   config: config
   data: data
@@ -6,6 +7,10 @@ paths:
   src: src
   tmp: tmp
 logging: warn
-name: 4_all
 order: stack, environment, target, namespace
 config: {}
+components:
+  - { name: stack, default: backend, alias: s }
+  - { name: environment, default: development, alias: e, env: env }
+  - { name: target, default: cluster, alias: t }
+  - { name: namespace, default: hsbc, alias: n, env: ns }
