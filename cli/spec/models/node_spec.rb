@@ -59,14 +59,16 @@ RSpec.describe 'Node' do
         expect(asset[:klass].first.owner).to eq(asset[:owner])
       end
 
+      expect(Component.count).to eq(2)
+
       # it 'creates the correct number of Components' do
-      [
-        { klass: Target, count: 1, ref: :project, owner: Project.first }
-      ].each do |component|
-        expect(component[:klass].count).to eq(component[:count])
-        # expect(component[:klass].first.send(component[:ref])).to eq(component[:owner])
-        expect(component[:klass].first.owner).to eq(component[:owner])
-      end
+      # [
+      #   { klass: Target, count: 1, ref: :project, owner: Project.first }
+      # ].each do |component|
+      #   expect(component[:klass].count).to eq(component[:count])
+      #   # expect(component[:klass].first.send(component[:ref])).to eq(component[:owner])
+      #   expect(component[:klass].first.owner).to eq(component[:owner])
+      # end
       binding.pry
     end
   end

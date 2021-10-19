@@ -69,6 +69,16 @@ module Concerns
     end
 
     class_methods do
+      def child_component_class
+        if (idx = Cnfs.config.orders.index(table_name))
+          # puts table_name
+          # binding.pry
+          Cnfs.config.order[idx + 1].classify
+        else
+          # binding.pry
+        end
+      end
+
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
           t.references :parent

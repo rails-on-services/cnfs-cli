@@ -1,13 +1,13 @@
 ---
 name: 1_target
-paths:
-  config: config
-  data: data
-  lib: lib
-  src: src
-  tmp: tmp
-logging: warn
-# order: stack, environment, target, namespace
-config: {}
-components:
-  - { name: target, default: cap2, alias: t, env: tar }
+config:
+  paths:
+    config: config
+    data: data
+    lib: lib
+    src: src
+    tmp: tmp
+  logging: warn
+  # order: stack, environment, target, namespace
+  x_components:
+    - { name: target, default: cap2, alias: t, env: tar }

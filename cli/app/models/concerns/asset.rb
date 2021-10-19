@@ -5,7 +5,7 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      belongs_to :parent, class_name: 'Node'
+      has_one :parent, as: :asset, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
       store :config, coder: YAML
@@ -22,7 +22,6 @@ module Concerns
     class_methods do
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
-          t.references :parent
           t.references :owner, polymorphic: true
           t.string :name
           t.string :config

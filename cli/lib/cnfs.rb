@@ -50,8 +50,12 @@ module Cnfs
 
     # The model class list for which tables will be created in the database
     def schema_model_names
-      %w[blueprint builder context dependency environment image namespace node node_config node_asset
-        project provider repository resource runtime service stack target user]
+      %w[blueprint builder context component dependency image node node_asset
+        project provider repository resource runtime service user]
+    end
+
+    def asset_names
+      %w[builders providers resources repositories runtimes services users]
     end
   end
 end

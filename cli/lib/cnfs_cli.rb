@@ -64,11 +64,12 @@ module CnfsCli
 
     def set_config_options
       Cnfs.config.order ||= 'target'
-      if Cnfs.config.components
-        Cnfs.config.order = Cnfs.config.components.map(&:name).map(&:singularize).unshift('project')
+      if Cnfs.config.config.x_components
+        Cnfs.config.order = Cnfs.config.config.x_components.map(&:name).map(&:singularize).unshift('project')
         Cnfs.config.orders = Cnfs.config.order.map(&:pluralize)
       end
-      Cnfs.config.asset_names = %w[builders context providers resources repositories runtimes services users]
+      # binding.pry
+      Cnfs.config.asset_names = Cnfs.asset_names
     end
 
     def load_project_files

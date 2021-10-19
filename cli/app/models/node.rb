@@ -4,12 +4,8 @@ class Node < ApplicationRecord
   attr_writer :yaml_payload, :asset_class
 
   belongs_to :parent, class_name: 'Node'
-  # Move asset to Asset class
   belongs_to :asset, polymorphic: true
-  belongs_to :config, class_name: 'NodeConfig'
   has_many :nodes, class_name: 'Node', foreign_key: 'parent_id'
-
-  delegate :asset_names, :component_names, to: :config
 
   before_validation :set_realpath
 
@@ -19,18 +15,25 @@ class Node < ApplicationRecord
 
   # This only applies to Component, ComponentDir and Asset
   def make_asset
-    payload = yaml_payload.merge(parent: self).merge(owner_hash(self))
-    # binding.pry
-    update(asset: asset_class.create(payload))
-    asset_log('Created asset:', payload)
+    obj = parent.nil? ? @asset_class.create(yaml_payload) : make_owner
+    update(asset: obj)
+    asset_log('Created asset')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
-    # binding.pry
-    Cnfs.logger.warn(e.message, payload)
-    asset_log('Error creating asset:', payload)
+    Cnfs.logger.warn(e.message, yaml_payload)
+    asset_log('Error creating asset')
   end
 
-  def owner_hash(obj)
-    parent.owner_hash(obj)
+  def make_owner
+    own = owner_ref(self)
+    ass_str = asset_ass_name
+    ass = own.send(ass_str.to_sym)
+    ass.create(yaml_payload)
+  end
+
+  # Recursively move back through parent hierarchy until reaching a Node::Component which
+  # overrides this method and returns it's asset
+  def owner_ref(obj)
+    parent.owner_ref(obj)
   end
 
   # AssetGroup, Asset and Component (ComponentDir sort of)
@@ -42,57 +45,38 @@ class Node < ApplicationRecord
     @yaml ||= YAML.load_file(rootpath) || {}
   end
 
-  def asset_class
-    @asset_class ||= s_asset_type(node_name, pathname).classify.constantize
-  end
-
-  def load_search_paths
-    return unless asset.respond_to?(:search_config)
-    return unless (search_path = asset.search_config[:path])
+  # Query the just created asset or component for a search_path
+  # If it exists and is a directory then create a SearchPath object which will query the child nodes
+  def load_search_path
+    return unless asset.respond_to?(:search_path) && (search_path = asset.search_path)
     return unless search_path.directory? && search_path.exist?
 
-    node_config = NodeConfig.create(asset.search_config)
-    # node_config.pry
-    nodes.create(path: search_path.to_s, config: node_config, type: 'Node::SearchPath', calc_type: calc_type)
+    _n = nodes.create(path: search_path.to_s, type: 'Node::SearchPath')
   end
 
+  # Called by AssetDir and ComponentDir to iterate over their children
   def load_path
-    pathname.each_child do |c_pathname|
-      c_node_name = c_pathname.basename.to_s.delete_suffix(c_pathname.extname)
-      c_asset_type = s_asset_type(c_node_name, c_pathname, 1)
-      c_node_type = s_node_type(c_asset_type, c_pathname)
-      c_node_type = "node/#{c_node_type}".classify
-      _n = nodes.create(path: c_pathname.to_s, config: config, type: c_node_type, calc_type: c_asset_type)
-      # binding.pry
+    %i[file? directory?].each do |node_kind|
+      pathname.children.select(&node_kind).each do |c_pathname|
+        _n = nodes.create(path: c_pathname.to_s, type: child_node_class_name(c_pathname))
+      end
     end
   end
 
-  def s_asset_type(c_node_name, c_pathname, level = 0)
-    if asset_names.include?(c_node_name) # resources, backend/resources.yml
-      c_node_name
-    elsif c_pathname.file? && asset_names.include?(parent.calc_type) # backend/resources/bucket.yml
-      parent.calc_type.singularize
-    else # backend, backend.yml, backend/development, backend/development.yml
-      component_names[dir_level + level]
-    end
-  end
-
-  def s_node_type(c_asset_type, c_pathname)
-    if component_names.include?(c_asset_type)
-      c_pathname.directory? ? :component_dir : :component
-    elsif c_pathname.directory?
-      :asset_dir
+  # Based on the pathname type, dir or file, and the pluralization of the basename
+  # return the appropriate node sub-class as a string
+  def child_node_class_name(pathname)
+    n_name = pathname.basename.to_s.delete_suffix(pathname.extname)
+    class_name = if pathname.directory?
+      n_name.eql?(n_name.pluralize) ? 'AssetDir' : 'ComponentDir'
     else
-      c_asset_type.pluralize.eql?(c_asset_type) ? :asset_group : :asset
+      n_name.eql?(n_name.pluralize) ? 'AssetGroup' : 'Component'
     end
+    "Node::#{class_name}"
   end
 
   def node_name
-    pathname.basename.to_s.delete_suffix(pathname.extname)
-  end
-
-  def dir_level
-    @dir_level ||= pathname.sub(config.path, '').to_s.count('/')
+    @node_name ||= pathname.basename.to_s.delete_suffix(pathname.extname)
   end
 
   def pathname
@@ -103,10 +87,8 @@ class Node < ApplicationRecord
     @rootpath ||= Pathname.new(realpath)
   end
 
-  def asset_log(title, yaml_payload)
-    Cnfs.logger.debug(
-      "#{title} node_name: #{node_name} calc_type: #{calc_type}\npathname: #{pathname}\n#{yaml_payload}"
-    )
+  def asset_log(title)
+    Cnfs.logger.debug("#{title} from: #{pathname}\n#{yaml_payload}")
   end
 
   class << self
@@ -114,11 +96,9 @@ class Node < ApplicationRecord
       schema.create_table table_name, force: true do |t|
         t.references :parent
         t.references :asset, polymorphic: true
-        t.references :config
+        t.string :type
         t.string :path
         t.string :realpath
-        t.string :calc_type
-        t.string :type
       end
     end
   end

@@ -1,16 +1,15 @@
 ---
 name: 4_all
-paths:
-  config: config
-  data: data
-  lib: lib
-  src: src
-  tmp: tmp
-logging: warn
-order: stack, environment, target, namespace
-config: {}
-components:
-  - { name: stack, default: backend, alias: s }
-  - { name: environment, default: development, alias: e, env: env }
-  - { name: target, default: cluster, alias: t }
-  - { name: namespace, default: hsbc, alias: n, env: ns }
+config:
+  paths:
+    config: config
+    data: data
+    lib: lib
+    src: src
+    tmp: tmp
+  logging: warn
+  x_components:
+    - { name: stack, default: backend, alias: s }
+    - { name: environment, default: development, alias: e, env: env }
+    - { name: target, default: cluster, alias: t }
+    - { name: namespace, default: hsbc, alias: n, env: ns }

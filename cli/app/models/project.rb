@@ -1,28 +1,22 @@
 # frozen_string_literal: true
 
-class Project < ApplicationRecord
+class Project < Component
   # include Singleton
-  include Concerns::Component
+  # has_one :context, as: :owner
+
+  # has_many :components
 
   # belongs_to :source_repository, class_name: 'Repository'
 
-  # has_many :blueprints, as: :owner
-  # has_many :builders, as: :owner
-  # has_many :providers, as: :owner
-  # has_many :repositories
-  # has_many :runtimes
-  # has_many :users, as: :owner
-
-  store :paths, coder: YAML
-  serialize :components, Array
-  # store :options, coder: YAML
-
-  # called by Component concern
-  def owner; end
+  store :config, accessors: %i[paths logging x_components], coder: YAML
 
   # TODO: Implement validation
   def platform_is_valid
     errors.add(:platform, 'not supported') if Cnfs.platform.unknown?
+  end
+
+  def search_path
+    Pathname.new(parent.path).split[0].join('config')
   end
 
   def search_config
@@ -79,15 +73,5 @@ class Project < ApplicationRecord
     namespace.decrypt(ciphertext)
   rescue Lockbox::DecryptionError => _e
     environment.decrypt(ciphertext)
-  end
-
-  class << self
-    def add_columns(t)
-      t.string :order
-      t.string :paths
-      t.string :components
-      t.string :tags
-      t.string :logging
-    end
   end
 end
