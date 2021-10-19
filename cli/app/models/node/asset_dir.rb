@@ -7,4 +7,8 @@ class Node::AssetDir < Node
   def child_node_class_name(_pathname)
     'Node::Asset'
   end
+
+  def valid_load_path_types
+    %i[file?]
+  end
 end

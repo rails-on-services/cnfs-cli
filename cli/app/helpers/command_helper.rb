@@ -6,6 +6,7 @@ module CommandHelper
 
   included do
     extend CnfsCommandHelper
+    # binding.pry
     add_cnfs_option :environment,       desc: 'Target environment',
                                         aliases: '-e', type: :string, default: Cnfs.config.environment
     add_cnfs_option :namespace,         desc: 'Target namespace',

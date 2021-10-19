@@ -11,36 +11,41 @@
 
 
 class Context < ApplicationRecord
-  belongs_to :owner, polymorphic: true
-  belongs_to :component, polymorphic: true
-  belongs_to :parent, class_name: 'Node'
+  belongs_to :root, class_name: 'Component'
+  belongs_to :component
 
   store :options, coder: YAML
 
-  # (Cnfs.config.asset_names - ['context']).each do |asset_name|
-  # has_many asset_name.to_sym
-  # end
+  Cnfs.config.asset_names.each do |asset_name|
+    has_many asset_name.to_sym
+  end
 
   delegate :runtime, to: :component
 
   class << self
     def after_node_load
-      obj = first_or_create(owner: Project.first)
-      parse_options
-      obj.component&.update_context(context: obj)
-    end
-
-    def parse_options
-      # TODO
-      # binding.pry
+      raise Cnfs::Error, 'Context issue' if count.positive?
+      obj = create(root: Project.first)
+      obj.parse_options
     end
   end
 
+  # TODO: This method needs error checking and then log or raise if supplied params are not found
+  def parse_options
+    obj = root
+    Cnfs.config.order[1..].each do |component_name|
+      name = Cnfs.config.send(component_name)
+      name ||= Cnfs.config.config.x_components.select{ |c| c.name.eql?(component_name) }.first&.default
+      obj = obj.components.find_by(name: name)
+    end
+    update(component: obj)
+    component.update_context(context: self)
+  end
 
-  # Cnfs.config.order.each do |component_name|
-  #   belongs_to component_name.to_sym
-  # end
-  # binding.pry
+
+  Cnfs.config.order[1..].each do |component_name|
+    has_many component_name.pluralize.to_sym
+  end
 
   # attr_accessor :runtime
   # attr_writer :manifest
@@ -140,18 +145,9 @@ class Context < ApplicationRecord
   class << self
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
-        t.references :owner, polymorphic: true
-        t.references :component, polymorphic: true
-        t.references :parent
-        # Cnfs.config.order.each do |component_name|
-        #   t.references component_name.to_sym
-        # end
-        t.string :name
+        t.references :root
+        t.references :component
         t.string :options
-        # t.string :environment
-        # t.string :namespace
-        # t.string :stack
-        # t.string :target
       end
     end
   end

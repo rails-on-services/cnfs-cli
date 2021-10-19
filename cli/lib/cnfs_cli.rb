@@ -29,7 +29,7 @@ module CnfsCli
 
       Dir.chdir(Cnfs.project_root) do
         _n = Node::Component.create(path: Cnfs.project_file, owner_class: Project) if load_nodes
-        load_project_files if Project.first
+        after_node_load if Project.first
         yield if block_given?
       end
     end
@@ -72,16 +72,11 @@ module CnfsCli
       Cnfs.config.asset_names = Cnfs.asset_names
     end
 
-    def load_project_files
-      # Get the component names, but only after the Project.is loaded
-      # context = Context.first_or_create(owner: Project.first)
-      # TODO: Target.first is not correct
-      # context.update(component: Target.first)
+    def after_node_load 
       Cnfs.schema_model_names.each do |model|
         klass = model.classify.constantize
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
-      # ActiveSupport::Notifications.instrument('after_models_created.cnfs-cli')
     end
 
     def process_cmd

@@ -23,7 +23,8 @@ class ProjectsController < Thor
   # So that Cnfs.app.valid? returns true if env and ns are not necessary
   cnfs_options :environment, :namespace, :tags, :repository
   before :initialize_project
-  before :ensure_valid_project
+  # TODO: Bail right after parsing nodes if there is an issue with the project being valid
+  # before :ensure_valid_project
   map %w[c] => :console
   def console
     execute

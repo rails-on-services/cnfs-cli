@@ -92,11 +92,11 @@ module CnfsCommandHelper
       # project.runtime.prepare
     end
 
-    def ensure_valid_project
-      return true
-      # binding.pry
-      raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
-    end
+    # def ensure_valid_project
+    #   return true
+    #   # binding.pry
+    #   raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
+    # end
 
     # def services_file_path
     #   path = [options.environment, options.namespace].compact.join('/')
@@ -123,9 +123,9 @@ module CnfsCommandHelper
     end
 
     # TODO: Move to CLI gem
-    def project
-      Cnfs.project
-    end
+    # def project
+    #   Cnfs.project
+    # end
   end
   # rubocop:enable Metrics/BlockLength
 end

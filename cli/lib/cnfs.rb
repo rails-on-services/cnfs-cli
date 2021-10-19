@@ -28,6 +28,8 @@ module Cnfs
     end
 
     def context
+      # require 'pry'
+      # binding.pry if @context.nil?
       @context ||= Cnfs::Context.new(
         cwd: project_root,
         config_parse_settings: { env_separator: '_', env_prefix: 'CNFS' },
@@ -39,7 +41,7 @@ module Cnfs
     # TODO: This is going to be a problem when run outside of a project since the file will not be available
     def translations
       @translations ||= (
-        yml = YAML.load_file(project_file)['components'] || {}
+        yml = YAML.load_file(project_file)['config']['x_components'] || {}
         translations = yml.each_with_object({}) do |kv, hash|
           next unless (env = kv['env'])
 

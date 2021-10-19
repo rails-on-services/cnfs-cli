@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Target < ApplicationRecord
-  include Concerns::Component
+  # include Concerns::Component
   # include Concerns::HasEnvs
 
   class << self

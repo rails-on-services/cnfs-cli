@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Node::Asset < Node
-  after_create :make_asset, :load_search_path
+  after_create :make_owner, :load_search_path
 
   # parent must be either AssetGroup or AssetDir
   def owner_ass_name

@@ -8,8 +8,8 @@ module Projects
       end
 
       def model_shortcuts
-        { bl: Blueprint, bu: Builder, c: Context, d: Dependency, e: Environment, l: Location, n: Node, nam: Namespace, pr: Provider,
-          res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, st: Stack, u: User }
+        { bl: Blueprint, bu: Builder, c: Context, co: Component, d: Dependency, n: Node, p: Project, pr: Provider,
+          res: Resource, reg: Registry, rep: Repository, run: Runtime, s: Service, u: User }
       end
     end
 
@@ -28,11 +28,14 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt
       prompt = []
-      prompt << Pry::Helpers::Text.blue('happy') #Cnfs.project.name)
-      env = 'essay' # Cnfs.project.environment.name
-      environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
-      prompt << Pry::Helpers::Text.send(environment_color, env)
-      prompt << 'krash' # Cnfs.project.namespace.name
+      first = Context.first.root.name
+      prompt << Pry::Helpers::Text.blue(first)
+      # TODO: If project.config.prompt.eql?('all') then display all component names in the hierarchy
+      # including if Cnfs.order.index('environment') then colorize it using the following
+      # environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
+      # prompt << Pry::Helpers::Text.send(environment_color, env)
+      last = Context.first.component.name
+      prompt << last
       proc do |obj, _nest_level, _|
         klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
         label = klass.eql?('console') ? '' : " (#{klass})"

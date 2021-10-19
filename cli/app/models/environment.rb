@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Environment < ApplicationRecord
-  include Concerns::Component
+  # include Concerns::Component
   # include Concerns::Key
   # include Concerns::HasEnvs
 

@@ -14,8 +14,9 @@ class Node < ApplicationRecord
   end
 
   # This only applies to Component, ComponentDir and Asset
-  def make_asset
-    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner
+  def make_owner
+    # binding.pry if parent.nil?
+    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner_association
     update(owner: obj)
     owner_log('Created owner')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
@@ -23,7 +24,7 @@ class Node < ApplicationRecord
     owner_log('Error creating owner')
   end
 
-  def make_owner
+  def make_owner_association
     own = owner_ref(self)
     ass_str = owner_ass_name
     ass = own.send(ass_str.to_sym)
@@ -38,7 +39,8 @@ class Node < ApplicationRecord
 
   # AssetGroup, Asset and Component (ComponentDir sort of)
   def yaml_payload
-    @yaml_payload ||= yaml.merge!('name' => node_name)
+    # @yaml_payload ||= yaml.merge!('name' => node_name)
+    @yaml_payload ||= { 'name' => node_name }.merge(yaml)
   end
 
   def yaml
@@ -54,13 +56,17 @@ class Node < ApplicationRecord
     _n = nodes.create(path: search_path.to_s, type: 'Node::SearchPath')
   end
 
-  # Called by AssetDir and ComponentDir to iterate over their children
+  # Called by AssetDir, ComponentDir and SearchPath to iterate over their children
   def load_path
-    %i[file? directory?].each do |node_kind|
-      pathname.children.select(&node_kind).each do |c_pathname|
+    valid_load_path_types.each do |node_type|
+      pathname.children.select(&node_type).each do |c_pathname|
         _n = nodes.create(path: c_pathname.to_s, type: child_node_class_name(c_pathname))
       end
     end
+  end
+
+  def valid_load_path_types
+    %i[file? directory?]
   end
 
   # Based on the pathname type, dir or file, and the pluralization of the basename
