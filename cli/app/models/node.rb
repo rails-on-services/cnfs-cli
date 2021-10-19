@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class Node < ApplicationRecord
-  attr_writer :yaml_payload, :asset_class
+  attr_writer :yaml_payload, :owner_class
 
   belongs_to :parent, class_name: 'Node'
-  belongs_to :asset, polymorphic: true
+  belongs_to :owner, polymorphic: true
   has_many :nodes, class_name: 'Node', foreign_key: 'parent_id'
 
   before_validation :set_realpath
@@ -15,23 +15,23 @@ class Node < ApplicationRecord
 
   # This only applies to Component, ComponentDir and Asset
   def make_asset
-    obj = parent.nil? ? @asset_class.create(yaml_payload) : make_owner
-    update(asset: obj)
-    asset_log('Created asset')
+    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner
+    update(owner: obj)
+    owner_log('Created owner')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
     Cnfs.logger.warn(e.message, yaml_payload)
-    asset_log('Error creating asset')
+    owner_log('Error creating owner')
   end
 
   def make_owner
     own = owner_ref(self)
-    ass_str = asset_ass_name
+    ass_str = owner_ass_name
     ass = own.send(ass_str.to_sym)
     ass.create(yaml_payload)
   end
 
   # Recursively move back through parent hierarchy until reaching a Node::Component which
-  # overrides this method and returns it's asset
+  # overrides this method and returns it's owner
   def owner_ref(obj)
     parent.owner_ref(obj)
   end
@@ -48,7 +48,7 @@ class Node < ApplicationRecord
   # Query the just created asset or component for a search_path
   # If it exists and is a directory then create a SearchPath object which will query the child nodes
   def load_search_path
-    return unless asset.respond_to?(:search_path) && (search_path = asset.search_path)
+    return unless owner.respond_to?(:search_path) && (search_path = owner.search_path)
     return unless search_path.directory? && search_path.exist?
 
     _n = nodes.create(path: search_path.to_s, type: 'Node::SearchPath')
@@ -87,7 +87,7 @@ class Node < ApplicationRecord
     @rootpath ||= Pathname.new(realpath)
   end
 
-  def asset_log(title)
+  def owner_log(title)
     Cnfs.logger.debug("#{title} from: #{pathname}\n#{yaml_payload}")
   end
 
@@ -95,7 +95,7 @@ class Node < ApplicationRecord
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :parent
-        t.references :asset, polymorphic: true
+        t.references :owner, polymorphic: true
         t.string :type
         t.string :path
         t.string :realpath

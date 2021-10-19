@@ -5,7 +5,7 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      has_one :parent, as: :asset, class_name: 'Node'
+      has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
       store :config, coder: YAML

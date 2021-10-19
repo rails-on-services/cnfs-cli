@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 class Project < Component
-  # include Singleton
-  # has_one :context, as: :owner
-
-  # has_many :components
-
   # belongs_to :source_repository, class_name: 'Repository'
 
   store :config, accessors: %i[paths logging x_components], coder: YAML
@@ -17,12 +12,6 @@ class Project < Component
 
   def search_path
     Pathname.new(parent.path).split[0].join('config')
-  end
-
-  def search_config
-    { path: Pathname.new(parent.path).split[0].join('config'),
-      asset_names: %w[builders context providers resources repositories runtimes services users],
-      component_names: Cnfs.config.order }
   end
 
   def paths
@@ -49,10 +38,6 @@ class Project < Component
     base.merge!('repository' => repository.name) if repository
     base
   end
-
-  # def _source
-  #   'config/project.yml'
-  # end
 
   # def options
   #   @options ||= Thor::CoreExt::HashWithIndifferentAccess.new(super)

@@ -5,7 +5,7 @@ class Node::Component < Node
 
   def make_asset
     if parent.nil?
-      update(asset: @asset_class.create(yaml_payload))
+      update(owner: @owner_class.create(yaml_payload))
     else
       super
     end
@@ -13,11 +13,11 @@ class Node::Component < Node
 
   # Override Node's definition; Only Component's can be owners
   def owner_ref(obj)
-    obj.eql?(self) ? parent.owner_ref(obj) : asset
+    obj.eql?(self) ? parent.owner_ref(obj) : owner
   end
 
   # parent must be either SearchPath or ComponentDir
-  def asset_ass_name
+  def owner_ass_name
     'components'
   end
 end

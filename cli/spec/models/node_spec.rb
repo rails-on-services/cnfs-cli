@@ -10,7 +10,7 @@ RSpec.describe 'Node' do
     before do
       # CnfsCli.run!(path: path, load_nodes: true)
       CnfsCli.run!(path: path, load_nodes: false) do
-        _n = Node::Component.create(path: 'project.yml', asset_class: Project)
+        _n = Node::Component.create(path: 'project.yml', owner_class: Project)
         # _p = Context.
         # binding.pry
       end

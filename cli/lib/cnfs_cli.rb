@@ -28,7 +28,7 @@ module CnfsCli
       Cnfs.setup
 
       Dir.chdir(Cnfs.project_root) do
-        _n = Node::Component.create(path: Cnfs.project_file, asset_class: Project) if load_nodes
+        _n = Node::Component.create(path: Cnfs.project_file, owner_class: Project) if load_nodes
         load_project_files if Project.first
         yield if block_given?
       end
