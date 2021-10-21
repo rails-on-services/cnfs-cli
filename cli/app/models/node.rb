@@ -39,7 +39,6 @@ class Node < ApplicationRecord
 
   # AssetGroup, Asset and Component (ComponentDir sort of)
   def yaml_payload
-    # @yaml_payload ||= yaml.merge!('name' => node_name)
     @yaml_payload ||= { 'name' => node_name }.merge(yaml)
   end
 

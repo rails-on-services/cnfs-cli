@@ -9,4 +9,4 @@ config:
     tmp: tmp
   logging: warn
   x_components:
-    - { name: target, alias: t, default: lambda }
+    - { name: target, aliases: t, default: lambda }

@@ -33,7 +33,7 @@ module Cnfs
       @context ||= Cnfs::Context.new(
         cwd: project_root,
         config_parse_settings: { env_separator: '_', env_prefix: 'CNFS' },
-        config_paths: [CnfsCli.gem_root.join(project_file), user_root.join('cnfs.yml'), project_file],
+        config_paths: [CnfsCli.gem_root.join(project_file), user_root.join('cnfs.yml'), load_p_root],
         translations: translations
       )
     end
@@ -41,13 +41,17 @@ module Cnfs
     # TODO: This is going to be a problem when run outside of a project since the file will not be available
     def translations
       @translations ||= (
-        yml = YAML.load_file(project_file)['config']['x_components'] || {}
+        yml = YAML.load_file(load_p_root)['config']['x_components'] || {}
         translations = yml.each_with_object({}) do |kv, hash|
           next unless (env = kv['env'])
 
           hash[env] = kv['name']
         end
       )
+    end
+
+    def load_p_root
+        project_root ? project_root.join(project_file) : project_file
     end
 
     # The model class list for which tables will be created in the database

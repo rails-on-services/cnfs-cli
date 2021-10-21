@@ -1,105 +1,134 @@
 # frozen_string_literal: true
-# def parse
-#   content = Cnfs.config.to_hash.slice(
-#     *reflect_on_all_associations(:belongs_to).map(&:name).append(:name, :paths, :tags)
-#   )
-#   namespace = "#{content[:environment]}_#{content[:namespace]}"
-#   options = Cnfs.config.delete_field(:options).to_hash if Cnfs.config.options
-#   output = { 'project' => content.merge(namespace: namespace, options: options) }
-#   create_all(output)
-# end
-
 
 class Context < ApplicationRecord
   belongs_to :root, class_name: 'Component'
   belongs_to :component
 
-  store :options, coder: YAML
+  has_many :components
+
+  # dynamic methods for all asset types:
+  # component_<asset> All <assets> from the component hierarchy
+  # <asset> All <assets> that are available given the value of abstract at each level
+  # filtered_<asset> All available <assets> filterd by arguments provided by the cli
+  # <asset>_runtime The runtime object for the <asset>
 
   Cnfs.config.asset_names.each do |asset_name|
-    has_many asset_name.to_sym
-  end
+    has_many "component_#{asset_name}".to_sym, through: :components, source: asset_name.to_sym
+    has_many asset_name.to_sym, as: :owner
 
-  delegate :runtime, to: :component
-
-  class << self
-    def after_node_load
-      raise Cnfs::Error, 'Context issue' if count.positive?
-      obj = create(root: Project.first)
-      obj.parse_options
+    # For each asset there is a filtered_<asset_name> method that returns an A/R assn
+    # with a where clause if any args were passed in
+    define_method "filtered_#{asset_name}".to_sym do
+      args_plural = args.send(asset_name)
+      args_singular = args.send(asset_name.singularize)
+      if args_plural&.any?
+        send(asset_name).where(name: args_plural)
+      elsif args_singular
+        send(asset_name).where(name: args_singular)
+      else
+        send(asset_name)
+      end
     end
+
+    # define_method "#{asset_name}_runtime".to_sym do |assets: send("filtered_#{asset_name}".to_sym)|
+    #   runtime = component.runtime
+    #   runtime.send("#{asset_name}=".to_sym, assets) #services = services
+    #   runtime.context = self
+    #   runtime
+    # end
   end
 
-  # TODO: This method needs error checking and then log or raise if supplied params are not found
-  def parse_options
+  store :options, coder: YAML
+  store :args, coder: YAML
+
+  def options
+    Thor::CoreExt::HashWithIndifferentAccess.new(super)
+  end
+
+  def args
+    Thor::CoreExt::HashWithIndifferentAccess.new(super)
+  end
+
+  # Select the compoenents based on project and user supplied values
+  # Update the component hierarchy tree
+  # 1. Select from cli options
+  # 2. Select from an ENV found in CNFS_component_name
+  # 3. Select from a default set in project.yml
+  #
+  # The controller first updates the context options then calls this method
+  def set_component
     obj = root
+    c_list = Cnfs.config.order.dup[1..]
     Cnfs.config.order[1..].each do |component_name|
-      name = Cnfs.config.send(component_name)
-      name ||= Cnfs.config.config.x_components.select{ |c| c.name.eql?(component_name) }.first&.default
-      obj = obj.components.find_by(name: name)
+      name, source = value(component_name)
+      unless (new_obj = obj.components.find_by(name: name))
+        Cnfs.logger.warn("#{component_name.capitalize} '#{name}' configured from *#{source}* not found.\n" \
+                         "#{' ' * 10 }Current context set to #{obj.class.name} '#{obj.name}'")
+        break
+      end
+
+      obj = new_obj
+      obj.update(context: self, c_name: c_list.shift)
     end
     update(component: obj)
-    component.update_context(context: self)
   end
 
-
-  Cnfs.config.order[1..].each do |component_name|
-    has_many component_name.pluralize.to_sym
+  def value(component_name)
+    source = if (name = options.fetch(component_name, nil))
+               'CLI option'
+             elsif (name = Cnfs.config.send(component_name))
+               'ENV'
+             elsif (name = root.x_components.select{ |c| c['name'].eql?(component_name) }.first.try(:[], 'default'))
+               'project.yml'
+             end
+    [name, source]
   end
 
-  # attr_accessor :runtime
-  # attr_writer :manifest
-  # after_create :create_resources
-  # before_validation :set_defaults
+  def cli_components
+    objs = components.to_a
+    root.x_components.unshift({ 'name' => root.name }).each_with_object({}) do |comp, hash|
+      next unless kn = objs.shift&.name
 
-  def set_defaults
-    self.current ||= set_current
-  end
-
-  # If options were passed in then ensure the values are valid (names found in the config)
-  # validates :environment, presence: { message: 'not found' } # , if: -> { options.environment }
-  # validates :namespace, presence: { message: 'not found' } # , if: -> { options.namespace }
-  # validate :associations_are_valid
-
-  # TODO: Should there be validations for repository and source_repository?
-  # validates :service, presence: { message: 'not found' }, if: -> { arguments.service }
-  # validate :all_services, if: -> { arguments.services }
-  # validates :runtime, presence: true
-
-  def associations_are_valid
-    # errors.copy!(environment.errors) unless environment.valid?
-  end
-
-  def repository_is_valid
-    # binding.pry
-    # raise Cnfs::Error, "Unknown repository '#{options.repository}'." \
-    #  " Valid repositories:\n#{Cnfs.repositories.keys.join("\n")}"
-  end
-
-  # Start with the most specific component and work back up until finding
-  # the context that has been specified either in config or cli options
-  def set_current
-    Cnfs.config.order.reverse.each do |component_type|
-      next unless (name = options[component_type])
-
-      break root.send(component_type.pluralize).find_by(name: name)
+      hash[kn] = comp['color']
     end
   end
 
-  # after_create :create_resources
+  # TODO: Change the name of this method
+  def set_assets
+    Cnfs.config.asset_names.each do |asset_type|
+      component_assn = component.send(asset_type.to_sym).where(abstract: [false, nil])
+      # binding.pry if asset_type.eql?('users')
+      next unless component_assn.count.positive?
 
-  def create_resources
-    # NOTE: Here use the options to select things like services, resources, etc
-    # and combine them using the abstract assets in higher level directories
-    # then create records of them with this instance of the Context class as the owner
-    # NOTE:
-    # Then to any calling services, e.g. compose template creation would just call
-    # Cnfs.context.services and that's everything that's needed
+      owner_assn = send("component_#{asset_type}".to_sym).where(abstract: true).order(:id)
+      assn = send(asset_type.to_sym)
+
+      component_assn.each do |asset|
+        json = owner_assn.where(name: asset.name).each_with_object({}) do |rec, hash|
+          # json_hash = rec.as_json.compact
+          # hash.deep_merge!(rec.as_json.compact)
+          hash.merge!(rec.as_json.compact)
+        end
+        json.merge!(asset.as_json.compact).except!('id', 'owner_id', 'owner_type', 'abstract')
+        # binding.pry if asset_type.eql?('runtimes')
+        # json.deep_merge!(asset.as_json.compact).except!('id', 'owner_id', 'owner_type', 'abstract')
+        # binding.pry if asset_type.eql?('users')
+        assn.create(json)
+      end
+    end
   end
 
-  # maintain api for now
-  def write_path(type = :manifests)
-    path(to: type)
+  def runtime(services: filtered_services)
+    runtime = component.runtime
+    runtime.services = services
+    runtime.context = self
+    runtime
+  end
+
+  # TODO: add other dirs for config files, e.g. gem user's path; load from a config file?
+  # TODO: should only be one runtime per context
+  def manifest
+    @manifest ||= Manifest.new(config_files_paths: [path(to: :config)], write_path: path(to: :manifests))
   end
 
   def path(from: nil, to: nil, absolute: false)
@@ -107,39 +136,23 @@ class Context < ApplicationRecord
   end
 
   def project_path
-    @project_path ||= ProjectPath.new(self)
-  end
-
-  # TODO: Implement options.clean
-  # NOTE: If this method is called more than once it will get a new manifest instance each time
-  def process_manifests
-    @manifest = nil
-    manifest.purge! if options.force
-    return if manifest.valid?
-
-    manifest.generate
-  end
-
-  # TODO: add other dirs for config files, e.g. gem user's path; load from a config file?
-  def manifest
-    @manifest ||= Manifest.new(project: self, config_files_paths: [paths.config])
+    @project_path ||= ProjectPath.new(paths: root.paths, context_attrs: context_attrs)
   end
 
   # Used by runtime generators for templates by runtime to query services
   def labels
-    { project: full_context_name, environment: environment&.name, namespace: namespace&.name }
-  end
-
-  def full_context_name
-    context_attrs.unshift(name).join('_')
+    @labels ||= (
+      c_hash = components.each_with_object({}) {|c, h| h[c.c_name] = c.name }
+      { 'context' => context_name }.merge(c_hash)
+    )
   end
 
   def context_name
-    context_attrs.join('_')
+    @context_name ||= context_attrs.join('_')
   end
 
   def context_attrs
-    [environment&.name, namespace&.name].compact
+    @context_attrs ||= components.order(:id).pluck(:name)
   end
 
   class << self
@@ -148,7 +161,13 @@ class Context < ApplicationRecord
         t.references :root
         t.references :component
         t.string :options
+        t.string :args
       end
+    end
+
+    def after_node_load
+      obj = create(root: Project.first)
+      Project.first.update(context: obj, c_name: 'project')
     end
   end
 end

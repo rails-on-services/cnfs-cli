@@ -10,7 +10,7 @@ module CnfsCommandHelper
     end
 
     def cnfs_class_options(*option_names)
-      option_names.each do |option_name|
+      option_names.flatten.each do |option_name|
         opt = @shared_options[option_name]
         raise "Tried to access shared option '#{option_name}' but it was not previously defined" if opt.nil?
 
@@ -19,7 +19,7 @@ module CnfsCommandHelper
     end
 
     def cnfs_options(*option_names)
-      option_names.each do |option_name|
+      option_names.flatten.each do |option_name|
         opt = @shared_options[option_name]
         raise "Tried to access shared option '#{option_name}' but it was not previously defined" if opt.nil?
 
@@ -48,14 +48,6 @@ module CnfsCommandHelper
     end
 
     private
-
-    def initialize_project
-      # TODO: Maybe merge should go elsewhere since the options could be useful even if project is not loaded
-      # Merge options also under options key for Project to pick up
-      @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
-      # TODO: This is replaced by the Context class
-      # Cnfs::Boot.load_configuration(options)
-    end
 
     # rubocop:disable Metrics/ParameterLists
     def execute(command_args = {}, command_name = nil, location = 2, command_method = :execute)

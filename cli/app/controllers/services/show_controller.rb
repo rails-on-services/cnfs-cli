@@ -3,23 +3,26 @@
 module Services
   class ShowController
     include ServicesHelper
-    attr_accessor :services
 
     # rubocop:disable Metrics/AbcSize
-    # TODO: FIX: When invalid service name is requested it is silently ignored
     def execute
       modifier = options.modifier || '.yml'
-      services.each do |service|
-        show_file = service.write_path.join("#{service.name}#{modifier}")
-        unless show_file.exist?
-          Cnfs.logger.warn "File not found: #{show_file}"
-          next
-        end
+      ary = context.filtered_services.each_with_object([]) do |service, ary|
+        show_file = context.path(to: :manifests).join("#{service.name}#{modifier}")
+        ary.append(show_file) if show_file.exist?
+      end
 
+      if ary.empty?
+        Cnfs.logger.warn 'No files found' 
+        return
+      end
+
+      ary.each do |show_file|
+        puts("- #{show_file}:\n")
         puts(File.read(show_file))
-        puts("\nContent from: #{show_file}\n")
+        puts "\n"
       end
     end
-    # rubocop:enable Metrics/AbcSize
   end
+  # rubocop:enable Metrics/AbcSize
 end

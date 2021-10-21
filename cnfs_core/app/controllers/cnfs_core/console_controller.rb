@@ -30,6 +30,7 @@ module CnfsCore
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
       self.class.reload
       Pry.start(self)
+      # Pry.start(Context.first)
     end
 
     class << self

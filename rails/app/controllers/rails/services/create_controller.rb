@@ -24,7 +24,7 @@ module Rails
         # TODO: removed the next option when refactored cnfs to cnfs_core gem; put it back when repository is active
         option :type,       desc: 'The service type to generate: application or plugin',
                             aliases: '-t', type: :string # , default: Cnfs.repository&.service_type
-        cnfs_class_options :repository
+        # cnfs_class_options :repository
         cnfs_options :force
         # TODO: Add before for type
         def rails(name)

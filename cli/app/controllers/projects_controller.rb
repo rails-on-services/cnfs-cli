@@ -5,6 +5,8 @@ class ProjectsController < Thor
 
   # Activate common options
   cnfs_class_options :dry_run, :logging
+  class_before :initialize_project
+  cnfs_class_options Project.first.command_options_list
 
   register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
   register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'
@@ -20,13 +22,11 @@ class ProjectsController < Thor
 
   desc 'console', 'Start a CNFS project console (short-cut: c)'
   # TODO: Maybe have an option that removes :enfironment and namespace from options before running command
-  # So that Cnfs.app.valid? returns true if env and ns are not necessary
-  cnfs_options :environment, :namespace, :tags, :repository
-  before :initialize_project
   # TODO: Bail right after parsing nodes if there is an issue with the project being valid
-  # before :ensure_valid_project
   map %w[c] => :console
-  def console
+  def console(*users)
+    Context.first.update(args: {users: users})
+  # def console
     execute
   end
 

@@ -2,12 +2,14 @@
 
 class Runtime::ComposeGenerator < RuntimeGenerator
 
+  # private
   def generate_nginx_conf
+    # binding.pry
     template('nginx.conf.erb', "#{path}/nginx.conf") if template_types.include?(:nginx)
   end
 
   def generate_compose_environment
-    template('env.erb', Cnfs.project.runtime.compose_file, env: compose_environment)
+    template('env.erb', runtime.compose_file, env: compose_environment)
   end
 
   private
@@ -42,7 +44,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
     # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
       compose_file: Dir["#{path}/**/*.yml"].map { |f| f.gsub("#{Cnfs.project_root}/", '') }.join(':'),
-      compose_project_name: project.full_context_name,
+      compose_project_name: context.context_name,
       # context_dir: '../../../../../../..',
       # ros_context_dir: '../../../../../../../ros',
       # image_repository: 'railsonservices',

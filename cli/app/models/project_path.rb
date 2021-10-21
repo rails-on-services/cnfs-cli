@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 class ProjectPath
-  attr_accessor :project
+  include ActiveModel::Model
 
-  def initialize(project)
-    @project = project
-  end
+  attr_accessor :paths, :context_attrs
 
   def path(from: nil, to: nil, absolute: false)
     if from.nil? && to.nil?
-      absolute ? project.root : Pathname.new('.')
+      # absolute ? project.root : Pathname.new('.')
+      absolute ? Pathname.new('.').realpath : Pathname.new('.')
     elsif from.nil?
       path_to(to, absolute)
     else
@@ -27,22 +26,26 @@ class ProjectPath
     relative_path =
       case type.to_sym
       when :config
-        project.paths.config.join('environments', *project.context_attrs)
+        paths.config # .join('environments', *owner.context_attrs)
       when :manifests
-        project.paths.tmp.join('manifests', *project.context_attrs)
+        paths.tmp.join('manifests', *context_attrs)
       when :repository
-        project.repository&.path
+        owner.repository&.path
       when :repositories
-        project.paths.src
+        paths.src
       when :runtime
-        project.paths.tmp.join('runtime', *project.context_attrs)
+        paths.tmp.join('runtime', *context_attrs)
       when :services
-        project.paths.data.join('services', *project.context_attrs)
+        paths.data.join('services', *context_attrs)
       when :templates
         # paths.data.join('templates', *context_attrs)
-        project.paths.data.join('templates', project.environment.name)
+        paths.data.join('templates', environment.name)
+      else
+        raise Cnfs::Error, "ProjectPath symbol not found for ':#{type}'"
       end
-    absolute_path ? project.root.join(relative_path) : relative_path
+    # binding.pry
+    # absolute_path ? project.root.join(relative_path) : relative_path
+    absolute_path ? Pathname.new('.').realpath.join(relative_path) : relative_path
   end
   # rubocop:enable Style/OptionalBooleanParameter
   # rubocop:enable Metrics/CyclomaticComplexity

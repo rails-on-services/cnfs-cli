@@ -17,6 +17,14 @@ class Repository < ApplicationRecord
   validates :name, presence: true
   validates :url, presence: true
 
+  after_create :create_node
+
+  def create_node
+    # This gets called when a node creates a repo
+    # So going in the other direction have to avoid an infinite loop
+    binding.pry
+  end
+
   # after_destroy :remove_tree
 
   # def services
@@ -103,21 +111,12 @@ class Repository < ApplicationRecord
       find_by(name: repo_name)
     end
 
-    # def create_table(schema)
     def add_columns(t)
-      # schema.create_table :repositories, force: true do |t|
-        # t.references :owner, polymorphic: true
-        t.string :context
-        # t.string :_source
-        t.string :_id
-        # t.string :config
-        t.string :dockerfile
-        t.string :build
-        # t.string :name
-        # t.string :path
-        t.string :type
-        t.string :tags
-      # end
+      t.string :context
+      t.string :dockerfile
+      t.string :build
+      t.string :type
+      t.string :tags
     end
   end
 end

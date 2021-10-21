@@ -1,0 +1,14 @@
+---
+iam:
+  type: Rails::Service
+  config:
+    test: test
+  environment:
+    test: this
+cognito:
+  type: Rails::Service
+  config:
+    test: te
+nginx:
+  config:
+    test: hello

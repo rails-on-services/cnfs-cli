@@ -1,0 +1,15 @@
+---
+name: 2_target
+config:
+  paths:
+    config: config
+    data: data
+    lib: lib
+    src: src
+    tmp: tmp
+  logging: warn
+  # order: stack, environment, target, namespace
+  # black red green yellow blue purple magenta cyan white
+  x_components:
+    - { name: target, default: cap2, aliases: '-t', env: tar, color: blue }
+    - { name: namespace, default: duf, aliases: '-n', env: ns, color: green }

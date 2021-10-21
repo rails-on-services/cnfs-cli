@@ -21,6 +21,12 @@ class RepositoriesController < Thor
     # repo.project.update(source_repository: repo.name) if repo.project.source_repository.nil?
   end
 
+  desc 'new_add [NAME | URL [NAME]]', 'Add a repository configuration to the project'
+  def new_add(p1, p2 = nil)
+    repo = Repository.add(p1, p2)
+    repo.save
+  end
+
   desc 'destroy [NAME]', 'Delete a repository configuration and its contents from the project'
   cnfs_options :force
   before :validate_destroy

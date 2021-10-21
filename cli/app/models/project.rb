@@ -22,11 +22,6 @@ class Project < Component
     Cnfs.project_root
   end
 
-  # TODO: This may be unnecessary or a very important method/scope. Think about this
-  # def services
-  #   namespace.services
-  # end
-
   # NOTE: Not yet in use; decide where this should go
   # def user_root
   #   @user_root ||= Cnfs.user_root.join(name)
@@ -39,9 +34,21 @@ class Project < Component
     base
   end
 
-  # def options
-  #   @options ||= Thor::CoreExt::HashWithIndifferentAccess.new(super)
-  # end
+  def command_options
+    @command_options ||= x_components.each_with_object([]) do |opt, ary|
+      opt = opt.with_indifferent_access
+      ary.append({ name: opt[:name].to_sym,
+                   desc: opt[:desc] || "Specify #{opt[:name]}",
+                   aliases: opt[:aliases],
+                   type: :string,
+                   default: opt[:default]
+      })
+    end
+  end
+
+  def command_options_list
+    @command_options_list ||= x_components.map{ |comp| comp[:name].to_sym }
+  end
 
   # TODO: See what to do about encrypt/decrypt per env/ns
 

@@ -14,6 +14,7 @@ class Service < ApplicationRecord
   store :config, accessors: %i[path depends_on ports mount], coder: YAML
   store :image, accessors: %i[build_args dockerfile repository_name tag], coder: YAML
   store :profiles, coder: YAML
+  store :environment, coder: YAML
 
   serialize :volumes, Array
 

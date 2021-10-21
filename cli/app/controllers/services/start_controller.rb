@@ -3,30 +3,19 @@
 module Services
   class StartController
     include ServicesHelper
-    attr_accessor :services
 
-    # controller asks context for targets
-    # context asks component for targets
-    # namespace returns [target]
-    # target returns [self]
-    # environment returns targets
-    # OR
-    # any component can have activated services
-    # components can be in any order so have to ask context for targets
-    def exec_services
-      Cnfs.context.services.each do |service|
-      end
-    end
-
-    def new_execute
-      Cnfs.context.targets.each do |target|
-        target.services.each do |service|
-          target.runtime.start(service)
-        end
-      end
-    end
-
+    # TODO: Modify to take tags and profiles
     def execute
+      context.runtime.start
+      # NOTE: above command is invoked against filtered services by default
+      # To run against all available services pass it in to the method
+      # context.runtime(services: context.services).start
+
+      # TODO: The command should return output
+      # The controller should resuce/raise any excpetions
+    end
+
+    def old_execute
       # queue = CommandQueue.new
       each_runtime do |runtime, runtime_services|
         runtime.start(runtime_services)

@@ -6,23 +6,22 @@ class RuntimeGenerator < ApplicationGenerator
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
   def generate_service_environments
-    project.services.reject { |service| service.envs.empty? }.each do |service|
+    context.services.reject { |service| service.environment.empty? }.each do |service|
       file_name = path.join("#{service.name}.env")
-      environment = Config::Options.new.merge!(service.envs)
+      environment = Config::Options.new.merge!(service.environment)
       generated_files << template('env.erb', file_name, env: environment)
     end
   end
 
   def generate_entity_manifests
-    project.services.each do |service|
-      @service = service
+    context.services.each do |service_obj|
+      @service = service_obj
       generated_files << template("#{entity_to_template(service)}.yml.erb", "#{path}/#{service.name}.yml")
     end
   rescue StandardError => e
-    msg = e
     if Cnfs.config.dig(:cli, :dev)
       msg = "#{e}\n#{e.backtrace}"
-      binding.pry
+      # binding.pry
     end
     # TODO: add to errors array and have controller output the result
     raise Cnfs::Error, "\nError generating template for #{@service.name}: #{msg}"
@@ -34,8 +33,8 @@ class RuntimeGenerator < ApplicationGenerator
 
   def entity_to_template(entity = nil)
     entity ||= instance_variable_get("@#{entity_name}")
-    # binding.pry
-    key = entity.template || entity.type&.demodulize&.underscore || entity.name
+    # TODO: The entity should reutrn the template name rather than being so clever
+    key = entity.template || entity.type&.underscore&.split('/')&.shift || entity.name
     entity_template_map[key.to_sym] || key
   end
 
@@ -48,21 +47,21 @@ class RuntimeGenerator < ApplicationGenerator
 
   # List of services to be configured on the proxy server (nginx for compose)
   def proxy_services
-    project.services.select { |service| service.profiles.key?(:server) }
+    context.services.select { |service| service.profiles.key?(:server) }
   end
 
   def template_types
-    @template_types ||= project.services.map { |service| entity_to_template(service).to_sym }.uniq
+    @template_types ||= context.services.map { |service| entity_to_template(service).to_sym }.uniq
   end
 
   def version
-    Cnfs.project.runtime.version
+    runtime.version
   end
 
   # Default space_count is for compose
   # Template is expected to pass in a hash for example for profile
   def labels(labels: {}, space_count: 6)
-    Cnfs.project.runtime.labels(labels.merge(service: service.name)).map do |key, value|
+    context.labels.merge(labels).merge(service: service.name).map do |key, value|
       "\n#{' ' * space_count}#{key}: #{value}"
     end.join
   end
@@ -81,10 +80,10 @@ class RuntimeGenerator < ApplicationGenerator
   # Used by all runtime templates; Returns a path relative from the write path to the project root
   # Example: relative_path(:manifests) # => #<Pathname:../../../..>
   def relative_path(path_type = :manifests)
-    project.path(from: path_type)
+    context.path(from: path_type)
   end
 
   def path(to: :manifests)
-    project.path(to: to)
+    context.path(to: to)
   end
 end

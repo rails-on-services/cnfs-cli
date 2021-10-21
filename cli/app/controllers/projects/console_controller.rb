@@ -28,14 +28,12 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt
       prompt = []
-      first = Context.first.root.name
-      prompt << Pry::Helpers::Text.blue(first)
+      Context.first.cli_components.each do |name, color|
+        prompt << (color.nil? ? name : Pry::Helpers::Text.send(color.to_sym, name))
+      end
       # TODO: If project.config.prompt.eql?('all') then display all component names in the hierarchy
       # including if Cnfs.order.index('environment') then colorize it using the following
       # environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
-      # prompt << Pry::Helpers::Text.send(environment_color, env)
-      last = Context.first.component.name
-      prompt << last
       proc do |obj, _nest_level, _|
         klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
         label = klass.eql?('console') ? '' : " (#{klass})"

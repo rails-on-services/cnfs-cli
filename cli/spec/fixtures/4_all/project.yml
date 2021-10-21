@@ -9,7 +9,7 @@ config:
     tmp: tmp
   logging: warn
   x_components:
-    - { name: stack, default: backend, alias: s }
-    - { name: environment, default: development, alias: e, env: env }
-    - { name: target, default: cluster, alias: t }
-    - { name: namespace, default: hsbc, alias: n, env: ns }
+    - { name: stack, default: backend, aliases: s }
+    - { name: environment, default: development, aliases: e, env: env }
+    - { name: target, default: cluster, aliases: t }
+    - { name: namespace, default: hsbc, aliases: n, env: ns }

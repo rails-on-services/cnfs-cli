@@ -3,6 +3,9 @@
 # rubocop:disable Metrics/ClassLength
 class Runtime::Compose < Runtime
   attr_accessor :queue
+  attr_accessor :services, :context
+
+  # delegate :options, :labels, to: :context
 
   def supported_service_types
     ['Service::Rails', nil]
@@ -62,8 +65,12 @@ class Runtime::Compose < Runtime
   end
 
   # Service Admin Operations
-  def start(services)
-    queue.add(rv(compose("up #{compose_options} #{services.pluck(:name).join(' ')}")))
+  def start
+    puts services.pluck(:name)
+    generate
+    # process_manifests
+    # binding.pry
+    # queue.add(rv(compose("up #{compose_options} #{services.pluck(:name).join(' ')}")))
   end
 
   def stop(services)
@@ -130,7 +137,7 @@ class Runtime::Compose < Runtime
   end
 
   def compose_file
-    @compose_file ||= write_path(:runtime).join('compose.env')
+    @compose_file ||= context.path(to: :runtime).join('compose.env')
   end
 
   def running_service_id(service)
@@ -222,6 +229,20 @@ class Runtime::Compose < Runtime
 
   def clean(services)
     queue.add [command_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
+  end
+
+  # Check if the manifest is outdated and generate it if necessary
+  def generate
+    manifest = context.manifest
+    manifest.purge! if context.options.generate
+    return if manifest.valid?
+    manifest.purge!
+
+    g = Runtime::ComposeGenerator.new([self, context])
+    # TODO: why not set detination root? if a good reason then note it here
+    # g.destination_root = manifest.write_path
+    g.invoke_all
+    Cnfs.logger.warn("Invalid manifest: #{manifest.errors.full_messages}") unless manifest.valid?
   end
 
   # TODO: Only referenced in terraform_generator; after refactoring all that see if this is needed

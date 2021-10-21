@@ -50,6 +50,7 @@ class Component < ApplicationRecord
         t.string :name
         t.string :config
         t.string :type
+        t.string :c_name
       end
     end
   end

@@ -10,4 +10,5 @@ config:
   logging: warn
   # order: stack, environment, target, namespace
   x_components:
-    - { name: target, default: cap2, alias: t, env: tar }
+    - { name: target, default: cap2, aliases: t, env: tar }
+    - { name: namespace, default: cap2, aliases: n, env: ns }
