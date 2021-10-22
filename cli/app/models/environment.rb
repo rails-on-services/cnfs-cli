@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Environment < ApplicationRecord
+  include Concerns::Asset
   # include Concerns::Component
   # include Concerns::Key
   # include Concerns::HasEnvs
@@ -13,7 +14,8 @@ class Environment < ApplicationRecord
   # has_many :runtimes, through: :blueprints
   # def runtimes; [] end
 
-  store :config, accessors: %i[domain], coder: YAML
+  store :values, coder: YAML
+  # store :config, accessors: %i[domain], coder: YAML
   # store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML
   # store :config, accessors: %i[application_environment]
   # store :tf_config, accessors: %i[tags], coder: YAML
@@ -75,7 +77,8 @@ class Environment < ApplicationRecord
   class << self
     def add_columns(t)
       # t.string :context
-      t.string :key
+      # t.string :key
+      t.string :values
     end
   end
 end

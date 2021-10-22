@@ -6,7 +6,7 @@ class Service < ApplicationRecord
 
   include Concerns::Asset
   # include Concerns::Taggable
-  # include Concerns::HasEnvs
+  include Concerns::HasEnvs
 
   store :commands, accessors: %i[console shell test], coder: YAML
   store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
@@ -14,11 +14,16 @@ class Service < ApplicationRecord
   store :config, accessors: %i[path depends_on ports mount], coder: YAML
   store :image, accessors: %i[build_args dockerfile repository_name tag], coder: YAML
   store :profiles, coder: YAML
-  store :environment, coder: YAML
 
   serialize :volumes, Array
 
-  # delegate :full_context_name, :write_path, to: :project
+  # TODO: Get the below codd into HasEnv concern
+  serialize :environment, Array
+
+  def environments
+    Context.first.environments.where(name: environment)
+  end
+
   # delegate :git, to: :repository
 
   validate :image_values
@@ -139,21 +144,22 @@ class Service < ApplicationRecord
     end
 
     def add_columns(t)
-        # TODO: Perhaps these are better as strings that can be inherited
-        # t.references :source_repo
-        # t.references :image_repo
-        # t.references :chart_repo
-        t.string :commands
-        # TODO: Change to envs
-        t.string :environment
-        t.string :image
-        t.string :context
-        t.string :path
-        t.string :profiles
-        t.string :tags
-        t.string :template
-        t.string :type
-        t.string :volumes
+      # binding.pry
+      # TODO: Perhaps these are better as strings that can be inherited
+      # t.references :source_repo
+      # t.references :image_repo
+      # t.references :chart_repo
+      t.string :commands
+      # TODO: Change to envs
+      t.string :environment
+      t.string :image
+      t.string :context
+      t.string :path
+      t.string :profiles
+      t.string :tags
+      t.string :template
+      t.string :type
+      t.string :volumes
       # end
     end
   end

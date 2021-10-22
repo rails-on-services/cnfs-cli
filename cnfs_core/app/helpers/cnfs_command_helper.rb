@@ -4,8 +4,9 @@ module CnfsCommandHelper
   extend ActiveSupport::Concern
 
   class_methods do
+    # Add an option and it's values to be referenced by cnfs_class_options or cnfs_options
     def add_cnfs_option(name, options = {})
-      @shared_options = {} if @shared_options.nil?
+      @shared_options ||= {}
       @shared_options[name] = options
     end
 
@@ -26,6 +27,34 @@ module CnfsCommandHelper
         option option_name, opt
       end
     end
+
+    # Add an option and it's values to a specific command in a controller
+    # Used by plugin modules to add options to an existing command
+    def add_cnfs_method_option(method_name, options_name, **options)
+      @cnfs_method_options ||= {}
+      @cnfs_method_options[method_name] ||= {}
+      @cnfs_method_options[method_name][options_name] = options
+    end
+
+    def cnfs_method_options(method_name)
+      return unless (command = @cnfs_method_options.try(:[], method_name))
+
+      command.each { |name, values| option name, values }
+    end
+
+    def add_cnfs_action(lifecycle_command, method_name)
+      lifecycle, *command = lifecycle_command.to_s.split('_')
+      command = command.join('_').to_sym
+      @cnfs_actions ||= {}
+      @cnfs_actions[command] ||= []
+      @cnfs_actions[command].append({ lifecycle: lifecycle, method_name: method_name })
+    end
+
+    def cnfs_actions(method_name)
+      return unless (actions = @cnfs_actions.try(:[], method_name))
+
+      actions.each { |action| send(action[:lifecycle], action[:method_name]) }
+    end
   end
 
   # rubocop:disable Metrics/BlockLength
@@ -34,18 +63,13 @@ module CnfsCommandHelper
                                         aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
     add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
                                         aliases: '-f', type: :boolean
-    add_cnfs_option :logging,           desc: 'Display loggin information with degree of verbosity',
+    add_cnfs_option :logging,           desc: 'Display logging information with degree of verbosity',
                                         aliases: '-l', type: :string, default: Cnfs.config.logging
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',
                                         aliases: '-q', type: :boolean, default: Cnfs.config.quiet
 
-    Cnfs.extensions.select { |e| e.extension_point.eql?(name) }.each do |extension|
-      if extension.klass < Thor
-        register(extension.klass, extension.title, extension.help, extension.description)
-      else
-        include extension.klass
-      end
-    end
+    # Load plugin modules to add options, actions and sub-commands to existing command structure
+    Cnfs.plugin_modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }
 
     private
 
@@ -77,25 +101,6 @@ module CnfsCommandHelper
       klass
     end
 
-    # TODO: Most of these are specific to CLI gem so move them there
-    # Hollaback Callbacks
-    def prepare_runtime
-      project.available_runtimes.each(&:prepare)
-      # project.runtime.prepare
-    end
-
-    # def ensure_valid_project
-    #   return true
-    #   # binding.pry
-    #   raise Cnfs::Error, set_color(Cnfs.project.errors.full_messages.join("\n"), :red) unless project.valid?
-    # end
-
-    # def services_file_path
-    #   path = [options.environment, options.namespace].compact.join('/')
-    #   # TODO: just reference project?
-    #   Cnfs.project_root.join(Cnfs.paths.config, 'environments', path, 'services.yml')
-    # end
-
     # Usage: before: (or class_before:) :validate_destroy
     # Will raise an error unless force option is provided or user confirms the action
     def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
@@ -113,11 +118,6 @@ module CnfsCommandHelper
     def cmd(command_set)
       "#{command_set}_controller".classify.safe_constantize.new(args, options)
     end
-
-    # TODO: Move to CLI gem
-    # def project
-    #   Cnfs.project
-    # end
   end
   # rubocop:enable Metrics/BlockLength
 end

@@ -45,7 +45,7 @@ class Resource < ApplicationRecord
   end
 
   def as_hcl
-    attributes.except('blueprint_id', 'config', 'envs', 'id', 'type').merge(config_as_hcl)
+    attributes.except('blueprint_id', 'config', 'envs', 'id', 'type', 'owner_id', 'owner_type').merge(config_as_hcl)
   end
 
   def config_as_hcl

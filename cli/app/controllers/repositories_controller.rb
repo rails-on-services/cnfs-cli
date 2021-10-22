@@ -7,9 +7,17 @@ class RepositoriesController < Thor
   cnfs_class_options :dry_run, :logging
   class_before :initialize_project
 
-  register Repositories::CreateController, 'create', 'create TYPE NAME [options]', 'Create a new CNFS compatible services repository'
+  # register Repositories::CreateController, 'create', 'create TYPE NAME [options]', 'Create a new CNFS compatible services repository'
+
+  desc 'create[NAME | URL [NAME]]', 'Create a repository'
+  cnfs_method_options(:create)
+  cnfs_actions(:create)
+  def create(name)
+    Cnfs.logger.warn("In create with #{name} and #{args}")
+  end
 
   desc 'add [NAME | URL [NAME]]', 'Add a repository configuration to the project'
+  cnfs_method_options(:add)
   option :init, desc: 'Initialize repository',
                        aliases: '-i', type: :boolean
   def add(p1, p2 = nil)
@@ -22,12 +30,14 @@ class RepositoriesController < Thor
   end
 
   desc 'new_add [NAME | URL [NAME]]', 'Add a repository configuration to the project'
+  cnfs_method_options(:new_add)
   def new_add(p1, p2 = nil)
     repo = Repository.add(p1, p2)
     repo.save
   end
 
   desc 'destroy [NAME]', 'Delete a repository configuration and its contents from the project'
+  cnfs_method_options(:destroy)
   cnfs_options :force
   before :validate_destroy
   def destroy(name)
@@ -38,6 +48,7 @@ class RepositoriesController < Thor
   end
 
   desc 'init [NAME]', 'Initialize (clone) a configured repository'
+  cnfs_method_options(:init)
   def init(name)
     raise Cnfs::Error, "Repository not found: '#{name}'" unless (repo = Repository.find_by(name: name))
 

@@ -2,6 +2,13 @@
 
 class Project < Component
   # belongs_to :source_repository, class_name: 'Repository'
+  class << self
+    def config
+      ProjectConfig.new
+    end
+
+  # cnfs_options Project.config.commands.repositories.create.options
+  end
 
   store :config, accessors: %i[paths logging x_components], coder: YAML
 

@@ -14,6 +14,18 @@ module Cnfs
   class << self
     attr_accessor :plugin_root
 
+    # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])
+    def plugin_modules_for(mod: self, klass:, only: [])
+      plugins = only.empty? ? mod.plugins :  mod.plugins.select { |p| only.include?(p) }
+
+      plugins.keys.each_with_object([]) do |mod_name, ary|
+        mod_name = "#{mod_name.to_s.classify}::#{klass}"
+        next unless (mod = mod_name.safe_constantize)
+
+        ary.append(mod)
+      end
+    end
+
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
     def setup
@@ -23,7 +35,6 @@ module Cnfs
       Cnfs.loader.setup
       Cnfs.data_store.add_models(Cnfs.schema_model_names)
       Cnfs.data_store.setup
-      Cnfs.loader.setup_extensions
       Kernel.at_exit do
         Cnfs.logger.info(Cnfs.timers.map { |k, v| "\n#{k}:#{' ' * (30 - k.length)}#{v.round(2)}" }.join)
       end

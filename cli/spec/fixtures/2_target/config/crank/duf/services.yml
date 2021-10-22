@@ -3,8 +3,9 @@ iam:
   type: Rails::Service
   config:
     test: test
-  environment:
-    test: this
+  environment: 
+    - test
+    - this
 cognito:
   type: Rails::Service
   config:
