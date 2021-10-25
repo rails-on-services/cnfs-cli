@@ -21,6 +21,7 @@ module CnfsCli
         # Create a softlink in repo/services/.env to manifests dir so that iam.env, etc is available
         # rubocop:disable Metrics/AbcSize
         def on_runtime_switch
+          return
           return unless Cnfs.project.repository&.services_path&.exist?
 
           services_path = Cnfs.project.repository.services_path

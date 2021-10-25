@@ -10,7 +10,7 @@ class Component < ApplicationRecord
   # Pluralized resource names are declared as a has_many
   Cnfs.config.asset_names.select{ |name| name.pluralize.eql?(name) }.each do |asset_name|
     has_many asset_name.to_sym, as: :owner
-  end
+  end # if false
 
   store :config, coder: YAML
 

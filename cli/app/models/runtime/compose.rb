@@ -64,13 +64,33 @@ class Runtime::Compose < Runtime
     # running_services(format: options.format, status: options.status, **xargs)
   end
 
+  def tc
+    @tc ||= Command.new(
+      # opts: context.options,
+      env: { this: 'that' },
+      exec: 'ls -la',
+      opts: context.options.merge(printer: :null)
+    )
+  end
+
   # Service Admin Operations
   def start
-    puts services.pluck(:name)
-    generate
-    # process_manifests
+    prepare
+    queue.append(compose_command(exec: :up))
+    # qc = Command.new(
+    #   env: { hey: :now },
+    #   exec: compose_command("up #{compose_options} #{services.pluck(:name).join(' ')}"),
+    #   opts: context.options.merge(printer: :null)
+    #   # opts: context.options,
+    # )
+    # tc.run(exec: 'ls -w')
+    # queue.append(qc, tc)
+    queue.append(tc)
+    yield queue
     # binding.pry
-    # queue.add(rv(compose("up #{compose_options} #{services.pluck(:name).join(' ')}")))
+    # Here invoke callbacks on the services that were successful
+    # can do more work here
+    # could yield again
   end
 
   def stop(services)
@@ -125,6 +145,7 @@ class Runtime::Compose < Runtime
 
   # NOTE: This is an interface with CommandHelper
   def prepare
+    generate
     switch!
   end
 
@@ -154,7 +175,7 @@ class Runtime::Compose < Runtime
   end
 
   private
-
+=begin
   def required_tools
     %w[docker docker-compose]
   end
@@ -173,6 +194,7 @@ class Runtime::Compose < Runtime
     ActiveSupport::Notifications.instrument 'set_compose_env.cli', { command: silent_command, hash: hash }
     hash
   end
+=end
 
   # options embedded in the compose command string
   # rubocop:disable Metrics/AbcSize
@@ -180,8 +202,9 @@ class Runtime::Compose < Runtime
     location = 1
     method = caller_locations(1, location)[location - 1].label
     opts = []
-    opts.append('-d') if server_commands.include?(method) && !options.foreground
-    opts.append('-f') if options.tail
+    # binding.pry
+    opts.append('-d') if server_commands.include?(method) && !context.options.foreground
+    opts.append('-f') if context.options.tail
     Cnfs.logger.debug "compose options set to #{opts.join(' ')}"
     opts.join(' ')
   end
@@ -191,6 +214,7 @@ class Runtime::Compose < Runtime
     %w[start]
   end
 
+=begin
   # TODO: commands need to handle profiles
   # def exec_string
   #   application.services.each_with_object([]) do |service, ary|
@@ -210,18 +234,57 @@ class Runtime::Compose < Runtime
   # def runtime_service_names_to_service_names(runtime_services_list)
   #   runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
   # end
+=end
 
   def running_services_query(format:, status:, **filters)
     filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
-    filter.append("--filter 'status=#{status}'") if status
     filter.append("--format '#{format}'") if format
+    filter.append("--filter 'status=#{status}'") if status
 
-    silent_command.run(command_env, "docker ps #{filter.join(' ')}", command_options).out.split("\n")
-    # return an array of service strings minus the header
-    # result
-    # Cnfs.logger.info(result)
-    # result.size.positive? ? result.drop(1) : []
+    qc = command.run(exec: "docker ps #{filter.join(' ')}", opts: { silent: true })
+    qc.result.to_a
   end
+
+  # BEGIN: new stuff
+  #
+  # def compose_command(exec:, env: command_env, x_services: services)
+  #   queue_command(exec: compose(:up))
+  # end
+
+  # def queue_command(env: command_env, exec:)
+  #   Command.new(
+  #     env: env,
+  #     exec: exec,
+  #     opts: context.options
+  #   )
+  # end
+
+  def compose_command(exec:, env: {}) # , opts:)
+    command(exec: compose_exec(exec), env: compose_env.merge(env)) #, opts: compose_opts.merge(opts))
+  end
+
+  def compose_exec(exec)
+    "docker-compose #{exec} #{compose_options} #{services.pluck(:name).join(' ')}"
+  end
+
+	def compose_env(**env)
+		{}.merge(env)
+	end
+
+	# def compose_opts(**opts)
+  #   {}.merge(opts)
+	# end
+
+  def command(exec: nil, env: {}, opts: {})
+    Command.new(exec: exec, env: env, opts: context.options.merge(opts))
+  end
+
+  def queue
+    @queue ||= CommandQueue.new
+  end
+  #
+  # END: new stuff
+
 
   def silent_command
     TTY::Command.new(printer: :null)
@@ -232,7 +295,9 @@ class Runtime::Compose < Runtime
   end
 
   # Check if the manifest is outdated and generate it if necessary
-  def generate
+  def generate(force: false)
+    # TODO: enable return
+    # return if already_generated unless force
     manifest = context.manifest
     manifest.purge! if context.options.generate
     return if manifest.valid?
@@ -244,10 +309,5 @@ class Runtime::Compose < Runtime
     g.invoke_all
     Cnfs.logger.warn("Invalid manifest: #{manifest.errors.full_messages}") unless manifest.valid?
   end
-
-  # TODO: Only referenced in terraform_generator; after refactoring all that see if this is needed
-  # def deploy_type
-  #   :instance
-  # end
 end
 # rubocop:enable Metrics/ClassLength

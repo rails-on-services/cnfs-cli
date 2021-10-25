@@ -5,14 +5,21 @@ module Services
     include ServicesHelper
 
     # TODO: Modify to take tags and profiles
-    def execute
-      context.runtime.start
-      # NOTE: above command is invoked against filtered services by default
-      # To run against all available services pass it in to the method
-      # context.runtime(services: context.services).start
+    # TODO: The command should return output
+    # The controller should resuce/raise any excpetions
 
-      # TODO: The command should return output
-      # The controller should resuce/raise any excpetions
+    # Invoked against filtered services by default
+    # To run against all available services pass it in to the method
+    # context.runtime(services: context.services).start
+    def execute
+      context.runtime.start do |queue|
+        queue.run
+        queue.map(&:to_a).flatten.each do |msg|
+          Cnfs.logger.warn(msg)
+        end
+      end
+      rs = context.runtime.running_services(format: '{{.Names}}', status: :running) #, **filters)
+      binding.pry
     end
 
     def old_execute

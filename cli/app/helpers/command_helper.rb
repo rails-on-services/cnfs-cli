@@ -9,7 +9,7 @@ module CommandHelper
 
     Project.first.command_options.each do |hash|
       add_cnfs_option(hash.delete(:name), hash)
-    end
+    end # if false
 
     add_cnfs_option :tags,              desc: 'Filter by tags',
                                         aliases: '--tags', type: :array

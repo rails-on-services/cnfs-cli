@@ -13,6 +13,15 @@ module CnfsCli
 
     # docs for run!
     def run!(path: Dir.pwd, load_nodes: true)
+      # if Cnfs.project_root.nil? and valid_top_level_command?
+      #   setup
+      #   Cnfs.setup(data_store: false)
+      #   yield if block_given?
+      #   return
+      # end
+
+      # check for certain commands; If new then do something different
+      #
       # TODO: If path is different than existing path then reset the configuration; Primarily for specs
       Dir.chdir(path) { setup }
 

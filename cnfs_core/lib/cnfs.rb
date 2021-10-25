@@ -28,13 +28,13 @@ module Cnfs
 
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
-    def setup
+    def setup(data_store: true)
       Cnfs.loader.autoload_all(Cnfs.gem_root)
       Cnfs.loader.add_plugin_autoload_paths(Cnfs.plugin_root.plugins.values)
       # Cnfs.loader.add_plugin_autoload_paths(CnfsCli.plugins.values)
       Cnfs.loader.setup
       Cnfs.data_store.add_models(Cnfs.schema_model_names)
-      Cnfs.data_store.setup
+      Cnfs.data_store.setup if data_store
       Kernel.at_exit do
         Cnfs.logger.info(Cnfs.timers.map { |k, v| "\n#{k}:#{' ' * (30 - k.length)}#{v.round(2)}" }.join)
       end
@@ -98,9 +98,9 @@ module Cnfs
       @gem_root ||= Pathname.new(__dir__).join('..')
     end
 
-    def extensions
-      @extensions ||= []
-    end
+    # def extensions
+    #   @extensions ||= []
+    # end
 
     def subscribers
       @subscribers ||= []

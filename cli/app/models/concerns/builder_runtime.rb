@@ -27,23 +27,23 @@ module Concerns
     end
 
     # Simplified syntax to return a command array
-    def rv(command_string)
-      tool_check
-      [command_env, command_string, command_options]
-    end
+    # def rv(command_string)
+    #   # tool_check
+    #   [command_env, command_string, command_options]
+    # end
 
-    def command_env
-      @command_env ||= {}
-    end
+    # def command_env
+    #   @command_env ||= {}
+    # end
 
     # options returned to the TTY command
-    def command_options
-      opts = {}
-      opts.merge!(pty: true) if 1 == 2
-      # binding.pry
-      opts.merge!(only_output_on_error: true) if project.options.quiet
-      opts
-    end
+    # def command_options
+    #   opts = {}
+    #   opts.merge!(pty: true) if 1 == 2
+    #   # binding.pry
+    #   opts.merge!(only_output_on_error: true) if context.options.quiet
+    #   opts
+    # end
 
     def tool_check
       missing_tools = required_tools - Cnfs.capabilities

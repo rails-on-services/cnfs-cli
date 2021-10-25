@@ -41,6 +41,8 @@ module Cnfs
     # TODO: This is going to be a problem when run outside of a project since the file will not be available
     def translations
       @translations ||= (
+        # yml = File.exist?(load_p_root) ?  YAML.load_file(load_p_root) : {}
+        # yml = yml['config']&['x_components'] || {}
         yml = YAML.load_file(load_p_root)['config']['x_components'] || {}
         translations = yml.each_with_object({}) do |kv, hash|
           next unless (env = kv['env'])

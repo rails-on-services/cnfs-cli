@@ -23,7 +23,7 @@ class ServicesController < Thor
 
   # Activate common options
   class_before :initialize_project
-  cnfs_class_options :dry_run, :logging, :generate
+  cnfs_class_options :dry_run, :logging, :generate, :quiet
   cnfs_class_options Project.first.command_options_list
 
   register Services::CreateController, 'create', 'create SUBCOMMAND [options]',

@@ -2,69 +2,74 @@
 
 class CommandQueue
   include ActiveModel::AttributeAssignment
-  include TtyHelper
-  attr_reader :queue, :results
-  attr_accessor :halt_on_failure, :raise_on_failure
+  attr_reader :queue, :results, :on_failure
+
+  delegate :each, :map, :shfit, :unshift, :first, :last, :pop, :size, to: :queue
 
   def initialize(**options)
     @queue = []
     @results = []
+    self.on_failure ||= :raise_it
     assign_attributes(options)
   end
 
-  # TODO: Raise an error if the command is not properly formatted
-  def add(command)
-    raise ArgumentError, 'Incorrect command format' unless all_good(command)
-
-    queue.append(command)
+  def run!
+    run(cmd: :run!)
   end
 
-  def all_good(command)
-    return unless command.instance_of?(Array)
+  def run(cmd: :run)
+    queue.each do |command|
+      command.send(cmd)
+      binding.pry
+      if command.exit_error || command.result.failure?
+        msg = command.exit_error&.to_s || command.result.err
+        raise Cnfs::Error, msg if on_failure.raise?
 
-    command.first.instance_of?(Hash) and command.second.instance_of?(String) and command.third.instance_of?(Hash)
-  end
-
-  def execute_all
-    # rubocop:disable Style/WhileUntilModifier
-    while queue.any?
-      break if !execute && halt_on_failure
+        return false if on_failure.halt?
+      end
     end
-    # rubocop:enable Style/WhileUntilModifier
   end
 
-  def execute
-    current_command = queue.shift
-    result = command.run!(*current_command)
-    results.append(result)
-    if result.failure?
-      raise Cnfs::Error, result.err if raise_on_failure
-      return false if halt_on_failure
+  def append(*commands)
+    commands.each do |command|
+      raise ArgumentError, 'Incorrect command format' unless command.instance_of?(Command)
+
+      queue.append(command)
     end
-    true
   end
 
-  def failure?
-    failures.any?
+  def on_failure=(value)
+    @on_failure ||= ActiveSupport::StringInquirer.new(value.to_s)
   end
 
-  def success?
-    failures.empty?
-  end
-
-  def failure_messages
-    failures.map(&:err)
-  end
-
-  def failures
-    results.select(&:failure?)
-  end
-
-  def successes
-    results.select(&:success?)
-  end
-
-  def runtime
-    results.map(&:runtime).reduce(:+)
-  end
+#   def execute
+#     current_command = queue.shift
+#     result = command.run!(*current_command)
+#     results.append(result)
+#     true
+#   end
+#
+#   def failure?
+#     failures.any?
+#   end
+#
+#   def success?
+#     failures.empty?
+#   end
+#
+#   def failure_messages
+#     failures.map(&:err)
+#   end
+#
+#   def failures
+#     results.select(&:failure?)
+#   end
+#
+#   def successes
+#     results.select(&:success?)
+#   end
+#
+#   def runtime
+#     results.map(&:runtime).reduce(:+)
+#   end
 end
