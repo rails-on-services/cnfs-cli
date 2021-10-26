@@ -19,7 +19,7 @@ class RuntimeGenerator < ApplicationGenerator
       generated_files << template("#{entity_to_template(service)}.yml.erb", "#{path}/#{service.name}.yml")
     end
   rescue StandardError => e
-    if Cnfs.config.dig(:cli, :dev)
+    if Cnfs.config.dev
       msg = "#{e}\n#{e.backtrace}"
       # binding.pry
     end

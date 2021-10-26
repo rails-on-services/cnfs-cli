@@ -61,10 +61,12 @@ module Cnfs
     end
 
     def cli_mode
-      @cli_mode ||= begin
-                      mode = config.dig(:cli, :dev) ? 'development' : 'production'
-                      ActiveSupport::StringInquirer.new(mode)
-                    end
+      @cli_mode ||= set_cli_mode
+    end
+
+    def set_cli_mode
+      mode = config.dev ? 'development' : 'production'
+      ActiveSupport::StringInquirer.new(mode)
     end
 
     def git

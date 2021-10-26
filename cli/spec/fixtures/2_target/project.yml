@@ -11,5 +11,5 @@ config:
   # order: stack, environment, target, namespace
   # black red green yellow blue purple magenta cyan white
   x_components:
-    - { name: target, default: cap2, aliases: '-t', env: tar, color: blue }
+    - { name: target, default: crank, aliases: '-t', env: tar, color: blue }
     - { name: namespace, default: duf, aliases: '-n', env: ns, color: green }

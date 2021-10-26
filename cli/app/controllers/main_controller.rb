@@ -6,7 +6,7 @@ class MainController < Thor
   # Activate common options
   cnfs_class_options :dry_run, :logging
 
-  unless Cnfs.project_root.eql?('.')
+  if CnfsCli.config.project
     register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
     register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
     register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
@@ -18,7 +18,7 @@ class MainController < Thor
   end
 
   # Project Management
-  if Cnfs.project_root.eql?('.')
+  unless CnfsCli.config.project
     desc 'new NAME', 'Create a new CNFS project'
     long_desc <<-DESC.gsub("\n", "\x5")
 

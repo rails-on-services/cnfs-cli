@@ -12,7 +12,7 @@ class Context < ApplicationRecord
   # filtered_<asset> All available <assets> filterd by arguments provided by the cli
   # <asset>_runtime The runtime object for the <asset>
 
-  Cnfs.config.asset_names.each do |asset_name|
+  CnfsCli.asset_names.each do |asset_name|
     has_many "component_#{asset_name}".to_sym, through: :components, source: asset_name.to_sym
     has_many asset_name.to_sym, as: :owner
 
@@ -58,8 +58,8 @@ class Context < ApplicationRecord
   # The controller first updates the context options then calls this method
   def set_component
     obj = root
-    c_list = Cnfs.config.order.dup[1..]
-    Cnfs.config.order[1..].each do |component_name|
+    c_list = CnfsCli.config.order.dup[1..]
+    CnfsCli.config.order[1..].each do |component_name|
       name, source = value(component_name)
       unless (new_obj = obj.components.find_by(name: name))
         Cnfs.logger.warn("#{component_name.capitalize} '#{name}' configured from *#{source}* not found.\n" \
@@ -95,7 +95,7 @@ class Context < ApplicationRecord
 
   # TODO: Change the name of this method
   def set_assets
-    Cnfs.config.asset_names.each do |asset_type|
+    CnfsCli.asset_names.each do |asset_type|
       component_assn = component.send(asset_type.to_sym).where(abstract: [false, nil])
       # binding.pry if asset_type.eql?('users')
       next unless component_assn.count.positive?

@@ -16,6 +16,7 @@ require 'zeitwerk'
 
 require_relative 'errors'
 require_relative 'version'
+require_relative 'data_store'
 require_relative '../ext/config/options'
 require_relative '../ext/hash'
 require_relative '../ext/string'

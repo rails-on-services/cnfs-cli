@@ -5,14 +5,15 @@ require 'tty-logger'
 require 'xdg'
 
 require_relative 'cnfs/utils'
-require_relative 'cnfs/context'
+require_relative 'cnfs/config_base'
+require_relative 'cnfs/config'
 require_relative 'cnfs/loader'
 
 module Cnfs
   # class Error < StandardError; end
 
   class << self
-    attr_accessor :plugin_root
+    attr_accessor :plugin_root, :config, :configuration
 
     # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])
     def plugin_modules_for(mod: self, klass:, only: [])
@@ -28,23 +29,18 @@ module Cnfs
 
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
-    def setup(data_store: true)
+    def setup(data_store: true, schema_model_names: [])
       Cnfs.loader.autoload_all(Cnfs.gem_root)
       Cnfs.loader.add_plugin_autoload_paths(Cnfs.plugin_root.plugins.values)
       # Cnfs.loader.add_plugin_autoload_paths(CnfsCli.plugins.values)
       Cnfs.loader.setup
-      Cnfs.data_store.add_models(Cnfs.schema_model_names)
+      Cnfs.data_store.add_models(schema_model_names)
       Cnfs.data_store.setup if data_store
       Kernel.at_exit do
         Cnfs.logger.info(Cnfs.timers.map { |k, v| "\n#{k}:#{' ' * (30 - k.length)}#{v.round(2)}" }.join)
       end
     end
     # rubocop:enable Metrics/AbcSize
-
-    def config
-      # binding.pry
-      @config ||= context.config
-    end
 
     def data_store
       @data_store ||= Cnfs::DataStore.new
