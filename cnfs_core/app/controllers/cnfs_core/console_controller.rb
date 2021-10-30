@@ -81,7 +81,7 @@ module CnfsCore
 
     def reload!
       reset_cache
-      Cnfs.reload
+      CnfsCli.reload
       self.class.reload
       true
     end

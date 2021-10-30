@@ -15,18 +15,6 @@ module Cnfs
   class << self
     attr_accessor :plugin_root, :config, :configuration
 
-    # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])
-    def plugin_modules_for(mod: self, klass:, only: [])
-      plugins = only.empty? ? mod.plugins :  mod.plugins.select { |p| only.include?(p) }
-
-      plugins.keys.each_with_object([]) do |mod_name, ary|
-        mod_name = "#{mod_name.to_s.classify}::#{klass}"
-        next unless (mod = mod_name.safe_constantize)
-
-        ary.append(mod)
-      end
-    end
-
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
     def setup(data_store: true, schema_model_names: [])
@@ -70,17 +58,27 @@ module Cnfs
       end
     end
 
+    # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])
+    def plugin_modules_for(mod: self, klass:, only: [])
+      plugins = only.empty? ? mod.plugins :  mod.plugins.select { |p| only.include?(p) }
+
+      plugins.keys.each_with_object([]) do |mod_name, ary|
+        mod_name = "#{mod_name.to_s.classify}::#{klass}"
+        next unless (mod = mod_name.safe_constantize)
+
+        ary.append(mod)
+      end
+    end
+
     def reload
-      reset
-      context.reload
       loader.reload
-      data_store.reload
     end
 
     # NOTE: most of this moved to context. Is shift and caps needed?
     def reset
       @logger = nil
-      @config = nil
+      # data_store.reload
+      # @config = nil
       subscribers.each { |sub| ActiveSupport::Notifications.unsubscribe(sub.pattern) }
       # ARGV.shift # remove 'new'
       # @capabilities = nil
@@ -94,24 +92,9 @@ module Cnfs
       @gem_root ||= Pathname.new(__dir__).join('..')
     end
 
-    # def extensions
-    #   @extensions ||= []
-    # end
-
+    # Record any ActiveRecord pubsub subsribers
     def subscribers
       @subscribers ||= []
-    end
-
-    def user_root
-      @user_root ||= xdg.config_home.join(Cnfs.xdg_name)
-    end
-
-    def user_data_root
-      @user_data_root ||= xdg.data_home.join(Cnfs.xdg_name)
-    end
-
-    def xdg
-      @xdg ||= XDG::Environment.new
     end
   end
 end

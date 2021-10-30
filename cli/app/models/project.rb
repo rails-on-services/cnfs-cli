@@ -2,48 +2,64 @@
 
 class Project < Component
   # belongs_to :source_repository, class_name: 'Repository'
-  class << self
-    def config
-      ProjectConfig.new
-    end
-
-  # cnfs_options Project.config.commands.repositories.create.options
-  end
-
   store :config, accessors: %i[paths logging x_components], coder: YAML
 
-  # TODO: Implement validation
-  def platform_is_valid
-    errors.add(:platform, 'not supported') if Cnfs.platform.unknown?
+  before_validation :set_defaults
+
+  before_create :mod_x_components, unless: proc { skip_node_create } 
+
+  def create_node
+    binding.pry
+    node = Node::Component.create(owner: self, skip_owner_create: true,
+                  path: CnfsCli.config.root.join('project.yml'))
+    p = create_parent(type: 'Node::SearchPath', parent: node, path: 'config', skip_owner_create: true)
+    binding.pry
+
+    # parent = create_parent(type: 'Node::Component', owner: self, skip_owner_create: true,
+                  # path: CnfsCli.config.root.join('project.yml'))
+    # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config', skip_owner_create: true)
   end
 
+  def mod_x_components
+    self.x_components = x_components.each_with_object([]) do |comp, ary|
+      defaults = comp_defaults[comp[:name]] || {}
+      ary.append(defaults.merge(comp))
+    end
+  end
+
+  # "black" "red" "green" "yellow" "blue" "purple" "magenta" "cyan" "white"
+  def comp_defaults
+    {
+      'target' => { aliases: '-t', color: 'blue' },
+      'environment' => { aliases: '-e', env: 'env', color: 'green' },
+      'namespace' => { aliases: '-e', env: 'ns', color: 'yellow' },
+      'stack' => { aliases: '-e', color: 'red' }
+    }
+  end
+
+  # name: default aliases env color
+  def set_defaults
+    self.x_components ||= []
+  end
+
+  # Node SearchPath
   def search_path
     Pathname.new(parent.path).split[0].join('config')
   end
 
-  def paths
-    @paths ||= super&.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = Pathname.new(v) }
+  def except_json
+    super.append('c_name', 'type')
   end
 
-  def root
-    Cnfs.project_root
-  end
-
-  # NOTE: Not yet in use; decide where this should go
-  # def user_root
-  #   @user_root ||= Cnfs.user_root.join(name)
-  # end
-
-  def as_save
-    base = attributes.slice('name', 'config', 'paths', 'logging')
-    # base.merge!('repository' => "#{repository.name} (#{repository.type})") if repository
-    base.merge!('repository' => repository.name) if repository
-    base
+  def root_tree
+    puts "\n#{super.render}"
   end
 
   def command_options
     @command_options ||= x_components.each_with_object([]) do |opt, ary|
-      opt = opt.with_indifferent_access
+    # @command_options ||= CnfsCli.config.config.x_components.each_with_object([]) do |opt, ary|
+      opt = opt.to_h.with_indifferent_access
+      # opt = opt.with_indifferent_access
       ary.append({ name: opt[:name].to_sym,
                    desc: opt[:desc] || "Specify #{opt[:name]}",
                    aliases: opt[:aliases],
@@ -54,7 +70,7 @@ class Project < Component
   end
 
   def command_options_list
-    @command_options_list ||= x_components.map{ |comp| comp[:name].to_sym }
+    @command_options_list ||= CnfsCli.config.config.x_components.map{ |comp| comp[:name].to_sym }
   end
 
   # TODO: See what to do about encrypt/decrypt per env/ns

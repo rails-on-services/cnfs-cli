@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Node < ApplicationRecord
+  attr_accessor :skip_owner_create
   attr_writer :yaml_payload, :owner_class
 
   belongs_to :parent, class_name: 'Node'
@@ -10,13 +11,15 @@ class Node < ApplicationRecord
   before_validation :set_realpath
 
   def set_realpath
-    self.realpath ||= Pathname.new(path).realpath.to_s
+    binding.pry unless path
+    # self.realpath ||= Pathname.new(path).realpath.to_s
+    self.realpath ||= Pathname.new(path).cleanpath.to_s
   end
 
   # This only applies to Component, ComponentDir and Asset
   def make_owner
     # binding.pry if parent.nil?
-    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner_association
+    obj = parent.nil? ? @owner_class.create(yaml_payload.merge(skip_node_create: true)) : make_owner_association
     update(owner: obj)
     owner_log('Created owner')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
@@ -26,9 +29,9 @@ class Node < ApplicationRecord
 
   def make_owner_association
     own = owner_ref(self)
-    ass_str = owner_ass_name
-    ass = own.send(ass_str.to_sym)
-    ass.create(yaml_payload)
+    assn_str = owner_ass_name
+    assn = own.send(assn_str.to_sym)
+    assn.create(yaml_payload.merge(skip_node_create: true))
   end
 
   # Recursively move back through parent hierarchy until reaching a Node::Component which
@@ -42,8 +45,10 @@ class Node < ApplicationRecord
     @yaml_payload ||= { 'name' => node_name }.merge(yaml)
   end
 
-  def yaml
-    @yaml ||= YAML.load_file(rootpath) || {}
+  def yaml(reload: false)
+    return @yaml ||= YAML.load_file(rootpath) || {} unless reload
+
+    @yaml = YAML.load_file(rootpath) || {}
   end
 
   # Query the just created asset or component for a search_path
@@ -94,6 +99,20 @@ class Node < ApplicationRecord
 
   def owner_log(title)
     Cnfs.logger.debug("#{title} from: #{pathname}\n#{yaml_payload}")
+  end
+
+  def root_tree
+    puts "\n#{TTY::Tree.new(node_name => tree).render}"
+  end
+
+  # TODO: Use the subclasses to determine what should be returned
+  def tree
+    ret = nodes.select{ |c| c.rootpath.file? }.map(&:tree_name)
+    ret.append(
+      nodes.select{ |c| c.rootpath.directory? }.each_with_object({}) do |node, hash|
+        hash["#{node.node_name} (#{node.owner&.c_name})"] = node.tree
+      end
+    )
   end
 
   class << self

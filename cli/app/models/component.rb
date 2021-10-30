@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
+  attr_accessor :skip_node_create
+
   belongs_to :owner, class_name: 'Component'
   belongs_to :context
   has_one :parent, as: :owner, class_name: 'Node'
@@ -16,6 +18,19 @@ class Component < ApplicationRecord
 
   validates :name, presence: true
 
+  after_create :create_node, unless: proc { skip_node_create }
+  after_update :update_node, unless: proc { skip_node_create }
+
+  def create_node
+    binding.pry
+    create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent, skip_owner_create: true)
+  end
+
+  def update_node
+    # parent.update(owner: self)
+    parent.update(owner: self, skip_owner_create: true)
+  end
+
   # updates this component's context and it's owner's context (recursive until owner is nil)
   def update_context(context:)
     update(context: context)
@@ -24,6 +39,20 @@ class Component < ApplicationRecord
 
   def runtime
     resource&.runtime
+  end
+
+  def root_tree
+    TTY::Tree.new("#{name} (project)" => tree)
+  end
+
+  def tree
+    components.each_with_object([]) do |comp, ary|
+      if comp.components.size.zero?
+        ary.append("#{comp.name} (#{comp.c_name})")
+      else
+        ary.append({ "#{comp.name} (#{comp.c_name})" => comp.tree })
+      end
+    end
   end
 
   # Scan all resources for a runtime association

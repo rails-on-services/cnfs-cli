@@ -6,14 +6,15 @@ class MainController < Thor
   # Activate common options
   cnfs_class_options :dry_run, :logging
 
+  # ["builders", "environments", "providers", "resources", "repositories", "runtimes", "services", "users"]
   if CnfsCli.config.project
+    # register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Manage environment infrastructure blueprints (k8s clusters, storage, etc)'
+    # register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
+    register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
+    register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
     register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
     register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]', 'Add, create, list and remove project repositories'
-    register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
-    register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Manage environment infrastructure blueprints (k8s clusters, storage, etc)'
-    register InfraController, 'infra', 'infra [SUBCOMMAND]', 'Manage environment infrastructure. (short-cut: i)'
-    register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]', 'Manage namespace infrastructure and services'
-    register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
+    register ResourcesController, 'resource', 'resource [SUBCOMMAND]', 'Manage component resources'
     register ServicesController, 'service', 'service SUBCOMMAND [options]', 'Manage services in the current namespace'
   end
 
@@ -38,8 +39,8 @@ class MainController < Thor
     DESC
     option :force,  desc: 'Force creation even if the project directory already exists',
                     aliases: '-f', type: :boolean
-    option :config, desc: 'Create project with a working configuration (instead of commented examples)',
-                    aliases: '-c', type: :boolean
+    # option :config, desc: 'Create project with a working configuration (instead of commented examples)',
+                    # aliases: '-c', type: :boolean
     option :guided, desc: 'Create project with a guided configuration',
                     aliases: '-g', type: :boolean
     def new(name)
@@ -47,11 +48,6 @@ class MainController < Thor
         raise Cnfs::Error, set_color('Directory exists. exiting.', :red)
       end
       execute(name: name)
-      Dir.chdir(name) do
-        Cnfs.reset
-        initialize_project
-        execute({ blueprints: cmd(:blueprints) }, :new, 2, :configure)
-      end
     end
   end
 

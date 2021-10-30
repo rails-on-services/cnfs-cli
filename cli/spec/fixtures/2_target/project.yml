@@ -1,5 +1,4 @@
 ---
-name: 2_target
 config:
   paths:
     config: config
@@ -8,8 +7,15 @@ config:
     src: src
     tmp: tmp
   logging: warn
-  # order: stack, environment, target, namespace
-  # black red green yellow blue purple magenta cyan white
   x_components:
-    - { name: target, default: crank, aliases: '-t', env: tar, color: blue }
-    - { name: namespace, default: duf, aliases: '-n', env: ns, color: green }
+  - aliases: "-t"
+    color: blue
+    name: target
+    default: crank
+    env: tar
+  - aliases: "-n"
+    env: ns
+    color: green
+    name: namespace
+    default: duf
+type: Project

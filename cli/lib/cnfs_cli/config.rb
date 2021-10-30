@@ -23,11 +23,10 @@ module CnfsCli
     end
 
     def after_set_config(config)
-      config.order ||= 'target'
-      if config.config&.x_components
-        config.order = config.config.x_components.map(&:name).map(&:singularize).unshift('project')
-        config.orders = config.order.map(&:pluralize)
-      end
+      config.order = config.config.x_components.map(&:name).map(&:singularize) if config.config&.x_components
+      config.order ||= ['target']
+      config.order = config.order.unshift('project')
+      config.orders = config.order.map(&:pluralize)
     end
 
     def env_translations

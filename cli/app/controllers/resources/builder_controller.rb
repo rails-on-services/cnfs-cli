@@ -1,10 +1,18 @@
 # frozen_string_literal: true
 
-module Infra
-  class ApplyController
-    include InfraHelper
+module Resources
+  class BuilderController
+    include ResourcesHelper
 
-    def execute
+    # from plan_controller
+    def plan
+      run_in_path(:init)
+      run_in_path(:plan) do |result|
+        raise Cnfs::Error, result.err if result.failure?
+      end
+    end
+
+    def apply
       # run_in_path(:init, :apply) do |result|
       # end
         # binding.pry

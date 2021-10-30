@@ -18,7 +18,7 @@ module CnfsCli
       # Initialize plugins in the *Cnfs* namespace
       Cnfs.initialize_plugins_from_path(gem_root) if Cnfs.initialize_plugins.empty?
 
-      load_configurations(path, load_nodes)
+      load_configurations(path: path, load_nodes: load_nodes)
 
       Dir.chdir(config.root) do
         setup
@@ -30,10 +30,10 @@ module CnfsCli
     end
 
     # Setup CnfsCli.config (project settings) and Cnfs.config (tool settings)
-    def load_configurations(path, load_nodes)
+    def load_configurations(path:, load_nodes:)
       require_relative 'cnfs_cli/config'
-      @configuration ||= CnfsCli::Config.new(name: 'project', cwd: path, load_nodes: load_nodes)
-      @config ||= @configuration.config
+      @configuration = CnfsCli::Config.new(name: 'project', cwd: path, load_nodes: load_nodes)
+      @config = @configuration.config
       Cnfs.configuration = Cnfs::Config.new(name: 'cnfs-cli', cwd: path)
       Cnfs.config = Cnfs.configuration.config
       config.load_nodes = false if config.load_nodes and not config.project
@@ -93,14 +93,15 @@ module CnfsCli
     end
 
     # TODO: this needs to be refactored
-    def reload(path: nil)
-      Cnfs.project_root = nil
+    def reload(path: nil, load_nodes: true)
+      load_configurations(path: path, load_nodes: load_nodes)
+      # Cnfs.project_root = nil
       # binding.pry
-      Cnfs.translations = nil
-      Cnfs.context = nil
-      Cnfs.reset
-      Dir.chdir(path) { puts Cnfs.context; puts Cnfs.project_root } if path
-      set_config_options
+      # Cnfs.translations = nil
+      # Cnfs.context = nil
+      # Cnfs.reset
+      # Dir.chdir(path) { puts Cnfs.context; puts Cnfs.project_root } if path
+      # set_config_options
       Cnfs.loader.reload
       Cnfs.data_store.reload
     end

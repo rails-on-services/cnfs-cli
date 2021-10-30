@@ -5,18 +5,25 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
+      attr_accessor :skip_node_create
+
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
       store :config, coder: YAML
 
       validates :name, presence: true
-      # For records created with new during cli operations
-      # after_initialize do
-      #   self.project ||= Cnfs.project if new_record?
-      # end
 
-      # delegate :options, :paths, :write_path, to: :project
+      after_create :create_node, unless: proc { skip_node_create }
+      after_update :update_node, unless: proc { skip_node_create }
+    end
+
+    def create_node
+      create_parent(type: 'Node::Asset', owner: self, skip_owner_create: true)
+    end
+
+    def update_node
+      parent.update(owner: self, skip_owner_create: true)
     end
 
     class_methods do

@@ -68,7 +68,7 @@ class Context < ApplicationRecord
       end
 
       obj = new_obj
-      obj.update(context: self, c_name: c_list.shift)
+      obj.update(context: self, c_name: c_list.shift, skip_node_create: true)
     end
     update(component: obj)
   end
@@ -78,6 +78,7 @@ class Context < ApplicationRecord
                'CLI option'
              elsif (name = Cnfs.config.send(component_name))
                'ENV'
+             # TODO: bug here is project.yml doesn't have x_components
              elsif (name = root.x_components.select{ |c| c['name'].eql?(component_name) }.first.try(:[], 'default'))
                'project.yml'
              end
@@ -113,7 +114,7 @@ class Context < ApplicationRecord
         # binding.pry if asset_type.eql?('runtimes')
         # json.deep_merge!(asset.as_json.compact).except!('id', 'owner_id', 'owner_type', 'abstract')
         # binding.pry if asset_type.eql?('users')
-        assn.create(json)
+        assn.create(json.merge(skip_node_create: true))
       end
     end
   end
@@ -167,7 +168,7 @@ class Context < ApplicationRecord
 
     def after_node_load
       obj = create(root: Project.first)
-      Project.first.update(context: obj, c_name: 'project')
+      Project.first.update(context: obj, c_name: 'project', skip_node_create: true)
     end
   end
 end

@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 class Node::ComponentDir < Node
-  after_create :make_owner, :load_path
+  after_create :make_owner, :load_path, unless: proc { skip_owner_create }
+  after_create :make_path, if: proc { skip_owner_create }
+
+  def make_path
+    rootpath.mkdir
+  end
 
   # If 
   def make_owner
@@ -23,4 +28,8 @@ class Node::ComponentDir < Node
   def yaml_payload 
     @yaml_payload ||= { 'name' => node_name }
   end
+
+  # def tree_name
+  #   { node_name => nodes.map(&:owner).map(&:name) }
+  # end
 end

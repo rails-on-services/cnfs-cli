@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Infra
-  class ShellController
+  class RuntimeController
     include ExecHelper
     # include InfraHelper
 
-    def execute
+    def instance_shell
       system("ssh -A #{args.ip}")
       # unless service.shell_command
       #   raise Cnfs::Error, "#{service.name} does not implement the shell command"

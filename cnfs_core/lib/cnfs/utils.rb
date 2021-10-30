@@ -47,6 +47,10 @@ module Cnfs
     #   Dependency.pluck(:name)
     # end
 
+    def platform_is_valid
+      errors.add(:platform, 'not supported') if platform.unknown?
+    end
+
     def platform
       os =
         case RbConfig::CONFIG['host_os']
