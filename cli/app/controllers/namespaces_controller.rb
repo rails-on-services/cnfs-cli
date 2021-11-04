@@ -6,7 +6,7 @@ class NamespacesController < Thor
   # Activate common options
   class_before :initialize_project
   cnfs_class_options :dry_run, :logging, :force
-  cnfs_class_options Project.first.command_options_list
+  cnfs_class_options CnfsCli.configuration.command_options_list
   # class_around :timer
 
   # map %w[i] => :infra

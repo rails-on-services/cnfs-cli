@@ -57,67 +57,67 @@ module CnfsCommandHelper
     end
   end
 
-  # rubocop:disable Metrics/BlockLength
   included do |_base|
     add_cnfs_option :dry_run,           desc: 'Do not execute commands',
-                                        aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
+      aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
     add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
-                                        aliases: '-f', type: :boolean
+      aliases: '-f', type: :boolean
     add_cnfs_option :logging,           desc: 'Display logging information with degree of verbosity',
-                                        aliases: '-l', type: :string, default: Cnfs.config.logging
+      aliases: '-l', type: :string, default: Cnfs.config.logging
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',
-                                        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+      aliases: '-q', type: :boolean, default: Cnfs.config.quiet
 
     # Load plugin modules to add options, actions and sub-commands to existing command structure
     Cnfs.plugin_modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }
-
-    private
-
-    # rubocop:disable Metrics/ParameterLists
-    def execute(command_args = {}, command_name = nil, location = 2, command_method = :execute)
-      @args = Thor::CoreExt::HashWithIndifferentAccess.new(command_args)
-      yield if block_given?
-      Cnfs.logger.info("execute: #{command_name}")
-      command_name ||= command_method(location)
-      exec_instance = command_class(command_name)
-      exec_instance.new(options: options, args: args).send(command_method)
-    end
-    # rubocop:enable Metrics/ParameterLists
-
-    # Can be called directory by the command, e.g. 'console' with no params and will return 'console'
-    def command_method(location = 1)
-      method = caller_locations(1, location)[location - 1].label
-      Cnfs.logger.info("command_method: #{method}")
-      method
-    end
-
-    def command_class(command_name)
-      class_name = "#{self.class.name.delete_suffix('Controller')}/#{command_name}_controller".classify
-      Cnfs.logger.info("command_class: #{class_name}")
-      unless (klass = class_name.safe_constantize)
-        raise Cnfs::Error, set_color("Class not found: #{class_name} (this is a bug. please report)", :red)
-      end
-
-      klass
-    end
-
-    # Usage: before: (or class_before:) :validate_destroy
-    # Will raise an error unless force option is provided or user confirms the action
-    def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
-      return true if options.force || yes?(msg)
-
-      raise Cnfs::Error, 'Operation cancelled'
-    end
-
-    # NOTE: Not currently in use; intended as a class_around option
-    def timer(&block)
-      Cnfs.with_timer('command processing', &block)
-    end
-
-    # Run a command on another command_set controller
-    def cmd(command_set)
-      "#{command_set}_controller".classify.safe_constantize.new(args, options)
-    end
   end
-  # rubocop:enable Metrics/BlockLength
+
+  private
+
+  def execute(**kwargs, &block)
+    location = kwargs.delete(:location) || 2
+    controller_name = kwargs.delete(:controller) || controller_name_from_caller(location: location)
+    method_name = kwargs.delete(:method) || :execute
+    @args = Thor::CoreExt::HashWithIndifferentAccess.new(kwargs)
+    # binding.pry if block_given?
+    yield if block_given?
+
+    Cnfs.logger.info("controller name: #{controller_name}")
+    controller = controller_instance(controller_name: controller_name)
+    controller.new(**controller_args).send(method_name)
+  end
+
+  def controller_args
+    { options: options, args: args }
+  end
+
+  # Could be called directly by the command, e.g. 'console' with no params and will return 'console'
+  def controller_name_from_caller(location: 1)
+    name = caller_locations(1, location)[location - 1].label
+    Cnfs.logger.info("controller name: #{name}")
+    name
+  end
+
+  def controller_instance(controller_name:)
+    class_name = "#{self.class.name.delete_suffix('Controller')}/#{controller_name}_controller".classify
+    Cnfs.logger.info("command_class: #{class_name}")
+    unless (klass = class_name.safe_constantize)
+      raise Cnfs::Error, set_color("Class not found: #{class_name} (this is a bug. please report)", :red)
+    end
+
+    klass
+  end
+
+  # Usage: before: (or class_before:) :validate_destroy
+  # Will raise an error unless force option is provided or user confirms the action
+  def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
+    return true if options.force || yes?(msg)
+
+    raise Cnfs::Error, 'Operation cancelled'
+  end
+
+  # Run a command on another controller
+  # TODO: need to provide the context to the chained command
+  def controller_for(command)
+    "#{command}_controller".classify.safe_constantize.new # (args, options)
+  end
 end

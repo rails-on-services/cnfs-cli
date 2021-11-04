@@ -47,7 +47,7 @@ class Command
     TTY::Command.new(**cmd_opts)
   end
 
-  def to_a(term = "\n")
+  def to_a(term: "\n")
     out ? out.split(term) : []
   end
 

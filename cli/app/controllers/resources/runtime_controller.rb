@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
-module Infra
+module Resources
   class RuntimeController
     include ExecHelper
-    # include InfraHelper
+    include ResourcesHelper
 
+    def connect
+      binding.pry
+
+    end
     def instance_shell
       system("ssh -A #{args.ip}")
       # unless service.shell_command

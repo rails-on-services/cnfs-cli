@@ -1,0 +1,18 @@
+---
+res1:
+  runtime_id: 1
+  config:
+    family: r2
+    size: awesome
+  abstract:
+  provider_id:
+  runtime_name: compose
+  context:
+  envs:
+  tags:
+  type: Resource
+res2:
+  type: Resource
+  config:
+    family: ah23
+    size: cool!

@@ -6,30 +6,24 @@ module ExecHelper
 
   included do
     extend CnfsExecHelper
+
+    attr_accessor :context
+
+    define_model_callbacks :execute
   end
 
-  # delegate :runtime, to: :context
-
-  def context
-    Context.first
+  # TODO: When moving queue to cnfs_core then move this
+  def queue
+    @queue ||= CommandQueue.new # (halt_on_failure: true)
   end
 
-  # def each_runtime
-  #   environment.runtimes.each do |runtime|
-  #     runtime.queue = queue
-  #     # TODO: See if update works; it writes a bunch of stuff to config/project.yml
-  #     # If it requires reload then that is pretty useless
-  #     # project.update(runtime: runtime)
-  #     project.runtime = runtime
-  #     # Prepare should be handled by the CommandController
-  #     # project.runtime.prepare
-  #     # binding.pry
-  #     runtime_services = respond_to?(:services) ? services.where(type: runtime.supported_service_types) : []
-  #     yield runtime, runtime_services
-  #   end
-  # end
+  # Shortcut for CRUD controller's create and update methods
+  # Ex: crud_with(Build.new(project: Cnfs.project))
+  def crud_with(obj, location = 1)
+    method = caller_locations(1, location)[location - 1].label
+    obj.view.send(method)
+    return obj if obj.save
 
-  # def environment
-  #   project.environment
-  # end
+    $stdout.puts obj.errors.map(&:full_message).join("\n")
+  end
 end

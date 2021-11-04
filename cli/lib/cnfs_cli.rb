@@ -29,12 +29,12 @@ module CnfsCli
       end
     end
 
-    # Setup CnfsCli.config (project settings) and Cnfs.config (tool settings)
+    # Setup CnfsCli.config (project settings) and Cnfs.config (core tool settings)
     def load_configurations(path:, load_nodes:)
       require_relative 'cnfs_cli/config'
-      @configuration = CnfsCli::Config.new(name: 'project', cwd: path, load_nodes: load_nodes)
+      @configuration = CnfsCli::Config.new(file_name: 'cnfs-cli.yml', cwd: path, load_nodes: load_nodes)
       @config = @configuration.config
-      Cnfs.configuration = Cnfs::Config.new(name: 'cnfs-cli', cwd: path)
+      Cnfs.configuration = Cnfs::Config.new(name: 'cnfs-cli', file_name: 'cnfs-cli.yml', cwd: path)
       Cnfs.config = Cnfs.configuration.config
       config.load_nodes = false if config.load_nodes and not config.project
     end
@@ -62,13 +62,16 @@ module CnfsCli
     end
 
     def load_root_node
-      _n = Node::Component.create(path: config.file, owner_class: Project)
+      _n = Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
       return unless Project.first
 
       schema_model_names.each do |model|
         klass = model.classify.constantize
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
+    rescue ActiveRecord::SubclassNotFound => err
+      Cnfs.logger.warn("#{err.message.split('.').first}")
+      raise Cnfs::Error, ''
     end
 
     # Initialize plugins in the *CnfsCli* namespace
@@ -84,7 +87,7 @@ module CnfsCli
 
     # The model class list for which tables will be created in the database
     def schema_model_names
-      %w[blueprint builder context component dependency environment image node node_asset
+      %w[blueprint builder context context_component component dependency environment image node node_asset
         project provider repository resource runtime service user]
     end
 

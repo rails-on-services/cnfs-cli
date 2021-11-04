@@ -2,9 +2,15 @@
 
 module Projects
   class ConsoleController < CnfsCore::ConsoleController
+    include ExecHelper
+
+    # before_execute :initialize_project
+    around_execute :timer
+
     class << self
       def commands
-        %i[projects repositories infra environments blueprints namespaces images services]
+        # %i[projects repositories infra environments blueprints namespaces images services]
+        %i[projects repositories resources blueprints images services]
       end
 
       def model_shortcuts
@@ -28,8 +34,10 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt
       prompt = []
-      Context.first.cli_components.each do |name, color|
-        prompt << (color.nil? ? name : Pry::Helpers::Text.send(color.to_sym, name))
+      context.components.order(:id).each do |comp|
+        cfg = CnfsCli.config.components.select{ |ar| ar.name.eql?(comp.c_name) }.first
+        color = cfg&.color
+        prompt << (color.nil? ? comp.name : Pry::Helpers::Text.send(color.to_sym, comp.name))
       end
       # TODO: If project.config.prompt.eql?('all') then display all component names in the hierarchy
       # including if Cnfs.order.index('environment') then colorize it using the following

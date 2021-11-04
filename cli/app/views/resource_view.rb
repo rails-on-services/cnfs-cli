@@ -3,10 +3,16 @@
 class ResourceView < ApplicationView
   extend Forwardable
 
-  def_delegator :model, :blueprint
-  %i[builder environment provider runtime].each do |meth|
-    def_delegator :blueprint, meth
+  def create
+    raise Cnfs::Error, 'Create can only be called on new instances' if model.persisted?
+
+    model.name = ask('name', value: '') if model.name.nil?
   end
+
+  # def_delegator :model, :blueprint
+  # %i[builder environment provider runtime].each do |meth|
+  #   def_delegator :blueprint, meth
+  # end
 
   # def render(obj)
   #   @obj = obj

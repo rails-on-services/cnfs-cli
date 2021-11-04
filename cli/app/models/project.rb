@@ -2,11 +2,15 @@
 
 class Project < Component
   # belongs_to :source_repository, class_name: 'Repository'
-  store :config, accessors: %i[paths logging x_components], coder: YAML
+  # store :config, accessors: %i[paths logging x_components], coder: YAML
 
-  before_validation :set_defaults
+  def c_name
+    'project'
+  end
 
-  before_create :mod_x_components, unless: proc { skip_node_create } 
+  def as_json
+    super.merge('name' => name)
+  end
 
   def create_node
     binding.pry
@@ -20,13 +24,6 @@ class Project < Component
     # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config', skip_owner_create: true)
   end
 
-  def mod_x_components
-    self.x_components = x_components.each_with_object([]) do |comp, ary|
-      defaults = comp_defaults[comp[:name]] || {}
-      ary.append(defaults.merge(comp))
-    end
-  end
-
   # "black" "red" "green" "yellow" "blue" "purple" "magenta" "cyan" "white"
   def comp_defaults
     {
@@ -37,40 +34,17 @@ class Project < Component
     }
   end
 
-  # name: default aliases env color
-  def set_defaults
-    self.x_components ||= []
-  end
-
   # Node SearchPath
   def search_path
     Pathname.new(parent.path).split[0].join('config')
   end
 
   def except_json
-    super.append('c_name', 'type')
+    super.append('type')
   end
 
   def root_tree
     puts "\n#{super.render}"
-  end
-
-  def command_options
-    @command_options ||= x_components.each_with_object([]) do |opt, ary|
-    # @command_options ||= CnfsCli.config.config.x_components.each_with_object([]) do |opt, ary|
-      opt = opt.to_h.with_indifferent_access
-      # opt = opt.with_indifferent_access
-      ary.append({ name: opt[:name].to_sym,
-                   desc: opt[:desc] || "Specify #{opt[:name]}",
-                   aliases: opt[:aliases],
-                   type: :string,
-                   default: opt[:default]
-      })
-    end
-  end
-
-  def command_options_list
-    @command_options_list ||= CnfsCli.config.config.x_components.map{ |comp| comp[:name].to_sym }
   end
 
   # TODO: See what to do about encrypt/decrypt per env/ns

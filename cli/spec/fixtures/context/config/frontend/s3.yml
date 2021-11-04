@@ -1,4 +1,4 @@
 ---
 config: {}
-child_name: namespace
+child_name:
 default:

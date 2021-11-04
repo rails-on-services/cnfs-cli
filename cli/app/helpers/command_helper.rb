@@ -7,8 +7,10 @@ module CommandHelper
   included do
     extend CnfsCommandHelper
 
-    Project.first.command_options.each do |hash|
-      add_cnfs_option(hash.delete(:name), hash)
+    attr_accessor :context
+
+    CnfsCli.configuration.command_options.each do |hash|
+      add_cnfs_option(hash[:name], hash.except(:name))
     end if CnfsCli.config.load_nodes
 
     add_cnfs_option :tags,              desc: 'Filter by tags',
@@ -18,14 +20,18 @@ module CommandHelper
 
     private
 
+    # Override base controller and just provide the context to exec controllers
+    def controller_args
+      { context: context }
+    end
+
     # Configure the context with cli options and create the component tree
-    def initialize_project
-      # binding.pry
-      Context.first.update(options: options)
-      Context.first.set_component
-      Context.first.set_assets
-      # TODO: What about tags?
-      # @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
+    def context
+      @context ||= project.contexts.create(root: project, options: options, args: args)
+    end
+
+    def project
+      @project ||= Project.first
     end
   end
 end

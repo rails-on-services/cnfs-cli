@@ -22,9 +22,8 @@ class ServicesController < Thor
                              aliases: '--sh', type: :string
 
   # Activate common options
-  class_before :initialize_project
   cnfs_class_options :dry_run, :logging, :generate, :quiet
-  cnfs_class_options Project.first.command_options_list
+  cnfs_class_options CnfsCli.configuration.command_options_list
 
   register Services::CreateController, 'create', 'create SUBCOMMAND [options]',
            'Create a new service in the default (or specified) repository'
@@ -33,7 +32,7 @@ class ServicesController < Thor
   desc 'list', 'Lists services configured in the project'
   map %w[ls] => :list
   def list
-    puts project.services.pluck(:name).join("\n")
+    puts context.services.pluck(:name).join("\n")
   end
 
   # TODO: Implement remove
@@ -168,7 +167,7 @@ class ServicesController < Thor
   desc 'sh SERVICE', 'Execute an interactive shell on a running service'
   # NOTE: shell is a reserved word in Thor so it can't be used
   def sh(service)
-    execute({ service: service }, :shell)
+    execute(service: service, controller: :shell)
   end
 
   # Commands ot refactor
@@ -190,10 +189,17 @@ class ServicesController < Thor
 
   private
 
-  def execute(xargs = {}, command_name = nil, location = 3)
-    super_execute(xargs, command_name, location) do
+  # def execute(xargs = {}, command_name = nil, location = 3)
+    # super_execute(xargs, command_name, location) do
+  def execute(**kwargs)
+    kwargs[:location] ||= 3
+    super_execute(**kwargs) do
       if options.build
         remove_option(:build)
+        # TODO: This should probably use context.image_runtime.build rather than invoking the build command
+        # OR if it invokes the command as like now the API should be refactored to be more explicit and
+        # supply the context, eg
+        # command_controller(:images).build(context: context)
         cmd(:images).build(args.services)
       end
     end

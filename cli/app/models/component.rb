@@ -4,22 +4,36 @@ class Component < ApplicationRecord
   attr_accessor :skip_node_create
 
   belongs_to :owner, class_name: 'Component'
-  belongs_to :context
   has_one :parent, as: :owner, class_name: 'Node'
 
   has_many :components, foreign_key: 'owner_id'
+
+  has_many :context_components
+  has_many :contexts, through: :context_components
 
   # Pluralized resource names are declared as a has_many
   CnfsCli.asset_names.select{ |name| name.pluralize.eql?(name) }.each do |asset_name|
     has_many asset_name.to_sym, as: :owner
   end # if false
 
-  store :config, coder: YAML
+  store :config, accessors: %i[child_c_name], coder: YAML
 
   validates :name, presence: true
 
   after_create :create_node, unless: proc { skip_node_create }
   after_update :update_node, unless: proc { skip_node_create }
+
+  def c_name
+    owner.child_name
+  end
+
+  def except_json
+    super.append('type')
+  end
+
+  # def context
+  #   @context ||= create_context
+  # end
 
   def create_node
     binding.pry
@@ -75,11 +89,11 @@ class Component < ApplicationRecord
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :owner
-        t.references :context
         t.string :name
         t.string :config
         t.string :type
-        t.string :c_name
+        t.string :child_name
+        t.string :default
       end
     end
   end

@@ -43,7 +43,7 @@ class Runtime::ComposeGenerator < RuntimeGenerator
   def compose_environment
     # TODO: remove all but compose_file and compose_project_name
     Config::Options.new(
-      compose_file: Dir["#{path}/**/*.yml"].map { |f| f.gsub("#{Cnfs.project_root}/", '') }.join(':'),
+      compose_file: Dir["#{path}/**/*.yml"].map { |f| f.gsub("#{CnfsCli.config.root}/", '') }.join(':'),
       compose_project_name: context.context_name,
       # context_dir: '../../../../../../..',
       # ros_context_dir: '../../../../../../../ros',

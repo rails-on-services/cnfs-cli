@@ -23,13 +23,14 @@ Pry.config.commands.import CnfsCommandSet
 
 module CnfsCore
   class ConsoleController
-    include ExecHelper
 
     def execute
-      Cnfs.config.is_console = true
-      Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
-      self.class.reload
-      Pry.start(self)
+      run_callbacks :execute do
+        Cnfs.config.is_console = true
+        Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
+        self.class.reload
+        Pry.start(self)
+      end
       # Pry.start(Context.first)
     end
 
@@ -41,9 +42,10 @@ module CnfsCore
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/MethodLength
       def reload
-        commands.each do |command_set|
-          define_method(command_set) do
-            Pry.start("#{command_set}_controller".classify.safe_constantize.new(args, options))
+        commands.each do |command|
+          define_method(command) do
+            # binding.pry
+            Pry.start("#{command}_controller".classify.safe_constantize.new) # (args, options))
             true
           end
         end

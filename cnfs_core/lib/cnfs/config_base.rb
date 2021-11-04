@@ -8,12 +8,12 @@ module Cnfs
       attr_accessor :cwd
     end
 
-    attr_accessor :name, :cwd
+    attr_accessor :name, :file_name, :cwd
     attr_accessor :config_parse_settings, :config_paths
 
     def initialize(**options)
       options.each { |key, value| send("#{key}=".to_sym, value) }
-      return nil unless cwd && name
+      return nil unless cwd && file_name
 
       @cwd = Pathname.new(cwd)
       self.class.cwd ||= cwd
@@ -27,16 +27,16 @@ module Cnfs
       @root ||= @cwd.ascend { |path| break path if path.join(file_name).file? } || @cwd
     end
 
-    def file_name
-      "#{name}.yml"
-    end
+    # def file_name
+    #   "#{name}.yml"
+    # end
 
     def config_home
       @config_home ||= xdg.config_home.join(xdg_name)
     end
 
     def data_home
-      @date_home ||= xdg.data_home.join(xdg_name)
+      @data_home ||= xdg.data_home.join(xdg_name)
     end
 
     def xdg_name
@@ -56,14 +56,12 @@ module Cnfs
       config_parse_settings.each { |key, value| ::Config.send("#{key}=".to_sym, value) }
       cfg = ::Config.load_files(config_paths)
       config_attributes.each { |attr| cfg.send("#{attr}=", send(attr)) }
-      after_set_config(cfg)
       # TODO: Return a Thor Hash to return an immutable config
       # Thor::CoreExt::HashWithIndifferentAccess.new(cfg.to_hash)
       cfg
     end
 
     def before_set_config; end
-    def after_set_config(_config); end
 
     def config_attributes
       @config_attributes ||= %i[name cwd file root file_name config_home data_home]
@@ -74,7 +72,6 @@ module Cnfs
     end
 
     def config_paths
-      # @config_paths ||= [root.join(file_name), config_home.join(file_name)]
       @config_paths ||= [root, config_home].map{ |path| path.join(file_name) }
     end
 
@@ -84,10 +81,14 @@ module Cnfs
       end
     end
 
-    # def paths
-    #   # @paths ||= config.paths.each_with_object(OpenStruct.new) { |(k, v), os| os[k] = root.join(v) }
-    #   # @paths ||= config.paths&.each { |name, path| config.paths[name] = root.join(path) }
-    # end
+    def paths
+      @paths ||= set_paths
+    end
+
+    def set_paths
+      hash = config.paths&.each { |name, path| config.paths[name] = root.join(path) }
+      Thor::CoreExt::HashWithIndifferentAccess.new(hash)
+    end
 
     ### END
 

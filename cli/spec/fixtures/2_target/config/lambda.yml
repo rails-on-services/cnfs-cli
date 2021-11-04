@@ -1,5 +1,5 @@
 ---
 config:
   test: this
-c_name:
-type:
+child_name: environment
+default:

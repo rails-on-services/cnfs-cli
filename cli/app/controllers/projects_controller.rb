@@ -5,8 +5,7 @@ class ProjectsController < Thor
 
   # Activate common options
   cnfs_class_options :dry_run, :logging
-  class_before :initialize_project
-  cnfs_class_options Project.first.command_options_list
+  cnfs_class_options CnfsCli.configuration.command_options_list
 
   register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
   register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'
@@ -25,9 +24,8 @@ class ProjectsController < Thor
   # TODO: Bail right after parsing nodes if there is an issue with the project being valid
   map %w[c] => :console
   def console(*users)
-    Context.first.update(args: {users: users})
-  # def console
-    execute
+    # execute
+    execute(users: users)
   end
 
   desc 'init', 'Initialize the project'

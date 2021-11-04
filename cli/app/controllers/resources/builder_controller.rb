@@ -4,13 +4,21 @@ module Resources
   class BuilderController
     include ResourcesHelper
 
-    # from plan_controller
-    def plan
-      run_in_path(:init)
-      run_in_path(:plan) do |result|
-        raise Cnfs::Error, result.err if result.failure?
-      end
+    def create
+      binding.pry
     end
+
+    def destroy
+      binding.pry
+    end
+
+    # from plan_controller
+    # def plan
+    #   run_in_path(:init)
+    #   run_in_path(:plan) do |result|
+    #     raise Cnfs::Error, result.err if result.failure?
+    #   end
+    # end
 
     def apply
       # run_in_path(:init, :apply) do |result|

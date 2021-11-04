@@ -4,32 +4,21 @@ module CnfsExecHelper
   extend ActiveSupport::Concern
 
   included do
+    extend ActiveModel::Callbacks
+    include ActiveModel::AttributeAssignment
     attr_accessor :options, :args
   end
 
-  def initialize(options:, args:)
-    @options = options
-    @args = args
-    # TODO: See about using AS notification
-    before_execute if respond_to?(:before_execute)
+  def initialize(**kwargs)
+    assign_attributes(**kwargs)
   end
 
-  def queue
-    @queue ||= CommandQueue.new # (halt_on_failure: true)
-  end
-
-  # TODO: Move this to CLI
-  def project
-    Cnfs.project
-  end
-
-  # Shortcut for CRUD controller's create and update methods
-  # Ex: crud_with(Build.new(project: Cnfs.project))
-  def crud_with(obj, location = 1)
-    method = caller_locations(1, location)[location - 1].label
-    obj.view.send(method)
-    return obj if obj.save
-
-    $stdout.puts obj.errors.map(&:full_message).join("\n")
+  # Implement with an around_execute :timer call in the controller
+  def timer
+    start_time = Time.now
+    yield
+    title = 'command execution'
+    Cnfs.timers[title] = Time.now - start_time
+    Cnfs.logger.debug("Completed #{title} in #{Time.now - start_time} seconds")
   end
 end

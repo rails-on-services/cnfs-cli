@@ -18,4 +18,5 @@ config:
     color: green
     name: namespace
     default: duf
-type: Project
+child_name: target
+default:

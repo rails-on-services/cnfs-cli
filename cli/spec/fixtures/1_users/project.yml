@@ -1,5 +1,4 @@
 ---
-name: 1_users
 config:
   paths:
     config: config
@@ -9,4 +8,8 @@ config:
     tmp: tmp
   logging: warn
   x_components:
-    - { name: target, aliases: t, default: lambda }
+  - name: target
+    aliases: t
+    default: lambda
+child_name:
+default:
