@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Provider::Aws < Provider
+class Aws::Provider < Provider
   store :config, accessors: %i[access_key_id account_id region secret_acccess_key s3 sqs], coder: YAML
 
   def client_config(resource_type)
@@ -21,6 +21,6 @@ class Provider::Aws < Provider
   end
 
   def client
-    @client ||= Resource::Aws::EC2::Instance.client(self)
+    @client ||= Aws::Resource::EC2::Instance.client(self)
   end
 end

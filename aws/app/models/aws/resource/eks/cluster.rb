@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EKS::Cluster < Resource::Aws::EKS
+class Aws::Resource::EKS::Cluster < Aws::Resource::EKS
   store :config, accessors: %i[name tags], coder: YAML
   store :config, accessors: %i[aws_profile admins worker_groups worker_groups_launch_template services], coder: YAML
 

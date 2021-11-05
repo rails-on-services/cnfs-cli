@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EC2::Vpc < Resource::Aws
+class Aws::Resource::EC2::Vpc < Aws::Resource::EC2
   store :config, accessors: %i[azs cidr enable_nat_gateway
     enable_vpn_gateway private_subnets public_subnets], coder: YAML
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # See: https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/Redshift/Client.html
 
-class Resource::Aws::Redshift < Resource::Aws
+class Aws::Resource::Redshift < Aws::Resource
   def instance_types(family)
     @types ||= offers.select { |offer| offer.start_with?(_family) }.sort
   end

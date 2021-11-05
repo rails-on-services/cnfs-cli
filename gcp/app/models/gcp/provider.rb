@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Provider::Gcp < Provider
+class Gcp::Provider < Provider
   store :config, accessors: %i[service_account_key], coder: YAML
 
   def credentials

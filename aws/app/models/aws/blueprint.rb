@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 
-class Blueprint::Aws < Blueprint
+class Aws::Blueprint < Blueprint
 end

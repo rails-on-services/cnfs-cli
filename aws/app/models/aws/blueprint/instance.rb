@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-class Blueprint::Aws::Instance < Blueprint::Aws
+class Aws::Blueprint::Instance < Aws::Blueprint
   def resource_classes
-    [Resource::Aws::EC2::Vpc, Resource::Aws::EC2::Instance]
+    [Aws::Resource::EC2::Vpc, Aws::Resource::EC2::Instance]
   end
 
   def internal_path

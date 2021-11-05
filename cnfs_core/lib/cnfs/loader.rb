@@ -11,6 +11,7 @@ module Cnfs
 
     # Zeitwerk loader methods
     def setup
+      ActiveSupport::Notifications.instrument 'before_loader_setup.cnfs', { loader: loader }
       autoload_dirs.each { |dir| loader.push_dir(dir) }
       loader.enable_reloading
       loader.setup

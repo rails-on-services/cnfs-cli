@@ -7,11 +7,11 @@ module CnfsCli
         def initialize_aws
           require 'cnfs_cli/aws'
           Cnfs.logger.info "[Aws] Initializing from #{gem_root}"
-          ActiveSupport::Notifications.subscribe('before_loader_setup.cnfs') do |event|
+          Cnfs.subscribers << ActiveSupport::Notifications.subscribe('before_loader_setup.cnfs') do |event|
             add_inflectors(event.payload[:loader])
           end
-          ActiveSupport::Notifications.subscribe('add_console_shortcuts.cnfs') do |event|
-            # add_console_shortcuts(event.payload[:shortcuts])
+          Cnfs.subscribers << ActiveSupport::Notifications.subscribe('add_console_shortcuts.cnfs') do |event|
+            add_console_shortcuts(event.payload[:shortcuts])
           end
         end
 
@@ -30,12 +30,12 @@ module CnfsCli
         def add_console_shortcuts(shortcuts)
           Cnfs.logger.info '[Aws] Adding console shortcuts'
           shortcuts.merge!({
-            acm: Resource::Aws::ACM::Certificate,
-            ec2: Resource::Aws::EC2::Instance,
-            eks: Resource::Aws::EKS::Cluster,
-            rds: Resource::Aws::RDS::DBInstance,
-            s3: Resource::Aws::S3::Bucket,
-            vpc: Resource::Aws::EC2::Vpc,
+            acm: ::Aws::Resource::ACM::Certificate,
+            ec2: ::Aws::Resource::EC2::Instance,
+            eks: ::Aws::Resource::EKS::Cluster,
+            rds: ::Aws::Resource::RDS::DBInstance,
+            s3: ::Aws::Resource::S3::Bucket,
+            vpc: ::Aws::Resource::EC2::Vpc,
           })
         end
 

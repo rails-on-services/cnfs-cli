@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Resource::Aws < Resource
+class Aws::Resource < Resource
 
   def client
     @client ||= self.class.client(provider)

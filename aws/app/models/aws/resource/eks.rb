@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-class Resource::Aws::EKS < Resource::Aws
+class Aws::Resource::EKS < Aws::Resource
   delegate :list_clusters, to: :client
 end

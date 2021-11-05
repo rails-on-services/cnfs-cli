@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # See: https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/RDS/Client.html
 
-class Resource::Aws::RDS < Resource::Aws
+class Aws::Resource::RDS < Aws::Resource
   def instance_types(family)
     reserved_db_instances_offerings.select { |offer| offer.start_with?(family) }.sort
   end
