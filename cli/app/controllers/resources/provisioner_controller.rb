@@ -1,15 +1,19 @@
 # frozen_string_literal: true
 
 module Resources
-  class BuilderController
+  class ProvisionerController
     include ResourcesHelper
 
     def create
-      binding.pry
+      run_callbacks :execute do
+        binding.pry
+      end
     end
 
     def destroy
-      binding.pry
+      run_callbacks :execute do
+        binding.pry
+      end
     end
 
     # from plan_controller

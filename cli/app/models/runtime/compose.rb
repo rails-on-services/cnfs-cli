@@ -61,7 +61,7 @@ class Runtime::Compose < Runtime
     switch!
     queue.add(rv(compose('ps')))
     # tool_check
-    # running_services(format: options.format, status: options.status, **xargs)
+    # query(format: options.format, status: options.status, **xargs)
   end
 
   def tc
@@ -86,11 +86,47 @@ class Runtime::Compose < Runtime
     # tc.run(exec: 'ls -w')
     # queue.append(qc, tc)
     queue.append(tc)
+    # TODO: Add filter for labels so only getting containers managed for this context
+    running_before = query(format: '{{.Names}}', status: :running)
     yield queue
-    # binding.pry
-    # Here invoke callbacks on the services that were successful
-    # can do more work here
-    # could yield again
+    running_after = query(format: '{{.Names}}', status: :running).append('iam')
+    (running_after - running_before).each do |service_name|
+      next unless (service = services.select{|s| s.name.eql?('iam') }.first)
+
+      service.update(state: :started, skip_node_create: true)
+      # TODO: This returns an array of commands to run on the service
+      # Stuff this into the commands queue with docker-compose exec blah blah...
+      q = service.command_queue
+      queue.append(compose_command(exec: "exec #{q.first}"))
+      yield queue
+      # puts q
+      # binding.pry
+    end
+
+    # puts running_containers
+
+    # TODO:
+    # 1. Base runtime class has a query interface, i.e. a set of methods to implement by each runtime which
+    #    returns a standard set of results, e.g. the running container names
+    # 2. Compose implements these methods
+    # 3. Before calling start this controller gets the list of running containers
+    # 4. After start get a revised list and compare the two lists
+    # 5. Any service that was not running and not is running then has it's state changed
+
+    # TODO: if the queue has meta data with the service command to invoke and this is in a command class
+    # Then the class could auto invoke the command which triggers any callbacks
+    # result = command.run!(*cmd_array)
+    # raise Cnfs::Error, result.err if result.failure?
+
+    # runtime_services.each do |service|
+    #   # Trigger the service's after_start callbacks which may add commands to the service's command_queue
+    #   service.start
+    #   service.command_queue.each do |cmd_array|
+    #     Cnfs.logger.debug cmd_array
+    #     result = command.run!(*cmd_array)
+    #     Cnfs.logger.error(result.err) if result.failure?
+    #   end
+    # end
   end
 
   def stop(services)
@@ -128,7 +164,7 @@ class Runtime::Compose < Runtime
   def exec(service, command, pty)
     filters = { project: service.full_context_name, service: service.name }
     # filters.merge!(profile: profile_name) if profile_name
-    services = running_services(filters)
+    services = query(filters)
     modifier = services.empty? ? 'run --rm' : 'exec'
     [command_env, compose(command, modifier, service.name), { pty: pty }]
     # response.add(exec: compose(command, modifier, service.name), pty: pty)
@@ -165,13 +201,19 @@ class Runtime::Compose < Runtime
     command.run(command_env, "docker-compose ps -q #{service.name}", command_options).out.strip
   end
 
+  # TODO: This should query based on a label
   def running_services_names(status: :running)
-    running_services(status: status).map { |a| a.gsub("#{project.name}_", '').chomp('_1') }
+    query(status: status).map { |a| a.gsub("#{project.name}_", '').chomp('_1') }
   end
 
   # See: https://docs.docker.com/engine/reference/commandline/ps
-  def running_services(format: '{{.Names}}', status: :running, **filters)
-    @running_services ||= running_services_query(format: format, status: status, **filters)
+  def query(format: '{{.Names}}', status: :running, **filters)
+    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
+    filter.append("--format '#{format}'") if format
+    filter.append("--filter 'status=#{status}'") if status
+
+    qc = command.run(exec: "docker ps #{filter.join(' ')}", opts: { silent: true })
+    qc.result.to_a
   end
 
   private
@@ -235,15 +277,6 @@ class Runtime::Compose < Runtime
   #   runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
   # end
 =end
-
-  def running_services_query(format:, status:, **filters)
-    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
-    filter.append("--format '#{format}'") if format
-    filter.append("--filter 'status=#{status}'") if status
-
-    qc = command.run(exec: "docker ps #{filter.join(' ')}", opts: { silent: true })
-    qc.result.to_a
-  end
 
   # BEGIN: new stuff
   #

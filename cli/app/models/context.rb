@@ -182,13 +182,22 @@ class Context < ApplicationRecord
     nil_assets.each { |asset| asset.update(attr => obj, skip_node_create: true) }
   end
 
-  # has_many :resource_providers, through: :resources, source: :provider
+  def resource_runtimes(services: filtered_services)
+    services.where.not(resource: nil).group_by(&:resource).each_with_object([]) do |(resource, services), ary|
+      runtime = resource.runtime
+      runtime.services = services
+      runtime.context = self
+      ary.append(runtime)
+    end
+  end
 
-  def runtime(services: filtered_services)
-    runtime = component.runtime
-    runtime.services = services
-    runtime.context = self
-    runtime
+  def resource_provisioners(resources: filtered_resources)
+    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, resources), ary|
+      provisioner = resource.provisioner
+      provisioner.services = services
+      provisioner.context = self
+      ary.append(runtime)
+    end
   end
 
   # TODO: add other dirs for config files, e.g. gem user's path; load from a config file?

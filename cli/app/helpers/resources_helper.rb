@@ -5,7 +5,14 @@ module ResourcesHelper
 
   included do
     include ExecHelper
-    include TtyHelper
+
+    around_execute :timer
+  end
+
+  def raise_if_runtimes_empty
+    return if context.resource_provisioners.any?
+
+    raise Cnfs::Error, "Services not found: #{context.args.resource || context.args.resources.join(' ')}"
   end
 
   # def before_execute

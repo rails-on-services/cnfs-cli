@@ -3,8 +3,8 @@
 # rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
   include Concerns::Asset
-  # include Concerns::HasEnvs
-  # include Concerns::Taggable
+  include Concerns::HasEnvs
+  include Concerns::Taggable
 
   # TODO: is this the right way to do it?
   attr_accessor :command_queue
@@ -24,13 +24,20 @@ class Service < ApplicationRecord
   serialize :environment, Array
 
   # TODO: Implement Environment model
+  # TODO: This is also handled by the context
   def environments
     owner.environments.where(name: environment)
   end
 
   # delegate :git, to: :repository
+  def git
+    OpenStruct.new
+  end
+  def project
+    OpenStruct.new(environment: OpenStruct.new)
+  end
 
-  validate :image_values
+  # validate :image_values
 
   # def as_save
   #   attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
@@ -64,27 +71,39 @@ class Service < ApplicationRecord
   end
 
   # Custom callbacks
-  { start: :running, stop: :stopped, terminate: :terminated }.each do |command, state|
-    define_model_callbacks command
-    define_method(command) do
-      run_callbacks(command) do
-        update_runtime(state: state)
-      end
-    end
+  # { start: :running, stop: :stopped, terminate: :terminated }.each do |command, state|
+  #   define_model_callbacks command
+  #   define_method(command) do
+  #     run_callbacks(command) do
+  #       update_runtime(state: state)
+  #     end
+  #   end
+  # end
+
+  after_update :add_commands_to_queue, if: proc { skip_node_create }
+
+  # after_start { add_commands_to_queue(after_service_starts) }
+  # before_stop { add_commands_to_queue(before_service_stops) }
+  # before_terminate { add_commands_to_queue(before_service_terminates) }
+
+  def add_commands_to_queue # (commands_array)
+    self.command_queue = case state
+                         when attribute_before_last_save(:state)
+                           []
+                         when 'started'
+                           after_service_starts
+                         end
+    Cnfs.logger.debug "#{name} command_queue add: #{command_queue}" #".split("\n")}"
   end
+    # binding.pry
 
-  after_start { add_commands_to_queue(after_service_starts) }
-  before_stop { add_commands_to_queue(before_service_stops) }
-  before_terminate { add_commands_to_queue(before_service_terminates) }
+    # return unless commands_array&.any?
 
-  def add_commands_to_queue(commands_array)
-    return unless commands_array&.any?
-
-    commands_array.each do |command|
-      command_queue.append(Cnfs.project.runtime.exec(self, command, true))
-      Cnfs.logger.debug "#{name} command_queue add: #{command}"
-    end
-  end
+    # commands_array.each do |command|
+    #   command_queue.append(Cnfs.project.runtime.exec(self, command, true))
+    #   Cnfs.logger.debug "#{name} command_queue add: #{command}"
+    # end
+  # end
 
   # NOTE: Commands that execute on only one service are implemented here
   # Commands that execute on multiple services are handled directly by the runtime (or namespace?)
@@ -153,6 +172,7 @@ class Service < ApplicationRecord
     end
 
     def add_columns(t)
+      # binding.pry
       t.string :resource_name
       t.references :resource
       # TODO: Perhaps these are better as strings that can be inherited
@@ -160,17 +180,20 @@ class Service < ApplicationRecord
       # t.references :image_repo
       # t.references :chart_repo
       t.string :commands
-      # TODO: Change to envs
       t.string :environment
       t.string :image
       # t.string :context
       t.string :path
       t.string :profiles
-      t.string :tags
+      # t.string :tags
       t.string :template
       t.string :type
       t.string :volumes
-      # end
+      t.string :state
+      super # Adds envs from concern
+      # NOTE: Added for testing of old service definition
+      t.string :repository
+      t.string :location
     end
   end
 end

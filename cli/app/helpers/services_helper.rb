@@ -5,15 +5,13 @@ module ServicesHelper
 
   included do
     include ExecHelper
-    include TtyHelper
+
+    around_execute :timer
   end
 
-  # TODO: Should this move to ExecHelper?
-  def before_execute
-    context.update(args: args)
+  def raise_if_runtimes_empty
+    return if context.resource_runtimes.any?
 
-    unless context.runtime.services.any?
-      raise Cnfs::Error, "Service not found #{args.service || args.services.join(' ')}"
-    end
+    raise Cnfs::Error, "Services not found: #{context.args.service || context.args.services.join(' ')}"
   end
 end

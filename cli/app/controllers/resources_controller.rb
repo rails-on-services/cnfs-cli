@@ -3,11 +3,10 @@
 class ResourcesController < Thor
   include CommandHelper
 
-  # Activate common options
   cnfs_class_options :quiet, :dry_run, :logging
   cnfs_class_options CnfsCli.configuration.command_options_list
 
-  desc 'add', 'Add a resource by name from a charts repo or interactively to a component (current context)'
+  desc 'add RESOURCE', 'Add resource by name from a charts repo or interactively to a component (current context)'
   def add(resource)
     execute(resource: resource, controller: :crud, method: :create)
   end
@@ -38,16 +37,16 @@ class ResourcesController < Thor
   option :init, desc: 'Force to download latest modules from TF registry',
                 type: :boolean
   # TODO: Add 'auto' option which means don't confirm TF build, just do it
-  def create(resource)
-    execute(resource: resource, controller: :builder, method: :create)
+  def create(*resources)
+    execute(resources: resources, controller: :provisioner, method: :create)
   end
 
   desc 'destroy', 'Destroy infrastructure'
   cnfs_options :force
-  def destroy(resource)
+  def destroy(resources)
     validate_destroy("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
                      "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
-    execute(resource: resource, controller: :builder, method: :destroy)
+    execute(resources: resources, controller: :provisioner, method: :destroy)
   end
 
   # Runtime commands

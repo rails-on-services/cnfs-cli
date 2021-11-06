@@ -9,6 +9,7 @@ iam:
     - this
 cognito:
   type: Rails::Service
+  resource_name: res1
   config:
     test: te
 nginx:

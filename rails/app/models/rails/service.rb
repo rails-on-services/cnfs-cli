@@ -19,6 +19,7 @@ class Rails::Service < Service
   end
 
   def build_context_path
-    project.path(from: :manifests, to: :repositories)
+    []
+    # project.path(from: :manifests, to: :repositories)
   end
 end

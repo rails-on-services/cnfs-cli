@@ -20,7 +20,7 @@ class CommandQueue
   def run(cmd: :run)
     queue.each do |command|
       command.send(cmd)
-      binding.pry
+      # binding.pry
       if command.exit_error || command.result.failure?
         msg = command.exit_error&.to_s || command.result.err
         raise Cnfs::Error, msg if on_failure.raise?

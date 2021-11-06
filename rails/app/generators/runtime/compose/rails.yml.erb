@@ -18,8 +18,8 @@ services:<% service.profiles.each_pair do |profile, command| %><% xname = profil
       - "3000"<% end %><% if service.volumes.any? %>
     volumes:<% service.volumes.each do |volume| %>
       - type: bind
-        source: "<%= service.build_context_path.join(service.project_path, volume[:source].cnfs_sub(self)) %>"
-        target: "<%= Pathname.new('/home/rails').join(volume[:target]) %>"
+        source: "<%# service.build_context_path.join(service.project_path, volume[:source].cnfs_sub(self)) %>"
+        target: "<%# Pathname.new('/home/rails').join(volume[:target]) %>"
         consistency: consistent<% end %><% end %><% if profile.eql?('server') %>
     build:
       dockerfile: <%= service.dockerfile %>
