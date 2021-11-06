@@ -68,5 +68,16 @@ module CnfsCli
     def yaml
       @yaml ||= YAML.load_file(file) || {}
     end
+
+    # NOTE: From project.rb; don't know if it is really necessary
+    # "black" "red" "green" "yellow" "blue" "purple" "magenta" "cyan" "white"
+    # def comp_defaults
+    #   {
+    #     'target' => { aliases: '-t', color: 'blue' },
+    #     'environment' => { aliases: '-e', env: 'env', color: 'green' },
+    #     'namespace' => { aliases: '-e', env: 'ns', color: 'yellow' },
+    #     'stack' => { aliases: '-e', color: 'red' }
+    #   }
+    # end
   end
 end

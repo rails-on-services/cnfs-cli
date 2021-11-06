@@ -10,6 +10,9 @@ module Concerns
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
+      scope :inheritable, -> { where(inherit: true).order(:id) }
+      scope :enabled, -> { where(disabled: [false, nil]) }
+
       store :config, coder: YAML
 
       validates :name, presence: true
@@ -32,7 +35,8 @@ module Concerns
           t.references :owner, polymorphic: true
           t.string :name
           t.string :config
-          t.boolean :abstract
+          t.boolean :inherit
+          t.boolean :disabled
           add_columns(t)
         end
       end

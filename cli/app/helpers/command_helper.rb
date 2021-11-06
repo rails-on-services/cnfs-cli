@@ -27,7 +27,7 @@ module CommandHelper
 
     # Configure the context with cli options and create the component tree
     def context
-      @context ||= project.contexts.create(root: project, options: options, args: args)
+      @context ||= Context.create(root: project, options: options, args: args)
     end
 
     def project

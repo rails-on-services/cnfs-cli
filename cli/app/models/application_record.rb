@@ -13,6 +13,6 @@ class ApplicationRecord < Cnfs::ApplicationRecord
   end
 
   def except_json
-    %w[id name owner_type owner_id context_id]
+    %w[id name owner_type owner_id]
   end
 end

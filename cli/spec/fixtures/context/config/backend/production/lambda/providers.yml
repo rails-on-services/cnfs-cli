@@ -1,0 +1,6 @@
+---
+localstack:
+  config:
+    region: test
+ws_east:
+  disabled: true

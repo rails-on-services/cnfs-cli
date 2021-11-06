@@ -2,6 +2,7 @@
 ---
 compose:
   type: Runtime::Compose
+  inherit: true
   config:
     version: 3.2
   dependencies:

@@ -49,13 +49,8 @@ module Cnfs
     end
 
     def require_deps(type = :minimum)
-      # require_relative 'cnfs/minimum_dependencies'
       with_timer('loading minimum dependencies') { require_relative 'cnfs/minimum_dependencies' }
       with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
-      # TODO: Refector to move to the appropriate gem using AS Notifications
-      ActiveSupport::Inflector.inflections do |inflect|
-        inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
-      end
     end
 
     # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])

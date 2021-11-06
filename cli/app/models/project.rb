@@ -24,25 +24,12 @@ class Project < Component
     # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config', skip_owner_create: true)
   end
 
-  # "black" "red" "green" "yellow" "blue" "purple" "magenta" "cyan" "white"
-  def comp_defaults
-    {
-      'target' => { aliases: '-t', color: 'blue' },
-      'environment' => { aliases: '-e', env: 'env', color: 'green' },
-      'namespace' => { aliases: '-e', env: 'ns', color: 'yellow' },
-      'stack' => { aliases: '-e', color: 'red' }
-    }
-  end
-
   # Node SearchPath
   def search_path
     Pathname.new(parent.path).split[0].join('config')
   end
 
-  def except_json
-    super.append('type')
-  end
-
+  # Display the project's components as a TreeView
   def root_tree
     puts "\n#{super.render}"
   end

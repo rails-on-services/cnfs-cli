@@ -1,0 +1,6 @@
+---
+aws_east:
+  disabled: true
+  inherit: true
+  config:
+    region: east

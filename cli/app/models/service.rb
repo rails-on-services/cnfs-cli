@@ -2,11 +2,14 @@
 
 # rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
+  include Concerns::Asset
+  # include Concerns::HasEnvs
+  # include Concerns::Taggable
+
+  # TODO: is this the right way to do it?
   attr_accessor :command_queue
 
-  include Concerns::Asset
-  # include Concerns::Taggable
-  include Concerns::HasEnvs
+  belongs_to :resource, optional: true
 
   store :commands, accessors: %i[console shell test], coder: YAML
   store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
@@ -20,18 +23,19 @@ class Service < ApplicationRecord
   # TODO: Get the below codd into HasEnv concern
   serialize :environment, Array
 
+  # TODO: Implement Environment model
   def environments
-    Context.first.environments.where(name: environment)
+    owner.environments.where(name: environment)
   end
 
   # delegate :git, to: :repository
 
   validate :image_values
 
-  def as_save
-    attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
-      .merge('origin' => origin&.name, 'owner' => "#{owner.name} (#{owner_type})")
-  end
+  # def as_save
+  #   attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
+  #     .merge('origin' => origin&.name, 'owner' => "#{owner.name} (#{owner_type})")
+  # end
 
   def volumes
     super.map(&:with_indifferent_access)
@@ -139,12 +143,18 @@ class Service < ApplicationRecord
   end
 
   class << self
+    def update_names
+      # %w[provider provisioner runtime]
+      %w[resource]
+    end
+
     def by_profiles(profiles = project.profiles)
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
     def add_columns(t)
-      # binding.pry
+      t.string :resource_name
+      t.references :resource
       # TODO: Perhaps these are better as strings that can be inherited
       # t.references :source_repo
       # t.references :image_repo
@@ -153,7 +163,7 @@ class Service < ApplicationRecord
       # TODO: Change to envs
       t.string :environment
       t.string :image
-      t.string :context
+      # t.string :context
       t.string :path
       t.string :profiles
       t.string :tags

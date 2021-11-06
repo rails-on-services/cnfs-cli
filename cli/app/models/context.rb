@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class Context < ApplicationRecord
-  # Root can be a Project or Reppsitory Component, etc
+  # Root is intended to be only a Project or Reppsitory (component not asset) as of now
   belongs_to :root, class_name: 'Component'
+  belongs_to :component
+
   has_many :context_components
   has_many :components, through: :context_components
 
@@ -40,23 +43,12 @@ class Context < ApplicationRecord
     # end
   end
 
-  after_create :follow_components, :set_assets, if: proc { root_id }
-
-  # The farthest leaf component found given the supplied options
-  def component
-    @context ||= components.order(:id).last
-  end
-
   store :options, coder: YAML
   store :args, coder: YAML
 
-  def options
-    Thor::CoreExt::HashWithIndifferentAccess.new(super)
-  end
-
-  def args
-    Thor::CoreExt::HashWithIndifferentAccess.new(super)
-  end
+  before_create :create_components, if: proc { root_id }
+  after_create :create_assets, if: proc { root_id }
+  after_commit :update_assets, if: proc { root_id }
 
   # Select the compoenents based on project and user supplied values
   # Update the component hierarchy tree
@@ -65,59 +57,132 @@ class Context < ApplicationRecord
   # 3. Select from a default set in project.yml
   #
   # The controller should call:
-  # Project.first.contexts.create(root: Project.first, options: options)
-  def follow_components
+  # Context.create(root: Project.first, options: options)
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  def create_components
+    components << root
     current = root
-    while current.components.any? do
-      name, source = value(current)
-      if (new_comp = current.components.find_by(name: name))
-        components << new_comp
-        current = new_comp
-      else
-        Cnfs.logger.warn("#{current.child_name.capitalize} '#{name}' configured from *#{source}* not found.\n" \
-                         "#{' ' * 10 }Current context set to #{current.class.name} '#{current.name}'")
-        break
-      end
-    end
-  end
+    child = nil
+    while current.components.any?
+      break unless (child_spec = child_values(current)) # No values found to search for so stop at the current component
 
-  def value(component)
-    source = if (name = options.fetch(component.child_name, nil))
-               'CLI option'
-             elsif (name = Cnfs.config.send(component.child_name || ''))
-               'ENV'
-             elsif (name = component.default)
-               component.parent.rootpath.basename
-             end
-    [name, source]
+      components << child if child
+      if (child = current.components.find_by(name: child_spec.name))
+        current = child
+        next
+      end
+      Cnfs.logger.warn("#{current.child_name.capitalize} '#{child_spec.name}' specified by  *#{child_spec.source}* " \
+                       "not found.\n#{' ' * 10}Context set to #{current.class.name} '#{current.name}'")
+      break
+    end
+    self.component = child || root # The last component found given the supplied options
+  end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+
+  # Return a value for the current component's child component based on priority
+  # If a command line option was provided (e.g. -s stack_name) then return that value
+  # If an ENV was provided (e.g. CNFS_STACK) then return that value
+  # If the current component has an attribute 'default' then return that value
+  # Otherwise return nil
+  def child_values(component)
+    if (name = options.fetch(component.child_name, nil))
+      OpenStruct.new(name: name, source: 'CLI option')
+    elsif (name = CnfsCli.config.send(component.child_name || ''))
+      OpenStruct.new(name: name, source: 'ENV value')
+    elsif (name = component.default)
+      OpenStruct.new(name: name, source: component.parent.rootpath.basename)
+    end
   end
 
   # TODO: Change the name of this method
   # TODO: What about tags?
   # @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
-  def set_assets
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  def create_assets
     CnfsCli.asset_names.each do |asset_type|
-      component_assn = component.send(asset_type.to_sym).where(abstract: [false, nil])
-      # binding.pry if asset_type.eql?('users')
-      next unless component_assn.count.positive?
-
-      owner_assn = send("component_#{asset_type}".to_sym).where(abstract: true).order(:id)
-      assn = send(asset_type.to_sym)
-
-      component_assn.each do |asset|
-        json = owner_assn.where(name: asset.name).each_with_object({}) do |rec, hash|
-          # json_hash = rec.as_json.compact
-          # hash.deep_merge!(rec.as_json.compact)
-          hash.merge!(rec.as_json.merge('name' => rec.name).compact)
-        end
-        json.merge!(asset.as_json.merge('name' => asset.name).compact).except!('id', 'owner_id', 'owner_type', 'abstract')
-        # binding.pry if asset_type.eql?('runtimes')
-        # json.deep_merge!(asset.as_json.compact).except!('id', 'owner_id', 'owner_type', 'abstract')
-        # binding.pry if asset_type.eql?('users')
-        assn.create(json.merge(skip_node_create: true))
+      component_assets = component.send(asset_type.to_sym)
+      parent_assets = send("component_#{asset_type}".to_sym)
+      context_assets = send(asset_type.to_sym)
+      enabled_assets(component_assets.enabled, parent_assets.inheritable).each do |json|
+        context_assets.create(json)
+      end
+      inherited_assets(component_assets, parent_assets.inheritable).each do |json|
+        context_assets.create(json)
       end
     end
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+
+  def enabled_assets(enabled_assets, inheritable_assets)
+    enabled_assets.each_with_object([]) do |asset, ary|
+      name = asset.name
+      json = inheritable_assets.where(name: name).each_with_object({}) do |record, hash|
+        hash.deep_merge!(record.as_json.compact)
+      end
+      json.deep_merge!(asset.as_json.compact)
+      # TODO: if asset's owner is 'Context' then skip_node_create is auto set to true
+      ary.append(json.merge(name: name, skip_node_create: true))
+    end
+  end
+
+  # Return an array of json objects for any inheritable assets that have not already
+  # been specified by the context's component
+  # All values of the inherited assets of the same name are deep merged and returned
+  # if the resulting hash is not disabled
+  def inherited_assets(component_assets, inheritable_assets)
+    names = component_assets.pluck(:name)
+    inheritable_assets.where.not(name: names).group_by(&:name).each_with_object([]) do |(name, records), ary|
+      json = records.each_with_object({}) do |record, hash|
+        hash.deep_merge!(record.as_json.compact)
+      end
+      ary.append(json.merge(name: name, skip_node_create: true)) unless json['disabled']
+    end
+  end
+
+  def update_assets
+    CnfsCli.asset_names.each do |asset_type|
+      klass = asset_type.classify.constantize
+      assets = send(asset_type)
+      klass.update_names.each { |attr| update_em(assets, attr, :update_names) } if klass.respond_to?(:update_names)
+      klass.update_nils.each { |attr| update_em(assets, attr, :update_nils) } if klass.respond_to?(:update_nils)
+    end
+  end
+
+  def update_em(assets, attr, method)
+    attr_sym = "#{attr}_name".to_sym
+    assn_sym = attr.pluralize.to_sym
+    send(method, attr, attr_sym, assn_sym, assets)
+  end
+
+  def update_names(attr, attr_sym, assn_sym, assets)
+    assets.where.not(attr_sym => nil).each do |asset|
+      name = asset.send(attr_sym)
+      if (obj = send(assn_sym).find_by(name: name))
+        asset.update(attr => obj, skip_node_create: true)
+      else
+        Cnfs.logger.warn("Failed to find #{attr} '#{name}' for #{asset.class.name} '#{asset.name}'")
+      end
+    end
+  end
+
+  def update_nils(attr, attr_sym, assn_sym, assets)
+    nil_assets = assets.where(attr_sym => nil)
+    return if nil_assets.size.zero?
+
+    if send(assn_sym).size != 1
+      Cnfs.logger.warn("Cannot determine #{attr} for #{asset.class.name} #{nil_assets.pluck(:name).join(', ')}")
+      return
+    end
+
+    obj = send(assn_sym).first
+    nil_assets.each { |asset| asset.update(attr => obj, skip_node_create: true) }
+  end
+
+  # has_many :resource_providers, through: :resources, source: :provider
 
   def runtime(services: filtered_services)
     runtime = component.runtime
@@ -142,10 +207,10 @@ class Context < ApplicationRecord
 
   # Used by runtime generators for templates by runtime to query services
   def labels
-    @labels ||= (
-      c_hash = components.each_with_object({}) {|c, h| h[c.c_name] = c.name }
+    @labels ||= begin
+      c_hash = components.each_with_object({}) { |c, h| h[c.c_name] = c.name }
       { 'context' => context_name }.merge(c_hash)
-    )
+    end
   end
 
   def context_name
@@ -156,21 +221,32 @@ class Context < ApplicationRecord
     @context_attrs ||= components.order(:id).pluck(:name)
   end
 
+  # NOTE: Used by console controller to create the CLI prompt
+  def component_list
+    @component_list ||= begin
+      list = components.each_with_object([]) { |c, a| a.append OpenStruct.new(c_name: c.c_name, name: c.name) }
+      list.append(OpenStruct.new(c_name: component.c_name, name: component.name)) unless root_id.eql?(component_id)
+      list
+    end
+  end
+
+  def options
+    Thor::CoreExt::HashWithIndifferentAccess.new(super)
+  end
+
+  def args
+    Thor::CoreExt::HashWithIndifferentAccess.new(super)
+  end
+
   class << self
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :root
-        # t.references :component
+        t.references :component
         t.string :options
         t.string :args
       end
     end
-
-    def after_node_load
-      # obj = Project.first.context
-      # binding.pry
-      # obj = create(root: Project.first)
-      # Project.first.update(context: obj, c_name: 'project', skip_node_create: true)
-    end
   end
 end
+# rubocop:enable Metrics/ClassLength

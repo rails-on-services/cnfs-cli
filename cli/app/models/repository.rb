@@ -20,7 +20,7 @@ class Repository < ApplicationRecord
   after_create :create_node
 
   def create_node
-    puts "# This gets called when a node creates a repo #{__FILE__}"
+    # puts "# This gets called when a node creates a repo #{__FILE__}"
     # So going in the other direction have to avoid an infinite loop
     # binding.pry
   end

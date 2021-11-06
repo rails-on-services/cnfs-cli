@@ -47,6 +47,10 @@ module CnfsCli
       # Require all dependencies
       deps = config.project ? :all : :minimal
       Cnfs.require_deps(deps)
+      # TODO: Refector to move to the appropriate gem using AS Notifications
+      ActiveSupport::Inflector.inflections do |inflect|
+        # inflect.uncountable %w[aws cnfs dns kubernetes postgres rails redis]
+      end
 
       # Initialize plugins in the *CnfsCli* namespace
       Cnfs.plugin_root = self # used only by Cnfs::Boot; See if can remove this

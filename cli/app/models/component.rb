@@ -31,10 +31,6 @@ class Component < ApplicationRecord
     super.append('type')
   end
 
-  # def context
-  #   @context ||= create_context
-  # end
-
   def create_node
     binding.pry
     create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent, skip_owner_create: true)

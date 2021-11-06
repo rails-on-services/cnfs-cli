@@ -45,7 +45,7 @@ module CnfsCore
         commands.each do |command|
           define_method(command) do
             # binding.pry
-            Pry.start("#{command}_controller".classify.safe_constantize.new) # (args, options))
+            Pry.start("#{command.to_s.pluralize}_controller".classify.safe_constantize.new) # (args, options))
             true
           end
         end

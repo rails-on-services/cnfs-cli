@@ -1,6 +1,7 @@
 ---
 iam:
   type: Rails::Service
+  resource_name: res1
   config:
     test: test
   environment:

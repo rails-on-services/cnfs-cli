@@ -10,7 +10,7 @@ module Projects
     class << self
       def commands
         # %i[projects repositories infra environments blueprints namespaces images services]
-        %i[projects repositories resources blueprints images services]
+        %i[project repository resource blueprint image service]
       end
 
       def model_shortcuts
@@ -31,23 +31,34 @@ module Projects
       cache[:g] ||= t.generator
     end
 
+    CnfsCli.asset_names.each do |asset|
+      delegate asset.to_sym, to: :context
+    end
+
+    def context=(context)
+      @context = context
+      @__prompt2 = nil
+    end
+
     # rubocop:disable Metrics/AbcSize
-    def __prompt
-      prompt = []
-      context.components.order(:id).each do |comp|
+    def __prompt2
+      @__prompt2 ||= (
+      context.component_list.each_with_object([]) do |comp, prompt|
         cfg = CnfsCli.config.components.select{ |ar| ar.name.eql?(comp.c_name) }.first
         color = cfg&.color
         prompt << (color.nil? ? comp.name : Pry::Helpers::Text.send(color.to_sym, comp.name))
-      end
-      # TODO: If project.config.prompt.eql?('all') then display all component names in the hierarchy
-      # including if Cnfs.order.index('environment') then colorize it using the following
+      end.join('][')
+      )
+    end
+
+    def __prompt
+      # TODO: if Cnfs.order.index('environment') then colorize it using the following
       # environment_color = env.eql?('production') ? 'red' : env.eql?('staging') ? 'yellow' : 'green'
       proc do |obj, _nest_level, _|
         klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
         label = klass.eql?('console') ? '' : " (#{klass})"
-        "[#{prompt.join('][')}]#{label}> "
+        "[#{__prompt2}]#{label}> "
       end
     end
-    # rubocop:enable Metrics/AbcSize
   end
 end
