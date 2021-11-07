@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Builder::Terraform < Builder
+class Provisioner::Terraform < Provisioner
   store :providers, accessors: %i[aws gcp azure], coder: YAML
 
   # Template helpers

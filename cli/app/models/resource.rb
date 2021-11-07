@@ -2,8 +2,8 @@
 
 class Resource < ApplicationRecord
   include Concerns::Asset
-  # include Concerns::HasEnvs
-  # include Concerns::Taggable
+  include Concerns::HasEnvs
+  include Concerns::Taggable
 
   belongs_to :provider, optional: true
   belongs_to :provisioner, optional: true
@@ -43,12 +43,11 @@ class Resource < ApplicationRecord
 
   class << self
     def update_names
-      # %w[provider provisioner runtime]
-      %w[provider runtime]
+      %w[provider provisioner runtime]
     end
 
     def update_nils
-      %w[provider] # provisioner]
+      %w[provider provisioner]
     end
 
     def add_columns(t)
@@ -59,9 +58,8 @@ class Resource < ApplicationRecord
       t.string :runtime_name
       t.references :runtime
       # t.references :blueprint
-      t.string :envs
-      t.string :tags
       t.string :type
+      super
     end
   end
 end

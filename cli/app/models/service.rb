@@ -9,6 +9,7 @@ class Service < ApplicationRecord
   # TODO: is this the right way to do it?
   attr_accessor :command_queue
 
+  belongs_to :environment, optional: true
   belongs_to :resource, optional: true
 
   store :commands, accessors: %i[console shell test], coder: YAML
@@ -21,13 +22,13 @@ class Service < ApplicationRecord
   serialize :volumes, Array
 
   # TODO: Get the below codd into HasEnv concern
-  serialize :environment, Array
+  # serialize :environment, Array
 
   # TODO: Implement Environment model
   # TODO: This is also handled by the context
-  def environments
-    owner.environments.where(name: environment)
-  end
+  # def environments
+  #   owner.environments.where(name: environment)
+  # end
 
   # delegate :git, to: :repository
   def git
@@ -163,8 +164,7 @@ class Service < ApplicationRecord
 
   class << self
     def update_names
-      # %w[provider provisioner runtime]
-      %w[resource]
+      %w[resource environment]
     end
 
     def by_profiles(profiles = project.profiles)
@@ -172,15 +172,16 @@ class Service < ApplicationRecord
     end
 
     def add_columns(t)
-      # binding.pry
       t.string :resource_name
       t.references :resource
+      t.string :environment_name
+      t.references :environment
       # TODO: Perhaps these are better as strings that can be inherited
       # t.references :source_repo
       # t.references :image_repo
       # t.references :chart_repo
       t.string :commands
-      t.string :environment
+      # t.string :environment
       t.string :image
       # t.string :context
       t.string :path

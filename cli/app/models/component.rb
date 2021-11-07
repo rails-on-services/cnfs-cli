@@ -5,6 +5,7 @@ class Component < ApplicationRecord
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
+  has_one :context
 
   has_many :components, foreign_key: 'owner_id'
 

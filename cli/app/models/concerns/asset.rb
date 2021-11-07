@@ -5,6 +5,8 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
+      include Concerns::Key
+
       attr_accessor :skip_node_create
 
       has_one :parent, as: :owner, class_name: 'Node'

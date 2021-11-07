@@ -33,21 +33,4 @@ class Project < Component
   def root_tree
     puts "\n#{super.render}"
   end
-
-  # TODO: See what to do about encrypt/decrypt per env/ns
-
-  # Returns an encrypted string
-  #
-  # ==== Parameters
-  # plaintext<String>:: the string to be encrypted
-  # scope<String>:: the encryption key to be used: environment or namespace
-  def encrypt(plaintext, scope)
-    send(scope).encrypt(plaintext)
-  end
-
-  def decrypt(ciphertext)
-    namespace.decrypt(ciphertext)
-  rescue Lockbox::DecryptionError => _e
-    environment.decrypt(ciphertext)
-  end
 end

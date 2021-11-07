@@ -2,7 +2,7 @@
 
 class Runtime < ApplicationRecord
   include Concerns::Asset
-  include Concerns::BuilderRuntime
+  # include Concerns::BuilderRuntime
 
   store :config, accessors: %i[version], coder: YAML
 

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-class Builder < ApplicationRecord
+class Provisioner < ApplicationRecord
   include Concerns::Asset
-  include Concerns::BuilderRuntime
+  # include Concerns::BuilderRuntime
 
-  attr_accessor :blueprint
+  # attr_accessor :blueprint
 
   # belongs_to :owner, polymorphic: true
 
