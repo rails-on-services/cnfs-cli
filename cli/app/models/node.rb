@@ -20,6 +20,8 @@ class Node < ApplicationRecord
   def make_owner
     # binding.pry if parent.nil?
     obj = parent.nil? ? @owner_class.create(yaml_payload.merge(skip_node_create: true)) : make_owner_association
+    return unless obj
+
     update(owner: obj)
     owner_log('Created owner')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
@@ -32,6 +34,11 @@ class Node < ApplicationRecord
     assn_str = owner_ass_name
     assn = own.send(assn_str.to_sym)
     assn.create(yaml_payload.merge(skip_node_create: true))
+  rescue NoMethodError => err
+    # binding.pry
+    # Cnfs.logger.warn("unknown resource #{err.message.split[2]} found at #{realpath}")
+    Cnfs.logger.warn("#{err.message} in #{realpath}")
+    nil
   end
 
   # Recursively move back through parent hierarchy until reaching a Node::Component which

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# require 'active_record'
 class Repository < ApplicationRecord
   include Concerns::Asset
+  # include Concerns::Taggable
 
-    def search_paths
-      [Cnfs.paths.src.join(name).join('.cnfs/config')]
-    end
+  def search_paths
+    [Cnfs.paths.src.join(name).join('.cnfs/config')]
+  end
 
   # belongs_to :owner, polymorphic: true
   # has_many :services, as: :owner
@@ -38,10 +38,6 @@ class Repository < ApplicationRecord
   # def git
   #   Dir.chdir(full_path) { Cnfs.git }
   # end
-
-  def as_save
-    attributes.slice('name', 'config', 'type')
-  end
 
   def clone_cmd
     "git clone #{url} #{name}"
@@ -112,11 +108,8 @@ class Repository < ApplicationRecord
     end
 
     def add_columns(t)
-      t.string :context
       t.string :dockerfile
       t.string :build
-      t.string :type
-      t.string :tags
     end
   end
 end

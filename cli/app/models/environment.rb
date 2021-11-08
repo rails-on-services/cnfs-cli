@@ -19,6 +19,10 @@ class Environment < ApplicationRecord
     end
   end
 
+  def cnfs_sub
+    # "https://api.${project.environment.domain}"
+    platform['jwt']['aud']
+  end
   
   def yeah
     self.secret_key_base = encrypt(SecureRandom.hex(64))

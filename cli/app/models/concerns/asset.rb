@@ -5,17 +5,20 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      include Concerns::Key
+      include Concerns::Encryption
+      # include Concerns::Interpolate
 
       attr_accessor :skip_node_create
 
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
-      scope :inheritable, -> { where(inherit: true).order(:id) }
-      scope :enabled, -> { where(disabled: [false, nil]) }
+      scope :inheritable, -> { where(inherit: [true, nil]).order(:id) }
+      scope :enabled, -> { where(enable: [true, nil]) }
 
       store :config, coder: YAML
+
+      delegate :key, to: :owner
 
       validates :name, presence: true
 
@@ -36,10 +39,11 @@ module Concerns
         schema.create_table table_name, force: true do |t|
           t.references :owner, polymorphic: true
           t.string :name
-          t.string :config
+          t.boolean :enable
           t.boolean :inherit
-          t.boolean :disabled
-          add_columns(t)
+          t.string :type
+          t.string :config
+          add_columns(t) if respond_to?(:add_columns)
         end
       end
     end

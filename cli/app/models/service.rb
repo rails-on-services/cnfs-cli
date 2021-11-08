@@ -188,7 +188,6 @@ class Service < ApplicationRecord
       t.string :profiles
       # t.string :tags
       t.string :template
-      t.string :type
       t.string :volumes
       t.string :state
       super # Adds envs from concern

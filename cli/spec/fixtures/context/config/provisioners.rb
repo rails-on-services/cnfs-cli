@@ -1,7 +1,7 @@
 # builders.yml
 ---
 terraform:
-  type: Builder::Terraform
+  type: Provisioner::Terraform
   providers:
     aws:
       version: 3.22
@@ -11,7 +11,7 @@ terraform:
     - name: terraform-provider-kubectl
       url: https://github.com/gavinbunney/terraform-provider-kubectl/releases/download/v1.0.2/terraform-provider-kubectl-${platform}-amd64
 vagrant:
-  type: Builder::Vagrant
+  type: Provisioner::Vagrant
   config:
     box: ros/generic
     box_url: https://perx-ros-boxes.s3-ap-southeast-1.amazonaws.com/vagrant/json/ros/generic.json
@@ -20,7 +20,7 @@ vagrant:
       type: repo
       url: https://github.com/rails-on-services/setup
 ansible:
-  type: Builder::Ansible
+  type: Provisioner::Ansible
   dependencies:
     - name: setup
       type: repo

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
+  include Concerns::Encryption
+
   attr_accessor :skip_node_create
 
   belongs_to :owner, class_name: 'Component'
@@ -17,12 +19,46 @@ class Component < ApplicationRecord
     has_many asset_name.to_sym, as: :owner
   end # if false
 
-  store :config, accessors: %i[child_c_name], coder: YAML
+  store :config, coder: YAML
 
   validates :name, presence: true
 
   after_create :create_node, unless: proc { skip_node_create }
   after_update :update_node, unless: proc { skip_node_create }
+
+  def key
+    @key ||= local_file_values['key'] || owner&.key
+  end
+
+  def generate_key
+    @local_file_values.merge!('key' => Lockbox.generate_key)
+    write_local_file
+  end
+
+  def write_local_file
+    local_path.split.first.mkpath unless local_path.split.first.exist?
+    File.open(local_file, 'w') { |f| f.write(local_file_values.to_yaml) }
+  end
+
+  def local_file_values
+    @local_file_values ||= local_file.exist? ? (YAML.load_file(local_file) || {}) : {}
+  end
+
+  def local_file
+    @local_file ||= local_path.split.first.join("#{attrs.last}.yml")
+  end
+
+  def local_path
+    @local_path ||= CnfsCli.configuration.data_home.join(*attrs)
+  end
+
+  def attrs
+    @attrs ||= (owner&.attrs || []).dup.append(name)
+  end
+
+  # def x_config
+  #   Config::Options.new.merge!(config)
+  # end
 
   def c_name
     owner.child_name

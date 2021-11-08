@@ -67,19 +67,8 @@ class Provisioner < ApplicationRecord
 
   class << self
     def add_columns(t)
-      # schema.create_table :builders, force: true do |t|
-        # t.references :owner, polymorphic: true
-        # t.string :context
-        # t.string :_source
-        # t.references :project
-        # t.string :config
-        t.string :dependencies
-        # t.string :envs
-        # t.string :name
-        t.string :providers
-        # t.string :tags
-        t.string :type
-      # end
+      t.string :dependencies
+      t.string :providers
     end
   end
 end

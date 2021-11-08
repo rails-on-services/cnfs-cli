@@ -60,7 +60,11 @@ class String
       reference = references.shift
       interpolation_array = interpolation.split('.')
       while (next_interpolated_reference = interpolation_array.shift)
-        reference = reference.send(next_interpolated_reference)
+        reference = if reference.is_a? Hash
+          reference[next_interpolated_reference]
+        else
+          reference.send(next_interpolated_reference)
+        end
       end
       return_string = return_string.gsub("${#{interpolation}}", reference)
     end

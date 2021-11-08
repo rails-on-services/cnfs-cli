@@ -1,6 +1,5 @@
 ---
 aws_east:
-  disabled: true
-  inherit: true
+  enable: false
   config:
     region: east

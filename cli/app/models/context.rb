@@ -46,8 +46,10 @@ class Context < ApplicationRecord
   store :options, coder: YAML
   store :args, coder: YAML
 
+  delegate :key, to: :component
+
   before_create :create_components, if: proc { root_id }
-  after_create :create_assets, if: proc { root_id }
+  after_create :configure_component, :create_assets, if: proc { root_id }
   after_commit :update_assets, if: proc { root_id }
 
   # Select the compoenents based on project and user supplied values
@@ -94,6 +96,24 @@ class Context < ApplicationRecord
     elsif (name = component.default)
       OpenStruct.new(name: name, source: component.parent.rootpath.basename)
     end
+  end
+
+  def configure_component
+    component.update(config: component_config, skip_node_create: true)
+  end
+
+  # Iterate over each component from root to leaf
+  # perform interpolation and deep merge to one consolidated config
+  # TODO: decrypt values
+  def component_config
+    all_components.each_with_object({}) do |component, hash|
+      cfg = component.config.as_json.deep_transform_values { |value| value.cnfs_sub(hash) }
+      hash.deep_merge!(cfg)
+    end
+  end
+
+  def all_components
+    components.order(:id).to_a.append(component)
   end
 
   # TODO: Change the name of this method
@@ -174,7 +194,8 @@ class Context < ApplicationRecord
     return if nil_assets.size.zero?
 
     if send(assn_sym).size != 1
-      Cnfs.logger.warn("Cannot determine #{attr} for #{asset.class.name} #{nil_assets.pluck(:name).join(', ')}")
+      # Cnfs.logger.warn("Cannot determine #{attr} for #{asset.class.name} #{nil_assets.pluck(:name).join(', ')}")
+      Cnfs.logger.warn("Cannot determine #{attr} #{nil_assets.pluck(:name).join(', ')}")
       return
     end
 

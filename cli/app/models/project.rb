@@ -4,6 +4,15 @@ class Project < Component
   # belongs_to :source_repository, class_name: 'Repository'
   # store :config, accessors: %i[paths logging x_components], coder: YAML
 
+  def key
+    @key ||= super || warn_key
+  end
+
+  def warn_key
+    Cnfs.logger.error("No encryption key found. Run 'cnfs project generate_key'")
+    nil
+  end
+
   def c_name
     'project'
   end

@@ -64,14 +64,12 @@ class Blueprint < ApplicationRecord
     end
 
     def add_columns(t)
-      t.references :builder
-      # t.references :environment
+      t.string :environment_name
+      t.references :environment
+      t.string :provider_name
       t.references :provider
-      # t.string :config
-      # t.string :envs
-      # t.string :name
-      # t.string :tags
-      t.string :type
+      t.string :provisioner_name
+      t.references :provisioner
     end
   end
 end

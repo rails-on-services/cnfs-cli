@@ -58,7 +58,6 @@ class Resource < ApplicationRecord
       t.string :runtime_name
       t.references :runtime
       # t.references :blueprint
-      t.string :type
       super
     end
   end

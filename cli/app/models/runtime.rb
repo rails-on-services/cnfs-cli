@@ -9,7 +9,5 @@ class Runtime < ApplicationRecord
   def self.add_columns(t)
     t.references :resource
     t.string :dependencies
-    t.string :type
-    t.string :tags
   end
 end
