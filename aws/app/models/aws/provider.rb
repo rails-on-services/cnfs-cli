@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Aws::Provider < Provider
+  attr_encrypted :access_key_id, :secret_access_key
   store :config, accessors: %i[access_key_id account_id region secret_acccess_key s3 sqs], coder: YAML
 
   def client_config(resource_type)

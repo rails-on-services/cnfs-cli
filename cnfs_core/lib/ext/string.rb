@@ -34,53 +34,46 @@ class String
   end
 
   # Custom string interpolation using the ${<text>} pattern
-  # For each interpolation, pass an object reference (default is Cnfs module) to send the referenced values
+  # For each interpolation, pass an array of object references to search for the interpolated string
   #
   # ==== Examples
-  # '${project.name}'.cnfs_sub
-  # '${project.environment.name}'.cnfs_sub
-  # '${project.name} and ${project.environment.name}'.cnfs_sub
+  # '${project.name}'.cnfs_sub(hash)
+  # '${project.environment.name}'.cnfs_sub(hash)
+  # '${project.name} and ${project.environment.name}'.cnfs_sub(hash)
   #
   # Assuming that service is a referencable object, return service.name:
   # '${name}'.cnfs_sub(service)
   #
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/CyclomaticComplexity
-  # rubocop:disable Metrics/MethodLength
-  def cnfs_sub(*references, skip_raise: false)
-    return self unless (interpolations_to_replace = scan(/\${(.*?)}/).flatten)
-
-    if interpolations_to_replace.size > references.size
-      reference_to_append = references.size.positive? ? references.last : Cnfs
-      (interpolations_to_replace.size - references.size).times { references.append(reference_to_append) }
-    end
+  def cnfs_sub(*references) # , skip_raise: false)
+    return self unless (interpolations = scan(/\${(.*?)}/).flatten) && references.any?
 
     return_string = self
-    interpolations_to_replace.each do |interpolation|
-      reference = references.shift
-      interpolation_array = interpolation.split('.')
-      while (next_interpolated_reference = interpolation_array.shift)
-        reference = if reference.is_a? Hash
-          reference[next_interpolated_reference]
-        else
-          reference.send(next_interpolated_reference)
-        end
-      end
-      return_string = return_string.gsub("${#{interpolation}}", reference)
+    interpolations.each do |interpolation|
+      next unless (sub_string = search_references(references, interpolation))
+
+      return_string = return_string.gsub("${#{interpolation}}", sub_string)
     end
     return_string
-  rescue TypeError => _e
-    nil
-  rescue NoMethodError => e
-    raise e unless skip_raise
-
-    self
   end
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/CyclomaticComplexity
-  # rubocop:enable Metrics/MethodLength
 
   private
+
+  def search_references(references, interpolation)
+    references.each do |reference|
+      if (replaced = try_reference(reference, interpolation))
+        return replaced
+      end
+    end
+    nil
+  end
+
+  def try_reference(reference, interpolation)
+    interpolation.split('.').each do |value|
+      return unless (reference = reference.is_a?(Hash) ? reference[value] : reference.send(value))
+    end
+    reference
+  rescue NoMethodError # Swallow error if reference.is_a?(Integer TrueClass FalseClass)
+  end
 
   # to_yaml converts from hex to string
   def encrypt(plaintext, scope = :namespace)

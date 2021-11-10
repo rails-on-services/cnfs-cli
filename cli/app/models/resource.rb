@@ -42,10 +42,6 @@ class Resource < ApplicationRecord
   end
 
   class << self
-    def update_names
-      %w[provider provisioner runtime]
-    end
-
     def update_nils
       %w[provider provisioner]
     end

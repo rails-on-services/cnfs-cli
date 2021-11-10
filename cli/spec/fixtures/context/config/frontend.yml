@@ -2,3 +2,4 @@
 config: {}
 child_name: target
 default: s3
+test:

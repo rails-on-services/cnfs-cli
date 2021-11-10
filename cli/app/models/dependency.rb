@@ -3,13 +3,16 @@
 class Dependency < ApplicationRecord
   include Concerns::Asset
 
-  def self.add_columns(t)
-    # schema.create_table :dependencies, force: true do |t|
-      t.references :project
-      # t.string :name
-      t.string :linux
-      t.string :mac
-      t.string :tags
-    # end
+  store :config, accessors: %i[linux mac]
+
+  class << self
+    def create_table(schema)
+      schema.create_table table_name, force: true do |t|
+        t.string :name
+        t.string :config
+        # t.string :runtime_name
+        # t.references :runtime
+      end
+    end
   end
 end

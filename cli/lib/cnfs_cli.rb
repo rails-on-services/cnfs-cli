@@ -91,7 +91,7 @@ module CnfsCli
 
     # The model class list for which tables will be created in the database
     def schema_model_names
-      %w[blueprint context context_component component dependency environment image node node_asset
+      %w[blueprint context context_component component dependency environment image node
         project provider provisioner repository resource runtime service user]
     end
 

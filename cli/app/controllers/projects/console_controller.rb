@@ -33,7 +33,7 @@ module Projects
       cache[:g] ||= t.generator
     end
 
-    CnfsCli.asset_names.each do |asset|
+    CnfsCli.asset_names.append(:root, :component).each do |asset|
       delegate asset.to_sym, to: :context
     end
 

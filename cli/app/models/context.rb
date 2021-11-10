@@ -108,7 +108,7 @@ class Context < ApplicationRecord
   def component_config
     all_components.each_with_object({}) do |component, hash|
       cfg = component.config.as_json.deep_transform_values { |value| value.cnfs_sub(hash) }
-      hash.deep_merge!(cfg)
+      # hash.deep_merge!(cfg)
     end
   end
 

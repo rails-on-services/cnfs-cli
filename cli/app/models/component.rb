@@ -2,8 +2,10 @@
 
 class Component < ApplicationRecord
   include Concerns::Encryption
+  include Concerns::Interpolate
 
   attr_accessor :skip_node_create
+  attr_encrypted :test #, :config
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
@@ -17,12 +19,13 @@ class Component < ApplicationRecord
   # Pluralized resource names are declared as a has_many
   CnfsCli.asset_names.select{ |name| name.pluralize.eql?(name) }.each do |asset_name|
     has_many asset_name.to_sym, as: :owner
-  end # if false
+  end
 
   store :config, coder: YAML
 
   validates :name, presence: true
 
+  before_create :decrypt, unless: proc { skip_node_create }
   after_create :create_node, unless: proc { skip_node_create }
   after_update :update_node, unless: proc { skip_node_create }
 
@@ -31,7 +34,7 @@ class Component < ApplicationRecord
   end
 
   def generate_key
-    @local_file_values.merge!('key' => Lockbox.generate_key)
+    local_file_values.merge!('key' => Lockbox.generate_key)
     write_local_file
   end
 
@@ -74,18 +77,7 @@ class Component < ApplicationRecord
   end
 
   def update_node
-    # parent.update(owner: self)
     parent.update(owner: self, skip_owner_create: true)
-  end
-
-  # updates this component's context and it's owner's context (recursive until owner is nil)
-  def update_context(context:)
-    update(context: context)
-    owner&.update_context(context: context)
-  end
-
-  def runtime
-    resource&.runtime
   end
 
   def root_tree
@@ -102,22 +94,6 @@ class Component < ApplicationRecord
     end
   end
 
-  # Scan all resources for a runtime association
-  # If none is found then recursively call the owning component looking for a runtime
-  # If none or multiple runtimes are found log a warning and return nil
-  def resource
-    runtime_resources = resources.select(&:runtime)
-    size = runtime_resources.size
-    if size.zero?
-      Cnfs.logger.warn('No defined runtimes') if owner.nil?
-      owner&.resource
-    elsif size.eql?(1)
-      runtime_resources.first
-    else
-      Cnfs.logger.warn("Multiple defined runtimes found in: #{runtime_resources.map(&:name).join(' ')}")
-    end
-  end
-
   class << self
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
@@ -127,6 +103,7 @@ class Component < ApplicationRecord
         t.string :type
         t.string :child_name
         t.string :default
+        t.binary :test
       end
     end
   end

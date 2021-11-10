@@ -2,6 +2,7 @@
 
 class Repository < ApplicationRecord
   include Concerns::Asset
+  include Concerns::Git
   # include Concerns::Taggable
 
   def search_paths
@@ -69,12 +70,7 @@ class Repository < ApplicationRecord
       new(name: name, url: url)
     end
 
-    # rubocop:disable Layout/LineLength
-    def git_url_regex
-      %r{^(([A-Za-z0-9]+@|http(|s)://)|(http(|s)://[A-Za-z0-9]+@))([A-Za-z0-9.]+(:\d+)?)(?::|/)([\d/\w.-]+?)(\.git){1}$}i
-    end
-    # rubocop:enable Layout/LineLength
-
+    # TODO: Move to cnfs-cli.yml
     # Shortcuts for CNFS repos
     def url_map
       {
