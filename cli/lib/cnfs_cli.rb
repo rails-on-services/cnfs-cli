@@ -62,14 +62,14 @@ module CnfsCli
 
       # TODO: If path is different than existing path then reset the configuration; Primarily for specs
       # Load classes, create database, etc
-      Cnfs.setup(data_store: config.load_nodes, schema_model_names: schema_model_names)
+      Cnfs.setup(data_store: config.load_nodes, model_names: model_names)
     end
 
     def load_root_node
       _n = Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
       return unless Project.first
 
-      schema_model_names.each do |model|
+      model_names.each do |model|
         klass = model.classify.constantize
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
@@ -90,13 +90,17 @@ module CnfsCli
     end
 
     # The model class list for which tables will be created in the database
-    def schema_model_names
-      %w[blueprint context context_component component dependency environment image node
-        project provider provisioner repository resource runtime service user]
+    def model_names
+      %w[blueprint context context_component component image node project] +
+        (asset_names + support_names).map(&:singularize)
     end
 
     def asset_names
-      %w[environments providers provisioners resources repositories runtimes services users]
+      %w[environments providers provisioners repositories resources runtimes services users]
+    end
+
+    def support_names
+      %w[dependencies]
     end
 
     # TODO: this needs to be refactored

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
+# OS methods
 class Platform
   include ActiveModel::Model
   include ActiveModel::Validations
 
   validate :supported_platform?
 
-  # OS methods
   def gid
     ext_info = OpenStruct.new
     if platform.linux? && Etc.getlogin
@@ -38,9 +38,9 @@ class Platform
   end
   # rubocop:enable Metrics/MethodLength
 
-  # def tools
-  #   Dependency.pluck(:name)
-  # end
+  def dependencies
+    Dependency.all
+  end
 
   def supported_platform?
     errors.add(:platform, 'not supported') if os.unknown?
