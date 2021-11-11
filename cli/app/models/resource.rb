@@ -16,6 +16,10 @@ class Resource < ApplicationRecord
     resource_name.underscore
   end
 
+  def except_json
+    super + %w[provider_id provisioner_id runtime_id]
+  end
+
   # The fields that the builder should output upon creating the resource
   def outputs
     []

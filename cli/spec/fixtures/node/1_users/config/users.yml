@@ -1,17 +1,9 @@
 ---
 joe:
   config: {}
-  enable:
-  inherit:
   role: admin
-  full_name:
   tags: {}
-  type:
 nancy:
   config: {}
-  enable:
-  inherit:
   role: dev
-  full_name:
   tags: {}
-  type:

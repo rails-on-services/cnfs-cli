@@ -1,38 +1,6 @@
 # frozen_string_literal: false
 
 class String
-  YAML_STRING = "--- !binary |-\n  ".freeze
-
-  # Return an encrypted string
-  #
-  # ==== Examples
-  # 'abc'.ciphertext
-  #
-  # ==== Parameters
-  # strip<Boolean>:: Remove the leading YAML binary text
-  #
-  def ciphertext(strip: false)
-    strip ? encrypt(self).gsub(YAML_STRING, '').chomp : encrypt(self)
-  end
-
-  # Convert an encrypted string to a plaintext string
-  #
-  # ==== Examples
-  # ciphertext.plaintext
-  #
-  # ==== Parameters
-  # strip<Boolean>:: Remove the leading YAML binary text
-  #
-  def plaintext(force: false)
-    return decrypt(self) if encrypted?
-
-    force ? decrypt("#{YAML_STRING} #{self}\n") : self
-  end
-
-  def encrypted?
-    start_with?(YAML_STRING)
-  end
-
   # Custom string interpolation using the ${<text>} pattern
   # For each interpolation, pass an array of object references to search for the interpolated string
   #
@@ -73,15 +41,5 @@ class String
     end
     reference
   rescue NoMethodError # Swallow error if reference.is_a?(Integer TrueClass FalseClass)
-  end
-
-  # to_yaml converts from hex to string
-  def encrypt(plaintext, scope = :namespace)
-    Cnfs.project.encrypt(plaintext, scope).to_yaml
-  end
-
-  # YAML.load converts from string to hex
-  def decrypt(ciphertext)
-    Cnfs.project.decrypt(YAML.safe_load(ciphertext))
   end
 end

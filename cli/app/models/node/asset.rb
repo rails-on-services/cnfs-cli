@@ -2,8 +2,11 @@
 
 class Node::Asset < Node
   after_create :make_owner, :load_search_path, if: proc { Node.source.eql?(:node) }
+
   after_initialize :identify_parent, if: proc { Node.source.eql?(:asset) }
   after_update :update_yaml, if: proc { Node.source.eql?(:asset) }
+
+  delegate :tree_name, to: :owner
 
   # parent must be either AssetGroup or AssetDir
   def owner_ass_name
@@ -28,9 +31,5 @@ class Node::Asset < Node
   def update_yaml
     binding.pry
     parent.update_yaml(owner)
-  end
-
-  def tree_name
-    owner.tree_name
   end
 end

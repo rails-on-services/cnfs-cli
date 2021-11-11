@@ -6,10 +6,10 @@ module Concerns
 
     included do
       include Concerns::Encryption
-      # include Concerns::Interpolate
+      # include Concerns::Interpolation
 
       has_one :parent, as: :owner, class_name: 'Node'
-      belongs_to :owner, polymorphic: true
+      belongs_to :owner, polymorphic: true, required: true
 
       scope :inheritable, -> { where(inherit: [true, nil]).order(:id) }
       scope :enabled, -> { where(enable: [true, nil]) }
@@ -33,6 +33,9 @@ module Concerns
       # binding.pry
 
       create_parent(type: 'Node::Asset', owner: self)
+
+      # From Component:
+      # create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent)
     end
 
     def update_node

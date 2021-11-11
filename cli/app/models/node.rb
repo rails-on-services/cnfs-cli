@@ -9,31 +9,6 @@ class Node < ApplicationRecord
 
   before_validation :set_realpath
 
-  class << self
-    attr_reader :source
-
-    def source=(source)
-      @source = source.to_s.downcase.to_sym
-    end
-
-    def with_asset_callbacks_disabled
-      self.source = :node
-      assets_to_disable.each do |asset|
-        asset.node_callbacks.each { |callback| asset.skip_callback(*callback) }
-      end
-      yield
-      assets_to_disable.each do |asset|
-        asset.node_callbacks.each { |callback| asset.set_callback(*callback) }
-      end
-      self.source = :asset
-    end
-
-    def assets_to_disable
-      (CnfsCli.asset_names.append('component')).map { |name| name.classify.constantize }
-      # CnfsCli.asset_names.map { |name| name.classify.constantize }
-    end
-  end
-
   def set_realpath
     binding.pry unless path
     # self.realpath ||= Pathname.new(path).realpath.to_s
@@ -43,6 +18,7 @@ class Node < ApplicationRecord
   # This only applies to Component, ComponentDir and Asset
   def make_owner
     return if CnfsCli.support_names.include?(node_name)
+
     # binding.pry if parent.nil?
     obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner_association
     return unless obj
@@ -147,6 +123,32 @@ class Node < ApplicationRecord
   end
 
   class << self
+    attr_reader :source
+
+    def source=(source)
+      @source = source.to_s.downcase.to_sym
+    end
+
+    def with_asset_callbacks_disabled
+      self.source = :node
+
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.skip_callback(*callback) }
+      end
+
+      yield
+
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.set_callback(*callback) }
+      end
+
+      self.source = :asset
+    end
+
+    def assets_to_disable
+      (CnfsCli.asset_names.append('component')).map { |name| name.classify.constantize }
+    end
+
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.references :parent

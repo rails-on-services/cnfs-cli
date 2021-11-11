@@ -5,7 +5,7 @@ class ApplicationRecord < Cnfs::ApplicationRecord
 
   # by default rails does not serialize the type field
   def as_json
-    super.merge(type_json).except(*except_json)
+    super.merge(type_json).except(*except_json).compact
   end
 
   def type_json

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "#{ENV['SPEC_DIR']}/models/concerns/encryption_spec.rb"
-require "#{ENV['SPEC_DIR']}/models/concerns/interpolate_spec.rb"
+require "#{ENV['SPEC_DIR']}/models/concerns/interpolation_spec.rb"
 
 # rubocop:disable Metrics/BlockLength
 RSpec.describe 'Component' do

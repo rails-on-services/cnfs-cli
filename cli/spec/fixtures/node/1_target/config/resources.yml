@@ -3,14 +3,7 @@ cap2:
   config:
     family: r2
     size: awesome
-  enable:
-  inherit:
-  provider_name:
-  provider_id:
-  provisioner_name:
-  provisioner_id:
   runtime_name: compose
-  runtime_id:
   tags: {}
   envs: {}
   type: Aws::Resource::EC2::Instance
@@ -18,14 +11,6 @@ cap4:
   config:
     family: ah23
     size: cool!
-  enable:
-  inherit:
-  provider_name:
-  provider_id:
-  provisioner_name:
-  provisioner_id:
-  runtime_name:
-  runtime_id:
   tags: {}
   envs: {}
   type: Aws::Resource::S3::Bucket

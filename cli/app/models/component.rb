@@ -2,7 +2,7 @@
 
 class Component < ApplicationRecord
   include Concerns::Encryption
-  include Concerns::Interpolate
+  include Concerns::Interpolation
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
@@ -70,6 +70,10 @@ class Component < ApplicationRecord
 
   def attrs
     @attrs ||= (owner&.attrs || []).dup.append(name)
+  end
+
+  def tree_name
+    "#{name} (#{c_name})"
   end
 
   # def x_config

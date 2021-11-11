@@ -2,16 +2,14 @@
 localstack:
   config:
     access_key_id: !binary |-
-      eDXt3GUVMbiXYl1mEYikeAT0hM0xHAAkOTtA+f3aLnVGCPfxvt0dIXhNy+XFPtLiTTFW2spuhqBLSg8GcnFvLYRXIw==
+      vy4dq6oX45fhacUqHOY2836mkTNnqhuXlaLFcXvBvI+FZT2vNkmQRdGgw30Py1jP3wGsd2yyTXuyfYGkXqScG3IXeA==
     account_id: 123456789012
     region: ap-southeast-1
     secret_access_key: !binary |-
-      JJypmvgrtdVO7CggZ5VPkLNSev9YiDiMfrMzXKSzztUHE7hQ97QP5DeUhQJhV0KuCuXjvWFfazTpEb/DGY0Y7y5kcQ==
+      gDtIZvUdgRdnmKik2Qwj+7qwrqNCRTwfXh4Hn+GkWqqH0tbi5puXYa3LpSbDfwn5Ep6Mz/IbUV6YrvMamzwQ6WcIKA==
     s3:
       endpoint: http://localstack:4572
       force_path_style: true
     sqs:
       endpoint: http://localstack:4576
-  enable:
-  inherit:
   type: Aws::Provider

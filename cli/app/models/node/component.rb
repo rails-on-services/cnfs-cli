@@ -5,6 +5,8 @@ class Node::Component < Node
   after_create :update_yaml, if: proc { Node.source.eql?(:asset) }
   after_update :update_yaml
 
+  delegate :tree_name, to: :owner
+
   # Override Node's definition; Only Component's can be owners
   def owner_ref(obj)
     obj.eql?(self) ? parent.owner_ref(obj) : owner
@@ -30,9 +32,5 @@ class Node::Component < Node
     new_yaml = owner.as_json_encrypted.to_yaml
     Cnfs.logger.debug("Writing to #{realpath} with\n#{new_yaml}")
     File.open(realpath, 'w') { |f| f.write(new_yaml) }
-  end
-
-  def tree_name
-    "#{owner.name} (#{owner.c_name})"
   end
 end
