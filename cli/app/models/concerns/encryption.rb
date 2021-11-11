@@ -5,56 +5,76 @@ module Concerns
     extend ActiveSupport::Concern
 
     class_methods do
-      attr_reader :attr_encrypted
-
       def attr_encrypted(*attrs)
-        @encrypted_attrs ||= []
-        @encrypted_attrs.append(*attrs)
+        encrypted_attrs.append(*attrs)
       end
+
+      def encrypted_attrs
+        @encrypted_attrs ||= []
+      end
+    end
+
+    included do
+      before_validation :decrypt_attrs
+    end
+
+    # When a Node creates a new record it passes in raw yaml which may include encrypted values
+    # In the model all encrypted values are decrypted befoer saving so that:
+    #
+    # 1. The attribute has the decrypted value for processing, and
+    # 2. The encrypted value is not stored in the data store which would require columns to be of type binary
+    #
+    # This method iterates over all encrypted_attrs and:
+    #
+    # 1. If the attribute has ASCII-8BIT encoding it assigns the decrypted value to the attribute
+    # 2. If the attribute has any other encoding it ignores the attribute and leaves the value in place
+    #
+    def decrypt_attrs
+      self.class.encrypted_attrs.each do |attr|
+        next unless (value = send(attr))
+
+        send("#{attr}=", decrypt(value)) if value.encoding.to_s.eql?('ASCII-8BIT')
+      end
+    end
+
+    # Return as_json with all encrypted_attrs fields encrypted
+    # Used for saving the object to the filesystem
+    def as_json_encrypted
+      with_encrypted_attrs { as_json }
+    end
+
+    # Encrypt each encrypted_attr, yield to the caller then decrypt each encrypted_attr
+    def with_encrypted_attrs
+      self.class.encrypted_attrs.each do |attr|
+        next unless (value = send(attr))
+
+        send("#{attr}=", encrypt(value))
+      end
+
+      ret_val = yield if block_given?
+
+      self.class.encrypted_attrs.each do |attr|
+        next unless (value = send(attr))
+
+        send("#{attr}=", decrypt(value))
+      end
+
+      ret_val
     end
 
     # Returns an encrypted string
     #
     # ==== Parameters
     # plaintext<String>:: the string to be encrypted
-    def encrypt(plaintext = nil)
-      action(:encrypt, plaintext)
+    def encrypt(plaintext)
+      box.encrypt(plaintext)
     end
 
-    def decrypt(ciphertext = nil)
-      action(:decrypt, ciphertext)
+    def decrypt(ciphertext)
+      box.decrypt(ciphertext)
     rescue Lockbox::DecryptionError => e
       Cnfs.logger.warn(e.message)
-      self
-    end
-
-    private
-
-    def action(method, text)
-      if text.nil?
-        self.class.attr_encrypted.each { |attr| action_attr(method, attr) }
-        self
-      elsif has_attribute?(text)
-        action_attr(method, text)
-      else
-        box.send(method, text)
-        # encrypt_file(key_file, attributes.to_yaml)
-        # rubocop:disable Security/YAMLLoad
-        # YAML.load(decrypt_file("#{key_file}.enc"))
-        # rubocop:enable Security/YAMLLoad
-      end
-    end
-
-    def action_attr(method, attr)
-      return unless (value = send(attr))
-      binding.pry if value.is_a? Hash
-      binding.pry if method.eql?(:encrypt) && value.encoding.to_s.eql?('ASCII-8BIT')
-      return if method.eql?(:encrypt) && value.encoding.to_s.eql?('ASCII-8BIT')
-      return if method.eql?(:decrypt) && !value.encoding.to_s.eql?('ASCII-8BIT')
-
-      # binding.pry
-     
-      send("#{attr}=", box.send(method, value)) #.force_encoding("UTF-8")) #encrypt(send(attr)))
+      nil
     end
 
     # def encrypt_file(file_name, plaintext = nil)
@@ -66,6 +86,8 @@ module Concerns
     #   ciphertext = File.binread(file_name)
     #   box.decrypt(ciphertext).chomp
     # end
+
+    private
 
     def box
       @box ||= Lockbox.new(key: key)

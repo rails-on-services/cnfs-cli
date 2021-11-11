@@ -2,11 +2,18 @@
 res1:
   config:
     family: r2
-    size: awesome
+    size: newton
+  enable:
+  inherit:
+  provider_name:
+  provider_id:
+  provisioner_name:
+  provisioner_id:
   runtime_name: compose
-  envs:
-  tags:
-  type: Resource
+  runtime_id:
+  tags: {}
+  envs: {}
+  type: Aws::Resource::EC2::Instance
 res2:
   type: Resource
   config:

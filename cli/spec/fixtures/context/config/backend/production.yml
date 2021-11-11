@@ -3,4 +3,3 @@ config:
   domain: production-${domain}
 child_name: target
 default: lambda
-test:

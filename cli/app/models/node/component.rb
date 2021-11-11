@@ -27,7 +27,7 @@ class Node::Component < Node
   end
 
   def update_yaml
-    new_yaml = owner.encrypt.as_json.to_yaml
+    new_yaml = owner.as_json_encrypted.to_yaml
     Cnfs.logger.debug("Writing to #{realpath} with\n#{new_yaml}")
     File.open(realpath, 'w') { |f| f.write(new_yaml) }
   end

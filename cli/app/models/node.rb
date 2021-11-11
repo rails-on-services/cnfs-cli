@@ -10,6 +10,10 @@ class Node < ApplicationRecord
 
   before_validation :set_realpath
 
+  # def disable_callbacks
+  #    Resource.skip_callback(:update, :after, :update_node)
+  # end
+
   def set_realpath
     binding.pry unless path
     # self.realpath ||= Pathname.new(path).realpath.to_s
@@ -18,6 +22,7 @@ class Node < ApplicationRecord
 
   # This only applies to Component, ComponentDir and Asset
   def make_owner
+    return if CnfsCli.support_names.include?(node_name)
     # binding.pry if parent.nil?
     obj = parent.nil? ? @owner_class.create(yaml_payload.merge(skip_node_create: true)) : make_owner_association
     return unless obj
@@ -35,7 +40,6 @@ class Node < ApplicationRecord
     assn = own.send(assn_str.to_sym)
     assn.create(yaml_payload.merge(skip_node_create: true))
   rescue NoMethodError => err
-    # binding.pry
     # Cnfs.logger.warn("unknown resource #{err.message.split[2]} found at #{realpath}")
     Cnfs.logger.warn("#{err.message} in #{realpath}")
     nil

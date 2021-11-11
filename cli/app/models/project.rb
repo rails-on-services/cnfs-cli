@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Project < Component
-  attr_encrypted :test, :happy
+  attr_encrypted :happy
   # belongs_to :source_repository, class_name: 'Repository'
   store :config, accessors: %i[happy]
 

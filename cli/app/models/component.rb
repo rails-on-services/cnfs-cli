@@ -5,7 +5,6 @@ class Component < ApplicationRecord
   include Concerns::Interpolate
 
   attr_accessor :skip_node_create
-  attr_encrypted :test #, :config
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
@@ -72,7 +71,7 @@ class Component < ApplicationRecord
   end
 
   def create_node
-    binding.pry
+    # binding.pry
     create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent, skip_owner_create: true)
   end
 
@@ -103,7 +102,6 @@ class Component < ApplicationRecord
         t.string :type
         t.string :child_name
         t.string :default
-        t.binary :test
       end
     end
   end

@@ -30,6 +30,6 @@ class Node::Asset < Node
   end
 
   def tree_name
-    "#{owner.name} #{owner.abstract ? '(abstract)' : ''}"
+    owner.tree_name
   end
 end

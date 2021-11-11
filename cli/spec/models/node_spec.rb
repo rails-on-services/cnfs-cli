@@ -4,27 +4,18 @@
 # rubocop:disable Lint/Debugger
 RSpec.describe 'Node' do
   describe '1_users' do
-    let(:path) { Pathname.new(ENV['SPEC_DIR']).join('fixtures/1_users') }
-    # let(:path) { Pathname.new(ENV['SPEC_DIR']).join('fixtures/1_target') }
+    let(:path) { Pathname.new(ENV['SPEC_DIR']).join('fixtures/node/1_users') }
 
     before do
-      # CnfsCli.run!(path: path, load_nodes: true)
-      CnfsCli.run!(path: path, load_nodes: false) do
+      CnfsCli.run!(path: path, load_nodes: true) do
         _n = Node::Component.create(path: 'project.yml', owner_class: Project)
-        # _p = Context.
-        # binding.pry
       end
     end
 
-    it 'creates the correct number of Nodes' do
+    it 'creates the correct number of Users' do
+      expect(User.count).to eq(4)
+      # expect(asset[:klass].first.owner).to eq(asset[:owner])
       # binding.pry
-      expect(Cnfs.config.orders[0]).to eq('projects')
-      [
-        { klass: User, count: 2, owner: Project.first }
-      ].each do |asset|
-        expect(asset[:klass].count).to eq(asset[:count])
-        expect(asset[:klass].first.owner).to eq(asset[:owner])
-      end
     end
   end
 
@@ -45,7 +36,7 @@ RSpec.describe 'Node' do
     #   expect(Node.count).to eq(1)
     # end
 
-    it 'creates the correct number of Assets' do
+    xit 'creates the correct number of Assets' do
       expect(Cnfs.config.orders[0]).to eq('projects')
       [
         { klass: Builder, count: 3, owner: Project.first },

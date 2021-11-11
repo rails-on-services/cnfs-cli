@@ -2,3 +2,5 @@
 config: {}
 child_name:
 default:
+test:
+name: 1_user

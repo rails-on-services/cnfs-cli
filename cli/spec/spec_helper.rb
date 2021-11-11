@@ -32,3 +32,8 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+def stub_project
+  allow_any_instance_of(Project).to receive(:key).
+    and_return('9346840c042bb4dbf7bd6a5cf49de40d420c3d1835b28044f9abcab3003c47a1')
+end

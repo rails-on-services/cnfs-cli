@@ -3,4 +3,3 @@ config:
   test: this
 child_name:
 default:
-test:

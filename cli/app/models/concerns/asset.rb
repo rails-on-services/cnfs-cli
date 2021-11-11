@@ -22,16 +22,34 @@ module Concerns
 
       validates :name, presence: true
 
+      # TODO:
+      # Put this code and methods into a concern and include in Component and Asset
+      # The type string will need to come from the Component and Asset Concern
+      # Rename from skip_node_create to notify_node
+      # Rather than passing skip_owner_create to the Node
+      # havekk
+      # with_options unless: :skip_node_create do |asset|
+      #   asset.after_create :create_node
+      #   asset.after_update :update_node
+      # end
+
       after_create :create_node, unless: proc { skip_node_create }
       after_update :update_node, unless: proc { skip_node_create }
     end
 
+    def tree_name
+      %w[inhert enable].each_with_object([name]) do |v, ary|
+        ary.append("(#{v})") if v.nil? || v
+      end.join(' ')
+    end
+
     def create_node
+      # return unless owner.is_a? Component
       create_parent(type: 'Node::Asset', owner: self, skip_owner_create: true)
     end
 
     def update_node
-      # binding.pry
+      # return unless owner.is_a? Component
       parent.update(owner: self, skip_owner_create: true)
     end
 

@@ -11,7 +11,7 @@ class Node::AssetGroup < Node
   end
 
   def update_yaml(new_owner)
-    new_yaml = yaml.merge(new_owner.name => new_owner.as_json)
+    new_yaml = yaml.merge(new_owner.name => new_owner.as_json_encrypted)
     binding.pry
     Cnfs.logger.debug("Writing to #{realpath} with\n#{new_yaml}")
     File.open(realpath, 'w') { |f| f.write(new_yaml.to_yaml) }

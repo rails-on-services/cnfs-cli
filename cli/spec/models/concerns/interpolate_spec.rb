@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_examples_for 'interpolate' do
+RSpec.shared_examples_for 'interpolated' do
   # let(:path) { Pathname.new(ENV['SPEC_DIR']).join('fixtures/context') }
   # let(:project) { Project.first }
   # let(:a_context) { Context.create(root: project, options: options) }
