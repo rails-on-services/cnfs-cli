@@ -2,11 +2,11 @@
 localstack:
   config:
     access_key_id: !binary |-
-      ZtxSMHyOgybFPYk8zvNjYJ8dsR9yxICF0izeIk7j7xE=
+      eDXt3GUVMbiXYl1mEYikeAT0hM0xHAAkOTtA+f3aLnVGCPfxvt0dIXhNy+XFPtLiTTFW2spuhqBLSg8GcnFvLYRXIw==
     account_id: 123456789012
-    region: localstack
+    region: ap-southeast-1
     secret_access_key: !binary |-
-      aZxDpiGbfJjtAMLOe+0UgNeXBr8/WtYpZt7onaUI+QkOBXNBbMgpkPRBvWscHQWMgOhWqOJAcQ==
+      JJypmvgrtdVO7CggZ5VPkLNSev9YiDiMfrMzXKSzztUHE7hQ97QP5DeUhQJhV0KuCuXjvWFfazTpEb/DGY0Y7y5kcQ==
     s3:
       endpoint: http://localstack:4572
       force_path_style: true

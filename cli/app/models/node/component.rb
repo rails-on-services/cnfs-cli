@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Node::Component < Node
-  after_create :make_owner, :load_search_path, unless: proc { skip_owner_create }
-  after_create :update_yaml, if: proc { skip_owner_create }
+  after_create :make_owner, :load_search_path, if: proc { Node.source.eql?(:node) }
+  after_create :update_yaml, if: proc { Node.source.eql?(:asset) }
   after_update :update_yaml
 
   # Override Node's definition; Only Component's can be owners

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Node < ApplicationRecord
-  attr_accessor :skip_owner_create
   attr_writer :yaml_payload, :owner_class
 
   belongs_to :parent, class_name: 'Node'
@@ -10,9 +9,30 @@ class Node < ApplicationRecord
 
   before_validation :set_realpath
 
-  # def disable_callbacks
-  #    Resource.skip_callback(:update, :after, :update_node)
-  # end
+  class << self
+    attr_reader :source
+
+    def source=(source)
+      @source = source.to_s.downcase.to_sym
+    end
+
+    def with_asset_callbacks_disabled
+      self.source = :node
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.skip_callback(*callback) }
+      end
+      yield
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.set_callback(*callback) }
+      end
+      self.source = :asset
+    end
+
+    def assets_to_disable
+      (CnfsCli.asset_names.append('component')).map { |name| name.classify.constantize }
+      # CnfsCli.asset_names.map { |name| name.classify.constantize }
+    end
+  end
 
   def set_realpath
     binding.pry unless path
@@ -24,7 +44,7 @@ class Node < ApplicationRecord
   def make_owner
     return if CnfsCli.support_names.include?(node_name)
     # binding.pry if parent.nil?
-    obj = parent.nil? ? @owner_class.create(yaml_payload.merge(skip_node_create: true)) : make_owner_association
+    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner_association
     return unless obj
 
     update(owner: obj)
@@ -38,7 +58,7 @@ class Node < ApplicationRecord
     own = owner_ref(self)
     assn_str = owner_ass_name
     assn = own.send(assn_str.to_sym)
-    assn.create(yaml_payload.merge(skip_node_create: true))
+    assn.create(yaml_payload)
   rescue NoMethodError => err
     # Cnfs.logger.warn("unknown resource #{err.message.split[2]} found at #{realpath}")
     Cnfs.logger.warn("#{err.message} in #{realpath}")

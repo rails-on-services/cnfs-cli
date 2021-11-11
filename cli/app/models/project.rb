@@ -22,17 +22,16 @@ class Project < Component
     super.merge('name' => name)
   end
 
-  def create_node
-    binding.pry
-    node = Node::Component.create(owner: self, skip_owner_create: true,
-                  path: CnfsCli.config.root.join('project.yml'))
-    p = create_parent(type: 'Node::SearchPath', parent: node, path: 'config', skip_owner_create: true)
-    binding.pry
-
-    # parent = create_parent(type: 'Node::Component', owner: self, skip_owner_create: true,
-                  # path: CnfsCli.config.root.join('project.yml'))
-    # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config', skip_owner_create: true)
-  end
+  # def create_node
+  #   binding.pry
+  #   node = Node::Component.create(owner: self, path: CnfsCli.config.root.join('project.yml'))
+  #   p = create_parent(type: 'Node::SearchPath', parent: node, path: 'config')
+  #   binding.pry
+  #
+  #   # parent = create_parent(type: 'Node::Component', owner: self,
+  #                 # path: CnfsCli.config.root.join('project.yml'))
+  #   # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config')
+  # end
 
   # Node SearchPath
   def search_path

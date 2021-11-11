@@ -99,7 +99,7 @@ class Context < ApplicationRecord
   end
 
   def configure_component
-    component.update(config: component_config, skip_node_create: true)
+    component.update(config: component_config)
   end
 
   # Iterate over each component from root to leaf
@@ -144,8 +144,7 @@ class Context < ApplicationRecord
         hash.deep_merge!(record.as_json.compact)
       end
       json.deep_merge!(asset.as_json.compact)
-      # TODO: if asset's owner is 'Context' then skip_node_create is auto set to true
-      ary.append(json.merge(name: name, skip_node_create: true))
+      ary.append(json.merge(name: name))
     end
   end
 
@@ -159,7 +158,7 @@ class Context < ApplicationRecord
       json = records.each_with_object({}) do |record, hash|
         hash.deep_merge!(record.as_json.compact)
       end
-      ary.append(json.merge(name: name, skip_node_create: true)) unless json['disabled']
+      ary.append(json.merge(name: name)) unless json['disabled']
     end
   end
 
@@ -182,7 +181,7 @@ class Context < ApplicationRecord
     assets.where.not(attr_sym => nil).each do |asset|
       name = asset.send(attr_sym)
       if (obj = send(assn_sym).find_by(name: name))
-        asset.update(attr => obj, skip_node_create: true)
+        asset.update(attr => obj)
       else
         Cnfs.logger.warn("Failed to find #{attr} '#{name}' for #{asset.class.name} '#{asset.name}'")
       end
@@ -200,7 +199,7 @@ class Context < ApplicationRecord
     end
 
     obj = send(assn_sym).first
-    nil_assets.each { |asset| asset.update(attr => obj, skip_node_create: true) }
+    nil_assets.each { |asset| asset.update(attr => obj) }
   end
 
   def resource_runtimes(services: filtered_services)

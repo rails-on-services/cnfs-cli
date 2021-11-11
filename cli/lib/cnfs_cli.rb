@@ -66,7 +66,9 @@ module CnfsCli
     end
 
     def load_root_node
-      _n = Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
+      Node.with_asset_callbacks_disabled do
+        _n = Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
+      end
       return unless Project.first
 
       model_names.each do |model|

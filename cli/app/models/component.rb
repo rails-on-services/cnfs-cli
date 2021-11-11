@@ -4,8 +4,6 @@ class Component < ApplicationRecord
   include Concerns::Encryption
   include Concerns::Interpolate
 
-  attr_accessor :skip_node_create
-
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
   has_one :context
@@ -24,9 +22,25 @@ class Component < ApplicationRecord
 
   validates :name, presence: true
 
-  before_create :decrypt, unless: proc { skip_node_create }
-  after_create :create_node, unless: proc { skip_node_create }
-  after_update :update_node, unless: proc { skip_node_create }
+  after_create :create_node
+  after_update :update_node
+
+  def self.node_callbacks
+    [
+      %i[create after create_node],
+      %i[update after update_node],
+    ]
+  end
+
+  def create_node
+    # binding.pry
+    create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent)
+  end
+
+  def update_node
+    parent.update(owner: self)
+  end
+
 
   def key
     @key ||= local_file_values['key'] || owner&.key
@@ -68,15 +82,6 @@ class Component < ApplicationRecord
 
   def except_json
     super.append('type')
-  end
-
-  def create_node
-    # binding.pry
-    create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent, skip_owner_create: true)
-  end
-
-  def update_node
-    parent.update(owner: self, skip_owner_create: true)
   end
 
   def root_tree

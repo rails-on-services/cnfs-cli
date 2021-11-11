@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Node::SearchPath < Node
-  after_create :load_path, unless: proc { skip_owner_create }
-  after_create :make_path, if: proc { skip_owner_create }
+  after_create :load_path, if: proc { Node.source.eql?(:node) }
+  after_create :make_path, if: proc { Node.source.eql?(:asset) }
 
   def node_for(assn_type)
     # binding.pry

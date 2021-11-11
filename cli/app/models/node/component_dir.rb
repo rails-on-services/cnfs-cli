@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Node::ComponentDir < Node
-  after_create :make_owner, :load_path, unless: proc { skip_owner_create }
-  after_create :make_path, if: proc { skip_owner_create }
+  after_create :make_owner, :load_path, if: proc { Node.source.eql?(:node) }
+  after_create :make_path, if: proc { Node.source.eql?(:asset) }
 
   def make_path
     rootpath.mkdir

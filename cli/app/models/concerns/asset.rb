@@ -8,8 +8,6 @@ module Concerns
       include Concerns::Encryption
       # include Concerns::Interpolate
 
-      attr_accessor :skip_node_create
-
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true
 
@@ -25,16 +23,24 @@ module Concerns
       # TODO:
       # Put this code and methods into a concern and include in Component and Asset
       # The type string will need to come from the Component and Asset Concern
-      # Rename from skip_node_create to notify_node
-      # Rather than passing skip_owner_create to the Node
-      # havekk
-      # with_options unless: :skip_node_create do |asset|
-      #   asset.after_create :create_node
-      #   asset.after_update :update_node
-      # end
+      after_create :create_node
+      after_update :update_node
+    end
 
-      after_create :create_node, unless: proc { skip_node_create }
-      after_update :update_node, unless: proc { skip_node_create }
+    def create_node
+      # Assets whose owner is Context are ephemeral so don't create/update a node
+      return unless owner.is_a? Component
+      # binding.pry
+
+      create_parent(type: 'Node::Asset', owner: self)
+    end
+
+    def update_node
+      # Assets whose owner is Context are ephemeral so don't create/update a node
+      return unless owner.is_a? Component
+      # binding.pry
+
+      parent.update(owner: self)
     end
 
     def tree_name
@@ -43,17 +49,14 @@ module Concerns
       end.join(' ')
     end
 
-    def create_node
-      # return unless owner.is_a? Component
-      create_parent(type: 'Node::Asset', owner: self, skip_owner_create: true)
-    end
-
-    def update_node
-      # return unless owner.is_a? Component
-      parent.update(owner: self, skip_owner_create: true)
-    end
-
     class_methods do
+      def node_callbacks
+        [
+          %i[create after create_node],
+          %i[update after update_node],
+        ]
+      end
+
       def update_names
         reference_columns.group_by { |n| n.split('_').first }.select { |_k, v| v.size.eql?(2) }.keys
       end

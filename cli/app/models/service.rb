@@ -81,7 +81,7 @@ class Service < ApplicationRecord
   #   end
   # end
 
-  after_update :add_commands_to_queue, if: proc { skip_node_create }
+  # after_update :add_commands_to_queue, if: proc { skip_node_create }
 
   # after_start { add_commands_to_queue(after_service_starts) }
   # before_stop { add_commands_to_queue(before_service_stops) }
