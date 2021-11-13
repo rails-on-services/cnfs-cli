@@ -10,44 +10,41 @@ class Node < ApplicationRecord
   before_validation :set_realpath
 
   def set_realpath
-    binding.pry unless path
+    # binding.pry unless path
     # self.realpath ||= Pathname.new(path).realpath.to_s
     self.realpath ||= Pathname.new(path).cleanpath.to_s
   end
 
-  # This only applies to Component, ComponentDir and Asset
+  # This only applies to Component and Asset
   def make_owner
     return if CnfsCli.support_names.include?(node_name)
 
-    # binding.pry if parent.nil?
-    obj = parent.nil? ? @owner_class.create(yaml_payload) : make_owner_association
+    obj = parent.nil? ? @owner_class.create(yaml_payload) : owner_association.create(yaml_payload)
     return unless obj
 
     update(owner: obj)
     owner_log('Created owner')
   rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
+    binding.pry
     Cnfs.logger.warn(e.message, yaml_payload)
     owner_log('Error creating owner')
-  end
-
-  def make_owner_association
-    own = owner_ref(self)
-    assn_str = owner_ass_name
-    assn = own.send(assn_str.to_sym)
-    assn.create(yaml_payload)
   rescue NoMethodError => err
-    # Cnfs.logger.warn("unknown resource #{err.message.split[2]} found at #{realpath}")
     Cnfs.logger.warn("#{err.message} in #{realpath}")
-    nil
   end
 
-  # Recursively move back through parent hierarchy until reaching a Node::Component which
-  # overrides this method and returns it's owner
+  # Returns an A/R association, e.g. components, resources, etc
+  # owner_association_name is implemented in Node::Component and Node::Asset
+  def owner_association
+    owner_ref(self).send(owner_association_name.to_sym)
+  end
+
+  # Returns a Component instance by searching recursively up the current node's parent hierarch
+  # until reaching a Node::Component which overrides this method and returns it's owner
   def owner_ref(obj)
     parent.owner_ref(obj)
   end
 
-  # AssetGroup, Asset and Component (ComponentDir sort of)
+  # Component, Asset and AssetGroup
   def yaml_payload
     @yaml_payload ||= { 'name' => node_name }.merge(yaml)
   end
@@ -58,42 +55,12 @@ class Node < ApplicationRecord
     @yaml = YAML.load_file(rootpath) || {}
   end
 
-  # Query the just created asset or component for a search_path
-  # If it exists and is a directory then create a SearchPath object which will query the child nodes
-  def load_search_path
-    return unless owner.respond_to?(:search_path) && (search_path = owner.search_path)
-    return unless search_path.directory? && search_path.exist?
-
-    _n = nodes.create(path: search_path.to_s, type: 'Node::SearchPath')
-  end
-
-  # Called by AssetDir, ComponentDir and SearchPath to iterate over their children
-  def load_path
-    valid_load_path_types.each do |node_type|
-      pathname.children.select(&node_type).each do |c_pathname|
-        _n = nodes.create(path: c_pathname.to_s, type: child_node_class_name(c_pathname))
-      end
-    end
-  end
-
-  def valid_load_path_types
-    %i[file? directory?]
-  end
-
-  # Based on the pathname type, dir or file, and the pluralization of the basename
-  # return the appropriate node sub-class as a string
-  def child_node_class_name(pathname)
-    n_name = pathname.basename.to_s.delete_suffix(pathname.extname)
-    class_name = if pathname.directory?
-      n_name.eql?(n_name.pluralize) ? 'AssetDir' : 'ComponentDir'
-    else
-      n_name.eql?(n_name.pluralize) ? 'AssetGroup' : 'Component'
-    end
-    "Node::#{class_name}"
-  end
-
   def node_name
-    @node_name ||= pathname.basename.to_s.delete_suffix(pathname.extname)
+    @node_name ||= base_name(pathname)
+  end
+
+  def base_name(path_name)
+    path_name.basename.to_s.delete_suffix(path_name.extname)
   end
 
   def pathname
@@ -109,17 +76,23 @@ class Node < ApplicationRecord
   end
 
   def root_tree
-    puts "\n#{TTY::Tree.new(node_name => tree).render}"
+    puts "\n#{TTY::Tree.new(owner.name => nodes.first.tree).render}"
   end
 
-  # TODO: Use the subclasses to determine what should be returned
   def tree
-    ret = nodes.select{ |c| c.rootpath.file? }.map(&:tree_name)
-    ret.append(
-      nodes.select{ |c| c.rootpath.directory? }.each_with_object({}) do |node, hash|
-        hash["#{node.node_name} (#{node.owner&.c_name})"] = node.tree
+    nodes.each_with_object([]) do |node, ary|
+      if node.type.eql?('Node::Asset')
+        ary.append(node.tree_name)
+      elsif node.type.eql?('Node::Component')
+        if node.nodes.any?
+          ary.append({ node.tree_name => node.nodes.first.tree })
+        else
+          ary.append(node.tree_name)
+        end
+      else
+        ary.append({ node.node_name => node.tree })
       end
-    )
+    end
   end
 
   class << self

@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
 class Node::AssetDir < Node
-  after_create :load_path
+  after_create :make_nodes, if: proc { Node.source.eql?(:node) }
 
-  # Override Node's method because an AssetDir always only contains assets
-  def child_node_class_name(_pathname)
-    'Node::Asset'
+  def make_nodes
+    pathname.children.select(&:file?).each do |c_pathname|
+      nodes.create(path: c_pathname.to_s, type: 'Node::Asset')
+    end
   end
 
-  def valid_load_path_types
-    %i[file?]
+  # BEGIN: source asset
+
+  after_create :make_path, if: proc { Node.source.eql?(:asset) }
+
+  def make_path
+    rootpath.mkdir
   end
 end

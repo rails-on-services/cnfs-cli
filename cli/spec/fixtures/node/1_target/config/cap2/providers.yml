@@ -10,11 +10,11 @@ aws_west:
 localstack:
   config:
     access_key_id: !binary |-
-      WuGl/2ajtdGVYDMKNjLrOhvtDsDMIqhpZiFfB7RX6vwOzQkkgIAniVVULjW4UzbsnhutkoxiQA==
+      ynnnF0UVXikAcJaBoeE65A4W6pcc2XoN+DlYq/kh408/mp7tKHoRz6rTrpuURV8zZBlvgqch3g==
     account_id: 123456789012
     region: localstack
     secret_access_key: !binary |-
-      dVO3c4SGH7qt2g5zukR2zCowQ5Mt+aieD7rhH8aEXf13LuX9fDZprf2uXVmPfWGiB/Bj3bto7g==
+      jMVNwUN8aAuWwIqxii94QwG2LXnGI+y81MZda6DGsQ4yWCKyP2qLnlUWweaaqmOM4e3uB8LlGw==
     s3:
       endpoint: http://localstack:4572
       force_path_style: true

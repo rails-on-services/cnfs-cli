@@ -1,11 +1,9 @@
-# runtimes.yml
 ---
 compose:
-  type: Runtime::Compose
   config:
     version: 3.2
-  dependencies:
-    - name: docker-compose
-
+  dependencies: '[{"name"=>"docker-compose"}]'
+  type: Runtime::Compose
 native:
+  config: {}
   type: Runtime::Native

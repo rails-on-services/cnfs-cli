@@ -47,7 +47,7 @@ module Concerns
     end
 
     def tree_name
-      %w[inhert enable].each_with_object([name]) do |v, ary|
+      %w[inherit enable].each_with_object([name]) do |v, ary|
         ary.append("(#{v})") if v.nil? || v
       end.join(' ')
     end

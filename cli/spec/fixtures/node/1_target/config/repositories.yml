@@ -1,11 +1,13 @@
 ---
 cnfs:
-  name: cnfs
   config:
     url: git@github.com:rails-on-services/ros.git
+  dockerfile: {}
+  build: {}
   type: Rails::Repository
 kpop:
-  name: kpop
   config:
     url: git@github.com:maxcole/kpop.git
+  dockerfile: {}
+  build: {}
   type: Rails::Repository

@@ -33,9 +33,10 @@ class Project < Component
   #   # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config')
   # end
 
-  # Node SearchPath
-  def search_path
-    Pathname.new(parent.path).split[0].join('config')
+  # called by Node::Component
+  def dir_path
+    'config'
+    # Pathname.new(parent.path).split[0].join('config')
   end
 
   # Display the project's components as a TreeView

@@ -11,7 +11,7 @@ RSpec.describe 'Node' do
         stub_project
         Cnfs.setup(data_store: true, model_names: CnfsCli.model_names)
         Node.with_asset_callbacks_disabled do
-          _n = Node::Component.create(path: 'project.yml', owner_class: Project)
+          _n = Node::Component.create(path: 'project.yml', owner_class: Project) # , dir_path: 'config')
         end
       end
     end
@@ -40,7 +40,7 @@ RSpec.describe 'Node' do
       CnfsCli.run!(path: path, load_nodes: false) do
         Cnfs.setup(data_store: true, model_names: CnfsCli.model_names)
         Node.with_asset_callbacks_disabled do
-          _n = Node::Component.create(path: 'project.yml', owner_class: Project)
+          _n = Node::Component.create(path: 'project.yml', owner_class: Project) # , dir_path: 'config')
         end
       end
     end
