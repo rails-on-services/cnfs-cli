@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class Node::AssetDir < Node
-  after_create :make_nodes, if: proc { Node.source.eql?(:node) }
+  after_create :create_asset_nodes, if: proc { Node.source.eql?(:node) }
 
-  def make_nodes
-    pathname.children.select(&:file?).each do |c_pathname|
-      nodes.create(path: c_pathname.to_s, type: 'Node::Asset')
+  def create_asset_nodes
+    pathname.children.select(&:file?).each do |path_name|
+      nodes.create(type: 'Node::Asset', path: path_name.to_s)
     end
   end
 
@@ -14,6 +14,17 @@ class Node::AssetDir < Node
   after_create :make_path, if: proc { Node.source.eql?(:asset) }
 
   def make_path
+    binding.pry
     rootpath.mkdir
+  end
+
+  # Called from Asset
+  def destroy_yaml(asset)
+    Cnfs.logger.debug("Deleting #{realpath}")
+    FileUtils.rm(asset.realpath)
+    if rootpath.children.size.zero?
+      rootpath.rmtree
+      destroy
+    end
   end
 end

@@ -25,6 +25,7 @@ module Concerns
       # The type string will need to come from the Component and Asset Concern
       after_create :create_node
       after_update :update_node
+      after_destroy :destroy_node
     end
 
     def create_node
@@ -44,6 +45,12 @@ module Concerns
       # binding.pry
 
       parent.update(owner: self)
+    end
+
+    def destroy_node
+      return unless owner.is_a? Component
+
+      parent.destroy
     end
 
     def tree_name

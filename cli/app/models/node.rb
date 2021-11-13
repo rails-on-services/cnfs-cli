@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class Node < ApplicationRecord
-  attr_writer :yaml_payload, :owner_class
-
   belongs_to :parent, class_name: 'Node'
   belongs_to :owner, polymorphic: true
   has_many :nodes, class_name: 'Node', foreign_key: 'parent_id'
@@ -10,49 +8,18 @@ class Node < ApplicationRecord
   before_validation :set_realpath
 
   def set_realpath
-    # binding.pry unless path
-    # self.realpath ||= Pathname.new(path).realpath.to_s
-    self.realpath ||= Pathname.new(path).cleanpath.to_s
+    self.realpath ||= Pathname.new(path).realpath.to_s
   end
 
-  # This only applies to Component and Asset
-  def make_owner
-    return if CnfsCli.support_names.include?(node_name)
-
-    obj = parent.nil? ? @owner_class.create(yaml_payload) : owner_association.create(yaml_payload)
-    return unless obj
-
-    update(owner: obj)
-    owner_log('Created owner')
-  rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
-    binding.pry
-    Cnfs.logger.warn(e.message, yaml_payload)
-    owner_log('Error creating owner')
-  rescue NoMethodError => err
-    Cnfs.logger.warn("#{err.message} in #{realpath}")
-  end
-
-  # Returns an A/R association, e.g. components, resources, etc
-  # owner_association_name is implemented in Node::Component and Node::Asset
-  def owner_association
-    owner_ref(self).send(owner_association_name.to_sym)
-  end
-
-  # Returns a Component instance by searching recursively up the current node's parent hierarch
-  # until reaching a Node::Component which overrides this method and returns it's owner
+  # Returns a Component instance by searching recursively up the current node's parent hierarchy
+  # until reaching a Node::Component which overrides this method and returns its owner
   def owner_ref(obj)
     parent.owner_ref(obj)
   end
 
-  # Component, Asset and AssetGroup
-  def yaml_payload
-    @yaml_payload ||= { 'name' => node_name }.merge(yaml)
-  end
-
   def yaml(reload: false)
-    return @yaml ||= YAML.load_file(rootpath) || {} unless reload
-
-    @yaml = YAML.load_file(rootpath) || {}
+    @yaml = nil if reload
+    @yaml ||= YAML.load_file(rootpath) || {}
   end
 
   def node_name
@@ -71,19 +38,14 @@ class Node < ApplicationRecord
     @rootpath ||= Pathname.new(realpath)
   end
 
-  def owner_log(title)
-    Cnfs.logger.debug("#{title} from: #{pathname}\n#{yaml_payload}")
-  end
-
-  def root_tree
-    puts "\n#{TTY::Tree.new(owner.name => nodes.first.tree).render}"
-  end
-
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   def tree
     nodes.each_with_object([]) do |node, ary|
-      if node.type.eql?('Node::Asset')
+      case node.type
+      when 'Node::Asset'
         ary.append(node.tree_name)
-      elsif node.type.eql?('Node::Component')
+      when 'Node::Component'
         if node.nodes.any?
           ary.append({ node.tree_name => node.nodes.first.tree })
         else
@@ -94,6 +56,8 @@ class Node < ApplicationRecord
       end
     end
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   class << self
     attr_reader :source
@@ -119,7 +83,7 @@ class Node < ApplicationRecord
     end
 
     def assets_to_disable
-      (CnfsCli.asset_names.append('component')).map { |name| name.classify.constantize }
+      CnfsCli.asset_names.append('component').map { |name| name.classify.constantize }
     end
 
     def create_table(schema)

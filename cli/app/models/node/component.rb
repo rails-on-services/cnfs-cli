@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
 class Node::Component < Node
+  include Concerns::NodeWriter
+
   attr_writer :dir_path
 
-  after_create :make_owner, :load_dir_path, if: proc { Node.source.eql?(:node) }
+  after_create :load_dir_path, if: proc { Node.source.eql?(:node) }
 
-  # If it exists and is a directory then create a SearchPath object which will query the child nodes
+  # Create a ComponentDir object to query the child nodes if the directory exists on the filesystem
   def load_dir_path
     component_path = Pathname.new(dir_path)
-    # binding.pry
-    return unless component_path.directory? && component_path.exist?
-
-    nodes.create(path: component_path.to_s, type: 'Node::ComponentDir')
+    nodes.create(type: 'Node::ComponentDir', path: component_path.to_s) if component_path.exist?
   end
 
   # The default dir_path is the same name as the component file but with '.yml' stripped
@@ -19,7 +18,8 @@ class Node::Component < Node
     @dir_path ||= (owner.respond_to?(:dir_path) ? owner.dir_path : "#{parent.parent.dir_path}/#{node_name}")
   end
 
-  # Override Node's definition; Only Components are owners
+  # Override Node's definition to return owner unless calling owner_ref on self
+  # Components are the only type that can return an owner
   def owner_ref(obj)
     obj.eql?(self) ? parent.owner_ref(obj) : owner
   end
@@ -31,35 +31,14 @@ class Node::Component < Node
 
   # BEGIN: source asset
 
-  after_create :update_yaml, if: proc { Node.source.eql?(:asset) }
-  after_update :update_yaml, if: proc { Node.source.eql?(:asset) }
-
+  # Called by Asset to get the ComponentDir in which its AssetDir or AssetGroup is located
   def component_dir
-    return '' if parent.nil?
-    if (dir = parent.nodes.select { |n| n.class.name.eql?('Node::ComponentDir') && n.node_name.eql?(node_name) }.first)
-      return dir
-    end
-    binding.pry
-    nodes.create(type: 'Node::ComponentDir', path: '')
-  end
-
-  def node_for(assn_type)
-    Cnfs.logger.warn(nodes.first&.type)
-    # binding.pry
-    if nodes.first.type.eql?('Node::SearchPath')
-      nodes.first.node_for(assn_type)
-    else
-      ns = nodes.select{ |n| n.node_name.eql?(assn_type) }
-      return ns.first if ns.first
-      # binding.pry
-    end
-  end
-
-  def update_yaml
-    new_yaml = owner.as_json_encrypted.to_yaml
-    Cnfs.logger.debug("Writing to #{realpath} with\n#{new_yaml}")
-    File.open(realpath, 'w') { |f| f.write(new_yaml) }
+    nodes.first
   end
 
   delegate :tree_name, to: :owner
+
+  def root_tree
+    puts "\n#{TTY::Tree.new(owner.name => nodes.first.tree).render}"
+  end
 end
