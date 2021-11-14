@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
+  include Concerns::Parent
   include Concerns::Encryption
   include Concerns::Interpolation
 
@@ -14,33 +15,9 @@ class Component < ApplicationRecord
   has_many :contexts, through: :context_components
 
   # Pluralized resource names are declared as a has_many
-  CnfsCli.asset_names.select{ |name| name.pluralize.eql?(name) }.each do |asset_name|
+  CnfsCli.asset_names.select { |name| name.pluralize.eql?(name) }.each do |asset_name|
     has_many asset_name.to_sym, as: :owner
   end
-
-  store :config, coder: YAML
-
-  validates :name, presence: true
-
-  after_create :create_node
-  after_update :update_node
-
-  def self.node_callbacks
-    [
-      %i[create after create_node],
-      %i[update after update_node],
-    ]
-  end
-
-  def create_node
-    # binding.pry
-    create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent)
-  end
-
-  def update_node
-    parent.update(owner: self)
-  end
-
 
   def key
     @key ||= local_file_values['key'] || owner&.key
@@ -88,8 +65,13 @@ class Component < ApplicationRecord
     super.append('type')
   end
 
-  def root_tree
-    TTY::Tree.new("#{name} (project)" => tree)
+  # Display components as a TreeView
+  def to_tree
+    puts "\n#{as_tree.render}"
+  end
+
+  def as_tree
+    TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)
   end
 
   def tree

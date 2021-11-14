@@ -38,9 +38,4 @@ class Project < Component
     'config'
     # Pathname.new(parent.path).split[0].join('config')
   end
-
-  # Display the project's components as a TreeView
-  def root_tree
-    puts "\n#{super.render}"
-  end
 end

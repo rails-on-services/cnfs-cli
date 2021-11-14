@@ -34,6 +34,7 @@ class Service < ApplicationRecord
   def git
     OpenStruct.new
   end
+
   def project
     OpenStruct.new(environment: OpenStruct.new)
   end
@@ -87,23 +88,24 @@ class Service < ApplicationRecord
   # before_stop { add_commands_to_queue(before_service_stops) }
   # before_terminate { add_commands_to_queue(before_service_terminates) }
 
-  def add_commands_to_queue # (commands_array)
+  # (commands_array)
+  def add_commands_to_queue
     self.command_queue = case state
                          when attribute_before_last_save(:state)
                            []
                          when 'started'
                            after_service_starts
                          end
-    Cnfs.logger.debug "#{name} command_queue add: #{command_queue}" #".split("\n")}"
+    Cnfs.logger.debug "#{name} command_queue add: #{command_queue}" # ".split("\n")}"
   end
-    # binding.pry
+  # binding.pry
 
-    # return unless commands_array&.any?
+  # return unless commands_array&.any?
 
-    # commands_array.each do |command|
-    #   command_queue.append(Cnfs.project.runtime.exec(self, command, true))
-    #   Cnfs.logger.debug "#{name} command_queue add: #{command}"
-    # end
+  # commands_array.each do |command|
+  #   command_queue.append(Cnfs.project.runtime.exec(self, command, true))
+  #   Cnfs.logger.debug "#{name} command_queue add: #{command}"
+  # end
   # end
 
   # NOTE: Commands that execute on only one service are implemented here
@@ -171,6 +173,7 @@ class Service < ApplicationRecord
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
 
+    # rubocop:disable Metrics/MethodLength
     def add_columns(t)
       t.string :resource_name
       t.references :resource
@@ -195,6 +198,7 @@ class Service < ApplicationRecord
       t.string :repository
       t.string :location
     end
+    # rubocop:enable Metrics/MethodLength
   end
 end
 # rubocop:enable Metrics/ClassLength

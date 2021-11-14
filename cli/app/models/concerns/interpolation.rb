@@ -9,11 +9,11 @@ module Concerns
 
       owner_hash = owner.cnfs_sub
       this_hash = as_json.compact.deep_transform_values do |value|
-        value.cnfs_sub(owner_hash, owner_hash['config']) #, skip_raise: true) }
+        value.cnfs_sub(owner_hash, owner_hash['config'])
       end
 
       # binding.pry
-      # this_hash = as_json.deep_transform_values { |value| value&.cnfs_sub(owner_hash) } #, skip_raise: true) }
+      # this_hash = as_json.deep_transform_values { |value| value&.cnfs_sub(owner_hash) }
       owner_hash.merge(this_hash)
     end
   end

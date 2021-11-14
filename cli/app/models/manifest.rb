@@ -8,6 +8,7 @@ class Manifest
 
   validate :outdated?
 
+  # rubocop:disable Metrics/AbcSize
   def outdated?
     return if config_files.empty?
 
@@ -18,9 +19,10 @@ class Manifest
       manifest_latest = oldest_manifest_file_generated_at
       errors.add(:stale_manifest, "#{config_latest} > #{manifest_latest}") if config_latest > manifest_latest
     end
-    Cnfs.logger.info("manifest validated - OK") unless errors.size.positive?
+    Cnfs.logger.info('manifest validated - OK') unless errors.size.positive?
     errors.size.positive?
   end
+  # rubocop:enable Metrics/AbcSize
 
   def purge!
     @purged = true

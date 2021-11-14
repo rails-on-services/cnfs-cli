@@ -26,6 +26,9 @@ Metrics/MethodLength:
 Metrics/PerceivedComplexity:
   Exclude:
     - cli/app/helpers/*
+Naming/MethodParameterName:
+  Exclude:
+    - cli/app/models/*
 Style/ClassAndModuleChildren:
   Enabled: false
 Style/Documentation:

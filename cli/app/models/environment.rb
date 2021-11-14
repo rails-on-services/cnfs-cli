@@ -23,18 +23,17 @@ class Environment < ApplicationRecord
     # "https://api.${project.environment.domain}"
     platform['jwt']['aud']
   end
-  
+
   def yeah
     self.secret_key_base = encrypt(SecureRandom.hex(64))
     self.rails_master_key = encrypt(SecureRandom.hex)
-    self.values['platform']['jwt']['encryption_key'] = encrypt(SecureRandom.hex)
+    values['platform']['jwt']['encryption_key'] = encrypt(SecureRandom.hex)
     nil
   end
 
   def show
     puts as_json.to_yaml
   end
-
 
   # store :config, accessors: %i[domain], coder: YAML
   # store :config, accessors: %i[dns_sub_domain mount root_domain_managed_in_route53 lb_dns_hostnames], coder: YAML

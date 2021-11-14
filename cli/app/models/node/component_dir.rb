@@ -25,16 +25,29 @@ class Node::ComponentDir < Node
     path_name.children.reject do |n|
       CnfsCli.asset_names.include?(base_name(n))
     end.group_by { |n| base_name(n) }.each do |_name, ary|
-      FileUtils.touch("#{ary.first}.yml") if ary.size.eql?(1) && ary.first.directory?
+      next if ary.size.eql?(2)
+
+      FileUtils.touch("#{ary.first}.yml") if ary.first.directory?
+      FileUtils.mkdir(ary.first.to_s.delete_suffix('.yml')) if ary.first.file?
     end
   end
   # rubocop:enable Style/MultilineBlockChain
 
   # BEGIN: source asset
 
-  after_create :make_path, if: proc { Node.source.eql?(:asset) }
+  after_destroy :destroy_yaml, if: proc { Node.source.eql?(:asset) }
 
-  def make_path
-    rootpath.mkdir
+  # Override Node#set_realpath to create the file first, otherwise super will fail due to path not existing
+  def set_realpath
+    return super if Node.source.eql?(:node) || persisted?
+
+    # binding.pry
+    path_n = Pathname.new(path)
+    path_n.mkdir unless path_n.exist?
+    super
+  end
+
+  def destroy_yaml
+    rootpath.rmtree
   end
 end

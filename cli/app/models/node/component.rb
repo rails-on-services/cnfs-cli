@@ -31,14 +31,36 @@ class Node::Component < Node
 
   # BEGIN: source asset
 
+  # Override Node#set_realpath to create the file first, otherwise super will fail due to path not existing
+  def set_realpath
+    return super if Node.source.eql?(:node) || persisted?
+
+    self.parent ||= owner.owner.parent.component_dir
+    base_path = "#{parent.path}/#{owner.name}"
+    self.path ||= "#{base_path}.yml"
+    FileUtils.touch(path)
+    nodes << Node::ComponentDir.new(path: base_path)
+    super
+  end
+
   # Called by Asset to get the ComponentDir in which its AssetDir or AssetGroup is located
   def component_dir
     nodes.first
   end
 
+  def destroy_yaml
+    Cnfs.logger.debug("Deleting #{realpath}")
+    component_dir.destroy
+    FileUtils.rm(realpath)
+  end
+
   delegate :tree_name, to: :owner
 
-  def root_tree
-    puts "\n#{TTY::Tree.new(owner.name => nodes.first.tree).render}"
+  def to_tree
+    puts "\n#{as_tree.render}"
+  end
+
+  def as_tree
+    TTY::Tree.new(owner.name => nodes.first.tree)
   end
 end

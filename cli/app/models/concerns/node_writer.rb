@@ -18,7 +18,6 @@ module Concerns
     end
 
     # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def make_owner
       return if CnfsCli.support_names.include?(node_name)
 
@@ -34,9 +33,8 @@ module Concerns
     rescue NoMethodError => e
       Cnfs.logger.warn("#{e.message} in #{realpath}")
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
 
+    # rubocop:enable Metrics/AbcSize
     # Returns an A/R association, e.g. components, resources, etc
     # owner_association_name is implemented in Node::Component and Node::Asset
     def owner_association
@@ -51,15 +49,12 @@ module Concerns
       @yaml_payload ||= { 'name' => node_name }.merge(yaml)
     end
 
+    # BEGIN: source asset
+
     def write_yaml
       yaml_to_write = owner.as_json_encrypted.to_yaml
       Cnfs.logger.debug("Writing to #{realpath} with\n#{yaml_to_write}")
       File.open(realpath, 'w') { |f| f.write(yaml_to_write) }
-    end
-
-    def destroy_yaml
-      Cnfs.logger.debug("Deleting #{realpath}")
-      FileUtils.rm(realpath)
     end
   end
 end

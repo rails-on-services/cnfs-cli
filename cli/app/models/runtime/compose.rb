@@ -2,8 +2,7 @@
 
 # rubocop:disable Metrics/ClassLength
 class Runtime::Compose < Runtime
-  attr_accessor :queue
-  attr_accessor :services, :context
+  attr_accessor :queue, :services, :context
 
   # delegate :options, :labels, to: :context
 
@@ -90,8 +89,8 @@ class Runtime::Compose < Runtime
     running_before = query(format: '{{.Names}}', status: :running)
     yield queue
     running_after = query(format: '{{.Names}}', status: :running).append('iam')
-    (running_after - running_before).each do |service_name|
-      next unless (service = services.select{|s| s.name.eql?('iam') }.first)
+    (running_after - running_before).each do |_service_name|
+      next unless (service = services.select { |s| s.name.eql?('iam') }.first)
 
       service.update(state: :started, skip_node_create: true)
       # TODO: This returns an array of commands to run on the service
@@ -217,26 +216,25 @@ class Runtime::Compose < Runtime
   end
 
   private
-=begin
-  def required_tools
-    %w[docker docker-compose]
-  end
 
-  def compose(command, *modifiers)
-    modifiers.unshift('docker-compose').append(command).join(' ')
-  end
-
-  def command_env
-    @command_env ||= set_compose_env
-  end
-
-  def set_compose_env
-    hash = {}
-    # Notify listeners passing in the command object and the env hash
-    ActiveSupport::Notifications.instrument 'set_compose_env.cli', { command: silent_command, hash: hash }
-    hash
-  end
-=end
+  #   def required_tools
+  #     %w[docker docker-compose]
+  #   end
+  #
+  #   def compose(command, *modifiers)
+  #     modifiers.unshift('docker-compose').append(command).join(' ')
+  #   end
+  #
+  #   def command_env
+  #     @command_env ||= set_compose_env
+  #   end
+  #
+  #   def set_compose_env
+  #     hash = {}
+  #     # Notify listeners passing in the command object and the env hash
+  #     ActiveSupport::Notifications.instrument 'set_compose_env.cli', { command: silent_command, hash: hash }
+  #     hash
+  #   end
 
   # options embedded in the compose command string
   # rubocop:disable Metrics/AbcSize
@@ -256,27 +254,25 @@ class Runtime::Compose < Runtime
     %w[start]
   end
 
-=begin
-  # TODO: commands need to handle profiles
-  # def exec_string
-  #   application.services.each_with_object([]) do |service, ary|
-  #     binding.pry
-  #     (options.profiles || service.try(:profiles)&.keys || {}).each do |profile|
-  #       profile = profile.eql?(default_profile) ? '' : "_#{profile}"
-  #       ary.append("#{service.name}#{profile}")
-  #     end
-  #   end.join(' ')
-  # end
-
-  # TODO: make this a configuration option
-  # def default_profile
-  #   'server'
-  # end
-
-  # def runtime_service_names_to_service_names(runtime_services_list)
-  #   runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
-  # end
-=end
+  #   # TODO: commands need to handle profiles
+  #   # def exec_string
+  #   #   application.services.each_with_object([]) do |service, ary|
+  #   #     binding.pry
+  #   #     (options.profiles || service.try(:profiles)&.keys || {}).each do |profile|
+  #   #       profile = profile.eql?(default_profile) ? '' : "_#{profile}"
+  #   #       ary.append("#{service.name}#{profile}")
+  #   #     end
+  #   #   end.join(' ')
+  #   # end
+  #
+  #   # TODO: make this a configuration option
+  #   # def default_profile
+  #   #   'server'
+  #   # end
+  #
+  #   # def runtime_service_names_to_service_names(runtime_services_list)
+  #   #   runtime_services_list.map { |a| a.gsub("#{project.full_context_name}_", '')[0...-2] }
+  #   # end
 
   # BEGIN: new stuff
   #
@@ -292,21 +288,22 @@ class Runtime::Compose < Runtime
   #   )
   # end
 
-  def compose_command(exec:, env: {}) # , opts:)
-    command(exec: compose_exec(exec), env: compose_env.merge(env)) #, opts: compose_opts.merge(opts))
+  # , opts:)
+  def compose_command(exec:, env: {})
+    command(exec: compose_exec(exec), env: compose_env.merge(env)) # , opts: compose_opts.merge(opts))
   end
 
   def compose_exec(exec)
     "docker-compose #{exec} #{compose_options} #{services.pluck(:name).join(' ')}"
   end
 
-	def compose_env(**env)
-		{}.merge(env)
-	end
+  def compose_env(**env)
+    {}.merge(env)
+  end
 
-	# def compose_opts(**opts)
+  # def compose_opts(**opts)
   #   {}.merge(opts)
-	# end
+  # end
 
   def command(exec: nil, env: {}, opts: {})
     Command.new(exec: exec, env: env, opts: context.options.merge(opts))
@@ -317,7 +314,6 @@ class Runtime::Compose < Runtime
   end
   #
   # END: new stuff
-
 
   def silent_command
     TTY::Command.new(printer: :null)
@@ -334,6 +330,7 @@ class Runtime::Compose < Runtime
     manifest = context.manifest
     manifest.purge! if context.options.generate
     return if manifest.valid?
+
     manifest.purge!
 
     g = Runtime::ComposeGenerator.new([self, context])

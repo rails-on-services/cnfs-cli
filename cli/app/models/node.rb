@@ -3,7 +3,7 @@
 class Node < ApplicationRecord
   belongs_to :parent, class_name: 'Node'
   belongs_to :owner, polymorphic: true
-  has_many :nodes, class_name: 'Node', foreign_key: 'parent_id'
+  has_many :nodes, foreign_key: 'parent_id'
 
   before_validation :set_realpath
 
@@ -19,7 +19,7 @@ class Node < ApplicationRecord
 
   def yaml(reload: false)
     @yaml = nil if reload
-    @yaml ||= YAML.load_file(rootpath) || {}
+    @yaml ||= rootpath.file? ? (YAML.load_file(rootpath) || {}) : {}
   end
 
   def node_name

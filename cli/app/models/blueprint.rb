@@ -26,23 +26,9 @@ class Blueprint < ApplicationRecord
     binding
   end
 
-  def as_save
-    # attributes.slice('config', 'envs', 'tags', 'type').merge(
-    attributes.slice('config', 'type').merge(
-      {
-        builder: builder&.name,
-        provider: provider&.name,
-      }
-    )
-  end
-
-  def save_path
-    paths.config.join('environments', environment.name, 'blueprints.yml')
-  end
-
   class << self
     def available_types(platform)
-      defined_types.select{ |p| p.start_with?(platform.to_s) }.map { |p| p.split('/').second }.sort
+      defined_types.select { |p| p.start_with?(platform.to_s) }.map { |p| p.split('/').second }.sort
     end
 
     def available_platforms
@@ -50,7 +36,7 @@ class Blueprint < ApplicationRecord
     end
 
     def defined_types
-      @defined_types ||= defined_files.select { |p| p.split('/').size > 1  }.map { |p| p.delete_suffix('.rb') }
+      @defined_types ||= defined_files.select { |p| p.split('/').size > 1 }.map { |p| p.delete_suffix('.rb') }
     end
 
     def defined_files
