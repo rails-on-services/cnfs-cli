@@ -47,10 +47,74 @@ RSpec.describe 'Node' do
       expect(User.count).to eq(2)
     end
 
+    it 'updates the Component yaml when a Component is edited' do
+      node = node_select('Component', 'project')
+      diff = node_diff(node) { Project.update(child_name: 'target', default: 'lambda') }
+
+      expect(diff.keys_added).to match_array(%w[default child_name])
+      expect(diff.after_yaml['child_name']).to eq('target')
+      expect(diff.after_yaml['default']).to eq('lambda')
+    end
+
+    it 'creates yaml when a Component is created' do
+      Dir.chdir(path) do
+        expect { Project.first.components.create(name: 'lambda' ) }.to change { Node.count }.by(2)
+      end
+      nodes = Node.order(id: :desc)
+
+      dir = nodes.first
+      expect(dir.path).to eq('config/lambda')
+      expect(dir.rootpath.exist?).to be_truthy
+      expect(dir.rootpath.directory?).to be_truthy
+
+      file = nodes.second
+      expect(file.path).to eq('config/lambda.yml')
+      expect(file.rootpath.exist?).to be_truthy
+      expect(file.rootpath.file?).to be_truthy
+      expect(file.yaml).to eq({ 'config' => {} })
+    end
+
+    it 'creates a ComponentDir and yaml when a second Component is created' do
+      Dir.chdir(path) do
+        target = Project.first.components.create(name: 'backend')
+        expect { target.components.create(name: 'lambda') }.to change { Node.count }.by(2)
+      end
+      node = Node.last
+      expect(node.path).to eq('config/backend/lambda')
+      expect(node.rootpath.exist?).to be_truthy
+      expect(node.rootpath.directory?).to be_truthy
+    end
+
+    it 'creates a ComponentDir and yaml when a second Component is created' do
+      Dir.chdir(path) do
+        target = Project.first.components.create(name: 'backend')
+        lamb = target.components.create(name: 'lambda')
+        expect { lamb.resources.create(name: 'ec2' ) }.to change { Node.count }.by(2)
+      end
+      file = Node.last
+      expect(file.path).to eq('config/backend/lambda/resources.yml')
+      expect(file.rootpath.exist?).to be_truthy
+      expect(file.rootpath.file?).to be_truthy
+    end
+
+    it 'deletes Node::Component, Node::ComponentDir, file and directory when Component destroyed' do
+      node_count = Node.count
+      target = nil
+      Dir.chdir(path) do
+        target = Project.first.components.create(name: 'backend')
+      end
+      nodes = Node.order(id: :desc)
+      dir = nodes.first
+      file = nodes.second
+      Component.last.destroy
+      expect(file.rootpath.exist?).to be_falsey
+      expect(dir.rootpath.exist?).to be_falsey
+
+      expect(Node.count).to eq(node_count)
+    end
+
     it 'updates the User AssetGroup yaml when a new User is created' do
       name = 'test'
-      expect(User.count).to eq(2)
-
       node = node_select('AssetGroup', 'users')
       diff = node_diff(node) { User.create(owner: Project.first, name: name) }
 

@@ -19,7 +19,7 @@ class Node < ApplicationRecord
 
   def yaml(reload: false)
     @yaml = nil if reload
-    @yaml ||= YAML.load_file(rootpath) || {}
+    @yaml ||= rootpath.file? ? (YAML.load_file(rootpath) || {}) : {}
   end
 
   def node_name

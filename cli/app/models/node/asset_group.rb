@@ -16,7 +16,9 @@ class Node::AssetGroup < Node
 
   # Override Node#set_realpath to create the file first, otherwise super will fail due to path not existing
   def set_realpath
-    FileUtils.touch(path) unless File.exist?(path)
+    return super if Node.source.eql?(:node) || persisted?
+
+    FileUtils.touch(path)
     super
   end
 

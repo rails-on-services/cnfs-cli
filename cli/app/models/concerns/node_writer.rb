@@ -56,10 +56,5 @@ module Concerns
       Cnfs.logger.debug("Writing to #{realpath} with\n#{yaml_to_write}")
       File.open(realpath, 'w') { |f| f.write(yaml_to_write) }
     end
-
-    def destroy_yaml
-      Cnfs.logger.debug("Deleting #{realpath}")
-      FileUtils.rm(realpath)
-    end
   end
 end

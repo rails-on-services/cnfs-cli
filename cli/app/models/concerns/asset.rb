@@ -5,6 +5,7 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
+      include Concerns::Parent
       include Concerns::Encryption
       # include Concerns::Interpolation
 
@@ -14,45 +15,7 @@ module Concerns
       scope :inheritable, -> { where(inherit: [true, nil]).order(:id) }
       scope :enabled, -> { where(enable: [true, nil]) }
 
-      store :config, coder: YAML
-
       delegate :key, to: :owner
-
-      validates :name, presence: true
-
-      # TODO:
-      # Put this code and methods into a concern and include in Component and Asset
-      # The type string will need to come from the Component and Asset Concern
-      after_create :create_node
-      after_update :update_node
-      after_destroy :destroy_node
-    end
-
-    def create_node
-      # Assets whose owner is Context are ephemeral so don't create/update a node
-      return unless owner.is_a? Component
-
-      # binding.pry
-
-      create_parent(type: 'Node::Asset', owner: self)
-
-      # From Component:
-      # create_parent(type: 'Node::ComponentDir', path: name, owner: self, parent: owner.parent)
-    end
-
-    def update_node
-      # Assets whose owner is Context are ephemeral so don't create/update a node
-      return unless owner.is_a? Component
-
-      # binding.pry
-
-      parent.update(owner: self)
-    end
-
-    def destroy_node
-      return unless owner.is_a? Component
-
-      parent.destroy
     end
 
     def tree_name
@@ -62,19 +25,16 @@ module Concerns
     end
 
     class_methods do
-      def node_callbacks
-        [
-          %i[create after create_node],
-          %i[update after update_node]
-        ]
-      end
-
       def update_names
-        reference_columns.group_by { |n| n.split('_').first }.select { |_k, v| v.size.eql?(2) }.keys
+        belongs_to_names
       end
 
       def update_nils
-        reference_columns.group_by { |n| n.split('_').first }.select { |_k, v| v.size.eql?(2) }.keys
+        belongs_to_names
+      end
+
+      def belongs_to_names
+        @belongs_to_names ||= reference_columns.group_by { |n| n.split('_').first }.select { |_k, v| v.size.eql?(2) }.keys
       end
 
       def reference_columns
