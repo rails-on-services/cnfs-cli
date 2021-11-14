@@ -8,23 +8,28 @@ module Rails
   class ServiceGenerator < Thor::Group
     include Thor::Actions
     include GeneratorConcern
+    # argument :repository
+    argument :service
     # argument :project_name
-    # argument :repository_name
-    argument :service_name
+    # argument :service_name
 
-    def service_gem
-      send("service_gem_#{behavior}")
+    def service
+      @repository = service.repository
+      send("service_#{behavior}")
     end
 
     no_commands do
-      def service_gem_revoke
-        inside('services') { empty_directory(service_name) }
+      def service_revoke
+        inside('services') { empty_directory(service.name) }
       end
 
       # Create the service
-      def service_gem_invoke
-        base_env = { repo_name: Cnfs.repository.name, repo_path: '../..', name: full_service_name }
-        with_context('service/generator.rb', 'services', full_service_name, base_env) do |env, exec_ary|
+      def service_invoke
+        # base_env = { repo_name: repository.name, repo_path: '../..', name: full_service_name }
+        # with_context('service/generator.rb', 'services', full_service_name, base_env) do |env, exec_ary|
+        base_env = { repo_name: repository.name, repo_path: '../..', name: service.name }
+        with_context('service/generator.rb', 'services', service.name, base_env) do |env, exec_ary|
+      binding.pry
           system(env, exec_ary.join(' '))
         end
       end
@@ -32,9 +37,9 @@ module Rails
 
     # Create a module and base classes for this service in the SDK and require it at load time
     def sdk_service_model
-      template('sdk_model.rb.erb', "#{sdk_lib_path}/models/#{service_name}.rb")
+      template('sdk_model.rb.erb', "#{sdk_lib_path}/models/#{service.name}.rb")
       append_file "#{sdk_lib_path}/models.rb", <<~RUBY
-        require_relative 'models/#{service_name}'
+        require_relative 'models/#{service.name}'
       RUBY
     end
 
@@ -48,17 +53,18 @@ module Rails
 
     private
 
-    def full_service_name
-      [namespace, service_name].compact.join('_')
-    end
+    # def full_service_name
+    #   [namespace, service.name].compact.join('_')
+    # end
 
     def sdk_lib_path
-      lib_path.join('sdk/lib', [namespace, 'sdk'].compact.join('_'))
+      # lib_path.join('sdk/lib', [namespace, 'sdk'].compact.join('_'))
+      lib_path.join('sdk/lib/sdk')
     end
 
-    def namespace
-      @namespace ||= Cnfs.repository.namespace
-    end
+    # def namespace
+    #   @namespace ||= nil # Cnfs.repository.namespace
+    # end
 
     def lib_path
       Pathname.new(destination_root).join('lib')

@@ -17,14 +17,14 @@ RSpec.describe User, type: :model do
     FileUtils.rm_f(project_file)
   end
 
-  it 'returns the correct count and value of Users', :aggregate_failures do
+  xit 'returns the correct count and value of Users', :aggregate_failures do
     File.open(project_file, 'w') { |f| f.write(user_joe_1.to_yaml) }
     Cnfs::Configuration.reload
     expect(subject.count).to eq(1)
     expect(subject.first.role).to eq('admin')
   end
 
-  it 'returns the correct count and value of Users', :aggregate_failures do
+  xit 'returns the correct count and value of Users', :aggregate_failures do
     File.open(project_file, 'w') { |f| f.write(user_joe_1.to_yaml) }
     File.open(user_file, 'w') { |f| f.write(user_joe_2.merge(user_dave_2).to_yaml) }
     Cnfs::Configuration.reload

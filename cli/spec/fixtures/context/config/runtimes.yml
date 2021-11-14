@@ -1,0 +1,12 @@
+# runtimes.yml
+---
+compose:
+  type: Runtime::Compose
+  inherit: true
+  config:
+    version: 3.2
+  dependencies:
+    - name: docker-compose
+
+native:
+  type: Runtime::Native

@@ -3,9 +3,10 @@
 class BlueprintsController < Thor
   include CommandHelper
 
-  cnfs_class_options :environment, :dry_run, :logging
+  # Activate common options
   class_before :initialize_project
-  class_before :ensure_valid_project
+  cnfs_class_options :dry_run, :logging
+  cnfs_class_options Project.first.command_options_list
 
   desc 'apply', 'Apply an infrastructure blueprint to create infrastructure'
   def apply(name)

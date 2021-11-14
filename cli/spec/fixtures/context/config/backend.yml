@@ -1,0 +1,5 @@
+---
+config:
+  domain: backend.${tld}
+child_name: environment
+default: production

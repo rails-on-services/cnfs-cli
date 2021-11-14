@@ -1,0 +1,8 @@
+---
+config:
+  tld: cnfs.io
+  happy: !binary |-
+    mh2lj9BMTD9gzALhnTdC9V6/hMVBnUhSa0PmWGoN/RxT
+child_name: stack
+default: backend
+name: context_spec

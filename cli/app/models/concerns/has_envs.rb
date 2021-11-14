@@ -8,6 +8,12 @@ module Concerns
       store :envs, coder: YAML
     end
 
+    class_methods do
+      def add_columns(t)
+        t.string :envs
+      end
+    end
+
     # TODO: Should this be what is called by the runtime generators?
     # TODO Are env_scopes needed?
     # env_scope is ignored; implemented to maintain compatibility with service model

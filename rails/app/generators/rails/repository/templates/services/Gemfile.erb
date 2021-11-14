@@ -1,35 +1,39 @@
 # frozen_string_literal: true
-# servcies/Gemfile
+# services/Gemfile<%= @extension %>
 # NOTE: The location of the gems on a path vs loaded from rubygems or other gem server
 # is coordinated with the Dockerfile
 
 source ENV['GEM_SERVER'] || 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.7.1'
+ruby '<%= repository.ruby_version %>'
 
-# Default environment is development
+env = ENV['GEM_ENV'] || ''
+env = ".#{env}" unless env.empty?
+
 # Sourced from <repo_root>/services/<service_root>/Gemfile so path names are relative to that directory
 # Gemfiles sourced:
 # services/service/Gemfile
 # services/Gemfile
-# services/Gemfile.env
-# services/service/Gemfile.env
+# services/service/Gemfile.upstream
+# services/Gemfile[env].upstream
+# services/Gemfile[env].local
 
-env = ENV['GEM_ENV'] ||= 'dev'
-["../Gemfile.#{env}", "Gemfile.#{env}"].each { |gemfile| instance_eval File.read(gemfile) }
+["Gemfile#{env}.upstream", "../Gemfile#{env}.upstream", "../Gemfile#{env}.local"].each do |gemfile|
+  instance_eval(File.read(gemfile)) if File.exist?(gemfile)
+end
 
 gem 'awesome_print'
 gem 'bootsnap', '>= 1.4.2', require: false
 gem 'data_migrate'
 gem 'json-schema'
-gem 'nokogiri', '1.10.10'
+gem 'nokogiri', '1.12.2'
 gem 'paranoia', '~> 2.2'
 gem 'pg', '>= 0.18', '< 2.0'
 gem 'pry-rails'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
-gem 'rails', '~> 6.0.3.4'
+gem 'rails', '~> 6.1.4'
 gem 'rufus-scheduler', '~> 3.6.0'
 
 

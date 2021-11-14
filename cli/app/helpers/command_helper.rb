@@ -6,18 +6,32 @@ module CommandHelper
 
   included do
     extend CnfsCommandHelper
-    add_cnfs_option :environment,       desc: 'Target environment',
-                                        aliases: '-e', type: :string, default: Cnfs.config.environment
-    add_cnfs_option :namespace,         desc: 'Target namespace',
-                                        aliases: '-n', type: :string, default: Cnfs.config.namespace
-    add_cnfs_option :repository,        desc: 'The repository in which to run the command',
-                                        aliases: '-r', type: :string, default: Cnfs.config.repository
-    add_cnfs_option :source_repository, desc: 'The source repository to link to',
-                                        aliases: '-s', type: :string, default: Cnfs.config.source_repository
+
+    attr_accessor :context
+
+    CnfsCli.configuration.command_options.each do |hash|
+      add_cnfs_option(hash[:name], hash.except(:name))
+    end if CnfsCli.config.load_nodes
 
     add_cnfs_option :tags,              desc: 'Filter by tags',
-                                        aliases: '-t', type: :array
+                                        aliases: '--tags', type: :array
     add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
                                         aliases: '--ff', type: :boolean
+
+    private
+
+    # Override base controller and just provide the context to exec controllers
+    def controller_args
+      { context: context }
+    end
+
+    # Configure the context with cli options and create the component tree
+    def context
+      @context ||= Context.create(root: project, options: options, args: args)
+    end
+
+    def project
+      @project ||= Project.first
+    end
   end
 end

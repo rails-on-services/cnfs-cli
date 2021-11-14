@@ -1,0 +1,25 @@
+---
+config:
+  paths:
+    config: config
+    data: data
+    lib: lib
+    src: src
+    tmp: tmp
+  logging: warn
+  x_components:
+  - name: stack
+    default: backend
+    aliases: s
+  - name: environment
+    default: development
+    aliases: e
+    env: env
+  - name: target
+    default: cluster
+    aliases: t
+  - name: namespace
+    default: hsbc
+    aliases: n
+    env: ns
+type: Project

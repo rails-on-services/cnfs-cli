@@ -1,0 +1,6 @@
+---
+config:
+  url: git@github.com:rails-on-services/ros.git
+dockerfile: {}
+build: {}
+type: Rails::Repository

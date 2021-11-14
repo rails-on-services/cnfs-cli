@@ -1,0 +1,25 @@
+---
+logging: warn
+dev: true
+components:
+- name: stack
+  aliases: "-s"
+  color: green
+- name: environment
+  aliases: "-e"
+  env: env
+  color: yellow
+- name: target
+  aliases: "-t"
+  env: tar
+  color: blue
+- name: namespace
+  aliases: "-n"
+  env: ns
+  color: green
+paths:
+  config: config
+  data: data
+  lib: lib
+  src: src
+  tmp: tmp

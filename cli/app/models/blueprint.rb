@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+# A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
 class Blueprint < ApplicationRecord
+  include Concerns::Asset
   # include Concerns::HasEnv
   # include Concerns::Taggable
   belongs_to :builder
@@ -11,8 +13,8 @@ class Blueprint < ApplicationRecord
   delegate :project, to: :environment
   delegate :paths, :path, to: :project
 
-  parse_sources :project, :user
-  parse_scopes :environment
+  # parse_sources :project, :user
+  # parse_scopes :environment
 
   # List of resource classes that are managed by this blueprint
   def resource_classes
@@ -52,26 +54,22 @@ class Blueprint < ApplicationRecord
     end
 
     def defined_files
-      # binding.pry
-      CnfsCli.plugins.values.append(CnfsCli).each_with_object([]) do |p, ary|
-        path = p.plugin_lib.gem_root.join('app/models/blueprint')
+      # CnfsCli.plugins.values.map(&:to_s).sort.each_with_object([]) do |p, ary|
+      CnfsCli.plugins.values.each_with_object([]) do |p, ary|
+        path = p.gem_root.join('app/models/blueprint')
         next unless path.exist?
 
         Dir.chdir(path) { ary.concat(Dir['**/*.rb']) }
       end
     end
 
-    def create_table(schema)
-      schema.create_table :blueprints, force: true do |t|
-        t.references :builder
-        t.references :environment
-        t.references :provider
-        t.string :config
-        # t.string :envs
-        t.string :name
-        # t.string :tags
-        t.string :type
-      end
+    def add_columns(t)
+      t.string :environment_name
+      t.references :environment
+      t.string :provider_name
+      t.references :provider
+      t.string :provisioner_name
+      t.references :provisioner
     end
   end
 end

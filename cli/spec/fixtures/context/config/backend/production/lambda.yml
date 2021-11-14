@@ -1,0 +1,5 @@
+---
+config:
+  host: lambda.${domain}
+child_name:
+default:

@@ -1,16 +1,26 @@
 # frozen_string_literal: true
 
-module Cnfs
+module CnfsCli
   module Plugins
     class <%= name.classify %>
       class << self
         def initialize_<%= name %>
           require 'cnfs/cli/<%= name %>'
-          plugin_lib.initialize
+          Cnfs.logger.info "[<%= name.classify %>] Initializing plugin from #{gem_root}"
         end
 
-        def plugin_lib
-          Cnfs::Cli::<%= name.classify %>
+        def customize
+          src = gem_root.join('app/generators/<%= name %>')
+          dest = Cnfs.paths.lib.join('generators/<%= name %>')
+          FileUtils.rm_rf(dest)
+          FileUtils.mkdir_p(dest)
+          %w[service lib].each do |node|
+            FileUtils.cp_r(src.join(node), dest)
+          end
+        end
+
+        def gem_root
+          "<%= '#{CnfsCli::' + name.classify %>.gem_root}"
         end
       end
     end

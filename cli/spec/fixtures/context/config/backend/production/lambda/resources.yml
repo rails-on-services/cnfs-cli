@@ -1,0 +1,16 @@
+---
+res1:
+  config:
+    family: r2
+    size: awesome
+  provider_name: localstack
+  runtime_name: compose
+  envs: {}
+  tags:
+  type: Aws::Resource::EC2::Instance
+res2:
+  runtime_name: composer
+  type: Resource
+  config:
+    family: ah23
+    size: cool!

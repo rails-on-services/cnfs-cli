@@ -1,0 +1,10 @@
+---
+bob:
+  role: owner
+nancy:
+  role: admin
+  abstract: true
+joe:
+  role: user
+  full_name: Joe Roach
+  abstract: true

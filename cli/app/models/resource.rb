@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
 class Resource < ApplicationRecord
+  include Concerns::Asset
   include Concerns::HasEnvs
   include Concerns::Taggable
 
-  belongs_to :blueprint
-  belongs_to :location
+  belongs_to :provider, optional: true
+  belongs_to :provisioner, optional: true
+  belongs_to :runtime, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
-
-  delegate :builder, :environment, :provider, :runtime, to: :blueprint
-  delegate :services, to: :environment
-
-  parse_sources :project, :user
-  parse_scopes :environment
 
   # NOTE: used in TF templates
   def module_name
     resource_name.underscore
+  end
+
+  def except_json
+    super + %w[provider_id provisioner_id runtime_id]
   end
 
   # The fields that the builder should output upon creating the resource
@@ -30,7 +30,8 @@ class Resource < ApplicationRecord
   end
 
   def as_hcl
-    attributes.except('blueprint_id', 'config', 'envs', 'id', 'type').merge(config_as_hcl)
+    # attributes.except('blueprint_id', 'config', 'envs', 'id', 'type', 'owner_id', 'owner_type').merge(config_as_hcl)
+    as_json.except(%w[provisioner_id provider_id runtime_id config envs type]).merge(config_as_hcl)
   end
 
   def config_as_hcl
@@ -39,40 +40,25 @@ class Resource < ApplicationRecord
     end
   end
 
-  def as_save
-    attributes.except('blueprint_id', 'id', 'name').merge(blueprint: blueprint&.name)
-  end
-
-  # From Resource::Aws::RDS to RDS
+  # From Aws::Resource::RDS to RDS
   def service_name
     self.class.name.demodulize
   end
 
-  def save_path
-    Cnfs.project.paths.config.join('environments', environment.name, "#{self.class.table_name}.yml")
-  end
-
   class << self
-    def parse
-      # key: 'environments/staging/resources.yml'
-      super do |key, output, _opts|
-        env = key.split('/')[1]
-        output.each do |_key, value|
-          value['blueprint'] = "#{env}_#{value['blueprint']}"
-        end
-      end
+    def update_nils
+      %w[provider provisioner]
     end
 
-    def create_table(schema)
-      schema.create_table :resources, force: true do |t|
-        t.references :blueprint
-        t.references :location
-        t.string :config
-        t.string :envs
-        t.string :name
-        t.string :tags
-        t.string :type
-      end
+    def add_columns(t)
+      t.string :provider_name
+      t.references :provider
+      t.string :provisioner_name
+      t.references :provisioner
+      t.string :runtime_name
+      t.references :runtime
+      # t.references :blueprint
+      super
     end
   end
 end

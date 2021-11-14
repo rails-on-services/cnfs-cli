@@ -6,11 +6,21 @@ module CnfsCli
       class << self
         def initialize_angular
           require 'cnfs_cli/angular'
-          plugin_lib.initialize
+          Cnfs.logger.info "[Angular] Initializing from #{gem_root}"
         end
 
-        def plugin_lib
-          CnfsCli::Angular
+        def gem_root
+          CnfsCli::Angular.gem_root
+        end
+
+        def customize
+          src = gem_root.join('app/generators/angular')
+          dest = Cnfs.paths.lib.join('generators/angualr')
+          FileUtils.rm_rf(dest)
+          FileUtils.mkdir_p(dest)
+          %w[service lib].each do |node|
+            FileUtils.cp_r(src.join(node), dest)
+          end
         end
       end
     end

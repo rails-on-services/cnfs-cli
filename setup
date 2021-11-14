@@ -10,6 +10,7 @@ def each_dir
   Dir['*/'].sort.each do |dir|
     dir = dir.delete_suffix('/')
     Dir.chdir(dir) do
+      next if dir.eql?('packer')
       next unless (gemspec = Dir['*.gemspec'].shift)
       if (gemfile = Dir['*.gem'].shift)
         FileUtils.rm(gemfile)
@@ -25,6 +26,6 @@ each_dir do
   File.open('Gemfile', 'w') { |f| f.write("source ENV['GEM_SERVER'] || 'https://rubygems.org'\ngemspec") }
   system('bundle install')
   FileUtils.rm('Gemfile')
-  FileUtils.rm('Gemfile.lock')
+  FileUtils.rm_rf('Gemfile.lock')
   FileUtils.rm_rf('.bundle')
 end

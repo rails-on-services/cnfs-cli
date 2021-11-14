@@ -3,11 +3,16 @@
 class ApplicationRecord < Cnfs::ApplicationRecord
   self.abstract_class = true
 
-  store :config, coder: YAML
+  # by default rails does not serialize the type field
+  def as_json
+    super.merge(type_json).except(*except_json).compact
+  end
 
-  class << self
-    def permitted_scopes
-      @permitted_scopes ||= %i[config environments environment namespace].to_set
-    end
+  def type_json
+    has_attribute?(:type) ? { 'type' => type } : {}
+  end
+
+  def except_json
+    %w[id name owner_type owner_id]
   end
 end

@@ -1,0 +1,23 @@
+---
+aws_east:
+  config:
+    region: us-east-1
+  type: Aws::Provider
+aws_west:
+  config:
+    region: us-west-1
+  type: Aws::Provider
+localstack:
+  config:
+    access_key_id: !binary |-
+      WuGl/2ajtdGVYDMKNjLrOhvtDsDMIqhpZiFfB7RX6vwOzQkkgIAniVVULjW4UzbsnhutkoxiQA==
+    account_id: 123456789012
+    region: localstack
+    secret_access_key: !binary |-
+      dVO3c4SGH7qt2g5zukR2zCowQ5Mt+aieD7rhH8aEXf13LuX9fDZprf2uXVmPfWGiB/Bj3bto7g==
+    s3:
+      endpoint: http://localstack:4572
+      force_path_style: true
+    sqs:
+      endpoint: http://localstack:4576
+  type: Aws::Provider

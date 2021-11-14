@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe '`cnfs console` command', type: :cli do
-  it 'executes `cnfs help console` command successfully' do
+  xit 'executes `cnfs help console` command successfully' do
     output = `cnfs help console`
     expected_output = <<~OUT
       Usage:

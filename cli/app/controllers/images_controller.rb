@@ -4,7 +4,9 @@ class ImagesController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :environment, :namespace, :dry_run, :logging
+  class_before :initialize_project
+  cnfs_class_options :dry_run, :logging
+  cnfs_class_options CnfsCli.configuration.command_options_list
 
   desc 'pull [IMAGES]', 'Pull one or more or all images'
   def pull(*services)
@@ -19,8 +21,6 @@ class ImagesController < Thor
   # so that each image and within an environment/namespace _could_ have its own naming pattern
   # option :all,
   #   aliases: '-a', type: :boolean
-  before :initialize_project
-  before :prepare_runtime
   def build(*services)
     execute(services: services)
   end

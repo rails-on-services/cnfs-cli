@@ -12,6 +12,8 @@ class ServicesController < Thor
                              aliases: '-b', type: :boolean
   add_cnfs_option :console,  desc: "Connect to service's console",
                              aliases: '-c', type: :string
+  add_cnfs_option :generate, desc: "Force generate manifest files ",
+                             aliases: '-g', type: :string
   add_cnfs_option :profiles, desc: 'Service profiles',
                              aliases: '-p', type: :array
   add_cnfs_option :profile,  desc: 'Service profile',
@@ -20,30 +22,22 @@ class ServicesController < Thor
                              aliases: '--sh', type: :string
 
   # Activate common options
-  cnfs_class_options :dry_run, :logging
-  class_before :initialize_project
+  cnfs_class_options :dry_run, :logging, :generate, :quiet
+  cnfs_class_options CnfsCli.configuration.command_options_list
 
-  register Services::NewController, 'new', 'new SUBCOMMAND [options]',
+  register Services::CreateController, 'create', 'create SUBCOMMAND [options]',
            'Create a new service in the default (or specified) repository'
-  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service to the project configuration'
+  register Services::AddController, 'add', 'add TYPE NAME', 'Add a service configuration to the project'
 
   desc 'list', 'Lists services configured in the project'
-  option :environment, desc: 'Target environment',
-                       aliases: '-e', type: :string
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string
   map %w[ls] => :list
   def list
-    puts project.services.pluck(:name).join("\n")
+    puts context.services.pluck(:name).join("\n")
   end
 
   # TODO: Implement remove
   desc 'remove NAME', 'Remove a service from the project configuration (short-cut: rm)'
-  option :environment, desc: 'Target environment',
-                       aliases: '-e', type: :string
-  option :namespace, desc: 'Target namespace',
-                     aliases: '-n', type: :string
-  cnfs_options :repository
+  # cnfs_options :repository
   map %w[rm] => :remove
   def remove(_name)
     return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?")
@@ -55,7 +49,6 @@ class ServicesController < Thor
   end
 
   desc 'show SERVICE', 'Display the service manifest'
-  cnfs_options :environment, :namespace
   option :modifier, desc: "A suffix applied to service name, e.g. '.env'",
                     aliases: '-m', type: :string
   def show(*services)
@@ -63,7 +56,6 @@ class ServicesController < Thor
   end
 
   desc 'ps', 'List running services'
-  cnfs_options :environment, :namespace
   option :format, desc: 'Format output',
                   type: :string, aliases: '-f'
   option :status, desc: 'created, restarting, running, removing, paused, exited or dead',
@@ -75,7 +67,6 @@ class ServicesController < Thor
 
   # Service Admin
   desc 'start [SERVICES]', 'Start one or more services (short-cut: s)'
-  cnfs_options :environment, :namespace
   cnfs_options :attach, :build, :console, :profiles, :sh
   # option :clean, type: :boolean, aliases: '--clean', desc: 'Seed the database before executing command'
   option :foreground, type: :boolean, aliases: '-f', desc: 'Run in foreground (default is daemon)'
@@ -83,11 +74,11 @@ class ServicesController < Thor
   # TODO: Take a profile array also. The config should define a default profile
   map %w[s] => :start
   def start(*services)
+    # binding.pry
     execute(services: services)
   end
 
   desc 'restart [SERVICES]', 'Stop and start one or more running services'
-  cnfs_options :environment, :namespace
   cnfs_options :tags, :profiles
   cnfs_options :build
   cnfs_options :attach, :console, :sh
@@ -104,14 +95,12 @@ class ServicesController < Thor
   end
 
   desc 'stop [SERVICES]', 'Stop one or more running services'
-  cnfs_options :environment, :namespace
   cnfs_options :profiles
   def stop(*services)
     execute(services: services)
   end
 
   desc 'terminate [SERVICES]', 'Terminate one or more running services'
-  cnfs_options :environment, :namespace
   cnfs_options :tags, :profiles
   def terminate(*services)
     execute(services: services)
@@ -125,7 +114,6 @@ class ServicesController < Thor
 
   ctrl-f to detach; ctrl-c to stop/kill the service
   DESC
-  cnfs_options :environment, :namespace
   cnfs_options :tags, :profile, :build
   map %w[a] => :attach
   def attach(service)
@@ -140,7 +128,6 @@ class ServicesController < Thor
   # end
 
   desc 'console SERVICE', 'Start a console on a running service (short-cut: c)'
-  cnfs_options :environment, :namespace
   cnfs_options :profile
   map %w[c] => :console
   def console(service)
@@ -156,7 +143,6 @@ class ServicesController < Thor
 
   To copy to a service: cnfs service copy local/path/to/file service_name:path/to/file
   DESC
-  cnfs_options :environment, :namespace
   cnfs_options :profile
   map %w[cp] => :copy
   def copy(src, dest = nil)
@@ -165,14 +151,12 @@ class ServicesController < Thor
   end
 
   desc 'exec SERVICE COMMAND', 'Execute a command on a running service'
-  cnfs_options :environment, :namespace
   cnfs_options :profile
   def exec(service, *command)
     execute(service: service, command: command)
   end
 
   desc 'logs SERVICE', 'Display the logs of a running service'
-  cnfs_options :environment, :namespace
   cnfs_options :profile
   option :tail, desc: 'Continuous logging',
                 aliases: '-f', type: :boolean
@@ -181,15 +165,13 @@ class ServicesController < Thor
   end
 
   desc 'sh SERVICE', 'Execute an interactive shell on a running service'
-  cnfs_options :environment, :namespace
   # NOTE: shell is a reserved word in Thor so it can't be used
   def sh(service)
-    execute({ service: service }, :shell)
+    execute(service: service, controller: :shell)
   end
 
   # Commands ot refactor
   desc 'publish SERVICE', 'Publish API documentation to Postman'
-  cnfs_options :environment, :namespace
   option :force, desc: 'Force generation of new documentation',
                  aliases: '-f', type: :boolean
   # TODO: refactor
@@ -207,10 +189,17 @@ class ServicesController < Thor
 
   private
 
-  def execute(xargs = {}, command_name = nil, location = 3)
-    super_execute(xargs, command_name, location) do
+  # def execute(xargs = {}, command_name = nil, location = 3)
+    # super_execute(xargs, command_name, location) do
+  def execute(**kwargs)
+    kwargs[:location] ||= 3
+    super_execute(**kwargs) do
       if options.build
         remove_option(:build)
+        # TODO: This should probably use context.image_runtime.build rather than invoking the build command
+        # OR if it invokes the command as like now the API should be refactored to be more explicit and
+        # supply the context, eg
+        # command_controller(:images).build(context: context)
         cmd(:images).build(args.services)
       end
     end

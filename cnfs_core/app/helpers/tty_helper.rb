@@ -15,8 +15,8 @@ module TtyHelper
   # @api public
   def command(**options)
     options.merge!(uuid: false)
-    options.merge!(dry_run: true) if Cnfs.project.options.key?(:dry_run)
-    # options.merge!(verbose: true) if project.options.verbose
+    options.merge!(dry_run: true) if options.key?(:dry_run)
+    # options.merge!(verbose: true) if options.verbose
     require 'tty-command'
     TTY::Command.new(**options)
   end

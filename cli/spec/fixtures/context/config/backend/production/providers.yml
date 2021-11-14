@@ -1,0 +1,5 @@
+---
+aws_east:
+  enable: false
+  config:
+    region: east
