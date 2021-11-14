@@ -16,22 +16,22 @@ module Concerns
 
     # Assets whose owner is Context are ephemeral so don't create/update a node
     def create_node
-      create_parent(type: parent_type, owner: self) if has_node?
+      create_parent(type: parent_type, owner: self) if node?
     end
 
     def update_node
-      parent.update(owner: self) if has_node?
+      parent.update(owner: self) if node?
     end
 
     def destroy_node
-      parent.destroy if has_node?
+      parent.destroy if node?
     end
 
     def parent_type
       is_a?(Component) ? 'Node::Component' : 'Node::Asset'
     end
 
-    def has_node?
+    def node?
       is_a?(Component) || owner.is_a?(Component)
     end
 
