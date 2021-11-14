@@ -5,7 +5,7 @@
 RSpec.describe 'Cnfs::Commands::Console' do
   xit 'executes `console` command successfully' do
     output = StringIO.new
-    options = {}
+    _options = {}
     # command = Cnfs::Commands::Console.new(options)
 
     command.execute(output: output)

@@ -36,7 +36,7 @@ module CnfsCli
       @config = @configuration.config
       Cnfs.configuration = Cnfs::Config.new(name: 'cnfs-cli', file_name: 'cnfs-cli.yml', cwd: path)
       Cnfs.config = Cnfs.configuration.config
-      config.load_nodes = false if config.load_nodes and not config.project
+      config.load_nodes = false if config.load_nodes && !config.project
     end
 
     # Proces the configuration
@@ -75,8 +75,8 @@ module CnfsCli
         klass = model.classify.constantize
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
-    rescue ActiveRecord::SubclassNotFound => err
-      Cnfs.logger.warn("#{err.message.split('.').first}")
+    rescue ActiveRecord::SubclassNotFound => e
+      Cnfs.logger.warn(e.message.split('.').first.to_s)
       raise Cnfs::Error, ''
     end
 
@@ -118,7 +118,6 @@ module CnfsCli
       Cnfs.loader.reload
       Cnfs.data_store.reload
     end
-
 
     # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
     # TODO: plugin and repository load paths should work the same way and follow same class structures

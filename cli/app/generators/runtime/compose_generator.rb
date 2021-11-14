@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Runtime::ComposeGenerator < RuntimeGenerator
-
   # private
   def generate_nginx_conf
     # binding.pry
@@ -23,9 +22,10 @@ class Runtime::ComposeGenerator < RuntimeGenerator
 
     space_count = 6
     service.ports.each_with_object([]) do |entry, ary|
-      if entry.is_a?(Integer) || entry.is_a?(String)
+      case entry
+      when Integer, String
         ary.append("\n#{' ' * space_count}- #{entry}")
-      elsif entry.is_a? Hash
+      when Hash
         ary.append("\n#{' ' * space_count}- #{entry[:port]}")
       end
     end.join

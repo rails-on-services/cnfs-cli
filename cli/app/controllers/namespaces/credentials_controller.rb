@@ -80,8 +80,8 @@ module Namespaces
 
     def to_cli
       "[#{identifier}]\n" \
-      "#{part_name}_access_key_id=#{credential['access_key_id']}\n" \
-      "#{part_name}_secret_access_key=#{secret}"
+        "#{part_name}_access_key_id=#{credential['access_key_id']}\n" \
+        "#{part_name}_secret_access_key=#{secret}"
     end
 
     def to_sdk

@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe ProjectPath, type: :model do
   subject { project.project_path }
   let(:project) { Cnfs.project }
@@ -14,7 +15,8 @@ RSpec.describe ProjectPath, type: :model do
   end
 
   xit 'returns the correct absolute path to manifests' do
-    expect(subject.path(to: :manifests, absolute: true).to_s).to eq("#{cwd}/tmp/manifests/#{environment_name}/#{namespace_name}")
+    expect(subject.path(to: :manifests,
+                        absolute: true).to_s).to eq("#{cwd}/tmp/manifests/#{environment_name}/#{namespace_name}")
   end
 
   xit 'returns the correct relative path to the current repository' do
@@ -41,3 +43,4 @@ RSpec.describe ProjectPath, type: :model do
     expect(subject.path(from: 'four/part/custom/dir', to: :repository).to_s).to eq('../../../../src/ros')
   end
 end
+# rubocop:enable Metrics/BlockLength

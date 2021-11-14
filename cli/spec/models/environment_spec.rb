@@ -32,4 +32,3 @@ RSpec.describe Environment, type: :model do
     expect(subject.find_by(name: :joe).role).to eq('user')
   end
 end
-

@@ -72,11 +72,11 @@ module Blueprints
     def blueprint_class_name
       @blueprint_class_name ||= begin
         # 1. Select the target platform from the avialable cloud providers and local
-        platforms = Blueprint::available_platforms
+        platforms = Blueprint.available_platforms
         platform = platforms.size.eql?(1) ? platforms.first : prompt.enum_select('Target platform:', platforms)
 
         # 2. Select the type from the chosen platform's available types
-        types = Blueprint::available_types(platform)
+        types = Blueprint.available_types(platform)
         type = types.size.eql?(1) ? types.first : prompt.enum_select('Blueprint:', types)
 
         "blueprint/#{platform}/#{type}".classify

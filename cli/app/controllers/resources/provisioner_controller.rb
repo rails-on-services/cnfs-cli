@@ -27,10 +27,10 @@ module Resources
     def apply
       # run_in_path(:init, :apply) do |result|
       # end
-        # binding.pry
-        # context.runtime.init.run! if context.options.init
-        # # system_cmd('rm -f .terraform/terraform.tfstate')
-        # context.runtime.apply.run!
+      # binding.pry
+      # context.runtime.init.run! if context.options.init
+      # # system_cmd('rm -f .terraform/terraform.tfstate')
+      # context.runtime.apply.run!
       Dir.chdir(builder.destination_path) do
         result = command.run!('terraform output -json > output.json')
       end

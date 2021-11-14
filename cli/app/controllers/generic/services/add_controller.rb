@@ -42,6 +42,7 @@ module Generic
       end
 
       private
+
       def generate(project, name, type)
         services_file = [options.environment, options.namespace, 'services.yml'].compact.join('/')
         generator = Generic::ServiceGenerator.new([project, name, type], options.merge(services_file: services_file))

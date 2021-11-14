@@ -34,7 +34,9 @@ module Concerns
       end
 
       def belongs_to_names
-        @belongs_to_names ||= reference_columns.group_by { |n| n.split('_').first }.select { |_k, v| v.size.eql?(2) }.keys
+        @belongs_to_names ||= reference_columns.group_by do |n|
+                                n.split('_').first
+                              end .select { |_k, v| v.size.eql?(2) }.keys
       end
 
       def reference_columns

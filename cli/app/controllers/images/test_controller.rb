@@ -35,7 +35,7 @@ module App::Backend
       # TODO: Each service has a type
       # TODO: Services need to be accessible from the backend object
       services.each do |service|
-        service_config = config.platform.application.backend.rails.settings.units.dig(service)
+        service_config = config.platform.application.backend.rails.settings.units[service]
         test_commands = config.platform.application.backend.rails.config.dig(:commands, :test)
         cmd = ['docker-compose']
         cmd << (running_services.include?(service) ? 'exec' : 'run --rm')

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'active_support/inflector'
 
 module CnfsCli
@@ -56,13 +57,12 @@ module CnfsCli
                      desc: opt[:desc] || "Specify #{opt[:name]}",
                      aliases: opt[:aliases],
                      type: :string,
-                     default: opt[:default]
-        })
+                     default: opt[:default] })
       end
     end
 
     def command_options_list
-      @command_options_list ||= config.components.map{ |comp| comp[:name].to_sym }
+      @command_options_list ||= config.components.map { |comp| comp[:name].to_sym }
     end
 
     def yaml

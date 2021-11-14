@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ProjectView < ApplicationView
+  # rubocop:disable Metrics/AbcSize
   def create
     raise Cnfs::Error, 'Create can only be called on new instances' if model.persisted?
 
@@ -15,6 +16,7 @@ class ProjectView < ApplicationView
     @all_selected ||= []
   end
 
+  # rubocop:disable Metrics/MethodLength
   def load_components(obj, selected, title)
     available = components(selected)
     c_name = available.size.eql?(1) ? available.pop : select('Component type', available, filter: true)
@@ -29,6 +31,8 @@ class ProjectView < ApplicationView
     end
     selected
   end
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/AbcSize
 
   def edit
     # model.name = view_select('name', %w[data this that], 'this')
@@ -44,7 +48,7 @@ class ProjectView < ApplicationView
 
   private
 
-	def components(selected)
+  def components(selected)
     %w[environment namespace stack target] - selected
     # %w[environment namespace stack target].each_with_object([]) do |key, ary|
     #   hash = { name: key }
@@ -53,19 +57,19 @@ class ProjectView < ApplicationView
     # end
   end
 
-	def environment
+  def environment
     %w[development test staging production]
   end
 
-	def namespace
+  def namespace
     %w[default other]
   end
 
-	def stack
+  def stack
     %w[backend frontend pipeline warehouse]
   end
 
-	def target
+  def target
     %w[cluster instance local]
   end
 end

@@ -11,9 +11,7 @@ class EnvironmentGenerator < Thor::Group
 
   def generate_project_files
     project_file_path = Cnfs.paths.config.join(env_path)
-    if behavior.eql?(:revoke)
-      return empty_directory(project_file_path)
-    end
+    return empty_directory(project_file_path) if behavior.eql?(:revoke)
 
     %w[environment.yml resources.yml].each do |file|
       template("#{file}.erb", project_file_path.join(file))

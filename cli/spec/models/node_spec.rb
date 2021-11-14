@@ -58,7 +58,7 @@ RSpec.describe 'Node' do
 
     it 'creates yaml when a Component is created' do
       Dir.chdir(path) do
-        expect { Project.first.components.create(name: 'lambda' ) }.to change { Node.count }.by(2)
+        expect { Project.first.components.create(name: 'lambda') }.to change { Node.count }.by(2)
       end
       nodes = Node.order(id: :desc)
 
@@ -89,7 +89,7 @@ RSpec.describe 'Node' do
       Dir.chdir(path) do
         target = Project.first.components.create(name: 'backend')
         lamb = target.components.create(name: 'lambda')
-        expect { lamb.resources.create(name: 'ec2' ) }.to change { Node.count }.by(2)
+        expect { lamb.resources.create(name: 'ec2') }.to change { Node.count }.by(2)
       end
       file = Node.last
       expect(file.path).to eq('config/backend/lambda/resources.yml')

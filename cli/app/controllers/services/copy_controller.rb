@@ -5,7 +5,7 @@ module Services
     include ServicesHelper
     attr_accessor :service
 
-    alias_method :super_before_execute, :before_execute
+    alias super_before_execute before_execute
 
     def before_execute
       src = args.src
@@ -23,7 +23,7 @@ module Services
 
     # TODO: This works, but it's a mess and it creates directories on local project even if file copy fails
     def execute
-      if args.dest.class.name.eql?('Pathname')
+      if args.dest.instance_of?(Pathname)
         n = args.dest.to_s.delete_prefix(project.write_path(:services).to_s).delete_prefix('/')
         w = project.write_path(:services).join(service.name)
         w.join(Pathname.new(n).split.first).mkpath
@@ -34,11 +34,10 @@ module Services
       result = command.run!(*cmd)
       raise Cnfs::Error, result.err if result.failure?
 
-# Signal.trap('INT') do
-#   warn("\n#{caller.join("\n")}: interrupted")
-#   # exit 1
-# end
-
+      # Signal.trap('INT') do
+      #   warn("\n#{caller.join("\n")}: interrupted")
+      #   # exit 1
+      # end
     end
   end
 end

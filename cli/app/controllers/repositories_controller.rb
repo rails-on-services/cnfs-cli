@@ -19,7 +19,7 @@ class RepositoriesController < Thor
   desc 'add [NAME | URL [NAME]]', 'Add a repository configuration to the project'
   cnfs_method_options(:add)
   option :init, desc: 'Initialize repository',
-                       aliases: '-i', type: :boolean
+                aliases: '-i', type: :boolean
   def add(p1, p2 = nil)
     repo = Repository.add(p1, p2)
     raise Cnfs::Error, repo.errors.full_messages.join("\n") unless repo.save
@@ -58,7 +58,7 @@ class RepositoriesController < Thor
 
     Cnfs.project.paths.src.mkpath # Ensure the project's repositories directory exists
     Dir.chdir(Cnfs.project.paths.src) do
-      %x(#{repo.clone_cmd})
+      `#{repo.clone_cmd}`
       repo.update(type: 'Repository::Rails')
       if repo.full_path.join('.cnfs').exist?
         config = YAML.load_file(repo.full_path.join('.cnfs'))

@@ -7,7 +7,8 @@ require_relative 'cnfs_plugger'
 module Cnfs
   extend LittlePlugger
   extend CnfsPlugger
-  module Plugins; end # Required by LittlePlugger
+  # Required by LittlePlugger
+  module Plugins; end
 
   class Error < StandardError; end
 end
