@@ -38,7 +38,7 @@ class Provisioner::Terraform < Provisioner
   end
 
   def template_contents
-    ERB.new(IO.read(template_file), trim_mode: '-').result(blueprint._binding)
+    ERB.new(File.read(template_file), trim_mode: '-').result(blueprint._binding)
   end
 
   def template_file

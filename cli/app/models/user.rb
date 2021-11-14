@@ -4,10 +4,6 @@ class User < ApplicationRecord
   include Concerns::Asset
   include Concerns::Taggable
 
-  def as_save
-    attributes.except('id')
-  end
-
   class << self
     def add_columns(t)
       t.string :role

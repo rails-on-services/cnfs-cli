@@ -42,7 +42,7 @@ class Provisioner < ApplicationRecord
 
         dep = dependency[:url].cnfs_sub
         spinner.run do |_spinner|
-          if dependency[:type] && dependency[:type].eql?('repo')
+          if dependency[:type].eql?('repo')
             command.run(command_env, "git clone #{dep}", command_options)
           else
             TTY::File.download_file(dep)

@@ -7,28 +7,30 @@ class CommandQueue
   delegate :each, :map, :shfit, :unshift, :first, :last, :pop, :size, to: :queue
 
   def initialize(**options)
+    assign_attributes(options)
     @queue = []
     @results = []
-    self.on_failure ||= :raise_it
-    assign_attributes(options)
+    @on_failure ||= :raise
   end
 
   def run!
     run(cmd: :run!)
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity
   def run(cmd: :run)
     queue.each do |command|
       command.send(cmd)
       # binding.pry
-      if command.exit_error || command.result.failure?
-        msg = command.exit_error&.to_s || command.result.err
-        raise Cnfs::Error, msg if on_failure.raise?
+      next unless command.exit_error || command.result.failure?
 
-        return false if on_failure.halt?
-      end
+      msg = command.exit_error&.to_s || command.result.err
+      raise Cnfs::Error, msg if on_failure.raise?
+
+      return false if on_failure.halt?
     end
   end
+  # rubocop:enable Metrics/CyclomaticComplexity
 
   def append(*commands)
     commands.each do |command|
@@ -39,37 +41,38 @@ class CommandQueue
   end
 
   def on_failure=(value)
+    binding.pry
     @on_failure ||= ActiveSupport::StringInquirer.new(value.to_s)
   end
 
-#   def execute
-#     current_command = queue.shift
-#     result = command.run!(*current_command)
-#     results.append(result)
-#     true
-#   end
-#
-#   def failure?
-#     failures.any?
-#   end
-#
-#   def success?
-#     failures.empty?
-#   end
-#
-#   def failure_messages
-#     failures.map(&:err)
-#   end
-#
-#   def failures
-#     results.select(&:failure?)
-#   end
-#
-#   def successes
-#     results.select(&:success?)
-#   end
-#
-#   def runtime
-#     results.map(&:runtime).reduce(:+)
-#   end
+  #   def execute
+  #     current_command = queue.shift
+  #     result = command.run!(*current_command)
+  #     results.append(result)
+  #     true
+  #   end
+  #
+  #   def failure?
+  #     failures.any?
+  #   end
+  #
+  #   def success?
+  #     failures.empty?
+  #   end
+  #
+  #   def failure_messages
+  #     failures.map(&:err)
+  #   end
+  #
+  #   def failures
+  #     results.select(&:failure?)
+  #   end
+  #
+  #   def successes
+  #     results.select(&:success?)
+  #   end
+  #
+  #   def runtime
+  #     results.map(&:runtime).reduce(:+)
+  #   end
 end

@@ -13,8 +13,9 @@ class Node::AssetDir < Node
 
   after_create :make_path, if: proc { Node.source.eql?(:asset) }
 
+  # TODO: Is necessary?
   def make_path
-    binding.pry
+    # binding.pry
     rootpath.mkdir
   end
 
@@ -22,9 +23,9 @@ class Node::AssetDir < Node
   def destroy_yaml(asset)
     Cnfs.logger.debug("Deleting #{realpath}")
     FileUtils.rm(asset.realpath)
-    if rootpath.children.size.zero?
-      rootpath.rmtree
-      destroy
-    end
+    return if rootpath.children.size.positive?
+
+    rootpath.rmtree
+    destroy
   end
 end

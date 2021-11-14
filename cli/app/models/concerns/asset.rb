@@ -31,6 +31,7 @@ module Concerns
     def create_node
       # Assets whose owner is Context are ephemeral so don't create/update a node
       return unless owner.is_a? Component
+
       # binding.pry
 
       create_parent(type: 'Node::Asset', owner: self)
@@ -42,6 +43,7 @@ module Concerns
     def update_node
       # Assets whose owner is Context are ephemeral so don't create/update a node
       return unless owner.is_a? Component
+
       # binding.pry
 
       parent.update(owner: self)
@@ -63,7 +65,7 @@ module Concerns
       def node_callbacks
         [
           %i[create after create_node],
-          %i[update after update_node],
+          %i[update after update_node]
         ]
       end
 

@@ -37,10 +37,10 @@ class Command
     @env.merge!(env)
     @opts.merge!(opts).transform_keys!(&:to_sym)
     @result = command.send(method, @env, @exec, run_opts)
-  rescue TTY::Command::ExitError => err
-    @exit_error = err
+  rescue TTY::Command::ExitError => e
+    @exit_error = e
   ensure
-    return self
+    self
   end
 
   def command
@@ -77,7 +77,7 @@ class Command
 
   # TODO: It will be a complex map of an external key to a hash of TTY::Command cmd and run options
   def transform_keys
-   {a: 1, b: 2}.transform_keys{ |key| key_map[key] || key }
+    { a: 1, b: 2 }.transform_keys { |key| key_map[key] || key }
   end
 
   def key_map
@@ -85,13 +85,13 @@ class Command
   end
 
   # options for the TTY command
-  def set_command_options(context)
+  def x_set_command_options(context)
     defaults = { uuid: false }
     defaults.merge!(dry_run: true) if context.options.key?(:dry_run)
     defaults
   end
 
-  def set_run_options(context)
+  def x_set_run_options(context)
     defaults = {}
     defaults.merge!(verbose: true) if context.options.verbose
     defaults.merge!(pty: true) if 1 == 2

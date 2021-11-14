@@ -49,7 +49,7 @@ class Provisioner::Vagrant < Provisioner
     roles = blueprint.resources.pluck(:type).map { |resource| resource.demodulize.underscore }
     roles.each_with_object({}) do |role, hash|
       hash[role] = [project_name]
-    end # .merge(ansible_vars)
+    end
   end
 
   def ansible_db_instance_vars
@@ -69,7 +69,7 @@ class Provisioner::Vagrant < Provisioner
   end
 
   def template_contents
-    ERB.new(IO.read(template_file), trim_mode: '-').result(binding)
+    ERB.new(File.read(template_file), trim_mode: '-').result(binding)
   end
 
   def template_file

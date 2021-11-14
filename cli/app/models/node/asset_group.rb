@@ -22,7 +22,7 @@ class Node::AssetGroup < Node
 
   # TODO: Is necessary?
   def make_path
-    binding.pry
+    # binding.pry
     FileUtils.touch(rootpath)
   end
 
@@ -35,13 +35,13 @@ class Node::AssetGroup < Node
   end
 
   def write_file(yaml_to_write)
-    if yaml_to_write.empty?
-      FileUtils.rm(realpath)
-      destroy
-      return
-    end
     Cnfs.logger.debug("Writing to #{realpath} with\n#{yaml_to_write}")
     File.open(realpath, 'w') { |f| f.write(yaml_to_write.to_yaml) }
+
+    return unless yaml_to_write.empty?
+
+    FileUtils.rm(realpath)
+    destroy
   end
 
   def tree_name

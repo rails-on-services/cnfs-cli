@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Provisioner::Ansible < Provisioner
-
   # after_save :clone_repo, unless: -> { packages_path.join('setup').exist? }
 
   class << self

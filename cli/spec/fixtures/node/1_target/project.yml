@@ -1,4 +1,5 @@
 ---
 config: {}
 child_name: target
+default: cap2
 name: 1_target

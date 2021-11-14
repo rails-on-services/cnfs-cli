@@ -212,7 +212,7 @@ class Context < ApplicationRecord
   end
 
   def resource_provisioners(resources: filtered_resources)
-    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, resources), ary|
+    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, _resources), ary|
       provisioner = resource.provisioner
       provisioner.services = services
       provisioner.context = self

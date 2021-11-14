@@ -14,7 +14,7 @@ class Component < ApplicationRecord
   has_many :contexts, through: :context_components
 
   # Pluralized resource names are declared as a has_many
-  CnfsCli.asset_names.select{ |name| name.pluralize.eql?(name) }.each do |asset_name|
+  CnfsCli.asset_names.select { |name| name.pluralize.eql?(name) }.each do |asset_name|
     has_many asset_name.to_sym, as: :owner
   end
 
@@ -28,7 +28,7 @@ class Component < ApplicationRecord
   def self.node_callbacks
     [
       %i[create after create_node],
-      %i[update after update_node],
+      %i[update after update_node]
     ]
   end
 
@@ -40,7 +40,6 @@ class Component < ApplicationRecord
   def update_node
     parent.update(owner: self)
   end
-
 
   def key
     @key ||= local_file_values['key'] || owner&.key
