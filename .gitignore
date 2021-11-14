@@ -6,6 +6,7 @@
 **/pkg/
 **/spec/reports/
 **/tmp/
+**/src/
 **.env
 
 .dir-locals.el

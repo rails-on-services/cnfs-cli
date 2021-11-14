@@ -93,16 +93,19 @@ module CnfsCli
 
     # The model class list for which tables will be created in the database
     def model_names
-      %w[blueprint context context_component component image node project] +
-        (asset_names + support_names).map(&:singularize)
+      (asset_names + component_names + support_names).map(&:singularize)
     end
 
     def asset_names
-      %w[environments providers provisioners repositories resources runtimes services users]
+      %w[dependencies environments images providers provisioners resources runtimes services users]
+    end
+
+    def component_names
+      %w[blueprint component project repository]
     end
 
     def support_names
-      %w[dependencies]
+      %w[context context_component node]
     end
 
     # TODO: this needs to be refactored

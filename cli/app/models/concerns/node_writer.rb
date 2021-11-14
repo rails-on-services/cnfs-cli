@@ -19,8 +19,6 @@ module Concerns
 
     # rubocop:disable Metrics/AbcSize
     def make_owner
-      return if CnfsCli.support_names.include?(node_name)
-
       obj = parent.nil? ? @owner_class.create(yaml_payload) : owner_association.create(yaml_payload)
       return unless obj
 
@@ -47,6 +45,8 @@ module Concerns
 
     def yaml_payload
       @yaml_payload ||= { 'name' => node_name }.merge(yaml)
+    rescue => e
+      binding.pry
     end
 
     # BEGIN: source asset

@@ -1,59 +1,23 @@
 # frozen_string_literal: true
 
-class Repository < ApplicationRecord
-  include Concerns::Asset
+class Repository < Component
   include Concerns::Git
   # include Concerns::Taggable
 
-  def search_paths
-    [Cnfs.paths.src.join(name).join('.cnfs/config')]
-  end
-
-  # belongs_to :owner, polymorphic: true
-  # has_many :services, as: :owner
-
-  # store :config, accessors: %i[url repo_type], coder: YAML
   store :config, accessors: %i[url], coder: YAML
 
-  validates :name, presence: true
   validates :url, presence: true
 
-  after_create :create_node
-
-  def create_node
-    # puts "# This gets called when a node creates a repo #{__FILE__}"
-    # So going in the other direction have to avoid an infinite loop
-    # binding.pry
+  def dir_path
+    CnfsCli.configuration.paths.src.join(name)
   end
 
-  # after_destroy :remove_tree
-
-  # def services
-  #   services_path.exist? ? services_path.children.select(&:directory?).map { |p| p.split.last.to_s } : []
-  # end
-
-  def services_path
-    full_path.join('services')
+  def git
+    Dir.chdir(dir_path) { super }
   end
 
-  # def git
-  #   Dir.chdir(full_path) { Cnfs.git }
-  # end
-
-  def clone_cmd
-    "git clone #{url} #{name}"
-  end
-
-  def remove_tree
-    full_path.rmtree if full_path.exist?
-  end
-
-  def full_path
-    paths.src.join(name)
-  end
-
-  def paths
-    Cnfs.project.paths
+  def clone_it
+    Command.new(exec: "git clone #{url} #{dir_path}").run
   end
 
   class << self
@@ -72,6 +36,7 @@ class Repository < ApplicationRecord
 
     # TODO: Move to cnfs-cli.yml
     # Shortcuts for CNFS repos
+    # This is copied in to the user's local directory so its available to all projects on the file system
     def url_map
       {
         cnfs: 'git@github.com:rails-on-services/ros.git',

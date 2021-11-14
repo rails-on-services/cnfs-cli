@@ -3,9 +3,13 @@
 class Node::ComponentDir < Node
   after_create :load_path, if: proc { Node.source.eql?(:node) }
 
+  delegate :owner, to: :parent
+
   # Iterate over files and directories
   # rubocop:disable Metrics/AbcSize
   def load_path
+    # binding.pry if id > 9
+    return if owner.type.eql?('Repository')
     # ComponentDirs contain assets (repositories.yml, repositories/). Create these first
     pathname.children.sort.select { |n| CnfsCli.asset_names.include?(base_name(n)) }.each do |path_name|
       node_type = path_name.directory? ? 'Node::AssetDir' : 'Node::AssetGroup'
@@ -28,7 +32,7 @@ class Node::ComponentDir < Node
       next if ary.size.eql?(2)
 
       FileUtils.touch("#{ary.first}.yml") if ary.first.directory?
-      FileUtils.mkdir(ary.first.to_s.delete_suffix('.yml')) if ary.first.file?
+      # FileUtils.mkdir(ary.first.to_s.delete_suffix('.yml')) if ary.first.file?
     end
   end
   # rubocop:enable Style/MultilineBlockChain
