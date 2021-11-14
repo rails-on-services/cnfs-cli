@@ -17,7 +17,6 @@ class ResourcesController < Thor
     puts context.resources.pluck(:name).join("\n")
   end
 
-
   # desc 'show', 'Show infrastructure details'
   # def show(type = 'json')
   #   Dir.chdir(infra.deploy_path) do
@@ -53,7 +52,7 @@ class ResourcesController < Thor
   desc 'connect RESOURCE', 'Connext to a running resource'
   cnfs_options CnfsCli.configuration.command_options_list
   # NOTE: shell is a reserved word in Thor so it can't be used
-  def connect(resource)
+  def connect(_resource)
     execute(ip: 'admin@18.136.156.168', controller: :runtime, method: :connect)
   end
 end

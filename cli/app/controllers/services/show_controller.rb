@@ -13,7 +13,7 @@ module Services
       end
 
       if ary.empty?
-        Cnfs.logger.warn 'No files found' 
+        Cnfs.logger.warn 'No files found'
         return
       end
 

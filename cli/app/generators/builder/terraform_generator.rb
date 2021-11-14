@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class Builder::TerraformGenerator < BuilderGenerator
-
   def blueprint_to_terraform_json
     project.environment.blueprints.each do |blueprint|
       unless blueprint.valid?
@@ -10,7 +9,8 @@ class Builder::TerraformGenerator < BuilderGenerator
       end
 
       @blueprint = blueprint
-      generated_files << template("#{blueprint.template}.tf.json.erb", "#{path}/#{blueprint.template.split('/').last}.tf.json")
+      generated_files << template("#{blueprint.template}.tf.json.erb",
+                                  "#{path}/#{blueprint.template.split('/').last}.tf.json")
     end
     remove_stale_files
   end

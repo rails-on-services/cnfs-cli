@@ -18,7 +18,7 @@ module Core
     #   1. default services key
     #   2. the current service stanza
     def services_file
-        binding.pry
+      binding.pry
       content = ERB.new(File.read(template_path)).result(binding)
       if File.exist?(services_file_path)
         # Check for base config
@@ -27,7 +27,7 @@ module Core
         # Create new stanza
         append_to_file(services_file_path, content)
         # When revoked, the above line will subtract content; if the file is now empty the next line will remove it
-        create_file(services_file_path) if behavior.eql?(:revoke) and File.size(services_file_path).zero?
+        create_file(services_file_path) if behavior.eql?(:revoke) && File.size(services_file_path).zero?
       else
         create_file(services_file_path, default_content)
         append_to_file(services_file_path, content)
@@ -52,7 +52,7 @@ module Core
       views_path.join('files', path)
     end
 
-    def repo; 'hello' end
+    def repo() = 'hello'
 
     def source_paths
       [views_path, views_path.join('templates')]

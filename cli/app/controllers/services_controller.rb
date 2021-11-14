@@ -3,7 +3,7 @@
 # rubocop:disable Metrics/ClassLength
 class ServicesController < Thor
   include CommandHelper
-  alias_method :super_execute, :execute
+  alias super_execute execute
 
   # Define common options for this controller
   add_cnfs_option :attach,   desc: "Connect to service's running process ",
@@ -12,7 +12,7 @@ class ServicesController < Thor
                              aliases: '-b', type: :boolean
   add_cnfs_option :console,  desc: "Connect to service's console",
                              aliases: '-c', type: :string
-  add_cnfs_option :generate, desc: "Force generate manifest files ",
+  add_cnfs_option :generate, desc: 'Force generate manifest files ',
                              aliases: '-g', type: :string
   add_cnfs_option :profiles, desc: 'Service profiles',
                              aliases: '-p', type: :array
@@ -190,7 +190,7 @@ class ServicesController < Thor
   private
 
   # def execute(xargs = {}, command_name = nil, location = 3)
-    # super_execute(xargs, command_name, location) do
+  # super_execute(xargs, command_name, location) do
   def execute(**kwargs)
     kwargs[:location] ||= 3
     super_execute(**kwargs) do

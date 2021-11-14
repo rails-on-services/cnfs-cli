@@ -9,9 +9,11 @@ module CommandHelper
 
     attr_accessor :context
 
-    CnfsCli.configuration.command_options.each do |hash|
-      add_cnfs_option(hash[:name], hash.except(:name))
-    end if CnfsCli.config.load_nodes
+    if CnfsCli.config.load_nodes
+      CnfsCli.configuration.command_options.each do |hash|
+        add_cnfs_option(hash[:name], hash.except(:name))
+      end
+    end
 
     add_cnfs_option :tags,              desc: 'Filter by tags',
                                         aliases: '--tags', type: :array

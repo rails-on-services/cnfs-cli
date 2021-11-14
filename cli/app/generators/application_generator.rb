@@ -18,7 +18,7 @@ class ApplicationGenerator < Thor::Group
   def plugin_paths
     CnfsCli.plugins.values.append(CnfsCli).map do |plugin|
       plugin.gem_root.join('app/generators', caller_path, generator_type)
-    end.select { |path| path.exist? }
+    end.select(&:exist?)
   end
 
   # returns 'compose', 'skaffold', 'terraform', etc

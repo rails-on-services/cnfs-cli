@@ -3,7 +3,7 @@
 class ApplicationView < Cnfs::ApplicationView
   def self.index
     view = new
-    object = view.select("Choose your destiny?", model_class.all.map(&:name))
+    object = view.select('Choose your destiny?', model_class.all.map(&:name))
     model_class.find_by(name: object)&.edit
   end
 

@@ -36,7 +36,7 @@ module Namespaces
     end
 
     def tags
-      (local_tags + remote_tags).select { |tag| tag.match?(/#{api_tag_name}\.[v]\d+$/i) }
+      (local_tags + remote_tags).grep(/#{api_tag_name}\.v\d+$/i)
     end
 
     def api_tag_name

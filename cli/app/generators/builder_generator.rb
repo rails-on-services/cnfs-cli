@@ -6,7 +6,7 @@ class BuilderGenerator < ApplicationGenerator
   private
 
   # Used by the ApplicationGenerator#plugin_paths
-  def caller_path; 'builder' end
+  def caller_path() = 'builder'
 
   def path(to = :templates)
     project.path(to: to)

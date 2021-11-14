@@ -6,9 +6,7 @@ module Services
     attr_accessor :service
 
     def execute
-      unless service.commands.key?(:console)
-        raise Cnfs::Error, "#{service.name} does not implement the console command"
-      end
+      raise Cnfs::Error, "#{service.name} does not implement the console command" unless service.commands.key?(:console)
 
       system(*service.console.take(2))
     end

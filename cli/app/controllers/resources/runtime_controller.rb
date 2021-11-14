@@ -7,8 +7,8 @@ module Resources
 
     def connect
       binding.pry
-
     end
+
     def instance_shell
       system("ssh -A #{args.ip}")
       # unless service.shell_command

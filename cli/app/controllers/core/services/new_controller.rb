@@ -50,21 +50,21 @@ module Core
       end
 
       def validate_repository
-        if not Cnfs.repository.type.eql?('Repository::Rails')
+        if !Cnfs.repository.type.eql?('Repository::Rails')
           raise Cnfs::Error, "Invalid repository type '#{Cnfs.repository.type}'." \
-            " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
+                             " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
         elsif Cnfs.repository.namespace.eql?('ros')
           raise Cnfs::Error, "Cannot add a CNFS service to repository 'ros'." \
-            " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
+                             " Valid repos:\n#{repo_list('rails', :reject, 'ros')}"
         end
       end
 
       def repo_list(type, action, *list)
-        repos_matching(type).send(action) { |k, v| list.include?(k.to_s) }.map { |k, v| v.namespace }.join("\n")
+        repos_matching(type).send(action) { |k, _v| list.include?(k.to_s) }.map { |_k, v| v.namespace }.join("\n")
       end
 
       def repos_matching(type)
-        Cnfs.repositories.select { |name, config| config.type&.eql?(type) }
+        Cnfs.repositories.select { |_name, config| config.type&.eql?(type) }
       end
     end
   end

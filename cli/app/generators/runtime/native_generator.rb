@@ -45,7 +45,7 @@ class Runtime::NativeGenerator < RuntimeGenerator
     port = nil unless profile == 'server'
 
     [
-      [name, profile].join('_') + ':',
+      "#{[name, profile].join('_')}:",
       server_name_map[profile.to_sym],
       name,
       service_path(service),

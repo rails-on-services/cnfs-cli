@@ -26,6 +26,7 @@ module Environments
 
     def update
       return unless (env = Environment.find_by(name: args.name))
+
       # TODO: Test below. this should not be necessary
       result = Environments::View.new.render(env)
       env.update(result)

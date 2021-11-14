@@ -43,7 +43,7 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   # Used by the ApplicationGenerator#plugin_paths
-  def caller_path; 'runtime' end
+  def caller_path() = 'runtime'
 
   # List of services to be configured on the proxy server (nginx for compose)
   def proxy_services

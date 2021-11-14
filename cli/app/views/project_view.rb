@@ -44,7 +44,7 @@ class ProjectView < ApplicationView
 
   private
 
-	def components(selected)
+  def components(selected)
     %w[environment namespace stack target] - selected
     # %w[environment namespace stack target].each_with_object([]) do |key, ary|
     #   hash = { name: key }
@@ -53,19 +53,19 @@ class ProjectView < ApplicationView
     # end
   end
 
-	def environment
+  def environment
     %w[development test staging production]
   end
 
-	def namespace
+  def namespace
     %w[default other]
   end
 
-	def stack
+  def stack
     %w[backend frontend pipeline warehouse]
   end
 
-	def target
+  def target
     %w[cluster instance local]
   end
 end
