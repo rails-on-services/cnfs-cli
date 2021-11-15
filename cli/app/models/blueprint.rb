@@ -1,20 +1,7 @@
 # frozen_string_literal: true
 
 # A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
-class Blueprint < ApplicationRecord
-  include Concerns::Asset
-  # include Concerns::HasEnv
-  # include Concerns::Taggable
-  belongs_to :builder
-  belongs_to :environment
-  belongs_to :provider
-  has_many :resources
-
-  delegate :project, to: :environment
-  delegate :paths, :path, to: :project
-
-  # parse_sources :project, :user
-  # parse_scopes :environment
+class Blueprint < Component
 
   # List of resource classes that are managed by this blueprint
   def resource_classes

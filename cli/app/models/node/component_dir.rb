@@ -5,19 +5,43 @@ class Node::ComponentDir < Node
 
   delegate :owner, to: :parent
 
+  def config_file
+    return rootpath.join('____not_found') unless owner.type
+    rootpath.join("#{owner.type.underscore}.yml")
+  end
+
   # Iterate over files and directories
   # rubocop:disable Metrics/AbcSize
   def load_path
-    # binding.pry if id > 9
-    return if owner.type.eql?('Repository')
+    # Should this be a node?
+    binding.pry if owner.nil?
+    config_yaml = config_file.exist? ? (YAML.load_file(config_file) || {}) : {}
+    owner.update(sub_config: config_yaml)
+    # TODO: Each component other than nil type should have a loader instance
+    # No. The loaders should be in Cnfs so they can be iterated over on reload7
+    if owner.type&.eql?('Repository')
+      Cnfs.add_loader(name: owner.name, path: rootpath)
+    end
+
+    # return if owner.type.eql?('Repository')
     # ComponentDirs contain assets (repositories.yml, repositories/). Create these first
     pathname.children.sort.select { |n| CnfsCli.asset_names.include?(base_name(n)) }.each do |path_name|
+      if config_file.exist?
+        next if owner.exclude.include?(base_name(path_name))
+        next unless owner.include.include?(base_name(path_name))
+      end
+
       node_type = path_name.directory? ? 'Node::AssetDir' : 'Node::AssetGroup'
       nodes.create(type: node_type, path: path_name.to_s)
     end
     check_components(pathname)
     # Create Components
     pathname.children.select(&:file?).reject { |n| CnfsCli.asset_names.include?(base_name(n)) }.each do |path_name|
+      if config_file.exist?
+        next if owner.exclude.include?(base_name(path_name))
+        next unless owner.include.include?(base_name(path_name))
+      end
+
       nodes.create(type: 'Node::Component', path: path_name.to_s)
     end
   end

@@ -65,33 +65,33 @@ class Context < ApplicationRecord
   def create_components
     components << root
     current = root
-    child = nil
+    segment = nil
     while current.components.any?
-      break unless (child_spec = child_values(current)) # No values found to search for so stop at the current component
+      break unless (segment_spec  = segment_values(current)) # No serach values found so stop at the current component
 
-      components << child if child
-      if (child = current.components.find_by(name: child_spec.name))
-        current = child
+      components << segment if segment
+      if (segment = current.components.find_by(name: segment_spec.name))
+        current = segment
         next
       end
-      Cnfs.logger.warn("#{current.child_name.capitalize} '#{child_spec.name}' specified by  *#{child_spec.source}* " \
+      Cnfs.logger.warn("#{current.segment.capitalize} '#{segment_spec.name}' specified by  *#{segment_spec.source}* " \
                        "not found.\n#{' ' * 10}Context set to #{current.class.name} '#{current.name}'")
       break
     end
-    self.component = child || root # The last component found given the supplied options
+    self.component = segment || root # The last component found given the supplied options
   end
   # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength
 
-  # Return a value for the current component's child component based on priority
+  # Return a value for the current component's segment component based on priority
   # If a command line option was provided (e.g. -s stack_name) then return that value
   # If an ENV was provided (e.g. CNFS_STACK) then return that value
   # If the current component has an attribute 'default' then return that value
   # Otherwise return nil
-  def child_values(component)
-    if (name = options.fetch(component.child_name, nil))
+  def segment_values(component)
+    if (name = options.fetch(component.segment, nil))
       OpenStruct.new(name: name, source: 'CLI option')
-    elsif (name = CnfsCli.config.send(component.child_name || ''))
+    elsif (name = CnfsCli.config.send(component.segment || ''))
       OpenStruct.new(name: name, source: 'ENV value')
     elsif (name = component.default)
       OpenStruct.new(name: name, source: component.parent.rootpath.basename)

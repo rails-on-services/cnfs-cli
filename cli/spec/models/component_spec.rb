@@ -23,7 +23,7 @@ RSpec.describe 'Component' do
       let(:subject) { Component.find_by(name: :production) }
       let(:result) do
         { 'config' => { 'domain' => 'production-backend.cnfs.io' }, 'default' => 'lambda',
-          'child_name' => 'target', 'name' => 'context_spec' }
+          'segment' => 'target', 'name' => 'context_spec' }
       end
       it_behaves_like 'interpolated'
     end
@@ -31,7 +31,7 @@ RSpec.describe 'Component' do
     describe 'does the correct interpolation for lambda' do
       let(:subject) { Component.find_by(name: :lambda) }
       let(:result) do
-        { 'config' => { 'host' => 'lambda.production-backend.cnfs.io' }, 'child_name' => 'target',
+        { 'config' => { 'host' => 'lambda.production-backend.cnfs.io' }, 'segment' => 'target',
           'default' => 'lambda', 'name' => 'context_spec' }
       end
       it_behaves_like 'interpolated'

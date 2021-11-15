@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Project < Component
+class Project < Segment
   attr_encrypted :happy
   # belongs_to :source_repository, class_name: 'Repository'
   store :config, accessors: %i[happy]

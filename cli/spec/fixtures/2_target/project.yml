@@ -18,5 +18,5 @@ config:
     color: green
     name: namespace
     default: duf
-child_name: target
+segment: target
 default:

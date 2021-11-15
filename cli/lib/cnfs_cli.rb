@@ -56,9 +56,8 @@ module CnfsCli
       Cnfs.plugin_root = self # used only by Cnfs::Boot; See if can remove this
       Cnfs.config.dev ? initialize_development : initialize_plugins
 
-      # Tell the loader to load this gem's classes
-      Cnfs.loader.autoload(paths: [gem_root])
-      # add_repository_autoload_paths
+      # Create a loader for this gem's classes
+      Cnfs.add_loader(name: :cli, path: gem_root)
 
       # TODO: If path is different than existing path then reset the configuration; Primarily for specs
       # Load classes, create database, etc
@@ -97,11 +96,12 @@ module CnfsCli
     end
 
     def asset_names
-      %w[dependencies environments images providers provisioners resources runtimes services users]
+      %w[dependencies images providers provisioners resources runtimes services users]
+      # assets environments registries
     end
 
     def component_names
-      %w[blueprint component project repository]
+      %w[blueprint project repository segment]
     end
 
     def support_names
@@ -120,21 +120,6 @@ module CnfsCli
       # set_config_options
       Cnfs.loader.reload
       Cnfs.data_store.reload
-    end
-
-    # Scan repositories for subdirs in <repository_root>/cnfs/app and add them to autoload_dirs
-    # TODO: plugin and repository load paths should work the same way and follow same class structures
-    # So there should just be one method to populate autoload_dirs
-    # TODO: This needs to be refactored b/c repositories are not in the Cnfs.repositories array now
-    def add_repository_autoload_paths
-      binding.pry
-      Cnfs.repositories.each do |_name, config|
-        cnfs_load_path = Cnfs.project_root.join(config.path, 'cnfs/app')
-        next unless cnfs_load_path.exist?
-
-        paths_to_load = cnfs_load_path.children.select(&:directory?)
-        Cnfs.autoload_dirs.concat(paths_to_load)
-      end
     end
   end
 end

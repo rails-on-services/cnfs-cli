@@ -1,5 +1,5 @@
 ---
 config:
   domain: production-${domain}
-child_name: target
+segment: target
 default: lambda

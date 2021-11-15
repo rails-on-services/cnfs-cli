@@ -1,4 +1,4 @@
 ---
 config: {}
-child_name: target
+segment: target
 default: s3

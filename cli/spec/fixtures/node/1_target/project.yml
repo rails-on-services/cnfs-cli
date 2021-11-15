@@ -1,5 +1,5 @@
 ---
 config: {}
-child_name: target
+segment: target
 default: cap2
 name: 1_target

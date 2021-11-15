@@ -4,9 +4,23 @@ class Repository < Component
   include Concerns::Git
   # include Concerns::Taggable
 
-  store :config, accessors: %i[url], coder: YAML
+  store :config, accessors: %i[url]
 
   validates :url, presence: true
+
+  store :sub_config, accessors: %i[exclude include]
+
+  def except_json
+    super.append('sub_config')
+  end
+
+  def exclude
+    super&.split(',') || []
+  end
+
+  def include
+    super&.split(',') || []
+  end
 
   def dir_path
     CnfsCli.configuration.paths.src.join(name)
@@ -16,6 +30,7 @@ class Repository < Component
     Dir.chdir(dir_path) { super }
   end
 
+  # TODO: Move to somewhere in the controller
   def clone_it
     Command.new(exec: "git clone #{url} #{dir_path}").run
   end

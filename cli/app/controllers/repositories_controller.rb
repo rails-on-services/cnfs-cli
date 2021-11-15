@@ -5,7 +5,7 @@ class RepositoriesController < Thor
 
   # Activate common options
   cnfs_class_options :dry_run, :logging
-  class_before :initialize_project
+  # class_before :initialize_project
 
   # register Repositories::CreateController, 'create', 'create TYPE NAME [options]', 'Create a new CNFS compatible services repository'
 
@@ -73,10 +73,10 @@ class RepositoriesController < Thor
   map %w[ls] => :list
   def list
     require 'tty-tree'
-    data = Repository.order(:name).each_with_object({}) do |repo, hash|
-      hash[repo.name] = repo.services_path.exist? ? repo.services_path.children.select(&:directory?) : {}
-    end
-    puts TTY::Tree.new(data).render
+    # data = Repository.order(:name).each_with_object({}) do |repo, hash|
+    #   hash[repo.name] = repo.services_path.exist? ? repo.services_path.children.select(&:directory?) : {}
+    # end
+    # puts TTY::Tree.new(data).render
   end
 
   desc 'remove [NAME]', 'Remove a repository configuration from the project'

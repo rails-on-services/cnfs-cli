@@ -49,10 +49,10 @@ RSpec.describe 'Node' do
 
     it 'updates the Component yaml when a Component is edited' do
       node = node_select('Component', 'project')
-      diff = node_diff(node) { Project.update(child_name: 'target', default: 'lambda') }
+      diff = node_diff(node) { Project.update(segment: 'target', default: 'lambda') }
 
-      expect(diff.keys_added).to match_array(%w[default child_name])
-      expect(diff.after_yaml['child_name']).to eq('target')
+      expect(diff.keys_added).to match_array(%w[default segment])
+      expect(diff.after_yaml['segment']).to eq('target')
       expect(diff.after_yaml['default']).to eq('lambda')
     end
 

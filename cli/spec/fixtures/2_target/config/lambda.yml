@@ -1,5 +1,5 @@
 ---
 config:
   test: this
-child_name: environment
+segment: environment
 default:
