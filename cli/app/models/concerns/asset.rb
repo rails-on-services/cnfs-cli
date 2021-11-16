@@ -45,12 +45,12 @@ module Concerns
 
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
-          t.references :owner, polymorphic: true
           t.string :name
-          t.string :config
           t.string :type
           t.boolean :enable
           t.boolean :inherit
+          t.references :owner, polymorphic: true
+          t.string :config
           add_columns(t) if respond_to?(:add_columns)
         end
       end

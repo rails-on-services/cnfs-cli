@@ -18,13 +18,16 @@ module Cnfs
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
     def setup(data_store: true, model_names: [])
-      add_loader(name: :core, path: Cnfs.gem_root)
+      add_loader(name: :core, path: Cnfs.plugin_root.gem_root.join('app'))
+      # Create a loader for this gem's classes
+      add_loader(name: :core, path: Cnfs.gem_root.join('app'))
 
       Cnfs.plugin_root.plugins.each do |name, plugin_class|
         next unless (plugin = plugin_class.to_s.split('::').values_at(0, -1).join('::').safe_constantize)
 
-        loader = add_loader(name: name, path: plugin.gem_root, notifier: plugin_class)
+        add_loader(name: :core, path: plugin.gem_root.join('app'), notifier: plugin_class)
       end
+      loaders.values.map(&:setup)
 
       Cnfs.data_store.add_models(model_names)
       Cnfs.data_store.setup if data_store
@@ -40,9 +43,15 @@ module Cnfs
 
     def add_loader(name:, path:, notifier: nil)
       name = name.to_sym
-      return loaders[name] if loaders[name]
+      loaders[name] ||= Cnfs::Loader.new(name: name, logger: logger)
+      loaders[name].add_path(path)
+      loaders[name].add_notifier(notifier)
+      loaders[name]
+    end
 
-      loaders[name] ||= Cnfs::Loader.new(name: name, notifier: notifier, path: path, logger: logger).setup
+    def reload
+      results = loaders.values.each_with_object([]) { |loader, ary| ary.append(loader.reload) }
+      !results.include?(false)
     end
 
     def loaders
@@ -79,11 +88,6 @@ module Cnfs
 
         ary.append(mod)
       end
-    end
-
-    def reload
-      results = loaders.values.each_with_object([]) { |loader, ary| ary.append(loader.reload) }
-      !results.include?(false)
     end
 
     # NOTE: most of this moved to context. Is shift and caps needed?

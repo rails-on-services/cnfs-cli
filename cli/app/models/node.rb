@@ -8,6 +8,7 @@ class Node < ApplicationRecord
   before_validation :set_realpath
 
   def set_realpath
+    binding.pry unless Pathname.new(path).exist?
     self.realpath ||= Pathname.new(path).realpath.to_s
   end
 

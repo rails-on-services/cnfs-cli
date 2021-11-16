@@ -1,6 +1,0 @@
----
-config:
-  url: git@github.com:maxcole/kpop.git
-# dockerfile: {}
-# build: {}
-type: Repository

@@ -5,61 +5,56 @@ class Node::ComponentDir < Node
 
   delegate :owner, to: :parent
 
-  def config_file
-    return rootpath.join('____not_found') unless owner.type
-    rootpath.join("#{owner.type.underscore}.yml")
+  # Iterate over files and directories
+  def load_path
+    owner.before_load_path(rootpath, self) if owner.respond_to?(:before_load_path)
+    create_assets
+    validate_if_segment
+    create_components
   end
 
-  # Iterate over files and directories
-  # rubocop:disable Metrics/AbcSize
-  def load_path
-    # Should this be a node?
-    binding.pry if owner.nil?
-    config_yaml = config_file.exist? ? (YAML.load_file(config_file) || {}) : {}
-    owner.update(sub_config: config_yaml)
-    # TODO: Each component other than nil type should have a loader instance
-    # No. The loaders should be in Cnfs so they can be iterated over on reload7
-    if owner.type&.eql?('Repository')
-      Cnfs.add_loader(name: owner.name, path: rootpath)
-    end
-
-    # return if owner.type.eql?('Repository')
-    # ComponentDirs contain assets (repositories.yml, repositories/). Create these first
-    pathname.children.sort.select { |n| CnfsCli.asset_names.include?(base_name(n)) }.each do |path_name|
-      if config_file.exist?
-        next if owner.exclude.include?(base_name(path_name))
-        next unless owner.include.include?(base_name(path_name))
-      end
-
+  def create_assets
+    asset_paths.each do |path_name|      
       node_type = path_name.directory? ? 'Node::AssetDir' : 'Node::AssetGroup'
       nodes.create(type: node_type, path: path_name.to_s)
     end
-    check_components(pathname)
-    # Create Components
-    pathname.children.select(&:file?).reject { |n| CnfsCli.asset_names.include?(base_name(n)) }.each do |path_name|
-      if config_file.exist?
-        next if owner.exclude.include?(base_name(path_name))
-        next unless owner.include.include?(base_name(path_name))
-      end
+  end
 
+  # Return files and directories whose names are found in the asset_name array e.g. resources.yml, resources/
+  def asset_paths
+    search_path.children.sort.select { |n| CnfsCli.asset_names.include?(base_name(n)) }
+  end
+
+  # Create Node::Components for each found component
+  def create_components
+    component_file_paths.each do |path_name|
       nodes.create(type: 'Node::Component', path: path_name.to_s)
     end
   end
-  # rubocop:enable Metrics/AbcSize
 
-  # If a component dir exsists but not the file then create the file
-  # rubocop:disable Style/MultilineBlockChain
-  def check_components(path_name)
-    path_name.children.reject do |n|
-      CnfsCli.asset_names.include?(base_name(n))
-    end.group_by { |n| base_name(n) }.each do |_name, ary|
-      next if ary.size.eql?(2)
-
-      FileUtils.touch("#{ary.first}.yml") if ary.first.directory?
-      # FileUtils.mkdir(ary.first.to_s.delete_suffix('.yml')) if ary.first.file?
-    end
+  def component_file_paths
+    search_path.children.select(&:file?).reject { |n| CnfsCli.asset_names.include?(base_name(n)) }
   end
-  # rubocop:enable Style/MultilineBlockChain
+
+  def component_dir_paths
+    search_path.children.select(&:directory?).reject { |n| CnfsCli.asset_names.include?(base_name(n)) }
+  end
+
+  # If the component has the search_path method then only search in that path
+  def search_path
+    @search_path ||= pathname.join(owner.respond_to?(:search_path) ? owner.search_path : '')
+  end
+
+  # If a component dir exsists but not the file then create the file and vice versa
+  # So that component crud can rely on the filesystem being available
+  def validate_if_segment
+    return unless owner.type.eql?('Segment')
+
+    dirs = component_dir_paths.map { |p| base_name(p) }
+    files = component_file_paths.map { |p| base_name(p) }
+    (files - dirs).each { |path| search_path.join(path).mkdir }
+    (dirs - files).each { |path| FileUtils.touch(search_path.join("#{path}.yml")) }
+  end
 
   # BEGIN: source asset
 

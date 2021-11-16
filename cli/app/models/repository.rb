@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-class Repository < Component
+class Repository < ApplicationRecord
+  include Concerns::Asset
   include Concerns::Git
   # include Concerns::Taggable
 
@@ -8,23 +9,34 @@ class Repository < Component
 
   validates :url, presence: true
 
-  store :sub_config, accessors: %i[exclude include]
-
-  def except_json
-    super.append('sub_config')
+  def blueprints
+    @blueprints ||= set_blueprints
   end
 
-  def exclude
-    super&.split(',') || []
+  def set_blueprints
+    return {} unless blueprints_path.exist?
+
+    blueprints_path.children.select(&:directory?).each_with_object({}) do |blueprint_path, hash|
+      hash[blueprint_path.basename.to_s] = blueprint_path if blueprint_path.join('blueprint.yml').exist?
+    end
   end
 
-  def include
-    super&.split(',') || []
+  def tree_name
+    name
   end
 
-  def dir_path
+  def blueprints_path
+    repo_path.join('blueprints')
+  end
+
+  def repo_path
     CnfsCli.configuration.paths.src.join(name)
   end
+
+  # def repo_config
+  #   repo_config_file = repo_path.join('repository.yml')
+  #   repo_config = repo_config_file.exist? ? (YAML.load_file(repo_config_file) : {}) : {}
+  # end
 
   def git
     Dir.chdir(dir_path) { super }

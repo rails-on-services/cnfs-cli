@@ -26,10 +26,10 @@ module Concerns
       owner_log('Created owner')
     rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
       # binding.pry
-      Cnfs.logger.warn(e.message, yaml_payload)
+      Cnfs.logger.warn('NodeWriter:', e.message, yaml_payload)
       owner_log('Error creating owner')
     rescue NoMethodError => e
-      Cnfs.logger.warn("#{e.message} in #{realpath}")
+      Cnfs.logger.warn('NodeWriter:', e.message, yaml_payload)
     end
 
     # rubocop:enable Metrics/AbcSize

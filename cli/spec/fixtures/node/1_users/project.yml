@@ -1,5 +1,3 @@
 ---
 config: {}
-sub_config: "{}"
-type: Project
 name: 1_user

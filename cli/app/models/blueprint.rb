@@ -2,6 +2,23 @@
 
 # A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
 class Blueprint < Component
+  def dir_path
+    parent.rootpath.split.first.join('config')
+  end
+
+  # Called by Node::ComponentDir in order to load any defined classes before it loads #paths
+  def before_load_path(rootpath, cdir)
+    component_config_file = rootpath.join('../blueprint.yml')
+    if component_config_file&.exist? && (component_config = YAML.load_file(component_config_file))
+      update(config: component_config.merge(config))
+    end
+
+    Cnfs.add_loader(name: name, path: rootpath.join('../app')).setup
+  end
+
+  def tree_name
+    "#{name} (#{type})"
+  end
 
   # List of resource classes that are managed by this blueprint
   def resource_classes

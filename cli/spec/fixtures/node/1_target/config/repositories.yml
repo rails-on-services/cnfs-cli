@@ -1,0 +1,4 @@
+---
+jamstack:
+  config:
+    url: git@github.com:maxcole/kpop.git

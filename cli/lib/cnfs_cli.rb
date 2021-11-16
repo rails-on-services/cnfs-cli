@@ -56,9 +56,6 @@ module CnfsCli
       Cnfs.plugin_root = self # used only by Cnfs::Boot; See if can remove this
       Cnfs.config.dev ? initialize_development : initialize_plugins
 
-      # Create a loader for this gem's classes
-      Cnfs.add_loader(name: :cli, path: gem_root)
-
       # TODO: If path is different than existing path then reset the configuration; Primarily for specs
       # Load classes, create database, etc
       Cnfs.setup(data_store: config.load_nodes, model_names: model_names)
@@ -66,7 +63,7 @@ module CnfsCli
 
     def load_root_node
       Node.with_asset_callbacks_disabled do
-        _n = Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
+        Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
       end
       return unless Project.first
 
@@ -75,7 +72,7 @@ module CnfsCli
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
     rescue ActiveRecord::SubclassNotFound => e
-      Cnfs.logger.warn(e.message.split('.').first.to_s)
+      Cnfs.logger.warn('CnfsCli:', e.message.split('.').first.to_s)
       raise Cnfs::Error, ''
     end
 
@@ -96,12 +93,12 @@ module CnfsCli
     end
 
     def asset_names
-      %w[dependencies images providers provisioners resources runtimes services users]
+      %w[dependencies images providers provisioners resources repositories runtimes services users]
       # assets environments registries
     end
 
     def component_names
-      %w[blueprint project repository segment]
+      %w[component project]
     end
 
     def support_names
