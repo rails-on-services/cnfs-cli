@@ -16,3 +16,4 @@ bucket:
   envs: {}
   type: Aws::Resource::S3::Bucket
   provider_name: localstack
+  runtime_name: compose

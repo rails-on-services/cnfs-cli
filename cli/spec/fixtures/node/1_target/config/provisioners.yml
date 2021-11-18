@@ -9,7 +9,7 @@ terraform:
   providers:
     aws:
       version: 3.22
-  type: Provisioner::Terraform
+  type: Terraform::Provisioner
 vagrant:
   config:
     box: ros/generic

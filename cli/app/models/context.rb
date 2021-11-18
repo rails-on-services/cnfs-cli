@@ -46,9 +46,12 @@ class Context < ApplicationRecord
   store :options, coder: YAML
   store :args, coder: YAML
 
+  # When decrypting values assets ask for the key from their owner
+  # When context is the owner it must ask the component for the key
   delegate :key, to: :component
 
-  before_create :create_components, if: proc { root_id }
+  # Add existing components to the context based on cli options, ENV and componet default values
+  before_create :add_components, if: proc { root_id }
   after_create :configure_component, :create_assets, if: proc { root_id }
   after_commit :update_assets, if: proc { root_id }
 
@@ -62,7 +65,7 @@ class Context < ApplicationRecord
   # Context.create(root: Project.first, options: options)
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
-  def create_components
+  def add_components
     components << root
     current = root
     segment = nil
@@ -95,7 +98,7 @@ class Context < ApplicationRecord
     elsif (name = CnfsCli.config.send(component.segment_type || ''))
       OpenStruct.new(name: name, source: 'ENV value')
     elsif (name = component.segment_name)
-      OpenStruct.new(name: name, source: component.parent.rootpath.basename)
+      OpenStruct.new(name: name, source: component.parent.node_name) # rootpath.basename)
     end
   end
 
@@ -169,73 +172,8 @@ class Context < ApplicationRecord
   end
 
   def update_assets
-    Node.with_asset_callbacks_disabled do
-      CnfsCli.asset_names.each do |asset_type|
-        klass = asset_type.classify.constantize
-        # klass.update_these(context)
-        next if klass.belongs_to_names.size.zero?
-
-        # binding.pry
-        assets = send(asset_type)
-        klass.update_names.each { |attr| update_em(assets, attr, :update_names) } if klass.respond_to?(:update_names)
-        klass.update_nils.each { |attr| update_em(assets, attr, :update_nils) } if klass.respond_to?(:update_nils)
-      end
-    end
-  end
-
-  def update_em(assets, attr, method)
-    # attr                             # 'runtime'
-    attr_sym = "#{attr}_name".to_sym   # :runtime_name
-    assn_sym = attr.pluralize.to_sym   # :runtimes
-    send(method, attr, attr_sym, assn_sym, assets)
-  end
-
-  def update_names(attr, attr_sym, assn_sym, assets)
-    assets.where.not(attr_sym => nil).each do |asset|
-      name = asset.send(attr_sym)
-      if (obj = send(assn_sym).find_by(name: name))
-        asset.update(attr => obj)
-      else
-        res_msg = "#{asset.class.table_name.classify} not configured: "
-        Cnfs.logger.warn("#{res_msg}#{asset.name}" \
-                         "\n#{' ' * 10}#{attr.capitalize} '#{name}' is not available in this segment" \
-                         "\n#{' ' * 10}Available #{assn_sym}: #{send(assn_sym).pluck(:name).join(', ')}")
-      end
-    end
-  end
-
-  def update_nils(attr, attr_sym, assn_sym, assets)
-    nil_assets = assets.where(attr_sym => nil)
-    return if nil_assets.size.zero?
-
-    asset_names = nil_assets.pluck(:name).join(', ')
-    res_msg = "#{assets.first.class.table_name.capitalize} not configured: "
-
-    if send(assn_sym).size.zero?
-      Cnfs.logger.warn("#{res_msg}#{asset_names}" \
-                       "\n#{' ' * 10}No available #{assn_sym}")
-      return
-    end
-
-    if send(assn_sym).size.eql?(1)
-      obj = send(assn_sym).first
-      nil_assets.each { |asset| asset.update(attr => obj, attr_sym => obj.name) }
-      # TODO:
-      # This needs to reference the merged hash rather than just the component's attribute which is not merged
-      # Consolidate the logging to a single method
-      # For each asset track the list of files that were merged to make the one asset
-    elsif (name = component.send(attr_sym))
-      if (obj = send(assn_sym).find_by(name: name))
-        nil_assets.each { |asset| asset.update(attr => obj, attr_sym => obj.name) }
-      else
-        Cnfs.logger.warn("#{res_msg}#{asset_names}" \
-                         "\n#{' ' * 10}Default #{attr} #{name} not found" \
-                         "\n#{' ' * 10}Source: #{component.parent.rootpath}")
-      end
-    else
-      Cnfs.logger.warn("#{res_msg}#{asset_names}" \
-                       "\n#{' ' * 10}Multiple #{assn_sym} aviailable, but no default has been set" \
-                       "\n#{' ' * 10}Available #{assn_sym}: #{send(assn_sym).pluck(:name).join(', ')}")
+    CnfsCli.asset_names.each do |asset_type|
+      asset_type.classify.constantize.update_associations(self)
     end
   end
 

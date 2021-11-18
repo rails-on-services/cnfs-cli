@@ -167,10 +167,6 @@ class Service < ApplicationRecord
   end
 
   class << self
-    def update_names
-      %w[resource] # environment]
-    end
-
     def by_profiles(profiles = project.profiles)
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end

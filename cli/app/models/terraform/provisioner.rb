@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Provisioner::Terraform < Provisioner
+class Terraform::Provisioner < Provisioner
   store :providers, accessors: %i[aws gcp azure], coder: YAML
 
   # rubocop:disable Metrics/AbcSize

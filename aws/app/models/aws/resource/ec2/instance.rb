@@ -5,6 +5,12 @@ class Aws::Resource::EC2::Instance < Aws::Resource::EC2
                                vpc_security_group_ids subnet_id subnet_ids instance_id], coder: YAML
   store :envs, accessors: %i[public_ip os_type], coder: YAML
 
+  belongs_to :runtime, optional: true
+
+  def valid_types
+    super.merge(runtime: %w[Runtime::Compose Runtime::Skaffold])
+  end
+
   def outputs
     %i[instance_id]
   end

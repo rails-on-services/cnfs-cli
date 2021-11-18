@@ -7,7 +7,6 @@ class Resource < ApplicationRecord
 
   belongs_to :provider, optional: true
   belongs_to :provisioner, optional: true
-  belongs_to :runtime, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
 
@@ -49,10 +48,6 @@ class Resource < ApplicationRecord
   end
 
   class << self
-    def update_nils
-      %w[provider provisioner]
-    end
-
     def add_columns(t)
       t.string :provider_name
       t.references :provider
