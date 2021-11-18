@@ -102,7 +102,7 @@ module CnfsCli
     end
 
     def support_names
-      %w[context context_component node]
+      %w[context context_component node runtime/services]
     end
 
     # TODO: this needs to be refactored

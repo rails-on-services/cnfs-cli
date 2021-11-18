@@ -37,9 +37,11 @@ class Command
     @env.merge!(env)
     @opts.merge!(opts).transform_keys!(&:to_sym)
     @result = command.send(method, @env, @exec, run_opts)
+    return self
   rescue TTY::Command::ExitError => e
     @exit_error = e
   ensure
+    # binding.pry
     self
   end
 

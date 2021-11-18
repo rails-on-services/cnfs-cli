@@ -29,7 +29,7 @@ class Node::AssetGroup < Node
   end
 
   def write_yaml(owner)
-    write_file(yaml.merge(owner.name => owner.as_json_encrypted))
+    write_file(yaml.merge(owner.name => owner.as_json_encrypted).sort)
   end
 
   def destroy_yaml(asset)

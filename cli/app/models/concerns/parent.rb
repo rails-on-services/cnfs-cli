@@ -16,24 +16,30 @@ module Concerns
 
     # Assets whose owner is Context are ephemeral so don't create/update a node
     def create_node
-      create_parent(type: parent_type, owner: self) if node?
+      create_parent(type: parent_type, owner: self) # if node?
     end
 
     def update_node
-      parent.update(owner: self) if node?
+      parent.update(owner: self) # if node?
     end
 
     def destroy_node
-      parent.destroy if node?
+      parent.destroy # if node?
     end
 
     def parent_type
       is_a?(Component) ? 'Node::Component' : 'Node::Asset'
     end
 
-    def node?
-      is_a?(Component) || owner.is_a?(Component)
+    # Log message at level warn appending the parent path to the message
+    def node_warn(node:, msg: [])
+      text = [msg].flatten.append("Source: #{node.rootpath}").join("\n#{' ' * 10}")
+      Cnfs.logger.warn(text)
     end
+
+    # def node?
+    #   is_a?(Component) || owner.is_a?(Component)
+    # end
 
     class_methods do
       def node_callbacks

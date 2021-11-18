@@ -19,15 +19,31 @@ class Component < ApplicationRecord
     has_many asset_name.to_sym, as: :owner
   end
 
+  store :default, coder: YAML,
+    accessors: %i[segment_name runtime_name resource_name provider_name provisioner_name repository_name]
+   
+
+  # Return the default dir_path of the parent's path + thsi component's name unless a blueprint_name is configured
+  # In which case parse blueprint_name to search the component hierarchy for the specified repository and blueprint
   def dir_path
     ret_val = parent.parent.rootpath.join(parent.node_name).to_s
-    return ret_val unless blueprint
+    return ret_val unless blueprint_name
 
-    repo_name, blueprint_name = blueprint.split('/')
-    return ret_val unless(repo = owner.repositories.find_by(name: repo_name))
-    return ret_val unless (path = repo.blueprints[blueprint_name])
+    bp_repo_name, bp_name = blueprint_name.split('/')
 
-    Cnfs.add_loader(name: blueprint, path: path.join('app')).setup
+    unless (repo = owner.repositories.find_by(name: bp_repo_name))
+      node_warn(node: parent,
+                msg: ["Blueprint repository '#{bp_repo_name}' not found", "Component: #{name}"])
+      return ret_val 
+    end
+
+    unless (path = repo.blueprints[bp_name])
+      node_warn(node: parent,
+                msg: ["Blueprint '#{bp_name}' not found in repository '#{bp_repo_name}'", "Component: #{name}"])
+      return ret_val 
+    end
+
+    Cnfs.add_loader(name: blueprint_name, path: path.join('app')).setup
     path.join('config')
   end
 
@@ -62,17 +78,13 @@ class Component < ApplicationRecord
   end
 
   def tree_name
-    bp = blueprint.nil? ? '' : "  from: #{blueprint.gsub('/', '-')}"
-    "#{name} (#{c_name})#{bp}"
+    bp_name = blueprint_name.nil? ? '' : "  source: #{blueprint_name.gsub('/', '-')}"
+    "#{name} (#{owner.segment_type})#{bp_name}"
   end
 
   # def x_config
   #   Config::Options.new.merge!(config)
   # end
-
-  def c_name
-    owner.segment
-  end
 
   # Display components as a TreeView
   def to_tree
@@ -97,12 +109,12 @@ class Component < ApplicationRecord
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.string :name
+        t.string :blueprint_name
         t.string :type
-        t.string :segment
-        t.string :blueprint
+        t.string :segment_type
         t.string :default
-        t.references :owner
         t.string :config
+        t.references :owner
       end
     end
   end

@@ -6,6 +6,7 @@ module CnfsExecHelper
   included do
     extend ActiveModel::Callbacks
     include ActiveModel::AttributeAssignment
+
     attr_accessor :options, :args
   end
 

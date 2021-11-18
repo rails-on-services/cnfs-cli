@@ -30,13 +30,16 @@ class Resource < ApplicationRecord
   end
 
   def as_hcl
-    # attributes.except('blueprint_id', 'config', 'envs', 'id', 'type', 'owner_id', 'owner_type').merge(config_as_hcl)
-    as_json.except(%w[provisioner_id provider_id runtime_id config envs type]).merge(config_as_hcl)
+    as_json.merge(config_as_hcl).except(*except_hcl)
+  end
+
+  def except_hcl
+    %w[provisioner_name provider_name runtime_name config envs type]
   end
 
   def config_as_hcl
     self.class.stored_attributes[:config].each_with_object({}) do |accessor, hash|
-      hash[accessor] = send(accessor)
+      hash[accessor.to_s] = send(accessor)
     end
   end
 

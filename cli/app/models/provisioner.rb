@@ -2,57 +2,15 @@
 
 class Provisioner < ApplicationRecord
   include Concerns::Asset
-  # include Concerns::BuilderRuntime
+  include Concerns::PlatformRunner
 
-  # attr_accessor :blueprint
+  attr_accessor :resources, :context_resources
 
-  # belongs_to :owner, polymorphic: true
-
-  serialize :dependencies, Array
-
-  # parse_scopes :config
-  # parse_sources :cli
-
-  def dependencies
-    super.map(&:with_indifferent_access)
-  end
-
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
-  def download_dependencies
-    return if dependencies.empty?
-
-    require 'tty-file'
-    require 'tty-spinner'
-
-    path.mkpath unless path.exist?
-
-    Dir.chdir(path) do
-      # TODO: Move to terraform builder
-      Pathname.new('.terraform/modules').rmtree if options.clean
-      # rubocop:disable Naming/VariableNumber
-      spinner = TTY::Spinner.new('[:spinner] Downloading dependencies ...', format: :pulse_2)
-      # rubocop:enable Naming/VariableNumber
-      dependencies.each do |dependency|
-        file = dependency[:url].split(%r{/}).last
-        if File.exist?(file) && !options.clean
-          Cnfs.logger.info "Dependency #{dependency[:name]} exists locally. To overwrite run command with --clean flag."
-          next
-        end
-
-        dep = dependency[:url].cnfs_sub
-        spinner.run do |_spinner|
-          if dependency[:type].eql?('repo')
-            command.run(command_env, "git clone #{dep}", command_options)
-          else
-            TTY::File.download_file(dep)
-          end
-        end
-      end
-    end
-  end
-  # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/AbcSize
+  # This may be about TF modules rather than binaries like tf, kubectl, etc
+  # TODO: Figure out how to manage these
+  # def dependencies
+  #   super.map(&:with_indifferent_access)
+  # end
 
   # TODO: What is this for?
   # def fetch_data_repo
@@ -67,7 +25,9 @@ class Provisioner < ApplicationRecord
 
   class << self
     def add_columns(t)
+      # TODO: If this is for TF modules then maybe keep it, otherwise it goes to Platform
       t.string :dependencies
+      # TODO: If providers is necessary than convert it into belongs_to_names
       t.string :providers
     end
   end

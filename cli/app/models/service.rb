@@ -22,7 +22,9 @@ class Service < ApplicationRecord
   serialize :volumes, Array
 
   # TODO: Get the below codd into HasEnv concern
+  # This is here for RuntimeGenerator at the moment
   # serialize :environment, Array
+  def environment; [] end
 
   # TODO: Implement Environment model
   # TODO: This is also handled by the context
@@ -166,7 +168,7 @@ class Service < ApplicationRecord
 
   class << self
     def update_names
-      %w[resource environment]
+      %w[resource] # environment]
     end
 
     def by_profiles(profiles = project.profiles)
@@ -177,14 +179,11 @@ class Service < ApplicationRecord
     def add_columns(t)
       t.string :resource_name
       t.references :resource
-      t.string :environment_name
-      t.references :environment
       # TODO: Perhaps these are better as strings that can be inherited
       # t.references :source_repo
       # t.references :image_repo
       # t.references :chart_repo
       t.string :commands
-      # t.string :environment
       t.string :image
       # t.string :context
       t.string :path
@@ -195,8 +194,10 @@ class Service < ApplicationRecord
       t.string :state
       super # Adds envs from concern
       # NOTE: Added for testing of old service definition
+      # TODO: If service really needs a repository then use belongs_to_names
       t.string :repository
       t.string :location
+      # t.string :environment
     end
     # rubocop:enable Metrics/MethodLength
   end

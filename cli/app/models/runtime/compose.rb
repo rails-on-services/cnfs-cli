@@ -2,10 +2,11 @@
 
 # rubocop:disable Metrics/ClassLength
 class Runtime::Compose < Runtime
-  attr_accessor :queue, :services, :context
+  # attr_accessor :queue, :services, :context
 
   # delegate :options, :labels, to: :context
 
+  # TODO: Is this necessary?
   def supported_service_types
     ['Service::Rails', nil]
   end
@@ -71,28 +72,35 @@ class Runtime::Compose < Runtime
       opts: context.options.merge(printer: :null)
     )
   end
+      # qc = Command.new(
+      #   env: { hey: :now },
+      #   exec: compose_command("up #{compose_options} #{services.pluck(:name).join(' ')}"),
+      #   opts: context.options.merge(printer: :null)
+      #   # opts: context.options,
+      # )
+      # queue.append(qc, tc)
+      # tc.run(exec: 'ls -w')
+      # binding.pry
+      # queue.append(tc)
 
   # Service Admin Operations
   def start
-    prepare
-    queue.append(compose_command(exec: :up))
-    # qc = Command.new(
-    #   env: { hey: :now },
-    #   exec: compose_command("up #{compose_options} #{services.pluck(:name).join(' ')}"),
-    #   opts: context.options.merge(printer: :null)
-    #   # opts: context.options,
-    # )
-    # tc.run(exec: 'ls -w')
-    # queue.append(qc, tc)
-    queue.append(tc)
-    # TODO: Add filter for labels so only getting containers managed for this context
-    running_before = query(format: '{{.Names}}', status: :running)
-    yield queue
-    running_after = query(format: '{{.Names}}', status: :running).append('iam')
-    (running_after - running_before).each do |_service_name|
-      next unless (service = services.select { |s| s.name.eql?('iam') }.first)
+    run_callbacks :execute do
+      # runtime_services.select{ |s| s.image.eql?('postgres') }
+      queue.append(compose_command(exec: :up))
+      yield queue
+    end
 
-      service.update(state: :started, skip_node_create: true)
+    # At this point the services have been queried both before and after the commands have run
+    # TODO: Is this the best way to have any services run their callbacks after a state change?
+
+    running_before = []
+    running_after = query.result.to_a.append('iam')
+
+    (running_after - running_before).each do |_service_name|
+      next unless (service = context_services.select { |s| s.name.eql?('iam') }.first)
+
+      service.update(state: :started)
       # TODO: This returns an array of commands to run on the service
       # Stuff this into the commands queue with docker-compose exec blah blah...
       q = service.command_queue
@@ -100,9 +108,68 @@ class Runtime::Compose < Runtime
       yield queue
       # puts q
       # binding.pry
+      # end
     end
+  end
 
-    # puts running_containers
+  before_execute :generate, :write_env, :query_services
+
+  def write_env
+    FileUtils.rm_f('.env')
+    FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
+    Cnfs.logger.debug("Linked #{compose_file} to .env")
+    # ActiveSupport::Notifications.instrument('on_runtime_switch.cli')
+    true
+  end
+
+  def query_services
+    query.result.to_a.each do |json|
+      runtime_services.create(docker: JSON.parse(json))
+    rescue JSON::ParserError => e
+      binding.pry
+    end
+  end
+
+  # See: https://docs.docker.com/engine/reference/commandline/ps
+  # TODO: Add filter for labels so only getting containers managed for this context
+  def query(format: :names, status: :running, **filters)
+    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
+    # filter.append("--format '#{query_format_map[format]}'") if format
+    # filter.append("--filter 'status=#{status}'") if status
+    # filter = "table {{.ID}}\\t{{.Status}}\\t{{.Ports}}"
+    # command.run(exec: "docker ps --format \"#{filter}\"", opts: { silent: true })
+    # docker ps --format '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Names":"{{ .Names }}"}'
+   
+    # working = %q[docker ps --format '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Names":"{{ .Names }}"}']
+    # try = %w[ID Image Names].each_with_object([]) do |item, ary|
+    #   ary.append("\"#{item}\":\"{{ .#{item} }}\"")
+    # end
+    # try = "docker ps --format '{#{try.join(', ')}}'"
+    try = "docker ps -a --format '{#{query_string.join(', ')}}'"
+    # binding.pry
+    # rworking =command.run(exec: working, opts: { silent: true })
+    rtry = command.run(exec: try, opts: { silent: true })
+    # binding.pry
+    rtry
+
+    # command.run(exec: "docker ps #{filter.join(' ')}", opts: { silent: true })
+  end
+
+  def query_string(hash = query_hash)
+    hash.each_with_object([]) do |(key, value), ary|
+      ary.append("\"#{key}\":\"{{ .#{value} }}\"")
+    end
+  end
+
+  def query_hash
+    # { rid: :ID, image: :Image, names: :Names, command: :Command, labels: :Labels, status: :Status, ports: :Ports }
+    { rid: :ID, image: :Image, names: :Names, labels: :Labels, status: :Status, ports: :Ports }
+  end
+
+  def query_format_map
+    { names: '{{.Names}}' }
+  end
+
 
     # TODO:
     # 1. Base runtime class has a query interface, i.e. a set of methods to implement by each runtime which
@@ -126,7 +193,6 @@ class Runtime::Compose < Runtime
     #     Cnfs.logger.error(result.err) if result.failure?
     #   end
     # end
-  end
 
   def stop(services)
     queue.add(rv(compose("stop #{services.pluck(:name).join(' ')}")))
@@ -178,19 +244,9 @@ class Runtime::Compose < Runtime
 
   #### Support Methods
 
-  # NOTE: This is an interface with CommandHelper
-  def prepare
-    generate
-    switch!
-  end
-
-  def switch!
-    FileUtils.rm_f('.env')
-    FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
-    Cnfs.logger.debug("Linked #{compose_file} to .env")
-    ActiveSupport::Notifications.instrument('on_runtime_switch.cli')
-    true
-  end
+  # NOTE: This was an interface with CommandHelper
+  # def prepare
+  # end
 
   def compose_file
     @compose_file ||= context.path(to: :runtime).join('compose.env')
@@ -203,16 +259,6 @@ class Runtime::Compose < Runtime
   # TODO: This should query based on a label
   def running_services_names(status: :running)
     query(status: status).map { |a| a.gsub("#{project.name}_", '').chomp('_1') }
-  end
-
-  # See: https://docs.docker.com/engine/reference/commandline/ps
-  def query(format: '{{.Names}}', status: :running, **filters)
-    filter = filters.each_pair.map { |key, value| "--filter 'label=#{key}=#{value}'" }
-    filter.append("--format '#{format}'") if format
-    filter.append("--filter 'status=#{status}'") if status
-
-    qc = command.run(exec: "docker ps #{filter.join(' ')}", opts: { silent: true })
-    qc.result.to_a
   end
 
   private
@@ -294,7 +340,7 @@ class Runtime::Compose < Runtime
   end
 
   def compose_exec(exec)
-    "docker-compose #{exec} #{compose_options} #{services.pluck(:name).join(' ')}"
+    "docker-compose #{exec} #{compose_options} #{context_services.pluck(:name).join(' ')}"
   end
 
   def compose_env(**env)
@@ -309,10 +355,6 @@ class Runtime::Compose < Runtime
     Command.new(exec: exec, env: env, opts: context.options.merge(opts))
   end
 
-  def queue
-    @queue ||= CommandQueue.new
-  end
-  #
   # END: new stuff
 
   def silent_command
@@ -321,23 +363,6 @@ class Runtime::Compose < Runtime
 
   def clean(services)
     queue.add [command_env, compose("rm -f #{services.pluck(:name).join(' ')}"), command_options]
-  end
-
-  # Check if the manifest is outdated and generate it if necessary
-  def generate(force: false)
-    # TODO: enable return
-    # return if already_generated unless force
-    manifest = context.manifest
-    manifest.purge! if context.options.generate
-    return if manifest.valid?
-
-    manifest.purge!
-
-    g = Runtime::ComposeGenerator.new([self, context])
-    # TODO: why not set detination root? if a good reason then note it here
-    # g.destination_root = manifest.write_path
-    g.invoke_all
-    Cnfs.logger.warn("Invalid manifest: #{manifest.errors.full_messages}") unless manifest.valid?
   end
 end
 # rubocop:enable Metrics/ClassLength

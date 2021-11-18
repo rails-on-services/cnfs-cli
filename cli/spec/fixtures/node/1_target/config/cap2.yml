@@ -1,2 +1,5 @@
 ---
 config: {}
+default:
+  resource_name: instance
+  provisioner_name: terraform

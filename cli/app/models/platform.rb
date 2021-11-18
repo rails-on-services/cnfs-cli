@@ -21,6 +21,17 @@ class Platform
     @capabilities ||= set_capabilities
   end
 
+    # def tool_check
+    #   missing_tools = required_tools - Cnfs.capabilities
+    #   raise Cnfs::Error, "Missing #{missing_tools}" if missing_tools.any?
+    #
+    #   true
+    # end
+
+    # def required_tools
+    #   []
+    # end
+
   # rubocop:disable Metrics/MethodLength
   def set_capabilities
     cmd = TTY::Command.new(printer: :null)

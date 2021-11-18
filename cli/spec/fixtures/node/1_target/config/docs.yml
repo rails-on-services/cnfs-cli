@@ -1,2 +1,3 @@
 ---
-blueprint: jamstack/scully
+config: {}
+blueprint_name: jamstack/scully

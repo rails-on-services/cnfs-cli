@@ -14,9 +14,9 @@ class Project < Component
     nil
   end
 
-  def c_name
-    'project'
-  end
+  # def c_name
+  #   'project'
+  # end
 
   def as_json
     super.merge('name' => name)

@@ -70,6 +70,7 @@ class Context < ApplicationRecord
       break unless (segment_spec  = segment_values(current)) # No serach values found so stop at the current component
 
       components << segment if segment
+      # binding.pry
       if (segment = current.components.find_by(name: segment_spec.name))
         current = segment
         next
@@ -89,17 +90,20 @@ class Context < ApplicationRecord
   # If the current component has an attribute 'default' then return that value
   # Otherwise return nil
   def segment_values(component)
-    if (name = options.fetch(component.segment, nil))
+    if (name = options.fetch(component.segment_type, nil))
       OpenStruct.new(name: name, source: 'CLI option')
-    elsif (name = CnfsCli.config.send(component.segment || ''))
+    elsif (name = CnfsCli.config.send(component.segment_type || ''))
       OpenStruct.new(name: name, source: 'ENV value')
-    elsif (name = component.default)
+    elsif (name = component.segment_name)
       OpenStruct.new(name: name, source: component.parent.rootpath.basename)
     end
   end
 
+  # TODO: This needs to be removed; The component config is moved to Component and follows owner
   def configure_component
-    component.update(config: component_config)
+    Node.with_asset_callbacks_disabled do
+      component.update(config: component_config)
+    end
   end
 
   # Iterate over each component from root to leaf
@@ -122,15 +126,17 @@ class Context < ApplicationRecord
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
   def create_assets
-    CnfsCli.asset_names.each do |asset_type|
-      component_assets = component.send(asset_type.to_sym)
-      parent_assets = send("component_#{asset_type}".to_sym)
-      context_assets = send(asset_type.to_sym)
-      enabled_assets(component_assets.enabled, parent_assets.inheritable).each do |json|
-        context_assets.create(json)
-      end
-      inherited_assets(component_assets, parent_assets.inheritable).each do |json|
-        context_assets.create(json)
+    Node.with_asset_callbacks_disabled do
+      CnfsCli.asset_names.each do |asset_type|
+        component_assets = component.send(asset_type.to_sym)
+        parent_assets = send("component_#{asset_type}".to_sym)
+        context_assets = send(asset_type.to_sym)
+        enabled_assets(component_assets.enabled, parent_assets.inheritable).each do |json|
+          context_assets.create(json)
+        end
+        inherited_assets(component_assets, parent_assets.inheritable).each do |json|
+          context_assets.create(json)
+        end
       end
     end
   end
@@ -163,17 +169,24 @@ class Context < ApplicationRecord
   end
 
   def update_assets
-    CnfsCli.asset_names.each do |asset_type|
-      klass = asset_type.classify.constantize
-      assets = send(asset_type)
-      klass.update_names.each { |attr| update_em(assets, attr, :update_names) } if klass.respond_to?(:update_names)
-      klass.update_nils.each { |attr| update_em(assets, attr, :update_nils) } if klass.respond_to?(:update_nils)
+    Node.with_asset_callbacks_disabled do
+      CnfsCli.asset_names.each do |asset_type|
+        klass = asset_type.classify.constantize
+        # klass.update_these(context)
+        next if klass.belongs_to_names.size.zero?
+
+        # binding.pry
+        assets = send(asset_type)
+        klass.update_names.each { |attr| update_em(assets, attr, :update_names) } if klass.respond_to?(:update_names)
+        klass.update_nils.each { |attr| update_em(assets, attr, :update_nils) } if klass.respond_to?(:update_nils)
+      end
     end
   end
 
   def update_em(assets, attr, method)
-    attr_sym = "#{attr}_name".to_sym
-    assn_sym = attr.pluralize.to_sym
+    # attr                             # 'runtime'
+    attr_sym = "#{attr}_name".to_sym   # :runtime_name
+    assn_sym = attr.pluralize.to_sym   # :runtimes
     send(method, attr, attr_sym, assn_sym, assets)
   end
 
@@ -183,7 +196,10 @@ class Context < ApplicationRecord
       if (obj = send(assn_sym).find_by(name: name))
         asset.update(attr => obj)
       else
-        Cnfs.logger.warn("Failed to find #{attr} '#{name}' for #{asset.class.name} '#{asset.name}'")
+        res_msg = "#{asset.class.table_name.classify} not configured: "
+        Cnfs.logger.warn("#{res_msg}#{asset.name}" \
+                         "\n#{' ' * 10}#{attr.capitalize} '#{name}' is not available in this segment" \
+                         "\n#{' ' * 10}Available #{assn_sym}: #{send(assn_sym).pluck(:name).join(', ')}")
       end
     end
   end
@@ -192,31 +208,53 @@ class Context < ApplicationRecord
     nil_assets = assets.where(attr_sym => nil)
     return if nil_assets.size.zero?
 
-    if send(assn_sym).size != 1
-      # Cnfs.logger.warn("Cannot determine #{attr} for #{asset.class.name} #{nil_assets.pluck(:name).join(', ')}")
-      Cnfs.logger.warn("Cannot determine #{attr} #{nil_assets.pluck(:name).join(', ')}")
+    asset_names = nil_assets.pluck(:name).join(', ')
+    res_msg = "#{assets.first.class.table_name.capitalize} not configured: "
+
+    if send(assn_sym).size.zero?
+      Cnfs.logger.warn("#{res_msg}#{asset_names}" \
+                       "\n#{' ' * 10}No available #{assn_sym}")
       return
     end
 
-    obj = send(assn_sym).first
-    nil_assets.each { |asset| asset.update(attr => obj) }
+    if send(assn_sym).size.eql?(1)
+      obj = send(assn_sym).first
+      nil_assets.each { |asset| asset.update(attr => obj, attr_sym => obj.name) }
+      # TODO:
+      # This needs to reference the merged hash rather than just the component's attribute which is not merged
+      # Consolidate the logging to a single method
+      # For each asset track the list of files that were merged to make the one asset
+    elsif (name = component.send(attr_sym))
+      if (obj = send(assn_sym).find_by(name: name))
+        nil_assets.each { |asset| asset.update(attr => obj, attr_sym => obj.name) }
+      else
+        Cnfs.logger.warn("#{res_msg}#{asset_names}" \
+                         "\n#{' ' * 10}Default #{attr} #{name} not found" \
+                         "\n#{' ' * 10}Source: #{component.parent.rootpath}")
+      end
+    else
+      Cnfs.logger.warn("#{res_msg}#{asset_names}" \
+                       "\n#{' ' * 10}Multiple #{assn_sym} aviailable, but no default has been set" \
+                       "\n#{' ' * 10}Available #{assn_sym}: #{send(assn_sym).pluck(:name).join(', ')}")
+    end
   end
 
+  # Returns an array of runtimes
+  # TODO: This needs to be simplified OR much better well documented
   def resource_runtimes(services: filtered_services)
     services.where.not(resource: nil).group_by(&:resource).each_with_object([]) do |(resource, services), ary|
       runtime = resource.runtime
-      runtime.services = services
+      runtime.context_services = services
       runtime.context = self
       ary.append(runtime)
     end
   end
 
   def resource_provisioners(resources: filtered_resources)
-    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, _resources), ary|
-      provisioner = resource.provisioner
-      provisioner.services = services
+    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, resources), ary|
+      provisioner.context_resources = resources
       provisioner.context = self
-      ary.append(runtime)
+      ary.append(provisioner)
     end
   end
 
@@ -237,7 +275,7 @@ class Context < ApplicationRecord
   # Used by runtime generators for templates by runtime to query services
   def labels
     @labels ||= begin
-      c_hash = components.each_with_object({}) { |c, h| h[c.c_name] = c.name }
+      c_hash = components.each_with_object({}) { |c, h| h[c.segment_type] = c.name }
       { 'context' => context_name }.merge(c_hash)
     end
   end
@@ -253,10 +291,14 @@ class Context < ApplicationRecord
   # NOTE: Used by console controller to create the CLI prompt
   def component_list
     @component_list ||= begin
-      list = components.each_with_object([]) { |c, a| a.append OpenStruct.new(c_name: c.c_name, name: c.name) }
-      list.append(OpenStruct.new(c_name: component.c_name, name: component.name)) unless root_id.eql?(component_id)
+      list = components.each_with_object([]) { |component, ary| ary.append(component_struct(component)) }
+      list.append(component_struct(component)) unless root_id.eql?(component_id)
       list
     end
+  end
+
+  def component_struct(component)
+    OpenStruct.new(segment_type: component.segment_type, name: component.name)
   end
 
   def options

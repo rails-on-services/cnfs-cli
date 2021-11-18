@@ -1,16 +1,18 @@
 ---
-cap2:
+instance:
   config:
-    family: r2
-    size: awesome
+    family: m5
+    size: medium
   runtime_name: compose
+  provider_name: aws_east
   tags: {}
   envs: {}
   type: Aws::Resource::EC2::Instance
-cap4:
+bucket:
   config:
     family: ah23
     size: cool!
   tags: {}
   envs: {}
   type: Aws::Resource::S3::Bucket
+  provider_name: localstack

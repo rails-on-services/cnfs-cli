@@ -1,5 +1,10 @@
 ---
 config: {}
-segment: target
-default: cap2
+segment_type: target
+default:
+  provisioner_name: terraform
+  repository_name: jamstack
+  resource_name: instance1
+  runtime_name: compose
+  segment_name: cap2
 name: 1_target

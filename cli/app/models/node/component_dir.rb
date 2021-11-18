@@ -7,6 +7,8 @@ class Node::ComponentDir < Node
 
   # Iterate over files and directories
   def load_path
+    # TODO: Could this be used to load app dir and blueprint.yml?
+    # If not remove it
     owner.before_load_path(rootpath, self) if owner.respond_to?(:before_load_path)
     create_assets
     validate_if_segment
@@ -48,7 +50,7 @@ class Node::ComponentDir < Node
   # If a component dir exsists but not the file then create the file and vice versa
   # So that component crud can rely on the filesystem being available
   def validate_if_segment
-    return unless owner.type.eql?('Segment')
+    return unless owner.type.nil?
 
     dirs = component_dir_paths.map { |p| base_name(p) }
     files = component_file_paths.map { |p| base_name(p) }

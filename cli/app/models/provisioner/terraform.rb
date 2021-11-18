@@ -3,6 +3,46 @@
 class Provisioner::Terraform < Provisioner
   store :providers, accessors: %i[aws gcp azure], coder: YAML
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  # TODO:
+  #   Implement as a before_execute callback
+  #   Make this reusable by refactoring Pathname.rmtree and moving code back to Provisioner class
+  def download_dependencies
+    return if dependencies.empty?
+
+    require 'tty-file'
+    require 'tty-spinner'
+
+    path.mkpath unless path.exist?
+
+    Dir.chdir(path) do
+      # TODO: Move to terraform builder
+      Pathname.new('.terraform/modules').rmtree if options.clean
+      # rubocop:disable Naming/VariableNumber
+      spinner = TTY::Spinner.new('[:spinner] Downloading dependencies ...', format: :pulse_2)
+      # rubocop:enable Naming/VariableNumber
+      dependencies.each do |dependency|
+        file = dependency[:url].split(%r{/}).last
+        if File.exist?(file) && !options.clean
+          Cnfs.logger.info "Dependency #{dependency[:name]} exists locally. To overwrite run command with --clean flag."
+          next
+        end
+
+        dep = dependency[:url].cnfs_sub
+        spinner.run do |_spinner|
+          if dependency[:type].eql?('repo')
+            command.run(command_env, "git clone #{dep}", command_options)
+          else
+            TTY::File.download_file(dep)
+          end
+        end
+      end
+    end
+  end
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/AbcSize
+
   # Template helpers
   def output(resource, key)
     "output \"#{title(resource.name, key)}\" {

@@ -43,7 +43,7 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt2
       @__prompt2 ||= context.component_list.each_with_object([]) do |comp, prompt|
-        cfg = CnfsCli.config.components.select { |ar| ar.name.eql?(comp.c_name) }.first
+        cfg = CnfsCli.config.components.select { |ar| ar.name.eql?(comp.segment_type) }.first
         color = cfg&.color
         prompt << (color.nil? ? comp.name : Pry::Helpers::Text.send(color.to_sym, comp.name))
       end.join('][')
