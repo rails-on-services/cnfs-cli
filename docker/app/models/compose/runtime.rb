@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/ClassLength
-class Runtime::Compose < Runtime
+class Compose::Runtime < Runtime
   # attr_accessor :queue, :services, :context
 
   # delegate :options, :labels, to: :context

@@ -2,7 +2,7 @@
 
 require 'yaml'
 
-class Runtime::Native < Runtime
+class Native::Runtime < Runtime
   def before_execute_on_target
     switch!
   end

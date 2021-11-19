@@ -228,15 +228,11 @@ class Context < ApplicationRecord
 
   # NOTE: Used by console controller to create the CLI prompt
   def component_list
-    @component_list ||= begin
-      list = components.each_with_object([]) { |component, ary| ary.append(component_struct(component)) }
-      list.append(component_struct(component)) unless root_id.eql?(component_id)
-      list
-    end
+    @component_list ||= all_components.each_with_object([]) { |component, ary| ary.append(component_struct(component)) }
   end
 
   def component_struct(component)
-    OpenStruct.new(segment_type: component.segment_type, name: component.name)
+    OpenStruct.new(segment_type: component.owner&.segment_type, name: component.name)
   end
 
   def options

@@ -20,7 +20,6 @@ module Concerns
       validate :dynamic_association_types
     end
 
-
     def dynamic_association_types
       return unless Node.source.eql?(:asset)
 

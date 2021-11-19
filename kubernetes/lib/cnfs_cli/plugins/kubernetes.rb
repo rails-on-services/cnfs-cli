@@ -2,7 +2,7 @@
 
 module CnfsCli
   module Plugins
-    class Kubernete
+    class Kubernetes
       class << self
         def initialize_kubernetes
           require 'cnfs_cli/kubernetes'
@@ -20,8 +20,7 @@ module CnfsCli
         # end
 
         def gem_root
-          #{CnfsCli::Kubernete.gem_root
-          CnfsCli::Kubernete.gem_root
+          CnfsCli::Kubernetes.gem_root
         end
       end
     end

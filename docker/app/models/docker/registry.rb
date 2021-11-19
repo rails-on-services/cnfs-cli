@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Registry::Docker < Repository
+class Docker::Registry < Registry
   store :config, accessors: %i[server username password email], coder: YAML
 
   def add_deploy_commands(runtime)

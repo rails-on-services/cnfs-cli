@@ -3,7 +3,7 @@
 require 'cnfs_cli/<%= name %>/version'
 
 module CnfsCli
-  module <%= name.classify %>
+  module <%= name.camelize %>
     class << self
       def gem_root
         @gem_root ||= Pathname.new(__dir__).join('../..')

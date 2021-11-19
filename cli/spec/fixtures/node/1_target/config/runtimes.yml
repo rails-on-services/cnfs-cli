@@ -3,7 +3,7 @@ compose:
   config:
     version: 3.2
   dependencies: '[{"name"=>"docker-compose"}]'
-  type: Runtime::Compose
+  type: Compose::Runtime
 native:
   config: {}
-  type: Runtime::Native
+  type: Native::Runtime

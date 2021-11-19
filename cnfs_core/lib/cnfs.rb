@@ -86,7 +86,8 @@ module Cnfs
         mod_name = "#{mod_name.to_s.classify}::#{klass}"
         next unless (mod = mod_name.safe_constantize)
 
-        ary.append(mod)
+        # Ignore anything that is not an A/S::Concern, e.g. A/R STI classes
+        ary.append(mod) if mod.is_a?(ActiveSupport::Concern)
       end
     end
 

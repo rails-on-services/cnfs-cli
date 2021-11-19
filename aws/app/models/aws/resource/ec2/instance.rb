@@ -8,7 +8,7 @@ class Aws::Resource::EC2::Instance < Aws::Resource::EC2
   belongs_to :runtime, optional: true
 
   def valid_types
-    super.merge(runtime: %w[Runtime::Compose Runtime::Skaffold])
+    super.merge(runtime: %w[Compose::Runtime Skaffold::Runtime])
   end
 
   def outputs

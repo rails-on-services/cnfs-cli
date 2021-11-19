@@ -14,8 +14,8 @@ module Projects
       end
 
       def model_shortcuts
-        { c: Context, co: Component, d: Dependency, n: Node, p: Project, pr: Provider,
-          pro: Provisioner, r: Resource, re: Repository, ru: Runtime, s: Service, u: User }
+        { c: Context, co: Component, d: Dependency, i: Image, n: Node, p: Project, pr: Provider,
+          pro: Provisioner, r: Resource, re: Repository, reg: Registry, ru: Runtime, s: Service, u: User }
       end
     end
 
@@ -43,10 +43,18 @@ module Projects
     # rubocop:disable Metrics/AbcSize
     def __prompt2
       @__prompt2 ||= context.component_list.each_with_object([]) do |comp, prompt|
-        cfg = CnfsCli.config.components.select { |ar| ar.name.eql?(comp.segment_type) }.first
-        color = cfg&.color
-        prompt << (color.nil? ? comp.name : Pry::Helpers::Text.send(color.to_sym, comp.name))
-      end.join('][')
+        # cfg = CnfsCli.config.components.select { |ar| ar.name.eql?(comp.segment_type) }.first
+        # color = cfg&.color
+        # TODO: if the color is specified that remove it from the colors array so it isn't resused
+        # prompt << (color.nil? ? comp.name : Pry::Helpers::Text.send(color.to_sym, comp.name))
+        # TODO: If option is not verbose then don't show segment_type
+        title = "#{comp.segment_type}:#{comp.name}"
+        prompt << (Pry::Helpers::Text.send(colors.shift, title))
+      end.join('/')
+    end
+
+    def colors
+      @colors ||= %i[blue green purple magenta cyan yellow red white black]
     end
 
     def __prompt
@@ -55,7 +63,7 @@ module Projects
       proc do |obj, _nest_level, _|
         klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
         label = klass.eql?('console') ? '' : " (#{klass})"
-        "[#{__prompt2}]#{label}> "
+        "#{__prompt2}#{label}> "
       end
     end
   end

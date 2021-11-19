@@ -2,11 +2,11 @@
 
 module CnfsCli
   module Plugins
-    class <%= name.classify %>
+    class <%= name.camelize %>
       class << self
         def initialize_<%= name %>
           require 'cnfs_cli/<%= name %>'
-          Cnfs.logger.info "[<%= name.classify %>] Initializing from #{gem_root}"
+          Cnfs.logger.info "[<%= name.camelize %>] Initializing from #{gem_root}"
         end
 
         # def customize
@@ -20,7 +20,6 @@ module CnfsCli
         # end
 
         def gem_root
-          <%= '#{CnfsCli::' + name.classify %>.gem_root
           CnfsCli::<%= name.classify %>.gem_root
         end
       end

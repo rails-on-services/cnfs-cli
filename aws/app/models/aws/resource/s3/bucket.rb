@@ -4,6 +4,6 @@ class Aws::Resource::S3::Bucket < Aws::Resource::S3
   belongs_to :runtime, optional: true
 
   def valid_types
-    super.merge(runtime: 'Runtime::Bucket')
+    super.merge(runtime: 'Bucket::Runtime')
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Runtime::Service < ApplicationRecord
+class RuntimeService < ApplicationRecord
 	belongs_to :runtime
 
 	# accessors match the columns returned by docker ps

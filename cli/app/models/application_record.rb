@@ -12,7 +12,11 @@ class ApplicationRecord < Cnfs::ApplicationRecord
     has_attribute?(:type) ? { 'type' => type } : {}
   end
 
+  # TODO: Maybe this should move to parent concern?
+  # Disable storing database primary and foreign keys to yaml
+  # All references are determined dynamically when the context builds the assets
+  # Storing keys in yaml would be confusing to user and will cause problems as yaml content changes and IDs change
   def except_json
-    %w[id name owner_type owner_id]
+    %w[id name owner_type] + self.class.column_names.select { |n| n.end_with?('_id') }
   end
 end

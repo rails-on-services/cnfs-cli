@@ -4,7 +4,7 @@ class Runtime < ApplicationRecord
   include Concerns::Asset
   include Concerns::PlatformRunner
 
-  has_many :runtime_services, class_name: 'Runtime::Service'
+  has_many :runtime_services
 
   attr_accessor :services, :context_services
 
