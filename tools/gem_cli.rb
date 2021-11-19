@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'thor'
+require 'yaml'
 require 'active_support/inflector'
 
 class Generator < Thor::Group
@@ -9,39 +10,17 @@ class Generator < Thor::Group
   argument :name
 
   def gemspec
+    old_file_name = "cnfs_cli-#{name}.gemspec"
     file_name = "cnfs-cli-#{name}.gemspec"
-    remove_file(file_name) if self.class.name.eql?('NewGenerator')
+    remove_file(old_file_name) if instance_of?(NewGenerator)
     template('gemspec.rb.erb', file_name)
   end
 
   private
 
-  # rubocop:disable Metrics/MethodLength
   def metadata
-    @metadata ||= Thor::CoreExt::HashWithIndifferentAccess.new(
-      angular: {
-        summary: 'the Angular Framework',
-        description: 'create Angular repositories and services in CNFS project'
-      },
-      aws: {
-        summary: 'Amazon Web Services',
-        description: 'create CNFS compatible blueprints for AWS'
-      },
-      gcp: {
-        summary: 'Google Cloud Platform',
-        description: 'create CNFS compatible blueprints for GCP'
-      },
-      rails: {
-        summary: 'the Ruby on Rails Framework',
-        description: 'create RoR repositories and services in CNFS project'
-      },
-      cnfs_core: {
-        summary: 'CNFS Core Services',
-        description: 'install service configurations into CNFS projects'
-      }
-    )
+    @metadata ||= YAML.load_file('tools/metadata.yml')
   end
-  # rubocop:enable Metrics/MethodLength
 
   def source_paths
     ["#{__dir__}/new", "#{__dir__}/new/templates"]
@@ -54,14 +33,16 @@ class NewGenerator < Generator
       remove_dir('.git')
       remove_file('.travis.yml')
       directory('files', '.')
-      remove_file("lib/cnfs/cli/#{name}.rb")
-      template('lib/cnfs/cli/gem_name.rb.erb', "lib/cnfs/cli/#{name}.rb")
-      template('lib/cnfs/plugins/gem_name.rb.erb', "lib/cnfs/plugins/#{name}.rb")
+      remove_file("lib/cnfs_cli/#{name}.rb")
+      template('lib/cnfs_cli/gem_name.rb.erb', "lib/cnfs_cli/#{name}.rb")
+      template('lib/cnfs_cli/plugins/gem_name.rb.erb', "lib/cnfs_cli/plugins/#{name}.rb")
     end
   end
 end
 
 class GemCli < Thor
+  class_option :force, desc: 'Overwrite existing dir if it exists',
+                       aliases: '-f', type: :boolean
   class_option :noop, desc: 'Do not execute commands',
                       aliases: '-n', type: :boolean
   class_option :verbose, desc: 'Display extra information from command',
@@ -69,8 +50,11 @@ class GemCli < Thor
 
   desc 'new', 'Create new CLI plugin gem'
   def new(name)
-    gem_name = "cnfs-cli-#{name}"
-    exec("bundle gem #{gem_name}")
+    FileUtils.rm_rf(name) if Dir.exist?(name) && validate_destroy('dir exists. Do you want to overwrite?')
+
+    gem_name = "cnfs_cli-#{name}"
+    exec("bundle gem -t none --ci=none --no-coc --no-rubocop --mit --changelog #{gem_name}")
+    # exec("bundle gem #{gem_name}")
     FileUtils.mv(gem_name, name)
     generator = NewGenerator.new([name], {})
     generator.destination_root = "#{Dir.pwd}/#{name}"
@@ -120,6 +104,13 @@ class GemCli < Thor
 
   private
 
+  def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
+    return true if options.force || yes?(msg)
+
+    puts 'Operation cancelled'
+    exit(-1)
+  end
+
   def each_dir
     Dir['*/'].sort.each do |dir|
       dir = dir.delete_suffix('/')
@@ -133,6 +124,6 @@ class GemCli < Thor
 
   def exec(cmd)
     puts cmd if options.verbose
-    `#{cmd}` unless options.noop
+    system(cmd) unless options.noop
   end
 end

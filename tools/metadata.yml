@@ -1,0 +1,19 @@
+---
+angular:
+  summary: 'the Angular Framework'
+  description: 'create Angular repositories and services in CNFS project'
+aws:
+  summary: 'Amazon Web Services'
+  description: 'create CNFS compatible blueprints for AWS'
+gcp:
+  summary: 'Google Cloud Platform'
+  description: 'create CNFS compatible blueprints for GCP'
+rails:
+  summary: 'the Ruby on Rails Framework'
+  description: 'create RoR repositories and services in CNFS project'
+cnfs_core:
+  summary: 'CNFS Core Services'
+  description: 'install service configurations into CNFS projects'
+terraform:
+  summary: 'the Terraform Provisioning Tool'
+  description: 'create Terraform templates for resources and blueprints'

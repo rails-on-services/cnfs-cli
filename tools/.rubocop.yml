@@ -1,0 +1,6 @@
+---
+inherit_from: ../.rubocop.yml
+
+# Lint/EmptyFile:
+#   Include:
+#     - new/files/config/environment.rb

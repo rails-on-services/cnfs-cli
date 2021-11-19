@@ -42,7 +42,7 @@ module Cnfs
     end
 
     def add_loader(name:, path:, notifier: nil)
-      name = name.to_sym
+      name = name.to_s
       loaders[name] ||= Cnfs::Loader.new(name: name, logger: logger)
       loaders[name].add_path(path)
       loaders[name].add_notifier(notifier)

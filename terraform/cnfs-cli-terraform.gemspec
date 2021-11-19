@@ -1,14 +1,14 @@
 # frozen_string_literal: true
-require_relative 'lib/cnfs_cli/<%= name %>/version'
+require_relative 'lib/cnfs_cli/terraform/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-cli-<%= name %>'
-  spec.version       = CnfsCli::<%= name.classify %>::VERSION
+  spec.name          = 'cnfs-cli-terraform'
+  spec.version       = CnfsCli::Terraform::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
-  <% if metadata[name].nil?; puts "\n WARNING: Missing metadata"; exit(-1) end %>
-  spec.summary       = 'CNFS CLI plugin for <%= metadata[name]['summary'] %>'
-  spec.description   = 'CNFS CLI plugin to <%= metadata[name]['description'] %>'
+
+  spec.summary       = 'CNFS CLI plugin for the Terraform Provisioning Tool'
+  spec.description   = 'CNFS CLI plugin to create Terraform templates for resources and blueprints'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
