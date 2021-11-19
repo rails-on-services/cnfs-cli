@@ -32,6 +32,7 @@ class NewGenerator < Generator
     in_root do
       remove_dir('.git')
       remove_file('.travis.yml')
+      remove_file('.gitignore')
       directory('files', '.')
       remove_file("lib/cnfs_cli/#{name}.rb")
       template('lib/cnfs_cli/gem_name.rb.erb', "lib/cnfs_cli/#{name}.rb")
