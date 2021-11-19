@@ -60,7 +60,7 @@ module Concerns
     end
 
     def generator_class
-      "#{self.class.name}Generator".safe_constantize
+      "#{self.class.name.demodulize}::Generator".safe_constantize
     end
 
     def path(from: nil, to: :templates, absolute: false)

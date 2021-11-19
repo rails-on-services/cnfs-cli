@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Runtime for running native processes on host
-class Runtime::NativeGenerator < RuntimeGenerator
+class Native::Generator < RuntimeGenerator
   def generate_project_files
     outdir = target.write_path(:deployment)
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Runtime::ComposeGenerator < RuntimeGenerator
+class Compose::Generator < RuntimeGenerator
   # private
   def generate_nginx_conf
     # binding.pry

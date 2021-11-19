@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Builder::TerraformGenerator < BuilderGenerator
+class Terraform::Generator < BuilderGenerator
   def blueprint_to_terraform_json
     project.environment.blueprints.each do |blueprint|
       unless blueprint.valid?

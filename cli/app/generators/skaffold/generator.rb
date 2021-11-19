@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Runtime::SkaffoldGenerator < RuntimeGenerator
+class Skaffold::Generator < RuntimeGenerator
   def files
     directory('files', path)
   end
