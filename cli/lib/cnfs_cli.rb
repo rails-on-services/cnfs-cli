@@ -96,7 +96,7 @@ module CnfsCli
       # TODO: assets blueprints environments registries
       # TODO: Fix: Raises an error if this is memoized
       # @asset_names ||= (%w[dependencies images providers resources services users] + operator_names).sort
-      (%w[dependencies images providers resources registries services users] + operator_names).sort
+      (%w[dependencies blueprints images providers resources registries services users] + operator_names).sort
     end
 
     def operator_names
@@ -109,7 +109,7 @@ module CnfsCli
     end
 
     def support_names
-      %w[context context_component node runtime_service]
+      %w[context context_component node runtime_service provisioner_resource]
     end
 
     # TODO: this needs to be refactored

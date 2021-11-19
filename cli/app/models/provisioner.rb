@@ -4,7 +4,11 @@ class Provisioner < ApplicationRecord
   include Concerns::Asset
   include Concerns::PlatformRunner
 
+  has_many :blueprint_resources
+
   attr_accessor :resources, :context_resources
+
+  store :config, accessors: %i[version], coder: YAML
 
   # This may be about TF modules rather than binaries like tf, kubectl, etc
   # TODO: Figure out how to manage these

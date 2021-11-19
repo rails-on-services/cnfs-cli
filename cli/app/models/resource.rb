@@ -14,7 +14,7 @@ class Resource < ApplicationRecord
   class << self
     def add_columns(t)
       t.references :blueprint
-      # t.string :blueprint_name
+      t.string :blueprint_name
       t.string :provider_name
       t.references :provider
       t.string :provisioner_name

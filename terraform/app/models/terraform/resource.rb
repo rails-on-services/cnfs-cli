@@ -4,10 +4,6 @@ module Terraform
   module Resource
     extend ActiveSupport::Concern
 
-    included do
-      # binding.pry
-    end
-
     # NOTE: used in TF templates
     def module_name
       resource_name.underscore

@@ -180,17 +180,18 @@ class Context < ApplicationRecord
   # Returns an array of runtimes
   # TODO: This needs to be simplified OR much better well documented
   def resource_runtimes(services: filtered_services)
-    services.where.not(resource: nil).group_by(&:resource).each_with_object([]) do |(resource, services), ary|
+    services.where.not(resource: nil).group_by(&:resource).each_with_object([]) do |(resource, x_services), ary|
       runtime = resource.runtime
-      runtime.context_services = services
+      runtime.context_services = x_services
       runtime.context = self
       ary.append(runtime)
     end
   end
 
-  def resource_provisioners(resources: filtered_resources)
-    resources.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, resources), ary|
-      provisioner.context_resources = resources
+  def blueprint_provisioners(resources: filtered_resources)
+    resources.where.not(blueprint: nil).group_by(&:blueprint).each_with_object([]) do |(blueprint, x_resources), ary|
+      provisioner = blueprint.provisioner
+      provisioner.context_resources = x_resources
       provisioner.context = self
       ary.append(provisioner)
     end

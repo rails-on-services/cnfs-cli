@@ -118,6 +118,14 @@ module Concerns
         @reference_columns ||= column_names.select { |n| n.end_with?('_id') || n.end_with?('_name') }
       end
 
+      def table_mod(method)
+        table_mods.append(method)
+      end
+
+      def table_mods
+        @table_mods ||= []
+      end
+
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
           t.string :name
@@ -127,6 +135,9 @@ module Concerns
           t.references :owner, polymorphic: true
           t.string :config
           add_columns(t) if respond_to?(:add_columns)
+          table_mods.each do |mod|
+            send(mod, t)
+          end
         end
       end
     end

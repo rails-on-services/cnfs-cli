@@ -5,6 +5,7 @@ instance:
     size: medium
   runtime_name: compose
   provider_name: aws_east
+  blueprint_name: test
   tags: {}
   envs: {}
   type: Aws::Resource::EC2::Instance

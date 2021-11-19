@@ -1,24 +1,11 @@
 # frozen_string_literal: true
 
-# A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
-class Blueprint < Component
-  def dir_path
-    parent.rootpath.split.first.join('config')
-  end
+# A Blueprint is A collection of resources
+class Blueprint < ApplicationRecord
+  include Concerns::Asset
 
-  # Called by Node::ComponentDir in order to load any defined classes before it loads #paths
-  def before_load_path(rootpath, cdir)
-    component_config_file = rootpath.join('../blueprint.yml')
-    if component_config_file&.exist? && (component_config = YAML.load_file(component_config_file))
-      update(config: component_config.merge(config))
-    end
-
-    Cnfs.add_loader(name: name, path: rootpath.join('../app')).setup
-  end
-
-  def tree_name
-    "#{name} (#{type})"
-  end
+  belongs_to :provisioner
+  has_many :resources
 
   # List of resource classes that are managed by this blueprint
   def resource_classes
@@ -31,6 +18,7 @@ class Blueprint < Component
   end
 
   class << self
+    # TODO: Are these methods necessary?
     def available_types(platform)
       defined_types.select { |p| p.start_with?(platform.to_s) }.map { |p| p.split('/').second }.sort
     end
@@ -54,10 +42,8 @@ class Blueprint < Component
     end
 
     def add_columns(t)
-      t.string :environment_name
-      t.references :environment
-      t.string :provider_name
-      t.references :provider
+      # t.string :provider_name
+      # t.references :provider
       t.string :provisioner_name
       t.references :provisioner
     end

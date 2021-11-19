@@ -6,12 +6,59 @@ module Concerns
 
     included do
       extend ActiveModel::Callbacks
-      # include ActiveModel::AttributeAssignment
+
+      include Concerns::Git
 
       attr_accessor :context
 
+      # binding.pry
       define_model_callbacks :execute
     end
+
+    # TODO:
+    #   Implement as a before_execute callback
+    #   Make this reusable by refactoring Pathname.rmtree and moving code back to Provisioner class
+    def download(url, path, spinner = false)
+      require 'tty-file'
+      require 'tty-spinner'
+
+      url = Pathname.new(url)
+      path = Pathname.new(path)
+      path.mkpath unless path.exist?
+
+      Dir.chdir(path) do
+        file = url.basename
+        if File.exist?(file) # && !options.clean
+          FileUtils.rm(file)
+          Cnfs.logger.warn("#{file} exists")
+          # Cnfs.logger.info "Dependency #{dependency[:name]} exists locally. To overwrite run command with --clean flag."
+          # next
+        end
+        do_it(url, file, spinner)
+      end
+    end
+
+    def do_it(url, file, spinner)
+      if spinner
+        spinner(file).run { |_spinner| more(url, file) }
+      else
+        more(url, file)
+      end
+    end
+
+    def more(url, file)
+      if git_url?(url.to_s)
+        git_clone(url.to_s).run
+      else
+        TTY::File.download_file(url.to_s)
+      end
+    end
+
+    # rubocop:disable Naming/VariableNumber
+    def spinner(file)
+      TTY::Spinner.new("[:spinner] Downloading #{file}...", format: :pulse_2)
+    end
+    # rubocop:enable Naming/VariableNumber
 
     # def initialize(**kwargs)
     #   assign_attributes(**kwargs)

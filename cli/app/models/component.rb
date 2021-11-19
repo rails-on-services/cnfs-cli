@@ -23,27 +23,27 @@ class Component < ApplicationRecord
     accessors: %i[segment_name runtime_name resource_name provider_name provisioner_name repository_name]
    
 
-  # Return the default dir_path of the parent's path + thsi component's name unless a blueprint_name is configured
-  # In which case parse blueprint_name to search the component hierarchy for the specified repository and blueprint
+  # Return the default dir_path of the parent's path + thsi component's name unless a component_name is configured
+  # In which case parse component_name to search the component hierarchy for the specified repository and blueprint
   def dir_path
     ret_val = parent.parent.rootpath.join(parent.node_name).to_s
-    return ret_val unless blueprint_name
+    return ret_val unless component_name
 
-    bp_repo_name, bp_name = blueprint_name.split('/')
+    comp_repo_name, comp_name = component_name.split('/')
 
-    unless (repo = owner.repositories.find_by(name: bp_repo_name))
+    unless (repo = owner.repositories.find_by(name: comp_repo_name))
       node_warn(node: parent,
-                msg: ["Blueprint repository '#{bp_repo_name}' not found", "Component: #{name}"])
+                msg: ["Blueprint repository '#{comp_repo_name}' not found", "Component: #{name}"])
       return ret_val 
     end
 
-    unless (path = repo.blueprints[bp_name])
+    unless (path = repo.components[comp_name])
       node_warn(node: parent,
-                msg: ["Blueprint '#{bp_name}' not found in repository '#{bp_repo_name}'", "Component: #{name}"])
+                msg: ["Component '#{comp_name}' not found in repository '#{comp_repo_name}'", "Component: #{name}"])
       return ret_val 
     end
 
-    Cnfs.add_loader(name: blueprint_name, path: path.join('app')).setup
+    Cnfs.add_loader(name: component_name, path: path.join('app')).setup
     path.join('config')
   end
 
@@ -78,7 +78,7 @@ class Component < ApplicationRecord
   end
 
   def tree_name
-    bp_name = blueprint_name.nil? ? '' : "  source: #{blueprint_name.gsub('/', '-')}"
+    bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
     "#{name} (#{owner.segment_type})#{bp_name}"
   end
 
@@ -109,7 +109,7 @@ class Component < ApplicationRecord
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
         t.string :name
-        t.string :blueprint_name
+        t.string :component_name
         t.string :type
         t.string :segment_type
         t.string :default

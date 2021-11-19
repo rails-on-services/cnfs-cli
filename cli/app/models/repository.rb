@@ -9,15 +9,15 @@ class Repository < ApplicationRecord
 
   validates :url, presence: true
 
-  def blueprints
-    @blueprints ||= set_blueprints
+  def components
+    @components ||= set_components
   end
 
-  def set_blueprints
-    return {} unless blueprints_path.exist?
+  def set_components
+    return {} unless components_path.exist?
 
-    blueprints_path.children.select(&:directory?).each_with_object({}) do |blueprint_path, hash|
-      hash[blueprint_path.basename.to_s] = blueprint_path if blueprint_path.join('blueprint.yml').exist?
+    components_path.children.select(&:directory?).each_with_object({}) do |component_path, hash|
+      hash[component_path.basename.to_s] = component_path if component_path.join('component.yml').exist?
     end
   end
 
@@ -25,8 +25,8 @@ class Repository < ApplicationRecord
     name
   end
 
-  def blueprints_path
-    repo_path.join('blueprints')
+  def components_path
+    repo_path.join('components')
   end
 
   def repo_path
