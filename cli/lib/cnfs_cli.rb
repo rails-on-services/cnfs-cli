@@ -100,8 +100,7 @@ module CnfsCli
     end
 
     def operator_names
-      # TODO: builders configurators
-      %w[provisioners repositories runtimes]
+      %w[builders configurators provisioners repositories runtimes]
     end
 
     def component_names

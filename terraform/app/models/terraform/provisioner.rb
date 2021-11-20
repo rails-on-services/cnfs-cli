@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Terraform::Provisioner < Provisioner
-  include Concerns::PlatformRunner
+  # include Concerns::PlatformRunner
   # store :providers, accessors: %i[aws gcp azure], coder: YAML
 
+      define_model_callbacks :execute
   # Template helpers
   def output(resource, key)
     "output \"#{title(resource.name, key)}\" {
@@ -25,7 +26,7 @@ class Terraform::Provisioner < Provisioner
     download_dependencies
   end
 
-  def generate
+  def x_generate
     write_template
   end
 
@@ -35,6 +36,7 @@ class Terraform::Provisioner < Provisioner
   end
 
   def destination_path
+    binding.pry
     project.path(to: :templates).join(blueprint.name)
   end
 
@@ -50,11 +52,20 @@ class Terraform::Provisioner < Provisioner
   #   %w[terraform]
   # end
 
+  def hello
+    binding.pry
+    puts 'hi'
+  end
+
+  # TODO: This is not working
+
+  before_execute :hello
+
   # before_execute :hello
   # Commands called by ExecControllers
   def init
     run_callbacks :execute do
-      # binding.pry
+      binding.pry
     end
     # rv('terraform init')
   end

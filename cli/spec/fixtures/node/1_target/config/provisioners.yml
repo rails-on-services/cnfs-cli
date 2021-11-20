@@ -18,4 +18,4 @@ vagrant:
   - name: setup
     type: repo
     url: https://github.com/rails-on-services/setup
-  type: Provisioner::Vagrant
+  type: Vagrant::Provisioner

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ruby-terraform'
+
 require 'cnfs_cli/terraform/version'
 
 module CnfsCli

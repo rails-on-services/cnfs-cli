@@ -40,6 +40,12 @@ module Concerns
     end
 
     def tree_name
+      # [name, type&.deconstantize&.underscore].compact.join(': ').gsub('/', '-')
+      [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
+    end
+
+    # TODO: Implement when option vebose is paased in
+    def tree_name_verbose
       %w[inherit enable].each_with_object([name]) do |v, ary|
         ary.append("(#{v})") if v.nil? || v
       end.join(' ')

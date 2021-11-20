@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Provisioner::Vagrant < Provisioner
+class Vagrant::Provisioner < Provisioner
   attr_accessor :blueprint
 
   store :config, accessors: %i[box box_url], coder: YAML

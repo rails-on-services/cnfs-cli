@@ -7,7 +7,7 @@ module Terraform
     extend ActiveSupport::Concern
 
     included do
-  include Concerns::PlatformRunner
+  include Concerns::Operator
       table_mod :terraform_add_columns
 
       store :terraform, accessors: %i[modules], coder: YAML

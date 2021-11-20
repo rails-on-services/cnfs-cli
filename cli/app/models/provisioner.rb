@@ -2,7 +2,7 @@
 
 class Provisioner < ApplicationRecord
   include Concerns::Asset
-  include Concerns::PlatformRunner
+  include Concerns::Operator
 
   has_many :blueprint_resources
 

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'docker'
+require 'docker/compose'
+
 require 'cnfs_cli/docker/version'
 
 module CnfsCli

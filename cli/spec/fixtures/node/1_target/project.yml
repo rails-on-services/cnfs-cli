@@ -3,7 +3,8 @@ config: {}
 segment_type: target
 default:
   provisioner_name: terraform
-  repository_name: jamstack
+  # repository_name: jamstack
+  repository_name: ros
   resource_name: instance1
   runtime_name: compose
   segment_name: cap2

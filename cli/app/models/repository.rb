@@ -2,6 +2,7 @@
 
 class Repository < ApplicationRecord
   include Concerns::Asset
+  include Concerns::Operator
   include Concerns::Git
   # include Concerns::Taggable
 

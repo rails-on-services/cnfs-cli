@@ -2,3 +2,6 @@
 jamstack:
   config:
     url: git@github.com:maxcole/kpop.git
+ros:
+  config:
+    url: git@github.com:rails-on-services/ros.git

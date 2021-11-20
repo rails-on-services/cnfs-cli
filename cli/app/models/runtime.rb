@@ -2,7 +2,7 @@
 
 class Runtime < ApplicationRecord
   include Concerns::Asset
-  include Concerns::PlatformRunner
+  include Concerns::Operator
 
   has_many :runtime_services
 

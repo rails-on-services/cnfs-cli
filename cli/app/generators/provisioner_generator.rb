@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class BuilderGenerator < ApplicationGenerator
-  attr_reader :blueprint
+class ProvisionerGenerator < ApplicationGenerator
+  attr_reader :resource
 
   private
 
@@ -9,6 +9,7 @@ class BuilderGenerator < ApplicationGenerator
   def caller_path() = 'builder'
 
   def path(to = :templates)
+    binding.pry
     project.path(to: to)
   end
 end

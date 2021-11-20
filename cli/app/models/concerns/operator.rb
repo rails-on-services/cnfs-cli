@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Concerns
-  module PlatformRunner
+  module Operator
     extend ActiveSupport::Concern
 
     included do
-      extend ActiveModel::Callbacks
+      # extend ActiveModel::Callbacks
 
       include Concerns::Git
 
@@ -88,11 +88,8 @@ module Concerns
 
     # Check if the manifest is outdated and generate it if necessary
     def generate(force: false)
-      # TODO: enable return
-      # return if already_generated unless force
-      manifest = context.manifest
       manifest.purge! if context.options.generate
-      return if manifest.valid?
+      return if manifest.valid? unless context.options.force
 
       manifest.purge!
 
@@ -102,12 +99,15 @@ module Concerns
       Cnfs.logger.warn("Invalid manifest: #{manifest.errors.full_messages}") unless manifest.valid?
     end
 
+    delegate :manifest, to: :context
+
     def generator
-      generator_class.new([self, context])
+      @generator ||= generator_class.new([self, context])
     end
 
+    # Terraform::Provisioner becomes Terraform::ProvisionerGenerator
     def generator_class
-      "#{self.class.name.demodulize}::Generator".safe_constantize
+      "#{self.class.name}Generator".constantize
     end
 
     def path(from: nil, to: :templates, absolute: false)

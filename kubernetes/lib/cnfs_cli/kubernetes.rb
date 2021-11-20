@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'kubeclient'
+
 require 'cnfs_cli/kubernetes/version'
 
 module CnfsCli

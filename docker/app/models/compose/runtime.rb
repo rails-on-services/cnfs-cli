@@ -26,19 +26,6 @@ class Compose::Runtime < Runtime
   #   # list show generate
   # end
 
-  # Image Operations
-  def build(services)
-    rv compose("build --parallel #{services.pluck(:name).join(' ')}")
-  end
-
-  def pull(services)
-    rv compose("pull #{services.pluck(:name).join(' ')}")
-  end
-
-  def push(services)
-    rv compose("push #{services.pluck(:name).join(' ')}")
-  end
-
   # Namespace Operations
   # TODO: Add support for destroying volumes; https://docs.docker.com/compose/reference/down/
   def destroy
@@ -112,7 +99,12 @@ class Compose::Runtime < Runtime
     end
   end
 
-  before_execute :generate, :write_env, :query_services
+  # before_execute :generate, :write_env, :query_services
+  before_execute :hello
+
+  def hello
+    puts 'hello'
+  end
 
   def write_env
     FileUtils.rm_f('.env')
