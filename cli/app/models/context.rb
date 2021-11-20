@@ -34,13 +34,6 @@ class Context < ApplicationRecord
         send(asset_name)
       end
     end
-
-    # define_method "#{asset_name}_runtime".to_sym do |assets: send("filtered_#{asset_name}".to_sym)|
-    #   runtime = component.runtime
-    #   runtime.send("#{asset_name}=".to_sym, assets) #services = services
-    #   runtime.context = self
-    #   runtime
-    # end
   end
 
   store :options, coder: YAML

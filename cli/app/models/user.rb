@@ -8,7 +8,6 @@ class User < ApplicationRecord
     def add_columns(t)
       t.string :role
       t.string :full_name
-      t.string :tags
     end
   end
 end

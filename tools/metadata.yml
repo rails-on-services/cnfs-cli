@@ -17,6 +17,9 @@ gcp:
 kubernetes:
   summary: 'the Kubernets Container Runtime'
   description: 'install Kubernetes support into CNFS projects'
+native:
+  summary: 'run services natively on local system'
+  description: 'run services natively on local system'
 rails:
   summary: 'the Ruby on Rails Framework'
   description: 'create RoR repositories and services in CNFS project'

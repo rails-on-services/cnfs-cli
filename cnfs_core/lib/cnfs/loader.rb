@@ -15,27 +15,30 @@ module Cnfs
       self
     end
 
-    def add_path(path)
-      return paths unless path.exist?
+    def add_path(root_path)
+      return paths unless root_path.exist?
 
-      selected = path.children.select(&:directory?).select { |m| load_paths.include?(m.basename.to_s) }
-      paths.concat(selected)
+      root_path.children.select(&:directory?).select { |path| load_paths.include?(path.basename.to_s) }.each do |path|
+        paths << path
+      end
     end
 
+    # Store all paths to be added to loader and ensure they are unique
     def paths
-      @paths ||= []
+      @paths ||= Set.new
     end
 
     def load_paths
       @load_paths ||= %w[controllers generators helpers models views]
     end
 
+    # Gems may want to set the loader's inflector and other work before classes are loaded
     def add_notifier(notifier)
       notifiers << notifier if notifier
     end
 
     def notifiers
-      @notifiers ||= []
+      @notifiers ||= Set.new
     end
 
     # Zeitwerk loader methods

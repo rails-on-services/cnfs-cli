@@ -20,31 +20,19 @@ class Component < ApplicationRecord
   end
 
   store :default, coder: YAML,
-    accessors: %i[segment_name runtime_name resource_name provider_name provisioner_name repository_name]
+    accessors: %i[blueprint_name provider_name provisioner_name repository_name resource_name runtime_name segment_name]
    
-
-  # Return the default dir_path of the parent's path + thsi component's name unless a component_name is configured
+  # Return the default dir_path of the parent's path + this component's name unless a component_name is configured
   # In which case parse component_name to search the component hierarchy for the specified repository and blueprint
   def dir_path
-    ret_val = parent.parent.rootpath.join(parent.node_name).to_s
-    return ret_val unless component_name
-
-    comp_repo_name, comp_name = component_name.split('/')
-
-    unless (repo = owner.repositories.find_by(name: comp_repo_name))
-      node_warn(node: parent,
-                msg: ["Blueprint repository '#{comp_repo_name}' not found", "Component: #{name}"])
-      return ret_val 
+    if component_name
+      if (path = CnfsCli.components[component_name])
+        return path.join('config')
+      else
+        node_warn(node: parent, msg: "Repository component '#{component_name}' not found")
+      end
     end
-
-    unless (path = repo.components[comp_name])
-      node_warn(node: parent,
-                msg: ["Component '#{comp_name}' not found in repository '#{comp_repo_name}'", "Component: #{name}"])
-      return ret_val 
-    end
-
-    Cnfs.add_loader(name: component_name, path: path.join('app')).setup
-    path.join('config')
+    parent.parent.rootpath.join(parent.node_name).to_s
   end
 
   def key

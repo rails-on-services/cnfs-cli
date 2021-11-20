@@ -102,7 +102,7 @@ module Concerns
     delegate :manifest, to: :context
 
     def generator
-      @generator ||= generator_class.new([self, context])
+      @generator ||= generator_class.new([context, self])
     end
 
     # Terraform::Provisioner becomes Terraform::ProvisionerGenerator

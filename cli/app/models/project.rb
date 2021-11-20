@@ -5,6 +5,12 @@ class Project < Component
   # belongs_to :source_repository, class_name: 'Repository'
   store :config, accessors: %i[happy]
 
+  after_create :add_loader
+
+  def add_loader
+    CnfsCli.add_loader(name: name, path: Pathname.new('app'))
+  end
+
   def key
     @key ||= super || warn_key
   end

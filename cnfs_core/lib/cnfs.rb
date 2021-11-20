@@ -18,14 +18,14 @@ module Cnfs
     # rubocop:disable Metrics/AbcSize
     # Setup the core framework
     def setup(data_store: true, model_names: [])
-      add_loader(name: :core, path: Cnfs.plugin_root.gem_root.join('app'))
+      add_loader(name: :framework, path: Cnfs.plugin_root.gem_root.join('app'))
       # Create a loader for this gem's classes
-      add_loader(name: :core, path: Cnfs.gem_root.join('app'))
+      add_loader(name: :framework, path: Cnfs.gem_root.join('app'))
 
       Cnfs.plugin_root.plugins.each do |name, plugin_class|
         next unless (plugin = plugin_class.to_s.split('::').values_at(0, -1).join('::').safe_constantize)
 
-        add_loader(name: :core, path: plugin.gem_root.join('app'), notifier: plugin_class)
+        add_loader(name: :framework, path: plugin.gem_root.join('app'), notifier: plugin_class)
       end
       loaders.values.map(&:setup)
 

@@ -12,8 +12,8 @@ module Concerns
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true, required: true
 
-      scope :inheritable, -> { where(inherit: [true, nil]).order(:id) }
-      scope :enabled, -> { where(enable: [true, nil]) }
+      scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
+      scope :enabled, -> { where(enable: [true, nil], abstract: [false, nil]) }
 
       delegate :key, to: :owner
 
@@ -136,14 +136,14 @@ module Concerns
         schema.create_table table_name, force: true do |t|
           t.string :name
           t.string :type
+          t.boolean :abstract
           t.boolean :enable
           t.boolean :inherit
+          t.string :from
           t.references :owner, polymorphic: true
           t.string :config
           add_columns(t) if respond_to?(:add_columns)
-          table_mods.each do |mod|
-            send(mod, t)
-          end
+          table_mods.each { |mod| send(mod, t) }
         end
       end
     end

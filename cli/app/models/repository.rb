@@ -10,20 +10,15 @@ class Repository < ApplicationRecord
 
   validates :url, presence: true
 
-  def components
-    @components ||= set_components
-  end
+  after_create :register_components
 
-  def set_components
-    return {} unless components_path.exist?
+  def register_components
+    return unless components_path.exist?
 
-    components_path.children.select(&:directory?).each_with_object({}) do |component_path, hash|
-      hash[component_path.basename.to_s] = component_path if component_path.join('component.yml').exist?
+    components_path.children.select(&:directory?).each do |component_path|
+      component_name = "#{name}/#{component_path.basename}"
+      CnfsCli.register_component(name: component_name, path: component_path)
     end
-  end
-
-  def tree_name
-    name
   end
 
   def components_path
@@ -34,6 +29,10 @@ class Repository < ApplicationRecord
     CnfsCli.configuration.paths.src.join(name)
   end
 
+  def tree_name
+    name
+  end
+
   # def repo_config
   #   repo_config_file = repo_path.join('repository.yml')
   #   repo_config = repo_config_file.exist? ? (YAML.load_file(repo_config_file) : {}) : {}
@@ -41,11 +40,6 @@ class Repository < ApplicationRecord
 
   def git
     Dir.chdir(dir_path) { super }
-  end
-
-  # TODO: Move to somewhere in the controller
-  def clone_it
-    Command.new(exec: "git clone #{url} #{dir_path}").run
   end
 
   class << self

@@ -1,0 +1,134 @@
+# services.yml
+# ---
+localstack:
+  # template: localstack
+  commands:
+    shell: bash
+  config:
+    ports:
+     - { port: 4572, wait: yes }
+  image:
+    name: localstack/localstack
+  envs:
+    services: s3:4572,lambda:4574,sns:4575,sqs:4576
+    port_web_ui: 8080
+    debug: s3
+    hostname: localstack
+    hostname_external: localstack
+
+nginx:
+  # template: nginx
+  commands:
+    shell: bash
+  image:
+    name: nginx
+
+postgres:
+  # template: postgres
+  config:
+    ports:
+      - { port: 5432, wait: yes }
+  envs:
+    postgres_user: admin
+    postgres_password: admin
+    postgres_db: postgres
+
+redis:
+  # template: redis
+  commands:
+    shell: sh
+  config:
+    ports:
+      - { port: 6379, wait: yes }
+  tags:
+    name: cool
+
+sftp:
+  commands:
+    shell: bash
+  tags:
+    core: yes
+    storage: yes
+
+base:
+  abstract: true
+  envs:
+    rails_database_host: postgres
+    rails_database_user: admin
+    rails_database_password: admin
+    secret_key_base: ""
+    rails_master_key: ""
+    platform:
+      api_docs:
+        server:
+          host: 'https://api.${project.environment.domain}'
+      connection:
+        type: host
+        external_connection_type: path
+        # feature_set: mounted
+        hosts: 'api.${project.environment.domain}'
+      jwt:
+        encryption_key: ""
+        aud: 'https://api.${project.environment.domain}'
+        iss: 'https://iam.api.${project.environment.domain}'
+      partition_name: what
+      postman:
+        workspace: 'api.${project.environment.domain}'
+      storage:
+        image:
+          services: ['images']
+        app:
+          services: ['documents', 'reports', 'sftp']
+  commands:
+    after_service_starts:
+      # - rails ros:db:reset:seed # non cnfs services
+      - rails app:ros:db:reset:seed # cnfs services
+    before_service_stops:
+      - echo 'hi'
+    console: rails console
+    shell: bash
+    test:
+      - bundle exec rubocop
+      - rails db:test:prepare
+      - bin/spring rspec # NOTE: missing options
+  # config: &base_config
+  image:
+    build_args:
+      bundle_string: --without production
+      os_packages: 'libpq5 tree curl git sudo vim less tcpdump net-tools iputils-ping graphviz'
+      rails_env: development
+      source_path: ros
+      # target_path: ../..
+    dockerfile: ros/Dockerfile.dev
+    gems:
+      bundler: 2.0.1
+      eventmachine: 1.2.7
+      ffi: 1.10.0
+      mini_portile2: 2.4.0
+      msgpack: 1.2.10
+      nio4r: 2.3.1
+      nokogiri: 1.10.4
+      pg: 1.1.4
+      puma: 3.12.1
+    repository_name: railsonservices
+    # TODO: read tag version from somewhere like File.read('path to version file')
+    tag: '0.1.0-${service.git.branch}-${service.git.sha}'
+  profiles: &base_profiles
+    server: '["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-P", "/tmp/server.pid"]'
+    scheduler: '["bundle", "exec", "rails", "runner", "./lib/scheduler.rb"]'
+    worker: '["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]' # for non cnfs services
+  repository: ros
+  type: Rails::Service
+  volumes:
+    # Below for cnfs services:
+    - { source: 'services/${service.name}', target: services/app }
+    - { source: lib, target: lib }
+    - { source: sre, target: sre }
+
+iam:
+  from: base
+  envs:
+    hey: now
+
+cognito:
+  from: base

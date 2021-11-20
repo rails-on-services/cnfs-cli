@@ -5,13 +5,14 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
+      table_mod :tags_add_column
+
       store :tags, coder: YAML
     end
 
     class_methods do
-      def add_columns(t)
+      def tags_add_column(t)
         t.string :tags
-        super
       end
 
       def by_tags(tags = project.tags)

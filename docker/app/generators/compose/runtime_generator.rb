@@ -2,19 +2,20 @@
 
 class Compose::RuntimeGenerator < RuntimeGenerator
   # private
-  def generate_nginx_conf
+  def nginx_conf
     # binding.pry
-    template('nginx.conf.erb', "#{path}/nginx.conf") if template_types.include?(:nginx)
+    # template('nginx.conf.erb', "#{path}/nginx.conf") if template_types.include?(:nginx)
   end
 
-  def generate_compose_environment
-    template('env.erb', runtime.compose_file, env: compose_environment)
+  def compose_environment
+    template('templates/env.erb', runtime.compose_file, env: compose_environment)
   end
 
   private
 
   def excluded_files
-    ["#{path}/nginx.conf"]
+    # ["#{path}/nginx.conf"]
+    [path.join('nginx.conf')]
   end
 
   def expose_ports(port = nil)
@@ -42,13 +43,9 @@ class Compose::RuntimeGenerator < RuntimeGenerator
 
   def compose_environment
     # TODO: remove all but compose_file and compose_project_name
-    Config::Options.new(
-      compose_file: Dir["#{path}/**/*.yml"].map { |f| f.gsub("#{CnfsCli.config.root}/", '') }.join(':'),
+    OpenStruct.new(
+      compose_file: path.relative_path_from(CnfsCli.config.root).glob('**/*.yml').join(':'),
       compose_project_name: context.context_name,
-      # context_dir: '../../../../../../..',
-      # ros_context_dir: '../../../../../../../ros',
-      # image_repository: 'railsonservices',
-      # image_tag: '0.1.0-development-e7f7c0b',
       puid: '1001',
       pgid: '1002'
     )

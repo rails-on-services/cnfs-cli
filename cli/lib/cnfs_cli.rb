@@ -13,6 +13,30 @@ module CnfsCli
   class << self
     attr_reader :configuration, :config
 
+    # Track Repository Components
+    # Used by Components to reference a component from within a Repository
+    def register_component(name:, path:)
+      components[name] ||= path
+      add_loader(name: name, path: path.join('app'))
+    end
+
+    def components
+      @components ||= {}
+    end
+
+    # Track loaded 'app' paths including those from Repository Components and Project but not core framework
+    # Used by ApplicationGenerator to compile template directories
+    def add_loader(name:, path:)
+      return unless path.exist?
+
+      Cnfs.add_loader(name: name, path: path).setup
+      loaders[name] ||= path
+    end
+
+    def loaders
+      @loaders ||= {}
+    end
+
     # docs for run!
     def run!(path: Dir.pwd, load_nodes: true)
       # Initialize plugins in the *Cnfs* namespace

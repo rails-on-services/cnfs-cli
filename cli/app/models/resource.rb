@@ -21,7 +21,6 @@ class Resource < ApplicationRecord
       t.references :provisioner
       t.string :runtime_name
       t.references :runtime
-      super
     end
   end
 end
