@@ -1,5 +1,8 @@
 ---
-config: {}
+config:
+  domain: backend.${parent.config.domain}
+  this_host: host.${config.domain}
+  fart: ${name}.${config.this_host}
 default:
   resource_name: instance
   provisioner_name: terraform

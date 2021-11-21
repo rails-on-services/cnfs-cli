@@ -1,7 +1,7 @@
 # services.yml
 # ---
 localstack:
-  template: localstack
+  # template: localstack
   commands:
     shell: bash
   config:
@@ -17,14 +17,14 @@ localstack:
     hostname_external: localstack
 
 nginx:
-  template: nginx
+  # template: nginx
   commands:
     shell: bash
   image:
     name: nginx
 
 postgres:
-  template: postgres
+  # template: postgres
   config:
     ports:
       - { port: 5432, wait: yes }
@@ -34,7 +34,7 @@ postgres:
     postgres_db: postgres
 
 redis:
-  template: redis
+  # template: redis
   commands:
     shell: sh
   config:
@@ -50,10 +50,9 @@ sftp:
     core: yes
     storage: yes
 
-DEFAULTS: &base_service
-  resource_name: res1
-  inherit: true
-  environment:
+base:
+  abstract: true
+  envs:
     rails_database_host: postgres
     rails_database_user: admin
     rails_database_password: admin
@@ -93,7 +92,6 @@ DEFAULTS: &base_service
       - rails db:test:prepare
       - bin/spring rspec # NOTE: missing options
   # config: &base_config
-  envs: &base_environment
   image:
     build_args:
       bundle_string: --without production
@@ -121,7 +119,6 @@ DEFAULTS: &base_service
     worker: '["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]' # for non cnfs services
   repository: ros
   type: Rails::Service
-  location: backend
   volumes:
     # Below for cnfs services:
     - { source: 'services/${service.name}', target: services/app }
@@ -129,7 +126,9 @@ DEFAULTS: &base_service
     - { source: sre, target: sre }
 
 iam:
-  <<: *base_service
+  from: base
+  envs:
+    hey: now
 
 cognito:
-  <<: *base_service
+  from: base

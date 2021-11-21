@@ -3,8 +3,6 @@
 # rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
   include Concerns::Asset
-  include Concerns::HasEnvs
-  include Concerns::Taggable
 
   # TODO: is this the right way to do it?
   attr_accessor :command_queue
@@ -19,6 +17,8 @@ class Service < ApplicationRecord
   store :profiles, coder: YAML
 
   serialize :volumes, Array
+
+  store :envs, coder: YAML
 
   # delegate :git, to: :repository
   def git
@@ -169,6 +169,7 @@ class Service < ApplicationRecord
       t.string :template
       t.string :volumes
       t.string :state
+      t.string :envs
       # NOTE: Added for testing of old service definition
       # TODO: If service really needs a repository then use belongs_to_names
       t.string :repository

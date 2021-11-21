@@ -2,14 +2,14 @@
 
 class Resource < ApplicationRecord
   include Concerns::Asset
-  include Concerns::HasEnvs
-  include Concerns::Taggable
 
   belongs_to :blueprint, optional: true
   belongs_to :provider, optional: true
   belongs_to :provisioner, optional: true
 
   store :config, accessors: %i[source version], coder: YAML
+
+  store :envs, coder: YAML
 
   class << self
     def add_columns(t)
@@ -21,6 +21,7 @@ class Resource < ApplicationRecord
       t.references :provisioner
       t.string :runtime_name
       t.references :runtime
+      t.string :envs
     end
   end
 end

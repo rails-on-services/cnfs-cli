@@ -45,7 +45,7 @@ class Component < ApplicationRecord
   end
 
   def write_local_file
-    local_path.split.first.mkpath unless local_path.split.first.exist?
+    local_path.parent.mkpath unless local_path.parent.exist?
     File.open(local_file, 'w') { |f| f.write(local_file_values.to_yaml) }
   end
 
@@ -54,7 +54,7 @@ class Component < ApplicationRecord
   end
 
   def local_file
-    @local_file ||= local_path.split.first.join("#{attrs.last}.yml")
+    @local_file ||= local_path.parent.join("#{attrs.last}.yml")
   end
 
   def local_path
@@ -70,14 +70,10 @@ class Component < ApplicationRecord
     "#{name} (#{owner.segment_type})#{bp_name}"
   end
 
-  # def x_config
-  #   Config::Options.new.merge!(config)
-  # end
+  def as_merged() = as_json
 
   # Display components as a TreeView
-  def to_tree
-    puts "\n#{as_tree.render}"
-  end
+  def to_tree() = puts('', as_tree.render)
 
   def as_tree
     TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)

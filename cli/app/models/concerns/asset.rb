@@ -7,17 +7,26 @@ module Concerns
     included do
       include Concerns::Parent
       include Concerns::Encryption
-      # include Concerns::Interpolation
+      include Concerns::Interpolation
 
       has_one :parent, as: :owner, class_name: 'Node'
       belongs_to :owner, polymorphic: true, required: true
 
       scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
       scope :enabled, -> { where(enable: [true, nil], abstract: [false, nil]) }
+      scope :by_tags, ->(tags) { where('tags LIKE ?', tags.map { |k, v| "%#{k}: #{v}%" }.join) }
+
+      store :tags, coder: YAML
 
       delegate :key, to: :owner
 
       validate :dynamic_association_types
+    end
+
+    def as_merged
+      return as_json unless from && (source = owner.send(self.class.table_name).find_by(name: from))
+
+      source.as_json.except('abstract').deep_merge(as_json)
     end
 
     def dynamic_association_types
@@ -142,6 +151,7 @@ module Concerns
           t.string :from
           t.references :owner, polymorphic: true
           t.string :config
+          t.string :tags
           add_columns(t) if respond_to?(:add_columns)
           table_mods.each { |mod| send(mod, t) }
         end

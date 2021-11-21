@@ -1,5 +1,11 @@
 ---
-config: {}
+config:
+  domain: cnfs.io
+  host: host.${config.domain}
+  targets:
+    one: one.${config.host}
+    two: two.${config.host}
+  carry: ${name}.${config.targets.one}
 segment_type: target
 default:
   provisioner_name: terraform

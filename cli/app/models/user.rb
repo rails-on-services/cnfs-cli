@@ -2,7 +2,6 @@
 
 class User < ApplicationRecord
   include Concerns::Asset
-  include Concerns::Taggable
 
   class << self
     def add_columns(t)
