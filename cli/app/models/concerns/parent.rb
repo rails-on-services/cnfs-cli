@@ -21,6 +21,8 @@ module Concerns
       after_destroy :destroy_node
     end
 
+    def to_context() = as_interpolated
+
     # Assets whose owner is Context are ephemeral so don't create/update a node
     def create_node
       create_parent(type: parent_type, owner: self) # if node?

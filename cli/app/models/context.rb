@@ -41,11 +41,11 @@ class Context < ApplicationRecord
 
   # When decrypting values assets ask for the key from their owner
   # When context is the owner it must ask the component for the key
-  delegate :key, to: :component
+  delegate :key, :as_interpolated, to: :component
 
   # Add existing components to the context based on cli options, ENV and componet default values
   before_create :add_components, if: proc { root_id }
-  after_create :configure_component, :create_assets, if: proc { root_id }
+  after_create :create_assets, if: proc { root_id }
   after_commit :update_assets, if: proc { root_id }
 
   # Select the compoenents based on project and user supplied values
@@ -95,27 +95,6 @@ class Context < ApplicationRecord
     end
   end
 
-  # TODO: This needs to be removed; The component config is moved to Component and follows owner
-  def configure_component
-    Node.with_asset_callbacks_disabled do
-      component.update(config: component_config)
-    end
-  end
-
-  # Iterate over each component from root to leaf
-  # perform interpolation and deep merge to one consolidated config
-  # TODO: decrypt values
-  def component_config
-    all_components.each_with_object({}) do |component, hash|
-      # cfg = component.config.as_json.deep_transform_values { |value| value.cnfs_sub(hash) }
-      # hash.deep_merge!(cfg)
-    end
-  end
-
-  def all_components
-    components.order(:id).to_a.append(component)
-  end
-
   # TODO: Change the name of this method
   # TODO: What about tags?
   # @options.merge!('tags' => Hash[*options.tags.flatten]) if options.tags
@@ -143,9 +122,9 @@ class Context < ApplicationRecord
     enabled_assets.each_with_object([]) do |asset, ary|
       name = asset.name
       json = inheritable_assets.where(name: name).each_with_object({}) do |record, hash|
-        hash.deep_merge!(record.as_json.compact)
+        hash.deep_merge!(record.as_merged.compact)
       end
-      json.deep_merge!(asset.as_json.compact)
+      json.deep_merge!(asset.as_merged.compact)
       ary.append(json.merge(name: name))
     end
   end
@@ -158,7 +137,7 @@ class Context < ApplicationRecord
     names = component_assets.pluck(:name)
     inheritable_assets.where.not(name: names).group_by(&:name).each_with_object([]) do |(name, records), ary|
       json = records.each_with_object({}) do |record, hash|
-        hash.deep_merge!(record.as_json.compact)
+        hash.deep_merge!(record.as_merged.compact)
       end
       ary.append(json.merge(name: name)) unless json['disabled']
     end
@@ -223,6 +202,10 @@ class Context < ApplicationRecord
   # NOTE: Used by console controller to create the CLI prompt
   def component_list
     @component_list ||= all_components.each_with_object([]) { |component, ary| ary.append(component_struct(component)) }
+  end
+
+  def all_components
+    components.order(:id).to_a.append(component)
   end
 
   def component_struct(component)

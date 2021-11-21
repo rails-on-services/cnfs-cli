@@ -61,7 +61,7 @@ base:
     platform:
       api_docs:
         server:
-          host: 'https://api.${project.environment.domain}'
+          host: 'https://api.${parent.config.domain}'
       connection:
         type: host
         external_connection_type: path

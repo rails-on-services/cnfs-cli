@@ -2,3 +2,8 @@
 config:
   domain: backend.${parent.config.domain}
   host: host.${config.domain}
+  friends:
+    - this:
+        one: one.${config.host}
+    - that:
+        two: two.${config.host}

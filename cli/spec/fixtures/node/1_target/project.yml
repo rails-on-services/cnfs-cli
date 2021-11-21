@@ -13,5 +13,5 @@ default:
   repository_name: ros
   resource_name: instance1
   runtime_name: compose
-  segment_name: cap2
+  segment_name: lambda
 name: 1_target

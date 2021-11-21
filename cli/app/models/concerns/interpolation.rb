@@ -9,6 +9,8 @@ module Concerns
       parent_hash = owner&.as_interpolated(method: method) || {}
 
       this_hash.deep_transform_values do |value|
+        next value unless value.is_a? String
+
         value.cnfs_sub(default: this_hash, parent: parent_hash)
       end
     end
