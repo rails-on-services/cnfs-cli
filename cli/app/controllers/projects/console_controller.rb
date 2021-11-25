@@ -4,7 +4,7 @@ module Projects
   class ConsoleController < CnfsCore::ConsoleController
     include ExecHelper
 
-    # before_execute :initialize_project
+    before_execute :init
     around_execute :timer
 
     class << self

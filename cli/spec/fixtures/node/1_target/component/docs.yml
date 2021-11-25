@@ -1,0 +1,5 @@
+---
+config: {}
+component_name: jamstack/scully
+default:
+  provider_name: aws_east

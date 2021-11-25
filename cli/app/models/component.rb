@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
-  include Concerns::Parent
   include Concerns::Encryption
   include Concerns::Interpolation
+
+  # Include Parent last as it includes plugin modules that may depend on methods in the above modules
+  include Concerns::Parent
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
@@ -27,7 +29,7 @@ class Component < ApplicationRecord
   def dir_path
     if component_name
       if (path = CnfsCli.components[component_name])
-        return path.join('config')
+        return path.join('component')
       else
         node_warn(node: parent, msg: "Repository component '#{component_name}' not found")
       end
@@ -58,7 +60,7 @@ class Component < ApplicationRecord
   end
 
   def local_path
-    @local_path ||= CnfsCli.configuration.data_home.join(*attrs)
+    @local_path ||= CnfsCli.config.data_home.join(*attrs)
   end
 
   def attrs

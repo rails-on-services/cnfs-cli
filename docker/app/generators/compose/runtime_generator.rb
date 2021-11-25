@@ -13,6 +13,14 @@ class Compose::RuntimeGenerator < RuntimeGenerator
 
   private
 
+  def templ
+    ERB.new('this is an <%= erb_var %>').result(binding)
+  end
+
+  def erb_var
+    'test'
+  end
+
   def excluded_files
     # ["#{path}/nginx.conf"]
     [path.join('nginx.conf')]

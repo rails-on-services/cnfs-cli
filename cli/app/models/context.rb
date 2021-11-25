@@ -88,10 +88,10 @@ class Context < ApplicationRecord
   def segment_values(component)
     if (name = options.fetch(component.segment_type, nil))
       OpenStruct.new(name: name, source: 'CLI option')
-    elsif (name = CnfsCli.config.send(component.segment_type || ''))
+    elsif (name = CnfsCli.config.segments[component.segment_type].try(:[], :env_value))
       OpenStruct.new(name: name, source: 'ENV value')
     elsif (name = component.segment_name)
-      OpenStruct.new(name: name, source: component.parent.node_name) # rootpath.basename)
+      OpenStruct.new(name: name, source: component.parent.node_name)
     end
   end
 
@@ -180,7 +180,7 @@ class Context < ApplicationRecord
   end
 
   def project_path
-    @project_path ||= ProjectPath.new(paths: CnfsCli.configuration.paths, context_attrs: context_attrs)
+    @project_path ||= ProjectPath.new(paths: CnfsCli.config.paths, context_attrs: context_attrs)
   end
 
   # Used by runtime generators for templates by runtime to query services

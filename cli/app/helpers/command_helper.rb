@@ -9,9 +9,10 @@ module CommandHelper
 
     attr_accessor :context
 
-    if CnfsCli.config.load_nodes
-      CnfsCli.configuration.command_options.each do |hash|
-        add_cnfs_option(hash[:name], hash.except(:name))
+    # Load options for configured segments
+    if CnfsCli.config.project
+      CnfsCli.config.command_options.each do |name, values|
+        add_cnfs_option(name, values)
       end
     end
 
@@ -19,17 +20,27 @@ module CommandHelper
                                         aliases: '--tags', type: :array
     add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
                                         aliases: '--ff', type: :boolean
+    add_cnfs_option :init,              desc: 'Initialize the project, e.g. download repositories and dependencies',
+                                        type: :boolean
+
+    # Load modules to add options, actions and sub-commands to existing command structure
+    Cnfs.modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }
 
     private
 
     # Override base controller and just provide the context to exec controllers
     def controller_args
-      { context: context }
+      return { context: context } if CnfsCli.config.project
+
+      { context: OpenStruct.new(options: options, args: args) }
     end
 
     # Configure the context with cli options and create the component tree
     def context
-      @context ||= Context.create(root: project, options: options, args: args)
+      Cnfs.with_timer('context') do
+        @context ||= Context.create(root: project, options: options, args: args)
+      end
+      @context
     end
 
     def project

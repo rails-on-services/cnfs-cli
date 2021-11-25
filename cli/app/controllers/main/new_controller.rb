@@ -3,40 +3,60 @@
 module Main
   class NewController
     include ExecHelper
-    include TtyHelper
+
+    attr_reader :name
 
     def execute
-      path = Pathname.new(args.name)
+      return unless validate_execute
+
+      @name = context.args.name
+
+      path = Pathname.new(name)
       path.rmtree if path.exist?
-      path.mkdir
-      # generator = ProjectGenerator.new([args.name], options)
-      # generator.destination_root = args.name
-      # generator.invoke_all
+
+      send("execute_#{method}")
+    end
+
+    def validate_execute
+      if context.options.plugin && context.options.component
+        Cnfs.logger.warn('plugin and component are mutally exclusive options')
+        return
+      end
+      true
+    end
+
+    def method
+      return :plugin if context.options.plugin
+      return :component if context.options.component
+      :project
+    end
+
+    def execute_component
+      generator.invoke_all
+    end
+
+    def execute_plugin
+      generator.invoke_all
+    end
+
+    def execute_project
+      # generator.destination_root = name
+      generator.invoke_all
+      return unless context.options.guided
 
       Cnfs.data_store.setup
-      CnfsCli.load_configurations(path: args.name, load_nodes: false)
-      # CnfsCli.load_root_node
+      # TODO: This API has changed
+      # CnfsCli.load_configurations(path: context.args.name, load_nodes: false)
+
+      # Start a view here
       # TODO: This should create a node which should create a file with the yaml or a directory
-      # Component.first.components.create(name: 'holy')
-      # pu = Project.first.users.create(name: :test)
-      # pf = Project.first
-      # view = ProjectsView.new(model: pf)
-      # view.edit
-      # pf.save if pf.changed
-      # Project.first.edit
-      Project.new(name: args.name).create
-      # binding.pry
+      Project.new(name: context.args.name).create
+    end
 
-      # TODO: Start a view here
-      # return unless options.guided
-
-      # prompt.say('Starting guided project configuration')
-      # require 'pry'
-      # m = Project.new
-      # m.name = 'testing'
-      # m.save
-      # Cnfs.require_deps
-      # end
+    def generator
+      gen = "#{method.to_s.classify}Generator".constantize.new([name], context.options)
+      gen.destination_root = name # "#{Dir.pwd}/#{name}"
+      gen
     end
   end
 end

@@ -3,6 +3,8 @@
 class Resource < ApplicationRecord
   include Concerns::Asset
 
+  # attr_obj :config, :envs
+
   belongs_to :blueprint, optional: true
   belongs_to :provider, optional: true
   belongs_to :provisioner, optional: true

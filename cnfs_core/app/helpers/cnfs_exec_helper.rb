@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'active_model'
 module CnfsExecHelper
   extend ActiveSupport::Concern
 
@@ -16,10 +17,6 @@ module CnfsExecHelper
 
   # Implement with an around_execute :timer call in the controller
   def timer
-    start_time = Time.now
-    yield
-    title = 'command execution'
-    Cnfs.timers[title] = Time.now - start_time
-    Cnfs.logger.debug("Completed #{title} in #{Time.now - start_time} seconds")
+    Cnfs.with_timer('Command execution') { yield }
   end
 end

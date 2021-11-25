@@ -6,7 +6,7 @@ class ImagesController < Thor
   # Activate common options
   class_before :initialize_project
   cnfs_class_options :dry_run, :logging
-  cnfs_class_options CnfsCli.configuration.command_options_list
+  cnfs_class_options CnfsCli.config.components.keys
 
   desc 'pull [IMAGES]', 'Pull one or more or all images'
   def pull(*services)

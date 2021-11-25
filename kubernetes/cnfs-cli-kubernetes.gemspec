@@ -3,7 +3,7 @@ require_relative 'lib/cnfs_cli/kubernetes/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cnfs-cli-kubernetes'
-  spec.version       = CnfsCli::Kubernete::VERSION
+  spec.version       = CnfsCli::Kubernetes::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
   

@@ -4,17 +4,16 @@ class RepositoriesController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :dry_run, :logging
-  # class_before :initialize_project
+  cnfs_class_options :dry_run, :logging, :init
 
-  # register Repositories::CreateController, 'create', 'create TYPE NAME [options]', 'Create a new CNFS compatible services repository'
+  register Repositories::CreateController, 'create', 'create TYPE NAME [options]', 'Create a new CNFS compatible services repository'
 
-  desc 'create[NAME | URL [NAME]]', 'Create a repository'
-  cnfs_method_options(:create)
-  cnfs_actions(:create)
-  def create(name)
-    Cnfs.logger.warn("In create with #{name} and #{args}")
-  end
+  # desc 'create[NAME | URL [NAME]]', 'Create a repository'
+  # cnfs_method_options(:create)
+  # cnfs_actions(:create)
+  # def create(name)
+    # Cnfs.logger.warn("In create with #{name} and #{args}")
+  # end
 
   desc 'add [NAME | URL [NAME]]', 'Add a repository configuration to the project'
   cnfs_method_options(:add)

@@ -11,7 +11,7 @@ module CnfsCli
   module Plugins; end
 
   class << self
-    attr_reader :configuration, :config
+    attr_reader :config, :load_nodes
 
     # Track Repository Components
     # Used by Components to reference a component from within a Repository
@@ -30,6 +30,8 @@ module CnfsCli
       return unless path.exist?
 
       Cnfs.add_loader(name: name, path: path).setup
+      Cnfs.add_module(name: name, path: path)
+
       loaders[name] ||= path
     end
 
@@ -37,33 +39,57 @@ module CnfsCli
       @loaders ||= {}
     end
 
+    # def mods
+    #   @mods ||= {}
+    # end
+
     # docs for run!
     def run!(path: Dir.pwd, load_nodes: true)
       # Initialize plugins in the *Cnfs* namespace
       Cnfs.initialize_plugins_from_path(gem_root) if Cnfs.initialize_plugins.empty?
+      t_hash = Cnfs::Timer.append(title: 'Application run time', start: Time.now).last
 
-      load_configurations(path: path, load_nodes: load_nodes)
+      require_relative 'cnfs_cli/config'
+      config(path: Pathname.new(path), load_nodes: load_nodes)
 
       Dir.chdir(config.root) do
+        require_project_config_files
         setup
+
         # next line needs deps to be loaded to use AS.singularize
-        # configuration.set_config_options
-        load_root_node if config.load_nodes
+        load_root_node if config.load_nodes # && options.no_cache
         yield if block_given?
       end
+      t_hash[:end] = Time.now
     end
 
-    # Setup CnfsCli.config (project settings) and Cnfs.config (core tool settings)
-    def load_configurations(path:, load_nodes:)
-      require_relative 'cnfs_cli/config'
-      @configuration = CnfsCli::Config.new(file_name: 'cnfs-cli.yml', cwd: path, load_nodes: load_nodes)
-      @config = @configuration.config
-      Cnfs.configuration = Cnfs::Config.new(name: 'cnfs-cli', file_name: 'cnfs-cli.yml', cwd: path)
-      Cnfs.config = Cnfs.configuration.config
-      config.load_nodes = false if config.load_nodes && !config.project
+    def require_project_config_files
+      require_relative application_path if application_path.exist?
+      config.after_user_config
+      initializers_path.glob('**/*.rb').each { |file| require file } if initializers_path.exist?
+      Cnfs.config = config
     end
 
-    # Proces the configuration
+    # Yield the configuration object for project configuration in config/application.rb
+    def configuration(&block)
+      config.yield_to_user(&block)
+    end
+
+    # When called for the first time the path can be overridden
+    # All subsequent calls will return the value set on the first call
+    def config(**options)
+      @config ||= CnfsCli::Config.new(**options)
+    end
+
+    def application_path() = config_path.join('application.rb')
+
+    def initializers_path() = config_path.join('initializers')
+
+    # The config path is the one path that cannot be set by the user
+    # It is always <project root path>/config
+    def config_path() = config.root.join('config')
+
+    # Process the configuration
     def setup
       default_commands = config.project ? %w[project console] : %w[help new]
       ARGV.append(*default_commands) if ARGV.size.zero?
@@ -77,7 +103,7 @@ module CnfsCli
       end
 
       # Initialize plugins in the *CnfsCli* namespace
-      Cnfs.plugin_root = self # used only by Cnfs::Boot; See if can remove this
+      Cnfs.plugin_root = self
       Cnfs.config.dev ? initialize_development : initialize_plugins
 
       # TODO: If path is different than existing path then reset the configuration; Primarily for specs
@@ -86,11 +112,14 @@ module CnfsCli
     end
 
     def load_root_node
-      Node.with_asset_callbacks_disabled do
-        Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
+      Cnfs.with_timer('load nodes') do
+        Node.with_asset_callbacks_disabled do
+          Node::Component.create(path: config.root.join('project.yml'), owner_class: Project)
+        end
       end
       return unless Project.first
 
+      # TODO: Is this still a thing?
       model_names.each do |model|
         klass = model.classify.constantize
         klass.after_node_load if klass.respond_to?(:after_node_load)
@@ -137,7 +166,8 @@ module CnfsCli
 
     # TODO: this needs to be refactored
     def reload(path: nil, load_nodes: true)
-      load_configurations(path: path, load_nodes: load_nodes)
+      @config = nil
+      # load_component(path: path, load_nodes: load_nodes)
       # Cnfs.project_root = nil
       # binding.pry
       # Cnfs.translations = nil

@@ -39,12 +39,16 @@ class MainController < Thor
 
       This generates a skeletal CNFS project in ~/Projects/todo.
     DESC
-    option :force,  desc: 'Force creation even if the project directory already exists',
-                    aliases: '-f', type: :boolean
-    # option :config, desc: 'Create project with a working configuration (instead of commented examples)',
-    # aliases: '-c', type: :boolean
-    option :guided, desc: 'Create project with a guided configuration',
-                    aliases: '-g', type: :boolean
+    option :force,     desc: 'Force creation even if the project directory already exists',
+                       aliases: '-f', type: :boolean
+    option :config,    desc: 'Create project with a working configuration (instead of commented examples)',
+                       aliases: '-c', type: :boolean
+    option :guided,    desc: 'Create project with a guided configuration',
+                       aliases: '-g', type: :boolean
+    option :plugin,    desc: 'Create a Cnfs plugin',
+                       type: :boolean
+    option :component, desc: 'Create a Cnfs component',
+                       type: :boolean
     def new(name)
       if Dir.exist?(name) && !validate_destroy('Directory already exists. Destroy and recreate?')
         raise Cnfs::Error, set_color('Directory exists. exiting.', :red)

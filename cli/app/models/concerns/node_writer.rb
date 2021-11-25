@@ -25,11 +25,12 @@ module Concerns
       update(owner: obj)
       owner_log('Created owner')
     rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
-      # binding.pry
       Cnfs.logger.warn('NodeWriter:', e.message, yaml_payload)
+      Cnfs.logger.debug('NodeWriter Error:', e.backtrace.join("\n"))
       owner_log('Error creating owner')
     rescue NoMethodError => e
-      Cnfs.logger.warn('NodeWriter:', e.message, yaml_payload)
+      Cnfs.logger.error('NodeWriter:', e.message, yaml_payload)
+      Cnfs.logger.debug('NodeWriter Error:', e.backtrace.join("\n"))
     end
 
     # rubocop:enable Metrics/AbcSize

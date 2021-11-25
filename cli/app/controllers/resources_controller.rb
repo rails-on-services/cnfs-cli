@@ -3,8 +3,8 @@
 class ResourcesController < Thor
   include CommandHelper
 
-  cnfs_class_options :quiet, :dry_run, :logging
-  cnfs_class_options CnfsCli.configuration.command_options_list
+  cnfs_class_options :quiet, :dry_run, :logging, :init
+  cnfs_class_options CnfsCli.config.components.keys
 
   desc 'add RESOURCE', 'Add resource by name from a charts repo or interactively to a component (current context)'
   def add(resource)
@@ -50,7 +50,6 @@ class ResourcesController < Thor
 
   # Runtime commands
   desc 'connect RESOURCE', 'Connext to a running resource'
-  cnfs_options CnfsCli.configuration.command_options_list
   # NOTE: shell is a reserved word in Thor so it can't be used
   def connect(_resource)
     execute(ip: 'admin@18.136.156.168', controller: :runtime, method: :connect)

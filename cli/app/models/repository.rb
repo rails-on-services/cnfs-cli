@@ -5,6 +5,10 @@ class Repository < ApplicationRecord
   include Concerns::Operator
   include Concerns::Git
 
+  COMPONENT_PATH_KEY = 'components_path'
+  COMPONENT_FILE = 'component.yml'
+  REPOSITORY_FILE = 'repository.yml'
+
   store :config, accessors: %i[url]
 
   validates :url, presence: true
@@ -12,36 +16,75 @@ class Repository < ApplicationRecord
   after_create :register_components
 
   def register_components
-    return unless components_path.exist?
+    return unless repo_path_exist? && components_path_exist?
 
     components_path.children.select(&:directory?).each do |component_path|
-      component_name = "#{name}/#{component_path.basename}"
+      next unless component_path.join(COMPONENT_FILE).exist?
+
+      component_name = component_path.relative_path_from(src_path).to_s
+      Cnfs.logger.info("Found component #{component_name}")
       CnfsCli.register_component(name: component_name, path: component_path)
     end
   end
 
-  def components_path
-    repo_path.join('components')
+  def repo_path_exist?
+    return true if repo_path.exist?
+
+    log_f(:warn, "Repository #{name} path not found #{repo_path}")
+    nil
   end
+
+  def components_path_exist?
+    return true if components_path.exist?
+
+    log_f(:warn, "Invalid configuration for repository #{name}", "Path not found: #{components_path}")
+    nil
+  end
+
+  # TODO: See about formatting messages using Logger config
+  def log_f(level, *messages)
+    message = messages.shift
+    m_messages = messages.map{ |message| "\n#{' ' * 10}#{message}"}
+    Cnfs.logger.send(level, message, *m_messages)
+  end
+
+  def components_path() = repo_path.join(components_path_name)
+
+  def components_path_name() = repo_config.fetch(COMPONENT_PATH_KEY, '.')
+
+  # Return the contents of the repository's config file or an empty hash
+  def repo_config
+    repo_config_file.exist? ? (YAML.load_file(repo_config_file) || {}) : {}
+  end
+
+  # <repo_path>/repository.yml if present must be in this specific location
+  def repo_config_file() = repo_path.join(REPOSITORY_FILE)
 
   def repo_path
-    CnfsCli.configuration.paths.src.join(name)
+    @repo_path ||= src_path.join(name)
   end
 
-  def tree_name
-    name
-  end
+  def src_path() = CnfsCli.config.paths.src
 
-  # def repo_config
-  #   repo_config_file = repo_path.join('repository.yml')
-  #   repo_config = repo_config_file.exist? ? (YAML.load_file(repo_config_file) : {}) : {}
-  # end
+  def tree_name() = name
 
-  def git
-    Dir.chdir(dir_path) { super }
-  end
+  def git() = Dir.chdir(repo_path) { super }
 
   class << self
+    def init(context)
+      context.repositories.each do |repo|
+        next if repo.repo_path_exist?
+
+        msg = "Cloning repository #{repo.url}"
+        Cnfs.logger.info(msg)
+
+        Cnfs.with_timer(msg) do
+          repo.src_path.mkpath unless repo.src_path.exist?
+          Dir.chdir(repo.src_path) { repo.git_clone(repo.url).run }
+        end
+      end
+    end
+
     def add(param1, param2 = nil)
       url = name = nil
       if param1.match(git_url_regex)
