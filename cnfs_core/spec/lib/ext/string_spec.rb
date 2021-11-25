@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../lib/ext/string.rb'
+require_relative '../../../lib/ext/string'
 
 RSpec.describe 'string' do
   describe 'cnfs_sub' do

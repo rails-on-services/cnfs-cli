@@ -33,6 +33,7 @@ class Cnfs::ApplicationRecord < ActiveRecord::Base
       if (klass = "#{name}View".safe_constantize)
         return klass
       end
+
       self::View
     end
   end

@@ -17,35 +17,41 @@ module Cnfs
         end
       end
 
-      def format(k, e, p = '', p_tot = '')
-        k = k[0..59]
-        p = "#{p}%" unless p.blank?
+      def t_format(title, elapsed, percent = '', p_tot = '')
+        title = title[0..59]
+        percent = "#{percent}%" unless percent.blank?
         p_tot = "#{p_tot}%" unless p_tot.blank?
-        "#{k}:#{' ' * (60 - k.length)}#{e}s#{' ' * (10 - e.to_s.length)}#{p}#{' ' * (10 - p.to_s.length)}#{p_tot}"
+        "#{title}:#{' ' * (60 - title.length)}#{elapsed}s#{' ' * (10 - elapsed.to_s.length)}#{percent}" \
+          "#{' ' * (10 - percent.to_s.length)}#{p_tot}"
       end
 
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/MethodLength
       def table
         diff
         main = timer.shift
         total = main[:elapsed]
         p_tot = 0
         e_tot = 0
-        ary = timer.each_with_object([]) do |timing, ary|
+        t_ary = timer.each_with_object([]) do |timing, ary|
           title = timing[:title]
           elapsed = timing[:elapsed]
           e_tot += elapsed
           percent = (elapsed / total * 100).round(2)
           p_tot = (p_tot + percent).round(2)
-          ary.append(format(title, elapsed, percent, p_tot))
+          ary.append(t_format(title, elapsed, percent, p_tot))
         end
-        ary.append(format('Untracked', (total - e_tot).round(2), (100 - p_tot).round(2), '100'))
-        ary.unshift(format(main[:title], main[:elapsed]))
+        str = t_format('Untracked', (total - e_tot).round(2), (100 - p_tot).round(2), '100')
+        t_ary.append(str)
+        t_ary.unshift(t_format(main[:title], main[:elapsed]))
       end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
     end
-
   end
+
   class << self
-    def with_timer(title = '', level = :info)
+    def with_timer(title = '', _level = :info)
       t_hash = Timer.append(title: title, start: Time.now).last
       # logger.send(level, "Start #{title} at #{t_hash[:start_time]}")
       result = yield

@@ -7,6 +7,7 @@ class Console < Pry::ClassCommand
   group 'cnfs'
   description 'List commands available in the current command set'
 
+  # rubocop:disable Metrics/AbcSize
   def process(_command_set)
     # if target_self.instance_of?(CnfsCore::ConsoleController)
     if target_self.class.respond_to?(:add_commands)
@@ -15,6 +16,7 @@ class Console < Pry::ClassCommand
       puts target_self.class.instance_methods(false).join("\n")
     end
   end
+  # rubocop:enable Metrics/AbcSize
 end
 
 CnfsCommandSet = Pry::CommandSet.new
@@ -23,7 +25,6 @@ Pry.config.commands.import CnfsCommandSet
 
 module CnfsCore
   class ConsoleController
-
     def execute
       run_callbacks :execute do
         Cnfs.config.is_console = true
@@ -106,6 +107,11 @@ module CnfsCore
 
     def method_missing(method)
       puts "Invalid command '#{method}'"
+    end
+
+    # https://www.rubydoc.info/gems/rubocop/RuboCop/Cop/Style/MissingRespondToMissing
+    def respond_to_missing?(method_name, *args)
+      method == :bark || super
     end
   end
 end

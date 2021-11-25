@@ -3,6 +3,7 @@
 # require 'config'
 require 'tty-logger'
 require 'xdg'
+require 'yaml'
 
 require_relative 'cnfs/utils'
 require_relative 'cnfs/config'
@@ -16,7 +17,6 @@ module Cnfs
     attr_accessor :plugin_root, :config, :configuration
 
     # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     # Setup the core framework
     def setup(data_store: true, model_names: [])
       add_loader(name: :framework, path: Cnfs.plugin_root.gem_root.join('app'))
@@ -34,7 +34,6 @@ module Cnfs
       Cnfs.data_store.setup if data_store
       Kernel.at_exit { Cnfs.logger.info(Cnfs::Timer.table.join("\n")) }
     end
-    # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
 
     def data_store
@@ -80,8 +79,9 @@ module Cnfs
       with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
     end
 
-    def add_module(name:, path:)
-      @modules[:cnfs_backend] = CnfsBackend
+    def add_module(name: 'Cnfs', path: 'Backend')
+      # name.split('/').first.gsub('-', '_').classify.safe_constantize
+      @modules[:cnfs_backend] = "#{name}#{path}".constantize
     end
 
     def modules
@@ -96,7 +96,6 @@ module Cnfs
         next unless (plugin_module = plugin_module_name.safe_constantize)
 
         # binding.pry if klass.eql?(RepositoriesController)
-        # name.split('/').first.gsub('-', '_').classify.safe_constantize
         # Ignore anything that is not an A/S::Concern, e.g. A/R STI classes
         next unless plugin_module.is_a?(ActiveSupport::Concern)
 

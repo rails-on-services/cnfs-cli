@@ -16,7 +16,7 @@ module CnfsExecHelper
   end
 
   # Implement with an around_execute :timer call in the controller
-  def timer
-    Cnfs.with_timer('Command execution') { yield }
+  def timer(&block)
+    Cnfs.with_timer('Command execution', &block)
   end
 end

@@ -4,7 +4,7 @@ require 'active_support/ordered_options'
 
 module Cnfs
   class Config
-    attr_reader :path, :root_file_id, :root
+    attr_reader :path, :root_file_id
 
     def initialize(**options)
       raise StandardError, 'Provide path and root_file_id' unless options.key?(:path) && defined?(:root_file_id)
@@ -12,7 +12,6 @@ module Cnfs
       @path = options.delete(:path)
       @configurations = options
       after_initialize
-      self
     end
 
     def yield_to_user
@@ -40,16 +39,16 @@ module Cnfs
     def method_missing(method, *args)
       return if %i[after_initialize after_user_config].include?(method)
 
-      if method.end_with?("=")
+      if method.end_with?('=')
         @configurations[:"#{method[0..-2]}"] = args.first
       else
-        @configurations.fetch(method) {
+        @configurations.fetch(method) do
           @configurations[method] = ActiveSupport::OrderedOptions.new
-        }
+        end
       end
     end
 
-    def respond_to_missing?(symbol, *)
+    def respond_to_missing?(_symbol, *)
       true
     end
   end

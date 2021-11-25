@@ -12,7 +12,6 @@ module Cnfs
       loader.logger = logger if logger
       add_path(path) if path
       add_notifier(notifier) if notifier
-      self
     end
 
     def add_path(root_path)

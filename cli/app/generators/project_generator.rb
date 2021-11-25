@@ -4,7 +4,7 @@ class ProjectGenerator < NewGenerator
   def user_files
     user_project_path.rmtree if user_project_path.exist?
     create_file(user_project_path.join("#{name}.yml"), { 'name' => name, 'key' => Lockbox.generate_key }.to_yaml)
-    create_file('.cnfs', '')
+    create_file('.cnfs', '### No Content - DO NOT REMOVE')
     directory('files', '.')
   end
 

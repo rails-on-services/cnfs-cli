@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'tty-prompt'
 require 'tty-tree'
 
@@ -17,11 +18,13 @@ class Cnfs::ApplicationView < TTY::Prompt
 
   def create
     raise Cnfs::Error, 'Create can only be called on new instances' if model.persisted?
+
     raise NotImplementedError, "#{self.class.name} needs to implement #create to edit a new instance"
   end
 
   def edit
     raise Cnfs::Error, 'Create can only be called on existing instances' unless model.persisted?
+
     raise NotImplementedError, "#{self.class.name} needs to implement #edit to edit an existing instance"
   end
 

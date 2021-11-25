@@ -14,12 +14,11 @@ module CnfsCore
       name = Cnfs.plugin_root.name.underscore
       keys = Cnfs.plugin_root.plugins.keys.append(name)
       pad = keys.max_by(&:length).size + 10
-      puts "Component#{' ' * (pad - 9)}Version"
-      puts "#{name}#{' ' * (pad - name.length)}#{Cnfs.plugin_root::VERSION}"
+      puts "Component#{' ' * (pad - 9)}Version", "#{name}#{' ' * (pad - name.length)}#{Cnfs.plugin_root::VERSION}"
       puts "cli_core#{' ' * (pad - 8)}#{Cnfs::VERSION}"
       Cnfs.plugin_root.plugins.sort.each do |namespace, plugin_class|
         print "#{namespace}#{' ' * (pad - namespace.length)}"
-        lib_class = plugin_class.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize
+        lib_class = plugin_class.to_s.split('::').reject { |n| n.eql?('Plugins') }.join('::').safe_constantize
         puts lib_class::VERSION
       end
     end

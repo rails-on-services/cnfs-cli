@@ -16,7 +16,7 @@ module Cnfs
 
     def setup
       Cnfs.with_timer('database initialization') do
-require 'active_record'
+        require 'active_record'
         # ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: Cnfs.config.data_home.join('sqlite.db'))
         # Set up in-memory database
         ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')

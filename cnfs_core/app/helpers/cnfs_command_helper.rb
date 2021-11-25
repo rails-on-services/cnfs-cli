@@ -3,6 +3,7 @@
 module CnfsCommandHelper
   extend ActiveSupport::Concern
 
+  # rubocop:disable Metrics/BlockLength
   class_methods do
     # Add an option and it's values to be referenced by cnfs_class_options or cnfs_options
     def add_cnfs_option(name, options = {})
@@ -56,21 +57,22 @@ module CnfsCommandHelper
       actions.each { |action| send(action[:lifecycle], action[:method_name]) }
     end
   end
+  # rubocop:enable Metrics/BlockLength
 
   included do |_base|
     add_cnfs_option :dry_run,           desc: 'Do not execute commands',
-      aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
+                                        aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
     add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
-      aliases: '-f', type: :boolean
+                                        aliases: '-f', type: :boolean
     add_cnfs_option :logging,           desc: 'Display logging information with degree of verbosity',
-      aliases: '-l', type: :string, default: Cnfs.config.logging
+                                        aliases: '-l', type: :string, default: Cnfs.config.logging
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',
-      aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+                                        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
   end
 
   private
 
-  def execute(**kwargs, &block)
+  def execute(**kwargs)
     location = kwargs.delete(:location) || 2
     controller_name = kwargs.delete(:controller) || controller_name_from_caller(location: location)
     method_name = kwargs.delete(:method) || :execute

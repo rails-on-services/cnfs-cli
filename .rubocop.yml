@@ -1,6 +1,6 @@
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 3.0.1
+  TargetRubyVersion: 3.0.0
 Layout/LineLength:
   Max: 120
 Layout/SpaceAroundMethodCallOperator:
@@ -18,6 +18,10 @@ Metrics/AbcSize:
 Metrics/CyclomaticComplexity:
   Exclude:
     - cli/app/helpers/*
+Metrics/BlockLength:
+  Exclude:
+    - '*/spec/**/*.rb'
+    - '*/*.gemspec'
 Metrics/MethodLength:
   Exclude:
     - cli/app/helpers/*

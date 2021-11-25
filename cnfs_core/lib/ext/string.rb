@@ -14,6 +14,9 @@ class String
   #
   # reference is an Hash of one or more Hashes upon which lookups are performed
   # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/AbcSize
   def cnfs_sub(**reference)
     # Return the original string if no reference were passed in
     return self if reference.empty?
@@ -33,10 +36,10 @@ class String
 
     # If one of the reference keys is 'default' then remove the 'default' key and put its values at the root of the Hash
     i_reference = if reference.key?('default')
-                     reference.except('default').merge(reference['default'])
-                   else
-                     reference
-                   end
+                    reference.except('default').merge(reference['default'])
+                  else
+                    reference
+                  end
 
     return_string = self
     interpolations.each do |interpolation|
@@ -55,6 +58,9 @@ class String
     # So recursively invoke cnfs_sub on the return_string
     return_string.cnfs_sub(**reference)
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/PerceivedComplexity
   # rubocop:enable Metrics/CyclomaticComplexity
 
   private
