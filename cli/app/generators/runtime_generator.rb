@@ -1,54 +1,52 @@
 # frozen_string_literal: true
 
 class RuntimeGenerator < ApplicationGenerator
-  attr_accessor :service
+  argument :runtime
 
   # NOTE: Generate the environment files first b/c the manifest template will
   # look for the existence of those files
-  def generate_service_environments
-    context.services.reject { |service| service.environment.empty? }.each do |service|
+  def environments
+    context.services.select { |service| service.environment.any? }.each do |service|
       file_name = path.join("#{service.name}.env")
+      binding.pry
       environment = Config::Options.new.merge!(service.environment)
-      generated_files << template('env.erb', file_name, env: environment)
+      binding.pry
+      generated_files << template('templates/env.erb', file_name, env: environment)
     end
   end
 
-  def generate_entity_manifests
-    context.services.each do |service_obj|
-      @service = service_obj
-      generated_files << template("#{entity_to_template(service)}.yml.erb", "#{path}/#{service.name}.yml")
+  def manifests
+    name = nil
+    context.services.each do |service|
+      name = service.name
+      # binding.pry
+      generated_files << template(template_file(service), "#{path.join(service.name)}.yml")
     end
   rescue StandardError => e
+    Cnfs.logger.warn("Error generating template for #{name}: #{e.message}")
     if Cnfs.config.dev
       msg = "#{e}\n#{e.backtrace}"
       # binding.pry
     end
-    # TODO: add to errors array and have controller output the result
-    raise Cnfs::Error, "\nError generating template for #{@service.name}: #{msg}"
   ensure
     remove_stale_files
   end
 
   private
 
-  def entity_to_template(entity = nil)
-    entity ||= instance_variable_get("@#{entity_name}")
-    # TODO: The entity should reutrn the template name rather than being so clever
-    key = entity.template || entity.type&.underscore&.split('/')&.shift || entity.name
-    entity_template_map[key.to_sym] || key
+  def template_file(service)
+    [service.template, service.name, service.class.name.deconstantize, 'service'].each do |template_name|
+      source_paths.each do |source_path|
+        template_path = "templates/#{template_name}.yml.erb"
+        return template_path if source_path.join(template_path).exist?
+      end
+    end
   end
 
-  def entity_template_map
-    {}
-  end
-
-  # Used by the ApplicationGenerator#plugin_paths
-  def caller_path() = 'runtime'
 
   # List of services to be configured on the proxy server (nginx for compose)
-  def proxy_services
-    context.services.select { |service| service.profiles.key?(:server) }
-  end
+  # TODO: Move this to an nginx service class in an RC
+  def proxy_services() = context.services.select { |service| service.profiles.key?(:server) }
 
   def template_types
     @template_types ||= context.services.map { |service| entity_to_template(service).to_sym }.uniq

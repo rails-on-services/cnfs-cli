@@ -6,6 +6,7 @@
 **/pkg/
 **/spec/reports/
 **/tmp/
+**/src/
 **.env
 
 .dir-locals.el
@@ -14,4 +15,4 @@
 **.rspec_status
 */config/environment.rb
 *.gem
-tools/Gemfile.lock
+Gemfile.lock

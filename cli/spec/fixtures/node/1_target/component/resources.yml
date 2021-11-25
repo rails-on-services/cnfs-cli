@@ -1,0 +1,20 @@
+---
+instance:
+  config:
+    family: m5
+    size: medium
+  runtime_name: compose
+  provider_name: aws_east
+  blueprint_name: test
+  tags: {}
+  envs: {}
+  type: Aws::Resource::EC2::Instance
+bucket:
+  config:
+    family: ah23
+    size: cool!
+  tags: {}
+  envs: {}
+  type: Aws::Resource::S3::Bucket
+  provider_name: localstack
+  runtime_name: compose

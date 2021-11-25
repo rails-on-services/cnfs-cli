@@ -2,61 +2,89 @@
 
 class Repository < ApplicationRecord
   include Concerns::Asset
+  include Concerns::Operator
   include Concerns::Git
-  # include Concerns::Taggable
 
-  def search_paths
-    [Cnfs.paths.src.join(name).join('.cnfs/config')]
-  end
+  COMPONENT_PATH_KEY = 'components_path'
+  COMPONENT_FILE = 'component.yml'
+  REPOSITORY_FILE = 'repository.yml'
 
-  # belongs_to :owner, polymorphic: true
-  # has_many :services, as: :owner
+  store :config, accessors: %i[url]
 
-  # store :config, accessors: %i[url repo_type], coder: YAML
-  store :config, accessors: %i[url], coder: YAML
-
-  validates :name, presence: true
   validates :url, presence: true
 
-  after_create :create_node
+  after_create :register_components
 
-  def create_node
-    # puts "# This gets called when a node creates a repo #{__FILE__}"
-    # So going in the other direction have to avoid an infinite loop
-    # binding.pry
+  def register_components
+    return unless repo_path_exist? && components_path_exist?
+
+    components_path.children.select(&:directory?).each do |component_path|
+      next unless component_path.join(COMPONENT_FILE).exist?
+
+      component_name = component_path.relative_path_from(src_path).to_s
+      Cnfs.logger.info("Found component #{component_name}")
+      CnfsCli.register_component(name: component_name, path: component_path)
+    end
   end
 
-  # after_destroy :remove_tree
+  def repo_path_exist?
+    return true if repo_path.exist?
 
-  # def services
-  #   services_path.exist? ? services_path.children.select(&:directory?).map { |p| p.split.last.to_s } : []
-  # end
-
-  def services_path
-    full_path.join('services')
+    log_f(:warn, "Repository #{name} path not found #{repo_path}")
+    nil
   end
 
-  # def git
-  #   Dir.chdir(full_path) { Cnfs.git }
-  # end
+  def components_path_exist?
+    return true if components_path.exist?
 
-  def clone_cmd
-    "git clone #{url} #{name}"
+    log_f(:warn, "Invalid configuration for repository #{name}", "Path not found: #{components_path}")
+    nil
   end
 
-  def remove_tree
-    full_path.rmtree if full_path.exist?
+  # TODO: See about formatting messages using Logger config
+  def log_f(level, *messages)
+    message = messages.shift
+    m_messages = messages.map{ |message| "\n#{' ' * 10}#{message}"}
+    Cnfs.logger.send(level, message, *m_messages)
   end
 
-  def full_path
-    paths.src.join(name)
+  def components_path() = repo_path.join(components_path_name)
+
+  def components_path_name() = repo_config.fetch(COMPONENT_PATH_KEY, '.')
+
+  # Return the contents of the repository's config file or an empty hash
+  def repo_config
+    repo_config_file.exist? ? (YAML.load_file(repo_config_file) || {}) : {}
   end
 
-  def paths
-    Cnfs.project.paths
+  # <repo_path>/repository.yml if present must be in this specific location
+  def repo_config_file() = repo_path.join(REPOSITORY_FILE)
+
+  def repo_path
+    @repo_path ||= src_path.join(name)
   end
+
+  def src_path() = CnfsCli.config.paths.src
+
+  def tree_name() = name
+
+  def git() = Dir.chdir(repo_path) { super }
 
   class << self
+    def init(context)
+      context.repositories.each do |repo|
+        next if repo.repo_path_exist?
+
+        msg = "Cloning repository #{repo.url}"
+        Cnfs.logger.info(msg)
+
+        Cnfs.with_timer(msg) do
+          repo.src_path.mkpath unless repo.src_path.exist?
+          Dir.chdir(repo.src_path) { repo.git_clone(repo.url).run }
+        end
+      end
+    end
+
     def add(param1, param2 = nil)
       url = name = nil
       if param1.match(git_url_regex)
@@ -72,6 +100,7 @@ class Repository < ApplicationRecord
 
     # TODO: Move to cnfs-cli.yml
     # Shortcuts for CNFS repos
+    # This is copied in to the user's local directory so its available to all projects on the file system
     def url_map
       {
         cnfs: 'git@github.com:rails-on-services/ros.git',

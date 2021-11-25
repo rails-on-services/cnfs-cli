@@ -10,7 +10,7 @@ module ServicesHelper
   end
 
   def raise_if_runtimes_empty
-    return if context.resource_runtimes.any?
+    return if context.runtimes.any?
 
     raise Cnfs::Error, "Services not found: #{context.args.service || context.args.services.join(' ')}"
   end

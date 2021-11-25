@@ -10,7 +10,8 @@ class CommandQueue
     assign_attributes(options)
     @queue = []
     @results = []
-    @on_failure ||= :raise
+    # @on_failure ||= :raise
+    @on_failure ||= ActiveSupport::StringInquirer.new('raise')
   end
 
   def run!
@@ -25,6 +26,7 @@ class CommandQueue
       next unless command.exit_error || command.result.failure?
 
       msg = command.exit_error&.to_s || command.result.err
+      binding.pry
       raise Cnfs::Error, msg if on_failure.raise?
 
       return false if on_failure.halt?

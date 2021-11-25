@@ -19,19 +19,18 @@ module Concerns
 
     # rubocop:disable Metrics/AbcSize
     def make_owner
-      return if CnfsCli.support_names.include?(node_name)
-
       obj = parent.nil? ? @owner_class.create(yaml_payload) : owner_association.create(yaml_payload)
       return unless obj
 
       update(owner: obj)
       owner_log('Created owner')
     rescue ActiveModel::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch, ActiveRecord::RecordInvalid => e
-      # binding.pry
-      Cnfs.logger.warn(e.message, yaml_payload)
+      Cnfs.logger.warn('NodeWriter:', e.message, yaml_payload)
+      Cnfs.logger.debug('NodeWriter Error:', e.backtrace.join("\n"))
       owner_log('Error creating owner')
     rescue NoMethodError => e
-      Cnfs.logger.warn("#{e.message} in #{realpath}")
+      Cnfs.logger.error('NodeWriter:', e.message, yaml_payload)
+      Cnfs.logger.debug('NodeWriter Error:', e.backtrace.join("\n"))
     end
 
     # rubocop:enable Metrics/AbcSize
@@ -47,6 +46,8 @@ module Concerns
 
     def yaml_payload
       @yaml_payload ||= { 'name' => node_name }.merge(yaml)
+    rescue => e
+      binding.pry
     end
 
     # BEGIN: source asset

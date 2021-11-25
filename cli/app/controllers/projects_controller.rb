@@ -4,20 +4,11 @@ class ProjectsController < Thor
   include CommandHelper
 
   # Activate common options
-  cnfs_class_options :dry_run, :logging
-  cnfs_class_options CnfsCli.configuration.command_options_list
+  cnfs_class_options :dry_run, :init
+  cnfs_class_options CnfsCli.config.components.keys
 
-  register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
-  register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'
-
-  desc 'config', 'Display project configuration'
-  option :local, desc: 'Display local overrides',
-                 aliases: '-l', type: :boolean
-  def config
-    YAML.load_file(Cnfs.project_file).each do |key, value|
-      puts "#{key}: #{value}"
-    end
-  end
+  # register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
+  # register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'
 
   desc 'console', 'Start a CNFS project console (short-cut: c)'
   # TODO: Maybe have an option that removes :enfironment and namespace from options before running command
@@ -26,6 +17,17 @@ class ProjectsController < Thor
   def console(*users)
     # execute
     execute(users: users)
+  end
+
+  private
+
+  desc 'config', 'Display project configuration'
+  option :local, desc: 'Display local overrides',
+                 aliases: '-l', type: :boolean
+  def config
+    YAML.load_file(Cnfs.project_file).each do |key, value|
+      puts "#{key}: #{value}"
+    end
   end
 
   desc 'init', 'Initialize the project'

@@ -8,6 +8,7 @@ class Node < ApplicationRecord
   before_validation :set_realpath
 
   def set_realpath
+    binding.pry unless Pathname.new(path).exist?
     self.realpath ||= Pathname.new(path).realpath.to_s
   end
 
@@ -40,6 +41,14 @@ class Node < ApplicationRecord
 
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
+  def x_tree
+    nodes.group_by(&:type).each_with_object([]) do |(key, nodes), ary|
+      binding.pry
+      ary.append({ key => x_tree(nodes) })
+    end
+  end
+
+  # def x_tree(nodes)
   def tree
     nodes.each_with_object([]) do |node, ary|
       case node.type

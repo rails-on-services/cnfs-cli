@@ -39,6 +39,7 @@ class Node::Component < Node
     base_path = "#{parent.path}/#{owner.name}"
     self.path ||= "#{base_path}.yml"
     FileUtils.touch(path)
+    binding.pry
     nodes << Node::ComponentDir.new(path: base_path)
     super
   end

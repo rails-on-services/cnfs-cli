@@ -1,40 +1,28 @@
 # frozen_string_literal: true
 
-class ProjectGenerator < Thor::Group
-  include Thor::Actions
-  argument :name
-
-  def generate_project_files
-    user_project_dir = CnfsCli.config.config_home
-    user_project_dir.rmtree if user_project_dir.exist?
-    # TODO: The save of this should be done with Node class
-    config = YAML.load_file(CnfsCli.gem_root.join('project.yml'))
-    config.merge!(name: name).stringify_keys!
-    create_file('project.yml', config.to_yaml)
+class ProjectGenerator < NewGenerator
+  def user_files
+    user_project_path.rmtree if user_project_path.exist?
+    create_file(user_project_path.join("#{name}.yml"), { 'name' => name, 'key' => Lockbox.generate_key }.to_yaml)
+    create_file('.cnfs', '')
     directory('files', '.')
-    # template('README.md')
+  end
+
+  def templates
     template_files.sort.each do |template|
-      destination = template.delete_suffix('.erb')
-      template("templates/#{template}", destination)
-      gsub_file(destination, /^#./, '') # if options.config
+      destination = template.relative_path_from(templates_path).to_s.delete_suffix('.erb')
+      template(template, destination)
+      gsub_file(destination, /^#./, '') if options.config && destination.end_with?('.yml')
     end
   end
 
   private
 
-  def template_files
-    Dir.chdir(views_path.join('templates')) { Dir['**/*.erb'] }
-  end
+  def user_project_path() = user_path.join(uuid)
 
-  def source_paths
-    [views_path]
-  end
+  def uuid() = @uuid ||= SecureRandom.uuid
 
-  def views_path
-    @views_path ||= internal_path.join('project')
-  end
+  def template_files() = templates_path.glob('**/*.erb')
 
-  def internal_path
-    Pathname.new(__dir__)
-  end
+  def templates_path() = views_path.join('templates')
 end

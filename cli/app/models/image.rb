@@ -3,15 +3,12 @@
 class Image < ApplicationRecord
   include Concerns::Asset
 
-  # belongs_to :repository
-
-  # def generate
-  #   Rails::ServiceGenerator.new([self])
-  # end
+  belongs_to :registry
 
   class << self
     def add_columns(t)
-      t.references :repository
+      t.string :registry_name
+      t.references :registry
       t.string :dockerfile
       t.string :build
       # t.string :path

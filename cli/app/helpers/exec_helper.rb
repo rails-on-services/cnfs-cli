@@ -26,4 +26,13 @@ module ExecHelper
 
     $stdout.puts obj.errors.map(&:full_message).join("\n")
   end
+
+  def init
+    return unless context.options.init
+
+    CnfsCli.asset_names.each do |asset|
+      klass = asset.classify.constantize
+      klass.init(context) if klass.respond_to?(:init)
+    end
+  end
 end

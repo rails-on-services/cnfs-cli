@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'fileutils'
+require 'thor'
+
+class GemCli < Thor
+  class_option :dry_run, desc: 'Do not execute commands', aliases: '-d', type: :boolean, default: false
+     
+  desc 'build', 'Build all CnfsCli gems'
+  def build
+    each_dir do |_name, gemspec|
+      exec("gem build #{gemspec}")
+    end
+  end
+
+  desc 'install', 'Install all CnfsCli gems'
+  option :deps, desc: 'Install all CnfsCli gems dependencies, but not the CnfsCli gems themselves', type: :boolean
+  def install
+    if options.deps
+      install_deps
+      return
+    end
+
+    each_dir do |_name, gemspec|
+      exec("gem build #{gemspec}")
+      next unless (gem_file = Dir['*.gem'].shift)
+
+      exec("gem install ./#{gem_file}")
+      FileUtils.rm(gem_file)
+    end
+  end
+
+  desc 'uninstall', 'Uninstall all CnfsCli gems'
+  def uninstall
+    each_dir do |_name, gemspec|
+      exec("gem uninstall -a -x #{gemspec.delete_suffix('.gemspec')}")
+    end
+  end
+
+  private
+
+  # Use this to quickly install all dependencies while running the CnfsCli gems from source
+  def install_deps
+    each_dir do |dir, gemspec|
+      next if dir.eql?('packer')
+
+      if (gemfile = Dir['*.gem'].shift)
+        FileUtils.rm(gemfile)
+      end
+      puts "** #{Dir.pwd.split('/').last}"
+
+      File.open('Gemfile', 'w') { |f| f.write("source ENV['GEM_SERVER'] || 'https://rubygems.org'\ngemspec") }
+      system('bundle install') unless options.dry_run
+      FileUtils.rm('Gemfile')
+      FileUtils.rm_rf('Gemfile.lock')
+      FileUtils.rm_rf('.bundle')
+    end
+  end
+
+  def each_dir
+    Dir['*/'].sort.each do |dir|
+      dir = dir.delete_suffix('/')
+      Dir.chdir(dir) do
+        next unless (gemspec = Dir['*.gemspec'].shift)
+
+        yield dir, gemspec
+      end
+    end
+  end
+
+  def exec(cmd)
+    puts cmd if options.verbose
+    system(cmd) unless options.noop
+  end
+end
+
+GemCli.start

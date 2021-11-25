@@ -6,6 +6,7 @@ lib_path = File.expand_path('../lib', __dir__)
 $LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
 
 ENV['CNFS_DEV'] ||= ARGV.delete('--cli-dev')
+ENV['CNFS_PROF'] ||= ARGV.delete('--cli-prof')
 dval = ARGV.index('--logging') || ARGV.index('-l')
 ENV['CNFS_LOGGING'] = ARGV[dval + 1] if dval
 
@@ -18,9 +19,6 @@ require 'cnfs_cli'
 
 begin
   CnfsCli.run! { MainController.start }
-  # at_exit { puts "at_exit function" }
-  # Cnfs.run! { MainController.start }
-  Cnfs.logger.info("wall time: #{Time.now - start_time}")
 rescue Cnfs::Error => e
   puts e.message
   exit 2

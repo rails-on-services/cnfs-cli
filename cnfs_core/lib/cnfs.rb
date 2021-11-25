@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require 'config'
+# require 'config'
 require 'tty-logger'
 require 'xdg'
 
 require_relative 'cnfs/utils'
-require_relative 'cnfs/config_base'
 require_relative 'cnfs/config'
 require_relative 'cnfs/loader'
 
@@ -13,27 +12,53 @@ module Cnfs
   # class Error < StandardError; end
 
   class << self
+    attr_writer :logger
     attr_accessor :plugin_root, :config, :configuration
 
     # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
     # Setup the core framework
     def setup(data_store: true, model_names: [])
-      Cnfs.loader.autoload_all(Cnfs.gem_root)
-      Cnfs.loader.add_plugin_autoload_paths(Cnfs.plugin_root.plugins.values)
-      # Cnfs.loader.add_plugin_autoload_paths(CnfsCli.plugins.values)
-      Cnfs.loader.setup
+      add_loader(name: :framework, path: Cnfs.plugin_root.gem_root.join('app'))
+      # Create a loader for this gem's classes
+      add_loader(name: :framework, path: Cnfs.gem_root.join('app'))
+
+      Cnfs.plugin_root.plugins.each do |_name, plugin_class|
+        next unless (plugin = plugin_class.to_s.split('::').values_at(0, -1).join('::').safe_constantize)
+
+        add_loader(name: :framework, path: plugin.gem_root.join('app'), notifier: plugin_class)
+      end
+      loaders.values.map(&:setup)
+
       Cnfs.data_store.add_models(model_names)
       Cnfs.data_store.setup if data_store
-      Kernel.at_exit do
-        Cnfs.logger.info(Cnfs.timers.map { |k, v| "\n#{k}:#{' ' * (30 - k.length)}#{v.round(2)}" }.join)
-      end
+      Kernel.at_exit { Cnfs.logger.info(Cnfs::Timer.table.join("\n")) }
     end
+    # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/AbcSize
 
     def data_store
       @data_store ||= Cnfs::DataStore.new
     end
 
+    def add_loader(name:, path:, notifier: nil)
+      name = name.to_s
+      loaders[name] ||= Cnfs::Loader.new(name: name, logger: logger)
+      loaders[name].add_path(path)
+      loaders[name].add_notifier(notifier)
+      loaders[name]
+    end
+
+    def reload
+      results = loaders.values.each_with_object([]) { |loader, ary| ary.append(loader.reload) }
+      !results.include?(false)
+    end
+
+    def loaders
+      @loaders ||= {}
+    end
+
+    # TODO: Multiple loggers
     def logger
       @logger ||= set_logger
     end
@@ -41,7 +66,9 @@ module Cnfs
     def set_logger
       default_level = (config.logging || 'warn').to_sym
       level = ::TTY::Logger::LOG_TYPES.keys.include?(default_level) ? default_level : :warn
-      ::TTY::Logger.new { |cfg| config.logging = cfg.level = level }
+      ::TTY::Logger.new do |config|
+        Cnfs.config.logging = config.level = level
+      end
     end
 
     def timers
@@ -53,20 +80,44 @@ module Cnfs
       with_timer('loading core dependencies') { require_relative 'cnfs/dependencies' } if type.eql?(:all)
     end
 
-    # Cnfs.plugin_modules(mod: CnfsCli, klass: RepositoriesController, only: [:aws, :rails])
-    def plugin_modules_for(mod: self, klass:, only: [])
-      plugins = only.empty? ? mod.plugins :  mod.plugins.select { |p| only.include?(p) }
-
-      plugins.keys.each_with_object([]) do |mod_name, ary|
-        mod_name = "#{mod_name.to_s.classify}::#{klass}"
-        next unless (mod = mod_name.safe_constantize)
-
-        ary.append(mod)
-      end
+    def add_module(name:, path:)
+      @modules[:cnfs_backend] = CnfsBackend
     end
 
-    def reload
-      loader.reload
+    def modules
+      @modules ||= {}
+    end
+
+    def modules_for(klass:, mod: self)
+      pms = plugin_modules_for(klass: klass, mod: self)
+
+      rms = modules.values.each_with_object([]) do |plugin_name, ary|
+        plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
+        next unless (plugin_module = plugin_module_name.safe_constantize)
+
+        # binding.pry if klass.eql?(RepositoriesController)
+        # name.split('/').first.gsub('-', '_').classify.safe_constantize
+        # Ignore anything that is not an A/S::Concern, e.g. A/R STI classes
+        next unless plugin_module.is_a?(ActiveSupport::Concern)
+
+        Cnfs.logger.info("Found plugin module #{plugin_module_name} for #{klass} in #{mod}.plugins")
+        ary.append(plugin_module)
+      end
+
+      pms + rms
+    end
+
+    def plugin_modules_for(klass:, mod: self)
+      mod.plugins.keys.each_with_object([]) do |plugin_name, ary|
+        plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
+        next unless (plugin_module = plugin_module_name.safe_constantize)
+
+        # Ignore anything that is not an A/S::Concern, e.g. A/R STI classes
+        next unless plugin_module.is_a?(ActiveSupport::Concern)
+
+        Cnfs.logger.info("Found plugin module #{plugin_module_name} for #{klass} in #{mod}.plugins")
+        ary.append(plugin_module)
+      end
     end
 
     # NOTE: most of this moved to context. Is shift and caps needed?
@@ -77,10 +128,6 @@ module Cnfs
       subscribers.each { |sub| ActiveSupport::Notifications.unsubscribe(sub.pattern) }
       # ARGV.shift # remove 'new'
       # @capabilities = nil
-    end
-
-    def loader
-      @loader ||= Cnfs::Loader.new(logger: logger)
     end
 
     def gem_root

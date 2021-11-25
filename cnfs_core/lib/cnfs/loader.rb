@@ -2,62 +2,66 @@
 
 module Cnfs
   class Loader
-    attr_accessor :loader
+    attr_reader :name, :loader
+    attr_writer :load_paths
 
-    def initialize(logger: nil)
+    # TODO: Catch a path overlap error
+    def initialize(name:, path: nil, notifier: nil, logger: nil)
+      @name = name
       @loader = Zeitwerk::Loader.new
       loader.logger = logger if logger
+      add_path(path) if path
+      add_notifier(notifier) if notifier
+      self
+    end
+
+    def add_path(root_path)
+      return paths unless root_path.exist?
+
+      root_path.children.select(&:directory?).select { |path| load_paths.include?(path.basename.to_s) }.each do |path|
+        paths << path
+      end
+    end
+
+    # Store all paths to be added to loader and ensure they are unique
+    def paths
+      @paths ||= Set.new
+    end
+
+    def load_paths
+      @load_paths ||= %w[controllers generators helpers models views]
+    end
+
+    # Gems may want to set the loader's inflector and other work before classes are loaded
+    def add_notifier(notifier)
+      notifiers << notifier if notifier
+    end
+
+    def notifiers
+      @notifiers ||= Set.new
     end
 
     # Zeitwerk loader methods
     def setup
-      ActiveSupport::Notifications.instrument 'before_loader_setup.cnfs', { loader: loader }
-      autoload_dirs.each { |dir| loader.push_dir(dir) }
+      paths.each { |path| loader.push_dir(path) }
+      notify(:before_loader_setup)
       loader.enable_reloading
       loader.setup
     end
 
-    def autoload(mode: nil, paths: [])
-      paths.each { |path| autoload_all(path) }
-    end
-
-    def autoload_dirs
-      @autoload_dirs ||= []
-    end
-
-    def autoload_all(path)
-      return [] unless path.join('app').exist?
-
-      dirs = path.join('app').children.select(&:directory?).select { |m| default_load_paths.include?(m.split.last.to_s) }
-      autoload_dirs.concat(dirs)
-      dirs
-    end
-
-    def default_load_paths
-      %w[controllers generators helpers models views]
-    end
-
-    def add_plugin_autoload_paths(values)
-      values.each do |plugin_class|
-        next unless (plugin = plugin_class.to_s.split('::').reject { |n| n.eql?('Plugins') }.join('::').safe_constantize)
-
-        gem_load_paths = plugin.respond_to?(:load_paths) ? plugin.load_paths : %w[app]
-        plugin_load_paths = plugin.respond_to?(:plugin_load_paths) ? plugin.plugin_load_paths : default_load_paths
-
-        gem_load_paths.each do |load_path|
-          load_path = plugin.gem_root.join(load_path)
-          next unless load_path.exist?
-
-          paths_to_load = load_path.children.select do |p|
-            p.directory? && plugin_load_paths.include?(p.split.last.to_s)
-          end
-          autoload_dirs.concat(paths_to_load)
-        end
-      end
-    end
-
+    # TODO: Catch a reload error
     def reload
-      loader.reload
+      result = loader.reload
+      notify(:after_reload) if result
+      text = result ? 'Reloaded' : 'Reload error on'
+      loader.logger.debug("#{text} #{name}")
+      result
+    end
+
+    def notify(method)
+      notifiers.each do |notifier|
+        notifier.send(method, loader) if notifier.respond_to?(method)
+      end
     end
   end
 end

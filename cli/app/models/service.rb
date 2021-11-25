@@ -3,32 +3,25 @@
 # rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
   include Concerns::Asset
-  include Concerns::HasEnvs
-  include Concerns::Taggable
+
+  # attr_obj :config, :envs
+  # attr_encrypted :state
 
   # TODO: is this the right way to do it?
   attr_accessor :command_queue
 
-  belongs_to :environment, optional: true
   belongs_to :resource, optional: true
 
   store :commands, accessors: %i[console shell test], coder: YAML
   store :commands, accessors: %i[after_service_starts before_service_stops before_service_terminates], coder: YAML
   # store :config, accessors: %i[path image depends_on ports mount], coder: YAML
-  store :config, accessors: %i[path depends_on ports mount], coder: YAML
+  store :config, accessors: %i[path depends_on ports mount] # , coder: YAML
   store :image, accessors: %i[build_args dockerfile repository_name tag], coder: YAML
   store :profiles, coder: YAML
 
   serialize :volumes, Array
 
-  # TODO: Get the below codd into HasEnv concern
-  # serialize :environment, Array
-
-  # TODO: Implement Environment model
-  # TODO: This is also handled by the context
-  # def environments
-  #   owner.environments.where(name: environment)
-  # end
+  store :envs, coder: YAML
 
   # delegate :git, to: :repository
   def git
@@ -40,11 +33,6 @@ class Service < ApplicationRecord
   end
 
   # validate :image_values
-
-  # def as_save
-  #   attributes.except('id', 'name', 'origin_id', 'owner_id', 'owner_type')
-  #     .merge('origin' => origin&.name, 'owner' => "#{owner.name} (#{owner_type})")
-  # end
 
   def volumes
     super.map(&:with_indifferent_access)
@@ -165,10 +153,6 @@ class Service < ApplicationRecord
   end
 
   class << self
-    def update_names
-      %w[resource environment]
-    end
-
     def by_profiles(profiles = project.profiles)
       where('profiles LIKE ?', profiles.map { |k, v| "%#{k}: #{v}%" }.join)
     end
@@ -177,26 +161,21 @@ class Service < ApplicationRecord
     def add_columns(t)
       t.string :resource_name
       t.references :resource
-      t.string :environment_name
-      t.references :environment
       # TODO: Perhaps these are better as strings that can be inherited
       # t.references :source_repo
       # t.references :image_repo
       # t.references :chart_repo
       t.string :commands
-      # t.string :environment
       t.string :image
-      # t.string :context
       t.string :path
       t.string :profiles
-      # t.string :tags
       t.string :template
       t.string :volumes
       t.string :state
-      super # Adds envs from concern
+      t.string :envs
       # NOTE: Added for testing of old service definition
+      # TODO: If service really needs a repository then use belongs_to_names
       t.string :repository
-      t.string :location
     end
     # rubocop:enable Metrics/MethodLength
   end

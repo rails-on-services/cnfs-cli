@@ -66,9 +66,6 @@ module CnfsCommandHelper
       aliases: '-l', type: :string, default: Cnfs.config.logging
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',
       aliases: '-q', type: :boolean, default: Cnfs.config.quiet
-
-    # Load plugin modules to add options, actions and sub-commands to existing command structure
-    Cnfs.plugin_modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }
   end
 
   private

@@ -1,6 +1,10 @@
 # frozen_string_literal: false
 
 class Hash
+  def to_obj
+    JSON.parse(to_json, object_class: OpenStruct)
+  end
+
   def to_hcl(hash = self, spacer = 2, ary = [])
     max_key_length = hash.keys.max_by(&:length).length
     hash.stringify_keys!.sort.to_h.compact.each_with_object(ary) do |(key, value), cary|

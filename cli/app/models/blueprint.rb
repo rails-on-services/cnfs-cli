@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
-# A Blueprint is analagous to a TF Module, but module is a reserved keyword in ruby
+# A Blueprint is A collection of resources
 class Blueprint < ApplicationRecord
   include Concerns::Asset
-  # include Concerns::HasEnv
-  # include Concerns::Taggable
-  belongs_to :builder
-  belongs_to :environment
-  belongs_to :provider
+
+  belongs_to :provisioner
   has_many :resources
-
-  delegate :project, to: :environment
-  delegate :paths, :path, to: :project
-
-  # parse_sources :project, :user
-  # parse_scopes :environment
 
   # List of resource classes that are managed by this blueprint
   def resource_classes
@@ -27,6 +18,7 @@ class Blueprint < ApplicationRecord
   end
 
   class << self
+    # TODO: Are these methods necessary?
     def available_types(platform)
       defined_types.select { |p| p.start_with?(platform.to_s) }.map { |p| p.split('/').second }.sort
     end
@@ -50,10 +42,8 @@ class Blueprint < ApplicationRecord
     end
 
     def add_columns(t)
-      t.string :environment_name
-      t.references :environment
-      t.string :provider_name
-      t.references :provider
+      # t.string :provider_name
+      # t.references :provider
       t.string :provisioner_name
       t.references :provisioner
     end

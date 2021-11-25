@@ -3,81 +3,48 @@
 require 'active_support/inflector'
 
 module CnfsCli
-  class Config < Cnfs::ConfigBase
-    attr_accessor :load_nodes
+  class Config < Cnfs::Config
+    def after_initialize
+      # Set defaults
+      self.dev = false
+      self.dry_run = false
+      self.logging = :warn
+      self.quiet = false
 
-    def project
-      file.exist?
+      # Default paths
+      paths.data = 'data'
+      paths.tmp = 'tmp'
+      paths.src = 'src'
     end
 
-    def xdg_name
-      "cnfs-cli/#{name}"
-    end
+    def after_user_config
+      # Transform paths from a string to an absolute path
+      paths.transform_values! { |path| path.is_a?(Pathname) ? path : root.join(path) }
 
-    def name
-      @name ||= yaml['name']
-    end
-
-    def before_set_config
-      config_attributes.append(:project, :load_nodes)
-      base = 'CNFS_'
-      env_translations.each do |short, long|
-        ENV["#{base}#{long}".upcase] = ENV.delete("#{base}#{short}".upcase)
+      # Set values for component selection based on any user defined ENVs
+      segments.each do |key, values|
+        env_key = "#{env_base}#{values[:env] || key}".upcase
+        values[:env_value] = ENV[env_key]
       end
-    end
 
-    def config_parse_settings
-      @config_parse_settings ||= { use_env: true, env_separator: '_', env_prefix: 'CNFS' }
-    end
-
-    def env_translations
-      @env_translations ||= project ? set_env_translations : {}
-    end
-
-    # Read project.yml config.x_components array of hashes for any hash that has the key 'env'
-    # Example return hash: { 'tar' => 'target', 'ns' => 'namespace' }
-    def set_env_translations
-      return {} unless yml = yaml['components']
-
-      yml.each_with_object({}) do |kv, hash|
-        next unless (env = kv['env'])
-
-        hash[env] = kv['name']
+      # Set Command Options
+      self.command_options = segments.dup.transform_values! do |opt|
+        { desc: opt[:desc], aliases: opt[:aliases], type: :string }
       end
+
+      # Disable loading of component if not in a valid project, i.e. cnfs new is being invoked
+      self.load_nodes = false unless project
     end
 
-    def command_options
-      @command_options ||= set_command_options
-    end
+    # If not in a valid project, i.e. cnfs new, then return the base path otherwise add the name to the path
+    def xdg_name() = project ? "#{xdg_base}/#{project_id}" : xdg_base
 
-    def set_command_options
-      config.components.each_with_object([]) do |opt, ary|
-        opt = opt.to_h.with_indifferent_access
-        ary.append({ name: opt[:name].to_sym,
-                     desc: opt[:desc] || "Specify #{opt[:name]}",
-                     aliases: opt[:aliases],
-                     type: :string,
-                     default: opt[:default] })
-      end
-    end
+    # The file that is present in the root of the project that indicates it is a cnfs-cli project
+    def root_file_id() = '.cnfs'
 
-    def command_options_list
-      @command_options_list ||= config.components.map { |comp| comp[:name].to_sym }
-    end
+    # The prefix of ENV vars specified in config/application.rb
+    def env_base() = 'CNFS_'
 
-    def yaml
-      @yaml ||= YAML.load_file(file) || {}
-    end
-
-    # NOTE: From project.rb; don't know if it is really necessary
-    # "black" "red" "green" "yellow" "blue" "purple" "magenta" "cyan" "white"
-    # def comp_defaults
-    #   {
-    #     'target' => { aliases: '-t', color: 'blue' },
-    #     'environment' => { aliases: '-e', env: 'env', color: 'green' },
-    #     'namespace' => { aliases: '-e', env: 'ns', color: 'yellow' },
-    #     'stack' => { aliases: '-e', color: 'red' }
-    #   }
-    # end
+    def xdg_base() = 'cnfs-cli'
   end
 end

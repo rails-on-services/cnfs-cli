@@ -1,5 +1,5 @@
 ---
 config:
   domain: backend.${tld}
-child_name: environment
+segment: environment
 default: production

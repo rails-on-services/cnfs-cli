@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
-  include Concerns::Parent
   include Concerns::Encryption
   include Concerns::Interpolation
+
+  # Include Parent last as it includes plugin modules that may depend on methods in the above modules
+  include Concerns::Parent
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'
@@ -19,6 +21,22 @@ class Component < ApplicationRecord
     has_many asset_name.to_sym, as: :owner
   end
 
+  store :default, coder: YAML,
+    accessors: %i[blueprint_name provider_name provisioner_name repository_name resource_name runtime_name segment_name]
+   
+  # Return the default dir_path of the parent's path + this component's name unless a component_name is configured
+  # In which case parse component_name to search the component hierarchy for the specified repository and blueprint
+  def dir_path
+    if component_name
+      if (path = CnfsCli.components[component_name])
+        return path.join('component')
+      else
+        node_warn(node: parent, msg: "Repository component '#{component_name}' not found")
+      end
+    end
+    parent.parent.rootpath.join(parent.node_name).to_s
+  end
+
   def key
     @key ||= local_file_values['key'] || owner&.key
   end
@@ -29,7 +47,7 @@ class Component < ApplicationRecord
   end
 
   def write_local_file
-    local_path.split.first.mkpath unless local_path.split.first.exist?
+    local_path.parent.mkpath unless local_path.parent.exist?
     File.open(local_file, 'w') { |f| f.write(local_file_values.to_yaml) }
   end
 
@@ -38,11 +56,11 @@ class Component < ApplicationRecord
   end
 
   def local_file
-    @local_file ||= local_path.split.first.join("#{attrs.last}.yml")
+    @local_file ||= local_path.parent.join("#{attrs.last}.yml")
   end
 
   def local_path
-    @local_path ||= CnfsCli.configuration.data_home.join(*attrs)
+    @local_path ||= CnfsCli.config.data_home.join(*attrs)
   end
 
   def attrs
@@ -50,25 +68,14 @@ class Component < ApplicationRecord
   end
 
   def tree_name
-    "#{name} (#{c_name})"
+    bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
+    "#{name} (#{owner.segment_type})#{bp_name}"
   end
 
-  # def x_config
-  #   Config::Options.new.merge!(config)
-  # end
-
-  def c_name
-    owner.child_name
-  end
-
-  def except_json
-    super.append('type')
-  end
+  def as_merged() = as_json
 
   # Display components as a TreeView
-  def to_tree
-    puts "\n#{as_tree.render}"
-  end
+  def to_tree() = puts('', as_tree.render)
 
   def as_tree
     TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)
@@ -77,9 +84,9 @@ class Component < ApplicationRecord
   def tree
     components.each_with_object([]) do |comp, ary|
       if comp.components.size.zero?
-        ary.append("#{comp.name} (#{comp.c_name})")
+        ary.append("#{comp.name} (#{comp.type})")
       else
-        ary.append({ "#{comp.name} (#{comp.c_name})" => comp.tree })
+        ary.append({ "#{comp.name} (#{comp.type})" => comp.tree })
       end
     end
   end
@@ -87,12 +94,13 @@ class Component < ApplicationRecord
   class << self
     def create_table(schema)
       schema.create_table table_name, force: true do |t|
-        t.references :owner
         t.string :name
-        t.string :config
+        t.string :component_name
         t.string :type
-        t.string :child_name
+        t.string :segment_type
         t.string :default
+        t.string :config
+        t.references :owner
       end
     end
   end

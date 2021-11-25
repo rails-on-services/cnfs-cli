@@ -1,5 +1,17 @@
 ---
-config: {}
-child_name: target
-default: cap2
+config:
+  domain: cnfs.io
+  host: host.${config.domain}
+  targets:
+    one: one.${config.host}
+    two: two.${config.host}
+  carry: ${name}.${config.targets.one}
+segment_type: target
+default:
+  provisioner_name: terraform
+  # repository_name: jamstack
+  repository_name: cnfs-backend
+  resource_name: instance1
+  runtime_name: compose
+  segment_name: backend
 name: 1_target

@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+require 'cnfs_cli/<%= name %>/version'
+
+module CnfsCli
+  module <%= name.camelize %>
+    class << self
+      def gem_root
+        @gem_root ||= Pathname.new(__dir__).join('../..')
+      end
+    end
+  end
+end

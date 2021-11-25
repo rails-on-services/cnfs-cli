@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 class Project < Component
-  attr_encrypted :happy
-  # belongs_to :source_repository, class_name: 'Repository'
-  store :config, accessors: %i[happy]
+  after_create :add_loader
+
+  def add_loader
+    CnfsCli.add_loader(name: name, path: Pathname.new('app'))
+  end
 
   def key
     @key ||= super || warn_key
@@ -14,28 +16,11 @@ class Project < Component
     nil
   end
 
-  def c_name
-    'project'
-  end
-
   def as_json
     super.merge('name' => name)
   end
 
-  # def create_node
-  #   binding.pry
-  #   node = Node::Component.create(owner: self, path: CnfsCli.config.root.join('project.yml'))
-  #   p = create_parent(type: 'Node::SearchPath', parent: node, path: 'config')
-  #   binding.pry
-  #
-  #   # parent = create_parent(type: 'Node::Component', owner: self,
-  #                 # path: CnfsCli.config.root.join('project.yml'))
-  #   # parent.nodes << Node::SearchPath.create(parent: parent, path: 'config')
-  # end
-
   # called by Node::Component
-  def dir_path
-    'config'
-    # Pathname.new(parent.path).split[0].join('config')
-  end
+  # Pathname.new(parent.path).split[0].join('config')
+  def dir_path() = 'component'
 end

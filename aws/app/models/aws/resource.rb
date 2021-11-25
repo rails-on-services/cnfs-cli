@@ -6,6 +6,10 @@ class Aws::Resource < Resource
     @client ||= self.class.client(provider)
   end
 
+  def valid_types
+    super.merge(provider: 'Aws::Provider')
+  end
+
   class << self
     def client(provider)
       require "aws-sdk-#{service_name}"

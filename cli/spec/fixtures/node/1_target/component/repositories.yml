@@ -1,0 +1,7 @@
+---
+jamstack:
+  config:
+    url: git@github.com:maxcole/kpop.git
+cnfs-projects:
+  config:
+    url: git@github.com:rails-on-services/cnfs-projects.git

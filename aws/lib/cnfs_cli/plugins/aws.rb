@@ -7,12 +7,13 @@ module CnfsCli
         def initialize_aws
           require 'cnfs_cli/aws'
           Cnfs.logger.info "[Aws] Initializing from #{gem_root}"
-          Cnfs.subscribers << ActiveSupport::Notifications.subscribe('before_loader_setup.cnfs') do |event|
-            add_inflectors(event.payload[:loader])
-          end
           Cnfs.subscribers << ActiveSupport::Notifications.subscribe('add_console_shortcuts.cnfs') do |event|
             add_console_shortcuts(event.payload[:shortcuts])
           end
+        end
+
+        def before_loader_setup(loader)
+          add_inflectors(loader)
         end
 
         def add_inflectors(loader)

@@ -17,7 +17,7 @@ module CnfsCore
       puts "Component#{' ' * (pad - 9)}Version"
       puts "#{name}#{' ' * (pad - name.length)}#{Cnfs.plugin_root::VERSION}"
       puts "cli_core#{' ' * (pad - 8)}#{Cnfs::VERSION}"
-      Cnfs.plugin_root.plugins.each do |namespace, plugin_class|
+      Cnfs.plugin_root.plugins.sort.each do |namespace, plugin_class|
         print "#{namespace}#{' ' * (pad - namespace.length)}"
         lib_class = plugin_class.to_s.split('::').reject{ |n| n.eql?('Plugins') }.join('::').safe_constantize
         puts lib_class::VERSION

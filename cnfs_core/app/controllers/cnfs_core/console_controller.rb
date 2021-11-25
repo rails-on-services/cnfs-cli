@@ -31,7 +31,6 @@ module CnfsCore
         self.class.reload
         Pry.start(self)
       end
-      # Pry.start(Context.first)
     end
 
     class << self
@@ -44,20 +43,20 @@ module CnfsCore
       def reload
         commands.each do |command|
           define_method(command) do
-            # binding.pry
-            Pry.start("#{command.to_s.pluralize}_controller".classify.safe_constantize.new) # (args, options))
+            Pry.start("#{command.to_s.pluralize}_controller".classify.safe_constantize.new)
             true
           end
         end
 
         shortcuts.each_pair do |key, klass|
-          define_method(key) { klass } unless %w[p r].include?(key)
           define_method("#{key}a") { klass.all }
           define_method("#{key}c") { |**attributes| klass.create(attributes) }
           define_method("#{key}f") { cache["#{key}f"] ||= klass.first }
+          define_method("#{key}fi") { |id| klass.find(id) }
+          define_method("#{key}fn") { |name| klass.find_by(name: name) }
+          define_method("#{key}k") { klass }
           define_method("#{key}l") { cache["#{key}l"] ||= klass.last }
           define_method("#{key}p") { |*attributes| klass.pluck(*attributes) }
-          define_method("#{key}fb") { |name| klass.find_by(name: name) }
           define_method("#{key}w") { |**attributes| klass.where(attributes) }
         end
       end
@@ -83,7 +82,7 @@ module CnfsCore
 
     def reload!
       reset_cache
-      CnfsCli.reload
+      Cnfs.plugin_root.reload
       self.class.reload
       true
     end
