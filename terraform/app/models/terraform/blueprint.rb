@@ -7,7 +7,7 @@ module Terraform
     extend ActiveSupport::Concern
 
     included do
-  include Concerns::Operator
+      include Concerns::Operator
       table_mod :terraform_add_columns
 
       store :terraform, accessors: %i[modules], coder: YAML
@@ -33,7 +33,7 @@ module Terraform
 
     def x_download
       # dependencies.each do |dependency|
-        # dep = dependency[:url].cnfs_sub
+      # dep = dependency[:url].cnfs_sub
       # Pathname.new('.terraform/modules').rmtree if options.clean
       url = tf_modules.last
       # g = git_clone(url)

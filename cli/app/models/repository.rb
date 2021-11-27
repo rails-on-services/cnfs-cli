@@ -3,7 +3,6 @@
 class Repository < ApplicationRecord
   include Concerns::Asset
   include Concerns::Operator
-  include Concerns::Git
 
   COMPONENT_PATH_KEY = 'components_path'
   COMPONENT_FILE = 'component.yml'

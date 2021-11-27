@@ -20,7 +20,7 @@ module CnfsCli
         # end
 
         def gem_root
-          #{CnfsCli::Terraform.gem_root
+          # {CnfsCli::Terraform.gem_root
           CnfsCli::Terraform.gem_root
         end
       end

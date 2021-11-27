@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'lib/cnfs_cli/terraform/version'
 
 Gem::Specification.new do |spec|
@@ -11,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'CNFS CLI plugin to create Terraform templates for resources and blueprints'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
+  spec.required_ruby_version = Gem::Requirement.new('>= 3.0.0')
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 

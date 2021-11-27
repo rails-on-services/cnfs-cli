@@ -4,7 +4,7 @@ class Terraform::Provisioner < Provisioner
   # include Concerns::PlatformRunner
   # store :providers, accessors: %i[aws gcp azure], coder: YAML
 
-      define_model_callbacks :execute
+  define_model_callbacks :execute
   # Template helpers
   def output(resource, key)
     "output \"#{title(resource.name, key)}\" {
