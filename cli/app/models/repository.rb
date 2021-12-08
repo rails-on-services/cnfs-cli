@@ -4,15 +4,15 @@ class Repository < ApplicationRecord
   include Concerns::Asset
   include Concerns::Operator
 
-  COMPONENT_PATH_KEY = 'components_path'
-  COMPONENT_FILE = 'component.yml'
-  REPOSITORY_FILE = 'repository.yml'
-
   store :config, accessors: %i[url]
 
   validates :url, presence: true
 
-  after_create :register_components
+  COMPONENT_PATH_KEY = 'components_path'
+  COMPONENT_FILE = 'component.yml'
+  REPOSITORY_FILE = 'repository.yml'
+
+  # after_create :register_components
 
   def register_components
     return unless repo_path_exist? && components_path_exist?
@@ -74,7 +74,7 @@ class Repository < ApplicationRecord
       context.repositories.each do |repo|
         next if repo.repo_path_exist?
 
-        msg = "Cloning repository #{repo.url}"
+        msg = "Cloning repository #{repo.url} to #{repo.src_path}"
         Cnfs.logger.info(msg)
 
         Cnfs.with_timer(msg) do

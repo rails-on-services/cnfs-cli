@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PluginGenerator < NewGenerator
+class New::PluginGenerator < NewGenerator
   def gem
     self.destination_root = name
     gem_name = "cnfs_cli-#{name}"
@@ -26,7 +26,6 @@ class PluginGenerator < NewGenerator
 
   def libs
     in_root do
-      binding.pry
       if options.config
         remove_dir('.git')
         remove_file('.travis.yml')
@@ -44,6 +43,8 @@ class PluginGenerator < NewGenerator
   end
 
   private
+
+  def internal_path() = Pathname.new(__dir__)
 
   def metadata
     {}

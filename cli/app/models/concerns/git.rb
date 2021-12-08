@@ -9,7 +9,7 @@ module Concerns
         # opts: context.options,
         # env: { this: 'that' },
         exec: "git clone #{url}",
-        opts: { printer: :null }
+        # opts: { printer: :null }
         # opts: context.options.merge(printer: :null)
       )
     end

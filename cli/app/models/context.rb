@@ -14,7 +14,6 @@ class Context < ApplicationRecord
   # <asset> All <assets> that are available given the value of abstract at each level
   # filtered_<asset> All available <assets> filterd by arguments provided by the cli
   # <asset>_runtime The runtime object for the <asset>
-
   CnfsCli.asset_names.each do |asset_name|
     has_many "component_#{asset_name}".to_sym, through: :components, source: asset_name.to_sym
     has_many asset_name.to_sym, as: :owner
@@ -41,7 +40,9 @@ class Context < ApplicationRecord
 
   # When decrypting values assets ask for the key from their owner
   # When context is the owner it must ask the component for the key
-  delegate :key, :as_interpolated, to: :component
+  # TODO: The assets need to be decrypted with reference to their actual owner not the context.component
+  # This will not work for inherited values. This needs to be tested
+  delegate :attrs, :cache_path, :data_path, :key, :as_interpolated, to: :component
 
   # Add existing components to the context based on cli options, ENV and componet default values
   before_create :add_components, if: proc { root_id }
@@ -120,11 +121,14 @@ class Context < ApplicationRecord
 
   def enabled_assets(enabled_assets, inheritable_assets)
     enabled_assets.each_with_object([]) do |asset, ary|
+      # binding.pry if asset.class.name.eql? 'Plan'
       name = asset.name
       json = inheritable_assets.where(name: name).each_with_object({}) do |record, hash|
-        hash.deep_merge!(record.as_merged.compact)
+        # hash.deep_merge!(record.as_merged.compact)
+        hash.deep_merge!(record.to_context.compact)
       end
-      json.deep_merge!(asset.as_merged.compact)
+      # json.deep_merge!(asset.as_merged.compact)
+      json.deep_merge!(asset.to_context.compact)
       ary.append(json.merge(name: name))
     end
   end
@@ -135,9 +139,11 @@ class Context < ApplicationRecord
   # if the resulting hash is not disabled
   def inherited_assets(component_assets, inheritable_assets)
     names = component_assets.pluck(:name)
-    inheritable_assets.where.not(name: names).group_by(&:name).each_with_object([]) do |(name, records), ary|
+    # binding.pry if inheritable_assets.any? and inheritable_assets.first.class.name.eql?('Plan')
+    inheritable_assets.enabled.where.not(name: names).group_by(&:name).each_with_object([]) do |(name, records), ary|
       json = records.each_with_object({}) do |record, hash|
-        hash.deep_merge!(record.as_merged.compact)
+        # hash.deep_merge!(record.as_merged.compact)
+        hash.deep_merge!(record.to_context.compact)
       end
       ary.append(json.merge(name: name)) unless json['disabled']
     end
@@ -160,65 +166,49 @@ class Context < ApplicationRecord
     end
   end
 
-  def blueprint_provisioners(resources: filtered_resources)
-    resources.where.not(blueprint: nil).group_by(&:blueprint).each_with_object([]) do |(blueprint, x_resources), ary|
-      provisioner = blueprint.provisioner
-      provisioner.context_resources = x_resources
+  def plan_provisioners(plans: filtered_plans)
+    plans.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, plans), ary|
       provisioner.context = self
+      provisioner.context_plans = plans
       ary.append(provisioner)
     end
   end
 
-  # TODO: add other dirs for config files, e.g. gem user's path; load from a config file?
-  # TODO: should only be one runtime per context
-  def manifest
-    @manifest ||= Manifest.new(config_files_paths: [path(to: :config)], write_path: path(to: :manifests))
-  end
-
-  def path(from: nil, to: nil, absolute: false)
-    project_path.path(from: from, to: to, absolute: absolute)
-  end
-
-  def project_path
-    @project_path ||= ProjectPath.new(paths: CnfsCli.config.paths, context_attrs: context_attrs)
-  end
-
-  # Used by runtime generators for templates by runtime to query services
-  def labels
-    @labels ||= begin
-      c_hash = components.each_with_object({}) { |c, h| h[c.segment_type] = c.name }
-      { 'context' => context_name }.merge(c_hash)
+  def image_builders(images: filtered_images)
+    images.where.not(builder: nil).group_by(&:builder).each_with_object([]) do |(builder, images), ary|
+      builder.context = self
+      builder.images = images
+      ary.append(builder)
     end
   end
 
-  def context_name
-    @context_name ||= context_attrs.join('_')
+  # Used by runtime generators for templates by runtime to query services
+  def labels() = @labels ||= labels_hash
+
+  def labels_hash
+    segment_type = 'project'
+    all_components.each_with_object({ 'context' => name }) do |component, hash|
+      hash[segment_type] = component.name
+      segment_type = component.segment_type
+    end
   end
 
-  def context_attrs
-    @context_attrs ||= components.order(:id).pluck(:name)
-  end
+  def name() = @name ||= attrs.join('_')
+
+  # def attrs() = @attrs ||= all_components.pluck(:name)
 
   # NOTE: Used by console controller to create the CLI prompt
   def component_list
     @component_list ||= all_components.each_with_object([]) { |component, ary| ary.append(component_struct(component)) }
   end
 
-  def all_components
-    components.order(:id).to_a.append(component)
-  end
+  def component_struct(component) = OpenStruct.new(segment_type: component.owner&.segment_type, name: component.name)
 
-  def component_struct(component)
-    OpenStruct.new(segment_type: component.owner&.segment_type, name: component.name)
-  end
+  def all_components() = @all_components ||= components.order(:id).to_a.append(component)
 
-  def options
-    Thor::CoreExt::HashWithIndifferentAccess.new(super)
-  end
+  def options() = @options ||= Thor::CoreExt::HashWithIndifferentAccess.new(super)
 
-  def args
-    Thor::CoreExt::HashWithIndifferentAccess.new(super)
-  end
+  def args() = @args ||= Thor::CoreExt::HashWithIndifferentAccess.new(super)
 
   class << self
     def create_table(schema)

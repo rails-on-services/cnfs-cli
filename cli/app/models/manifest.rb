@@ -1,61 +1,51 @@
 # frozen_string_literal: true
 
 class Manifest
-  include ActiveModel::Model
+  include ActiveModel::AttributeAssignment
   include ActiveModel::Validations
 
-  attr_accessor :config_files_paths, :write_path
+  attr_accessor :source_paths, :source_glob, :destination_path, :destination_glob
 
-  validate :outdated?
+  validate :outdated, :no_destination_files
 
-  # rubocop:disable Metrics/AbcSize
-  def outdated?
-    return if config_files.empty?
-
-    if manifest_files.empty?
-      errors.add(:missing_manifests, 'No manifest files found')
-    else
-      config_latest = youngest_config_file_updated_at
-      manifest_latest = oldest_manifest_file_generated_at
-      errors.add(:stale_manifest, "#{config_latest} > #{manifest_latest}") if config_latest > manifest_latest
-    end
-    Cnfs.logger.info('manifest validated - OK') unless errors.size.positive?
-    errors.size.positive?
-  end
-  # rubocop:enable Metrics/AbcSize
-
-  def purge!
-    @purged = true
-    write_path.rmtree
-    manifest_files
+  def initialize(**options)
+    assign_attributes(**options)
+    @source_glob ||= '**/*.yml'
+    @destination_path ||= '.'
+    @destination_glob ||= '**/*'
   end
 
-  def purged?
-    @purged || false
+  def reload
+    @source_files, @destination_files, @newest_source, @oldest_destination = nil
+    self.validate
+    self
   end
 
-  def config_files
-    Dir[*config_files_paths.map { |path| path.join('**/*.yml') }]
-  end
+  def source_files() = @source_files ||= read_paths.map { |path| path.glob(source_glob) }.flatten
 
-  def manifest_files
-    write_path.mkpath unless write_path.exist?
-    Dir[write_path.join('**/*')]
-  end
+  def destination_files() = @destination_files ||= write_path.glob(destination_glob)
 
   private
 
-  # @return [DateTime]
-  def youngest_config_file_updated_at
-    file_mtimes(config_files).max
+  def outdated
+    return if source_files.empty? || destination_files.empty? || oldest_destination > newest_source
+
+    errors.add(:stale_files, "#{newest_source} > #{oldest_destination}")
   end
 
-  # @return [DateTime]
-  def oldest_manifest_file_generated_at
-    file_mtimes(manifest_files).min
+  def no_destination_files
+    errors.add(:no_files_found, write_path.to_s) if source_files.any? && destination_files.empty?
   end
 
-  def file_mtimes(list)
-    list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }
-  end
+  def read_paths() = [source_paths].flatten.compact.map{ |p| Pathname.new(p) }
+
+  def write_path() = Pathname.new(destination_path)
+
+  # @return [DateTime]
+  def newest_source() = @newest_source ||= file_mtimes(source_files).max
+
+  # @return [DateTime]
+  def oldest_destination() = @oldest_destination ||= file_mtimes(destination_files).min
+
+  def file_mtimes(list) = list.reject { |f| File.symlink?(f) }.map { |f| File.mtime(f) }
 end

@@ -7,11 +7,12 @@ module CnfsCli
     def after_initialize
       # Set defaults
       self.dev = false
-      self.dry_run = false
+      # self.dry_run = false
       self.logging = :warn
       self.quiet = false
 
       # Default paths
+      paths.component = 'component'
       paths.data = 'data'
       paths.tmp = 'tmp'
       paths.src = 'src'
@@ -32,18 +33,20 @@ module CnfsCli
         { desc: opt[:desc], aliases: opt[:aliases], type: :string }
       end
 
-      # Disable loading of component if not in a valid project, i.e. cnfs new is being invoked
+      # Disable loading of component if not in a valid project, e.g. cnfs new is being invoked
       self.load_nodes = false unless project
     end
-
-    # If not in a valid project, i.e. cnfs new, then return the base path otherwise add the name to the path
-    def xdg_name() = project ? "#{xdg_base}/#{project_id}" : xdg_base
 
     # The file that is present in the root of the project that indicates it is a cnfs-cli project
     def root_file_id() = '.cnfs'
 
     # The prefix of ENV vars specified in config/application.rb
     def env_base() = 'CNFS_'
+
+    # If not in a valid project, i.e. cnfs new, then return the base path otherwise add the name to the path
+    def xdg_name() = @xdg_name ||= (project ? "#{xdg_base}/projects/#{project_id}" : xdg_base)
+
+    def cli_cache_home() = xdg.cache_home.join(xdg_base)
 
     def xdg_base() = 'cnfs-cli'
   end

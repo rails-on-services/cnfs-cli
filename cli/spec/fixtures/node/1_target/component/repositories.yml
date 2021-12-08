@@ -1,7 +1,10 @@
 ---
-jamstack:
+# jamstack:
+  # config:
+    # url: git@github.com:maxcole/kpop.git
+cnfs-components:
   config:
-    url: git@github.com:maxcole/kpop.git
-cnfs-projects:
+    url: git@github.com:rails-on-services/cnfs-components.git
+ros:
   config:
-    url: git@github.com:rails-on-services/cnfs-projects.git
+    url: git@github.com:rails-on-services/ros.git

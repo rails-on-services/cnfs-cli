@@ -50,8 +50,8 @@ class Node::Asset < Node
     parent.node_name
   end
 
-  # If parent is an AssetDir then just write the yaml to realpath
   # If parent is an AssetGroup then delegate writing to the parent
+  # If parent is an AssetDir then just write the yaml to realpath
   def write_yaml
     if parent.type.eql?('Node::AssetGroup')
       parent.write_yaml(owner)

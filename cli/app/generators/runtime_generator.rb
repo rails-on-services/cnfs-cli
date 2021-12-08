@@ -9,6 +9,7 @@ class RuntimeGenerator < ApplicationGenerator
     context.services.select { |service| service.environment.any? }.each do |service|
       file_name = path.join("#{service.name}.env")
       binding.pry
+      # TODO: remove Config::Options
       environment = Config::Options.new.merge!(service.environment)
       binding.pry
       generated_files << template('templates/env.erb', file_name, env: environment)
@@ -24,7 +25,7 @@ class RuntimeGenerator < ApplicationGenerator
     end
   rescue StandardError => e
     Cnfs.logger.warn("Error generating template for #{name}: #{e.message}")
-    if Cnfs.config.dev
+    if CnfsCli.config.dev
       msg = "#{e}\n#{e.backtrace}"
       # binding.pry
     end
@@ -33,6 +34,15 @@ class RuntimeGenerator < ApplicationGenerator
   end
 
   private
+
+  # All content comes from Repository and Project Components so source paths reflect that
+  # TODO: This probably needs to be further filtered based on the blueprint in the case of Provisoners
+  # and by Resource? in the case of Runtimes
+  # In fact this may need to be refactored from a global CnfsCli registry to a component hierarchy based
+  def source_paths
+    @source_paths ||= CnfsCli.loaders.values.map { |path| path.join('generators', generator_type) }.select(&:exist?)
+  end
+
 
   def template_file(service)
     [service.template, service.name, service.class.name.deconstantize, 'service'].each do |template_name|
@@ -71,17 +81,7 @@ class RuntimeGenerator < ApplicationGenerator
 
   def set_env_files
     files = []
-    files << "./#{service.name}.env" if File.exist?(path.join("#{service.name}.env"))
+    files.append("./#{service.name}.env") if path.join("#{service.name}.env").exist?
     files
-  end
-
-  # Used by all runtime templates; Returns a path relative from the write path to the project root
-  # Example: relative_path(:manifests) # => #<Pathname:../../../..>
-  def relative_path(path_type = :manifests)
-    context.path(from: path_type)
-  end
-
-  def path(to: :manifests)
-    context.path(to: to)
   end
 end

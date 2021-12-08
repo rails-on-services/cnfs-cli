@@ -4,11 +4,16 @@ class Provisioner < ApplicationRecord
   include Concerns::Asset
   include Concerns::Operator
 
-  has_many :blueprint_resources
+  # Resources assigned by the context
+  attr_accessor :plans, :context_plans
 
-  attr_accessor :resources, :context_resources
+  # Physical join table managed by the Provisioner
+  has_many :provisioner_resources
 
-  store :config, accessors: %i[version], coder: YAML
+  # This Operator manages target_type
+  def target_type() = :plans
+
+  # store :config, accessors: %i[version], coder: YAML
 
   # This may be about TF modules rather than binaries like tf, kubectl, etc
   # TODO: Figure out how to manage these
@@ -26,13 +31,4 @@ class Provisioner < ApplicationRecord
   #   end
   #   `tar xzf "data.tar.gz"`
   # end
-
-  class << self
-    def add_columns(t)
-      # TODO: If this is for TF modules then maybe keep it, otherwise it goes to Platform
-      t.string :dependencies
-      # TODO: If providers is necessary than convert it into belongs_to_names
-      t.string :providers
-    end
-  end
 end

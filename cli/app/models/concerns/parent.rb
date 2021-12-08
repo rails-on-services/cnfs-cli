@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Common Functionallity for Component and Asset
 module Concerns
   module Parent
     extend ActiveSupport::Concern
@@ -24,21 +25,13 @@ module Concerns
     def to_context() = as_interpolated
 
     # Assets whose owner is Context are ephemeral so don't create/update a node
-    def create_node
-      create_parent(type: parent_type, owner: self) # if node?
-    end
+    def create_node() = create_parent(type: parent_type, owner: self) # if node?
 
-    def update_node
-      parent.update(owner: self) # if node?
-    end
+    def update_node() = parent.update(owner: self) # if node?
 
-    def destroy_node
-      parent.destroy # if node?
-    end
+    def destroy_node() = parent.destroy # if node?
 
-    def parent_type
-      is_a?(Component) ? 'Node::Component' : 'Node::Asset'
-    end
+    def parent_type() = is_a?(Component) ? 'Node::Component' : 'Node::Asset'
 
     # Log message at level warn appending the parent path to the message
     def node_warn(node:, msg: [])
@@ -49,6 +42,22 @@ module Concerns
     # def node?
     #   is_a?(Component) || owner.is_a?(Component)
     # end
+
+    # Convenience methods for cache_* and data_* for clarity in calling code
+    def cache_file_read() = local_file_read(path: cache_file)
+
+    def data_file_read() = local_file_read(path: data_file)
+
+    def local_file_read(path:) = path.exist? ? (YAML.load_file(path) || {}) : {}
+
+    def cache_file_write(**values) = local_file_write(path: cache_file, values: values)
+
+    def data_file_write(**values) = local_file_write(path: data_file, values: values)
+
+    def local_file_write(path:, values:)
+      path.parent.mkpath
+      File.open(path, 'w') { |f| f.write(values.to_yaml) }
+    end
 
     class_methods do
       def node_callbacks

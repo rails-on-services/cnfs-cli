@@ -54,8 +54,8 @@ module Main
     end
 
     def generator
-      gen = "#{method.to_s.classify}Generator".constantize.new([name], context.options)
-      gen.destination_root = name # "#{Dir.pwd}/#{name}"
+      gen = "New::#{method.to_s.classify}Generator".constantize.new([context, name], context.options)
+      gen.destination_root = name
       gen
     end
   end

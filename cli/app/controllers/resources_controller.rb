@@ -3,55 +3,60 @@
 class ResourcesController < Thor
   include CommandHelper
 
-  cnfs_class_options :quiet, :dry_run, :logging, :init
-  cnfs_class_options CnfsCli.config.components.keys
+  add_cnfs_option :generate, desc: 'Force generate manifest files ',
+                             aliases: '-g', type: :boolean
 
-  desc 'add RESOURCE', 'Add resource by name from a charts repo or interactively to a component (current context)'
-  def add(resource)
-    execute(resource: resource, controller: :crud, method: :create)
+  cnfs_class_options :dry_run, :init, :quiet, :generate
+  cnfs_class_options CnfsCli.config.segments.keys
+
+  desc 'add REPO COMPONENT RESOURCE', 'Add a resource configuration from a reposistory component to the specified segment'
+  # TODO: This can be done interactively if the params are nil
+  def add(repository, component, resource)
+    execute(repository: repository, component: component, resource: resource, controller: :crud, method: :add)
   end
 
-  desc 'list', 'Lists services configured in the current context'
+  desc 'create', 'Create a new resource configuration in the specified segment'
+  def create
+    execute(controller: :crud, method: :create)
+  end
+
+  desc 'list', 'List resources from the specified segment'
   map %w[ls] => :list
   def list
-    puts context.resources.pluck(:name).join("\n")
+    execute(controller: :crud, method: :list)
   end
 
-  # desc 'show', 'Show infrastructure details'
-  # def show(type = 'json')
-  #   Dir.chdir(infra.deploy_path) do
-  #     show_json
-  #   end
-  # end
+  desc 'show', 'Display resource details from the specified segment'
+  def show(type = 'json')
+    execute(type: type, controller: :crud, method: :show)
+  end
 
-  desc 'remove RESOURCE', 'Remove resource from the specified component'
+  desc 'remove RESOURCE', 'Remove a resource configuration from the specified segment'
   def remove(resource)
-    execute(resource: resource, controller: :crud, method: :delete)
+    execute(resource: resource, controller: :crud, method: :destroy)
   end
 
-  # Builder commands
-  desc 'create', 'Create infrastructure'
-  option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
-                 type: :boolean
-  option :init, desc: 'Force to download latest modules from TF registry',
-                type: :boolean
-  # TODO: Add 'auto' option which means don't confirm TF build, just do it
-  def create(*resources)
-    execute(resources: resources, controller: :provisioner, method: :create)
-  end
-
-  desc 'destroy', 'Destroy infrastructure'
+  # TODO: These options are part of the Terrform controller concern
+  # option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',
+  #                type: :boolean
+  # option :init, desc: 'Force to download latest modules from TF registry',
+  #               type: :boolean
   cnfs_options :force
-  def destroy(resources)
-    validate_destroy("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{options.namespace} " \
-                     "namespace in #{options.environment}\nDestroy cannot be undone!\n\nAre you sure?")
-    execute(resources: resources, controller: :provisioner, method: :destroy)
+  desc 'deploy', 'Deploy all resources for the specified segment'
+  def deploy
+    execute(controller: :provisioner, method: :create)
   end
 
-  # Runtime commands
-  desc 'connect RESOURCE', 'Connext to a running resource'
-  # NOTE: shell is a reserved word in Thor so it can't be used
-  def connect(_resource)
-    execute(ip: 'admin@18.136.156.168', controller: :runtime, method: :connect)
+  desc 'connect RESOURCE', 'Connect to a resource in the specified segment'
+  def connect(resource)
+    execute(resource: resource, controller: :provisioner, method: :connect)
+  end
+
+  cnfs_options :force
+  desc 'destroy', 'Destroy all resources for the specified segment'
+  def destroy
+    validate_destroy("\n#{'WARNING!!!  ' * 5}\nAbout to *permanently destroy* #{context.component.name} " \
+                     "in #{context.component.owner&.name}\nDestroy cannot be undone!\n\nAre you sure?")
+    execute(controller: :provisioner, method: :destroy)
   end
 end

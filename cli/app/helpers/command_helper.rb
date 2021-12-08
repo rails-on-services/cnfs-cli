@@ -16,12 +16,14 @@ module CommandHelper
       end
     end
 
-    add_cnfs_option :tags,              desc: 'Filter by tags',
-                                        aliases: '--tags', type: :array
-    add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
-                                        aliases: '--ff', type: :boolean
+    add_cnfs_option :clean,             desc: 'Clean component cache',
+                                        type: :boolean
     add_cnfs_option :init,              desc: 'Initialize the project, e.g. download repositories and dependencies',
                                         type: :boolean
+    add_cnfs_option :fail_fast,         desc: 'Skip any remaining commands after a command fails',
+                                        aliases: '--ff', type: :boolean
+    add_cnfs_option :tags,              desc: 'Filter by tags',
+                                        aliases: '--tags', type: :array
 
     # Load modules to add options, actions and sub-commands to existing command structure
     Cnfs.modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }

@@ -3,7 +3,18 @@
 module Cnfs
   class DataStore
     class << self
+      # This class accessor is used in #create_database_tables
       attr_accessor :model_names
+
+      # Use this method to dump the latest version of the schema to a file
+      # Gems can use this to create a schema that used with NullDB to emulate models without having the actual classes
+      # or underlying database prsent
+      def schema_dump(file_name = nil)
+        schema = ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, StringIO.new).string
+        return schema unless file_name
+
+        File.open(file_name, 'w') { |f| f.puts(schema) }
+      end
     end
 
     def model_names
@@ -37,16 +48,19 @@ module Cnfs
     private
 
     def create_database_tables
+      ActiveRecord::Migration.verbose = log_migrations?
       Cnfs::DataStore.model_names = model_names
-      Cnfs.silence_output do
-        ActiveRecord::Schema.define do |s|
-          Cnfs::DataStore.model_names.each do |model_name|
-            model = model_name.classify.constantize
-            model.create_table(s)
-            model.reset_column_information
-          end
+      ActiveRecord::Schema.define do |s|
+        Cnfs::DataStore.model_names.each do |model_name|
+          model = model_name.classify.constantize
+          model.create_table(s)
+          model.reset_column_information
         end
       end
+    end
+
+    def log_migrations?
+      Cnfs.logger.compare_levels(Cnfs.logger.instance_variable_get('@config').level, :debug).eql?(:eq)
     end
   end
 end

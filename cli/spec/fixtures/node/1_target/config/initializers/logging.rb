@@ -13,6 +13,12 @@ Cnfs.logger = TTY::Logger.new do |config|
   config.metadata = [:date, :time]
 end
 
+require 'ruby-terraform'
+
+# RubyTerraform.configure do |config|
+#   config.logger = Cnfs.logger
+# end
+
 require 'tty-logger-raven'
 
 # TTY::Logger.new do |c|

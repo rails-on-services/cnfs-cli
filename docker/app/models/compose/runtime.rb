@@ -99,8 +99,8 @@ class Compose::Runtime < Runtime
     end
   end
 
-  # before_execute :generate, :write_env, :query_services
-  before_execute :hello
+  before_execute :generate, :write_env, :query_services
+  # before_execute :hello
 
   def hello
     puts 'hello'

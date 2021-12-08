@@ -2,68 +2,39 @@
 
 # OS methods
 class Platform
-  include ActiveModel::Model
   include ActiveModel::Validations
 
-  validate :supported_platform?
+  validate :supported_platform
+
+  def supported_platform
+    errors.add(:platform, 'not supported') if os.eql?('unknown')
+  end
+
+  def to_hash() = @to_hash ||= JSON.parse(as_hash.to_json)
+
+  def as_hash() = { arch: arch, os: os }.merge(gid)
+
+  def arch
+    case config['host_cpu']
+    when 'x86_64'
+      'amd64'
+    else
+      config['host_cpu']
+    end
+  end
 
   def gid
-    ext_info = OpenStruct.new
-    if platform.linux? && Etc.getlogin
+    ext_info = {}
+    if os.eql?('linux') && Etc.getlogin
       shell_info = Etc.getpwnam(Etc.getlogin)
-      ext_info.puid = shell_info.uid
-      ext_info.pgid = shell_info.gid
+      ext_info[:puid] = shell_info.uid
+      ext_info[:pgid] = shell_info.gid
     end
     ext_info
   end
 
-  def capabilities
-    @capabilities ||= set_capabilities
-  end
-
-    # def tool_check
-    #   missing_tools = required_tools - Cnfs.capabilities
-    #   raise Cnfs::Error, "Missing #{missing_tools}" if missing_tools.any?
-    #
-    #   true
-    # end
-
-    # def required_tools
-    #   []
-    # end
-
-  # rubocop:disable Metrics/MethodLength
-  def set_capabilities
-    cmd = TTY::Command.new(printer: :null)
-    installed_tools = []
-    missing_tools = []
-    tools.each do |tool|
-      if cmd.run!("which #{tool}").success?
-        installed_tools.append(tool)
-      else
-        missing_tools.append(tool)
-      end
-    end
-    Cnfs.logger.warn "Missing dependency tools: #{missing_tools.join(', ')}" if missing_tools.any?
-    installed_tools
-  end
-  # rubocop:enable Metrics/MethodLength
-
-  def dependencies
-    Dependency.all
-  end
-
-  def supported_platform?
-    errors.add(:platform, 'not supported') if os.unknown?
-    !os.unknown?
-  end
-
   def os
-    @os ||= ActiveSupport::StringInquirer.new(os_name)
-  end
-
-  def os_name
-    case RbConfig::CONFIG['host_os']
+    case config['host_os']
     when /linux/
       'linux'
     when /darwin/
@@ -72,4 +43,6 @@ class Platform
       'unknown'
     end
   end
+
+  def config() = @config ||= RbConfig::CONFIG
 end

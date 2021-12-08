@@ -3,6 +3,8 @@
 class Docker::Registry < Registry
   store :config, accessors: %i[server username password email], coder: YAML
 
+  attr_encrypted :password
+
   def add_deploy_commands(runtime)
     # return if runtime.kubectl("get secret #{name}") unless runtime.options.force
     runtime.response.add(pty: true, exec: runtime.kubectl("create secret docker-registry #{name} #{docker_string}"))

@@ -5,7 +5,6 @@ require 'active_support/log_subscriber'
 require 'active_support/string_inquirer'
 
 # require 'json_schemer'
-# require 'open3'
 require 'open-uri'
 require 'sqlite3'
 require 'tty-command'

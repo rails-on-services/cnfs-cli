@@ -13,6 +13,8 @@ class Compose::RuntimeGenerator < RuntimeGenerator
 
   private
 
+  def internal_path() = Pathname.new(__dir__)
+
   def templ
     ERB.new('this is an <%= erb_var %>').result(binding)
   end

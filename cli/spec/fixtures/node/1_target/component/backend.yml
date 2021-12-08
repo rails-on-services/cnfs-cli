@@ -2,4 +2,4 @@
 config:
   domain: backend.${parent.config.domain}
   host: host.${config.domain}
-component_name: cnfs-projects/backend
+component_name: cnfs-components/backend

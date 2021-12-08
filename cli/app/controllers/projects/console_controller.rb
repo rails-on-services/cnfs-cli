@@ -14,8 +14,8 @@ module Projects
       end
 
       def model_shortcuts
-        { b: Blueprint, bu: Builder, c: Context, co: Component, con: Configurator, d: Dependency, i: Image, n: Node,
-          p: Project, pr: Provider, pro: Provisioner, r: Resource, re: Repository, reg: Registry, ru: Runtime,
+        { b: Builder, c: Context, co: Component, con: Configurator, d: Dependency, im: Image, n: Node,
+          p: Project, pl: Plan, pr: Provider, pro: Provisioner, r: Resource, re: Repository, reg: Registry, ru: Runtime,
           s: Service, u: User }
       end
     end

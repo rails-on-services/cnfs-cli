@@ -1,27 +1,54 @@
 # frozen_string_literal: true
 
-class Aws::Provider < Provider
-  attr_encrypted :access_key_id, :secret_access_key
-  store :config, accessors: %i[access_key_id secret_access_key account_id region s3 sqs], coder: YAML
+module Aws
+  class Provider < Provider
+    # standard credentials for aws
+    store :config, accessors: %i[account_id access_key_id secret_access_key region]
 
-  def client_config(resource_type)
-    config.slice(:access_key_id, :secret_access_key, :region).merge(config[resource_type] || {})
-  end
+    # configuration values to add for a specific SDK client
+    store :config, accessors: %i[s3 sqs]
 
-  # NOTE: For terraform
-  def command_env
-    { 'AWS_DEFAULT_REGION' => region }
-  end
+    attr_encrypted :access_key_id, :secret_access_key
 
-  def regions
-    begin
-      regions = client.describe_regions[0].map { |r| r.region_name }.sort
-    rescue Aws::EC2::Errors::AuthFailure => e
-      raise Cnfs::Error, e.message
+    def client_config(resource_type)
+      config.slice(:access_key_id, :secret_access_key, :region).merge(config[resource_type] || {})
     end
-  end
 
-  def client
-    @client ||= Aws::Resource::EC2::Instance.client(self)
+    def regions
+      begin
+        client.describe_regions[0].map { |r| r.region_name }.sort
+      rescue EC2::Errors::AuthFailure => e
+        raise Cnfs::Error, e.message
+      end
+    end
+
+    def client() = @client ||= Resource::EC2::Instance.client(self)
+
+    # Terraform Provisioner
+    store :config, accessors: %i[source version]
+
+    def source() = super || 'hashicorp/aws'
+
+    def as_terraform
+      {
+        terraform: {
+          required_providers: {
+            aws: {
+              source: source,
+              version: version
+            }.compact
+          }
+        },
+        provider: {
+          aws: {
+            region: region
+          }
+        }
+      }
+    end
+
+    # Pulumi Provisioner
+    def as_pulumi
+    end
   end
 end

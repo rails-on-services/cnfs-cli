@@ -61,13 +61,13 @@ module CnfsCommandHelper
 
   included do |_base|
     add_cnfs_option :dry_run,           desc: 'Do not execute commands',
-                                        aliases: '-d', type: :boolean, default: Cnfs.config.dry_run
+                                        aliases: '-d', type: :boolean
     add_cnfs_option :force,             desc: 'Do not prompt for confirmation',
                                         aliases: '-f', type: :boolean
     add_cnfs_option :logging,           desc: 'Display logging information with degree of verbosity',
-                                        aliases: '-l', type: :string, default: Cnfs.config.logging
+                                        aliases: '-l', type: :string
     add_cnfs_option :quiet,             desc: 'Do not output execute commands',
-                                        aliases: '-q', type: :boolean, default: Cnfs.config.quiet
+                                        aliases: '-q', type: :boolean
   end
 
   private

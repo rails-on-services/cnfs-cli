@@ -1,0 +1,16 @@
+---
+version: '<%= version %>'
+services:
+  <%= service.name %>:
+    labels:
+      <%= labels %><% if service.image[:name] %>
+    image: <%= service.image[:name] %><% end %><% if env_files.size.positive? %>
+    env_file:
+      - <%= env_files %><% end %><% if service.path %>
+    build:
+      context: "<%= relative_path.join(service.path) %>"<% if mount %>
+    volumes:
+      - type: bind
+        source: "<%= relative_path.join(service.path) %>"
+        target: "/mnt/<%= service.name %>"
+        consistency: consistent<% end %><% end %>

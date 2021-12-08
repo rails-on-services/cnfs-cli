@@ -1,12 +1,16 @@
 ---
-aws_east:
+aws_apse_1:
+  config:
+    region: ap-southeast-1
+  type: Aws::Provider
+aws_east_1:
   config:
     region: us-east-1
   type: Aws::Provider
-aws_west:
+kubectl:
   config:
-    region: us-west-1
-  type: Aws::Provider
+    name: terraform-provider-kubectl
+    url: https://github.com/gavinbunney/terraform-provider-kubectl/releases/download/v1.0.2/terraform-provider-kubectl-${platform}-amd64
 localstack:
   config:
     access_key_id: !binary |-
@@ -21,3 +25,13 @@ localstack:
     sqs:
       endpoint: http://localstack:4576
   type: Aws::Provider
+rest:
+  config:
+    platform: linux
+    version: 1.16.0
+    arch: amd64
+    name: terraform-provider-restapi_v${config.version}
+    url: https://github.com/Mastercard/terraform-provider-restapi/releases/download/v${config.version}/
+      terraform-provider-restapi_v${config.version}-${config.platform}-${config.arch}.zip
+  tags: {}
+  type: Rest::Provider

@@ -73,14 +73,6 @@ module Cnfs
       File.open("#{Dir.home}/cnfs-cli-prof.html", 'w+') { |file| RubyProf::GraphHtmlPrinter.new(results).print(file) }
     end
 
-    # Cnfs.logger.compare_levels(:info, :debug) => :gt
-    def silence_output(unless_logging_at = :debug)
-      rs = $stdout
-      $stdout = StringIO.new if logger.compare_levels(config.logging, unless_logging_at).eql?(:gt)
-      yield
-      $stdout = rs
-    end
-
     def cli_mode
       @cli_mode ||= set_cli_mode
     end

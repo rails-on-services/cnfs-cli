@@ -1,6 +1,16 @@
 # frozen_string_literal: true
 
+# require 'bundler/setup'
+require 'pry'
+require 'pry-byebug'
+require 'active_support/concern'
+require 'active_support/core_ext/hash'
+
 require 'cnfs_cli/terraform'
+
+require 'nulldb_rspec'
+ActiveRecord::Base.establish_connection(adapter: :nulldb, schema: 'schema.rb')
+NullDB.configure { |config| config.project_root = 'spec/fixtures' }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

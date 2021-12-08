@@ -2,13 +2,9 @@
 
 class Aws::Resource < Resource
 
-  def client
-    @client ||= self.class.client(provider)
-  end
+  def client() = @client ||= self.class.client(provider)
 
-  def valid_types
-    super.merge(provider: 'Aws::Provider')
-  end
+  def valid_types() = super.merge(provider: 'Aws::Provider')
 
   class << self
     def client(provider)
@@ -22,16 +18,10 @@ class Aws::Resource < Resource
       raise Cnfs::Error, "AWS SDK not found for: #{service_name}"
     end
 
-    def client_config(provider)
-      provider.client_config(service_name)
-    end
+    def client_config(provider) = provider.client_config(service_name)
 
-    def service_name
-      service_class_name.underscore
-    end
+    def service_name() = service_class_name.underscore
 
-    def service_class_name
-      name.split('::')[2]
-    end
+    def service_class_name() = name.split('::')[2]
   end
 end

@@ -3,6 +3,7 @@
 require 'ruby-terraform'
 
 require 'cnfs_cli/terraform/version'
+require_relative '../ext/hash'
 
 module CnfsCli
   module Terraform

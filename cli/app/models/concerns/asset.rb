@@ -62,6 +62,12 @@ module Concerns
       end.join(' ')
     end
 
+    def cache_file() = @cache_file ||= owner.cache_path.join(asset_type, "#{name}.yml")
+
+    def data_file() = @data_file ||= owner.data_path.join(asset_type, "#{name}.yml")
+
+    def asset_type() = self.class.name.demodulize.underscore.pluralize
+
     class_methods do
       def with_node_callbacks_diabled
         node_callbacks.each { |callback| skip_callback(*callback) }

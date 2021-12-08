@@ -10,7 +10,7 @@ segment_type: target
 default:
   provisioner_name: terraform
   # repository_name: jamstack
-  repository_name: cnfs-backend
+  # repository_name: cnfs-backend
   resource_name: instance1
   runtime_name: compose
   segment_name: backend

@@ -23,7 +23,7 @@ class Component < ApplicationRecord
 
   store :default, coder: YAML,
     accessors: %i[blueprint_name provider_name provisioner_name repository_name resource_name runtime_name segment_name]
-   
+
   # Return the default dir_path of the parent's path + this component's name unless a component_name is configured
   # In which case parse component_name to search the component hierarchy for the specified repository and blueprint
   def dir_path
@@ -37,35 +37,42 @@ class Component < ApplicationRecord
     parent.parent.rootpath.join(parent.node_name).to_s
   end
 
-  def key
-    @key ||= local_file_values['key'] || owner&.key
-  end
+  # Key search priorities:
+  # 1. ENV var
+  # 2. Project's data_path/keys.yml
+  # 3. Owner's key
+  def key() = @key ||= ENV[key_name_env] || local_file_read(path: keys_file).fetch(key_name, owner&.key)
+
+  # 1_target/backend => 1_target_backend
+  def key_name() = @key_name ||= "#{owner.key_name}_#{name}"
+
+  # 1_target/backend => CNFS_KEY_BACKEND
+  def key_name_env() = @key_name_env ||= "#{owner.key_name_env}_#{name.upcase}"
+
+  def keys_file() = @keys_file ||= CnfsCli.config.data_home.join('keys.yml')
 
   def generate_key
-    local_file_values.merge!('key' => Lockbox.generate_key)
-    write_local_file
+    key_file_values = local_file_read(path: keys_file).merge(new_key)
+    local_file_write(path: keys_file, values: key_file_values)
   end
 
-  def write_local_file
-    local_path.parent.mkpath unless local_path.parent.exist?
-    File.open(local_file, 'w') { |f| f.write(local_file_values.to_yaml) }
-  end
+  def new_key() = { key_name => Lockbox.generate_key }
 
-  def local_file_values
-    @local_file_values ||= local_file.exist? ? (YAML.load_file(local_file) || {}) : {}
-  end
+  # Read/Write 'runtime' component data to this file
+  def cache_file() = @cache_file ||= owner.cache_path.join("#{name}.yml")
 
-  def local_file
-    @local_file ||= local_path.parent.join("#{attrs.last}.yml")
-  end
+  # This component's local file to provide local overrides to project values, e.g. change default runtime_name
+  # The user must maintain these files locally
+  # These values are merged for runtime so they are not saved into the project's files
+  def data_file() = @data_file ||= owner.data_path.join("#{name}.yml")
 
-  def local_path
-    @local_path ||= CnfsCli.config.data_home.join(*attrs)
-  end
+  # Operators and Context's Assets can read/write their 'runtime' data into this directory
+  def cache_path() = @cache_path ||= owner.cache_path.join(name)
 
-  def attrs
-    @attrs ||= (owner&.attrs || []).dup.append(name)
-  end
+  # Child Components and Assets can read their local overrides into this directory
+  def data_path() = @data_path ||= owner.data_path.join(name)
+
+  def attrs() = @attrs ||= owner.attrs.dup.append(name)
 
   def tree_name
     bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
@@ -77,9 +84,7 @@ class Component < ApplicationRecord
   # Display components as a TreeView
   def to_tree() = puts('', as_tree.render)
 
-  def as_tree
-    TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)
-  end
+  def as_tree() = TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)
 
   def tree
     components.each_with_object([]) do |comp, ary|

@@ -50,11 +50,12 @@ module CnfsCli
       t_hash = Cnfs::Timer.append(title: 'Application run time', start: Time.now).last
 
       require_relative 'cnfs_cli/config'
-      config(path: Pathname.new(path), load_nodes: load_nodes)
+      config(path: path, load_nodes: load_nodes)
 
       Dir.chdir(config.root) do
         require_project_config_files
         setup
+        register_repository_components
 
         # next line needs deps to be loaded to use AS.singularize
         load_root_node if config.load_nodes # && options.no_cache
@@ -63,6 +64,13 @@ module CnfsCli
       t_hash[:end] = Time.now
     end
 
+    # When called for the first time the path can be overridden
+    # All subsequent calls will return the value set on the first call
+    def config(**options) = @config ||= CnfsCli::Config.new(**options)
+
+    # Yield the configuration object for project configuration in config/application.rb
+    def configuration() = yield(config)
+
     def require_project_config_files
       require_relative application_path if application_path.exist?
       config.after_user_config
@@ -70,23 +78,12 @@ module CnfsCli
       Cnfs.config = config
     end
 
-    # Yield the configuration object for project configuration in config/application.rb
-    def configuration(&block)
-      config.yield_to_user(&block)
-    end
-
-    # When called for the first time the path can be overridden
-    # All subsequent calls will return the value set on the first call
-    def config(**options)
-      @config ||= CnfsCli::Config.new(**options)
-    end
-
     def application_path() = config_path.join('application.rb')
 
     def initializers_path() = config_path.join('initializers')
 
-    # The config path is the one path that cannot be set by the user
-    # It is always <project root path>/config
+    # config_path is the one path that cannot be set by the user
+    # config_path is always <project_root_path>/config
     def config_path() = config.root.join('config')
 
     # Process the configuration
@@ -125,7 +122,8 @@ module CnfsCli
         klass.after_node_load if klass.respond_to?(:after_node_load)
       end
     rescue ActiveRecord::SubclassNotFound => e
-      Cnfs.logger.warn('CnfsCli:', e.message.split('.').first.to_s)
+      binding.pry
+      Cnfs.logger.fatal('CnfsCli:', e.message.split('.').first.to_s)
       raise Cnfs::Error, ''
     end
 
@@ -136,33 +134,25 @@ module CnfsCli
     end
 
     # Return the root of the gem
-    def gem_root
-      @gem_root ||= Pathname.new(__dir__).join('..')
-    end
+    def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
 
     # The model class list for which tables will be created in the database
-    def model_names
-      (asset_names + component_names + support_names).map(&:singularize)
-    end
+    def model_names() = (asset_names + component_names + support_names).map(&:singularize).sort
 
     def asset_names
       # TODO: assets blueprints environments registries
       # TODO: Fix: Raises an error if this is memoized
       # @asset_names ||= (%w[dependencies images providers resources services users] + operator_names).sort
-      (%w[dependencies blueprints images providers resources registries services users] + operator_names).sort
+      (%w[dependencies blueprints images plans providers resources registries services users] + operator_names).sort
     end
 
-    def operator_names
-      %w[builders configurators provisioners repositories runtimes]
-    end
+    def operator_names() = %w[builders configurators provisioners repositories runtimes]
 
-    def component_names
-      %w[component project]
-    end
+    def component_names() = %w[component project]
 
-    def support_names
-      %w[context context_component node runtime_service provisioner_resource]
-    end
+    def support_names() = %w[context context_component node runtime_service provisioner_resource]
+
+    def platform() = @platform ||= Platform.new
 
     # TODO: this needs to be refactored
     def reload(path: nil, load_nodes: true)
@@ -177,6 +167,15 @@ module CnfsCli
       # set_config_options
       Cnfs.loader.reload
       Cnfs.data_store.reload
+    end
+
+    def register_repository_components
+      return unless CnfsCli.config.paths.src.exist?
+
+      CnfsCli.config.paths.src.children.select(&:directory?).each do |repo_path|
+        repo = Repository.new(name: repo_path.basename.to_s)
+        repo.register_components
+      end
     end
   end
 end

@@ -23,7 +23,7 @@ class ServicesController < Thor
 
   # Activate common options
   cnfs_class_options :dry_run, :logging, :generate, :quiet
-  cnfs_class_options CnfsCli.config.components.keys
+  cnfs_class_options CnfsCli.config.segments.keys
 
   register Services::CreateController, 'create', 'create SUBCOMMAND [options]',
            'Create a new service in the default (or specified) repository'

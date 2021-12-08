@@ -5,7 +5,7 @@ class ProjectsController < Thor
 
   # Activate common options
   cnfs_class_options :dry_run, :init
-  cnfs_class_options CnfsCli.config.components.keys
+  cnfs_class_options CnfsCli.config.segments.keys
 
   # register Projects::SetController, 'set', 'set [SUBCOMMAND]', 'Set a project configuration value'
   # register Projects::AddController, 'add', 'add [SUBCOMMAND] [options]', 'Add a package to the project'

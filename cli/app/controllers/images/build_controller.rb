@@ -2,13 +2,14 @@
 
 module Images
   class BuildController
-    include ServicesHelper
-    attr_accessor :services
+    include ExecHelper
 
-    def execute
-      # TODO: each_runtime
-      result = command.run!(*project.runtime.build(services))
-      raise Cnfs::Error, result.err if result.failure?
-    end
+    def build() = context.image_builders.each { |builder| builder.execute(:build) }
+
+    def push() = context.image_builders.each { |builder| builder.execute(:push) }
+
+    def pull() = context.image_builders.each { |builder| builder.execute(:pull) }
+
+    def test() = context.image_builders.each { |builder| builder.execute(:test) }
   end
 end

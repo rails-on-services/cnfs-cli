@@ -1,34 +1,70 @@
 # frozen_string_literal: true
 
 class Terraform::ProvisionerGenerator < ProvisionerGenerator
-  # Write all the resources into a main.tf using a single template for the blueprint
-  # Later write stuff to the standing input and output files
-  def hello
-    # generated_files << template("#{blueprint.template}.tf.json.erb",
-    # "#{path}/#{blueprint.template.split('/').last}.tf.json")
-    runtime.context_resources.each do |resource|
-      puts resource.to_hcl
-      binding.pry
+
+  def manifests
+    # cnfs_template('variables.tf')
+    cnfs_template('main.tf')
+    cnfs_template('outputs.tf')
+  end
+
+  def format_and_initialize
+    binding.pry
+    RubyTerraform.format # (chdir: path)
+    provisioner.context_plans.map(&:provider).each do |provider|
+      next unless (url = provider.config[:url])
+
+      # Dir.chdir(path) do
+        # TODO: Here we can download the url to where it needs to go
+        # See Operator
+        Cnfs.logger.info "TODO: Implement download of #{url}"
+      # end
     end
+    RubyTerraform.init # (chdir: path)
+  end
+
+  def cleanup
+    remove_stale_files
   end
 
   private
 
-  def blueprint_to_terraform_json
-    project.environment.blueprints.each do |blueprint|
-      unless blueprint.valid?
-        Cnfs.logger.warn("Invalid blueprint #{blueprint.name}")
-        next
-      end
+  def internal_path() = Pathname.new(__dir__)
 
-      @blueprint = blueprint
-      generated_files << template("#{blueprint.template}.tf.json.erb",
-                                  "#{path}/#{blueprint.template.split('/').last}.tf.json")
-    end
-    remove_stale_files
+  # These values are rendered before the rest of the hash keys
+  def pre_keys
+    %w[source version]
   end
 
   def excluded_files
-    Dir[path.join('terraform-provider*')] + Dir[path.join('terraform.tfstate*')]
+    # Dir[path.join('terraform-provider*')] + Dir[path.join('terraform.tfstate*')]
+    # path.glob('terraform-provider*') + path.glob('terraform.tfstate*')
+    path.glob('.terraform*') + path.glob('terraform.tfstate*')
   end
+
+  def with_captured_stdout
+    original_stdout = $stdout  # capture previous value of $stdout
+    $stdout = StringIO.new     # assign a string buffer to $stdout
+    yield                      # perform the body of the user code
+    $stdout.string             # return the contents of the string buffer
+  ensure
+    $stdout = original_stdout  # restore $stdout to its previous value
+  end
+
+  # # Template helpers
+  # def output(resource, key)
+  #   "output \"#{title(resource.name, key)}\" {
+  #   value = #{module_attr(resource, key)}
+  # }"
+  # end
+
+  # def module_attr(resource, key)
+  #   "module.#{title(resource.name)}.#{key}"
+  # end
+
+  # Convert any '-' in the keys to '_' then join each key with '-' so can use split('-') to parse keys
+  # def title(*vars)
+  #   vars.unshift(name).map { |key| key.gsub('-', '_') }.join('-')
+  # end
+  # End Template helpers
 end

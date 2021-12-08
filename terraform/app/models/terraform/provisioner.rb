@@ -1,93 +1,69 @@
 # frozen_string_literal: true
 
 class Terraform::Provisioner < Provisioner
-  # include Concerns::PlatformRunner
-  # store :providers, accessors: %i[aws gcp azure], coder: YAML
+  # TODO: This is not working
+  # before_execute :hello
 
-  define_model_callbacks :execute
-  # Template helpers
-  def output(resource, key)
-    "output \"#{title(resource.name, key)}\" {
-    value = #{module_attr(resource, key)}
-  }"
+  def around_execute
+    generate
+    yield
   end
 
-  def module_attr(resource, key)
-    "module.#{title(resource.name)}.#{key}"
+  # Provisioner API
+  def create
+    around_execute do
+      if context.options.dry_run
+        binding.pry
+        RubyTerraform.plan(**default_options) #, out: 'network.tfplan')
+      else
+        binding.pry
+        # RubyTerraform.apply(**default_options)
+        # st = ''
+        # state = Dir.chdir(context.manifest.write_path) do
+        state = JSON.parse(File.read('terraform.tfstate')).with_indifferent_access
+          # {}.with_indifferent_access
+        # end
+        context_plans.each do |plan|
+          plan.tf_state = test
+          plan.create_resources #(state)
+        end
+      end
+    end
   end
 
-  # Convert any '-' in the keys to '_' then join each key with '-' so can use split('-') to parse keys
-  def title(*vars)
-    vars.unshift(name).map { |key| key.gsub('-', '_') }.join('-')
-  end
-  # End Template helpers
-
-  def prepare
-    download_dependencies
+  def destroy
+    around_execute do
+      RubyTerraform.destroy(**default_options)
+    end
   end
 
-  def x_generate
-    write_template
+  def output() = @output ||= JSON.parse(raw_output).with_indifferent_access
+
+  def raw_output() = @raw_output ||= RubyTerraform.output(**default_options)
+
+  # TODO: Merge with state
+  def state_output
+    @state_output ||= with_captured_stdout { RubyTerraform.show(chdir: context.manifest.write_path, json: true) }
   end
 
-  def write_template
-    destination_path.mkpath unless destination_path.exist?
-    File.open(destination_path.join('main.tf'), 'w') { |f| f.write(template_contents) }
+  def with_captured_stdout
+    original_stdout = $stdout  # capture previous value of $stdout
+    $stdout = StringIO.new     # assign a string buffer to $stdout
+    yield                      # perform the body of the user code
+    $stdout.string             # return the contents of the string buffer
+  ensure
+    $stdout = original_stdout  # restore $stdout to its previous value
   end
 
-  def destination_path
-    binding.pry
-    project.path(to: :templates).join(blueprint.name)
-  end
+  # def default_options() = { chdir: context.manifest.write_path, auto_approve: true, json: true }
+  def default_options() = { auto_approve: true, json: true }
 
-  def template_contents
-    ERB.new(File.read(template_file), trim_mode: '-').result(blueprint._binding)
-  end
 
-  def template_file
-    blueprint.internal_path.to_s.gsub('/models/', '/views/').delete_suffix('.rb').concat('/terraform/main.tf.erb')
-  end
+  # def template_contents
+  #   ERB.new(File.read(template_file), trim_mode: '-').result(blueprint._binding)
+  # end
 
   # def required_tools
   #   %w[terraform]
   # end
-
-  def hello
-    binding.pry
-    puts 'hi'
-  end
-
-  # TODO: This is not working
-
-  before_execute :hello
-
-  # before_execute :hello
-  # Commands called by ExecControllers
-  def init
-    run_callbacks :execute do
-      binding.pry
-    end
-    # rv('terraform init')
-  end
-
-  def plan
-    rv('terraform plan')
-  end
-
-  # TODO: auto-approve should be a configuration option of the builder
-  def apply
-    rv('terraform apply -auto-approve')
-  end
-
-  def destroy
-    rv('terraform destroy -auto-approve')
-  end
-
-  # command support methods
-  # TODO: this is specific to AWS
-  def command_env
-    # {} # .merge(provider.command_env)
-    # TODO: relook at how the aws creds and details are loaded and referenced
-    { 'AWS_DEFAULT_REGION' => blueprint.provider.region }
-  end
 end

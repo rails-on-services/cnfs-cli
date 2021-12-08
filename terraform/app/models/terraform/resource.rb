@@ -3,7 +3,7 @@
 module Terraform
   module Resource
     extend ActiveSupport::Concern
-
+=begin
     # NOTE: used in TF templates
     def module_name
       resource_name.underscore
@@ -36,5 +36,6 @@ module Terraform
         hash[accessor.to_s] = send(accessor)
       end
     end
+=end
   end
 end

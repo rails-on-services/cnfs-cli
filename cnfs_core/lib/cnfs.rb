@@ -81,7 +81,9 @@ module Cnfs
 
     def add_module(name: 'Cnfs', path: 'Backend')
       # name.split('/').first.gsub('-', '_').classify.safe_constantize
-      @modules[:cnfs_backend] = "#{name}#{path}".constantize
+      # binding.pry
+      # @modules[:cnfs_backend] = "#{name}#{path}".constantize
+      @modules[:cnfs_backend] = "#{name}#{path}".safe_constantize
     end
 
     def modules
@@ -89,7 +91,7 @@ module Cnfs
     end
 
     def modules_for(klass:, mod: self)
-      pms = plugin_modules_for(klass: klass, mod: self)
+      pms = plugin_modules_for(klass: klass, mod: mod)
 
       rms = modules.values.each_with_object([]) do |plugin_name, ary|
         plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
@@ -106,8 +108,10 @@ module Cnfs
       pms + rms
     end
 
+    # klass: Plan, mod: CnfsCli
     def plugin_modules_for(klass:, mod: self)
       mod.plugins.keys.each_with_object([]) do |plugin_name, ary|
+        # terraform/plan
         plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
         next unless (plugin_module = plugin_module_name.safe_constantize)
 

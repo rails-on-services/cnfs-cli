@@ -8,11 +8,12 @@ class Runtime < ApplicationRecord
 
   attr_accessor :services, :context_services
 
-  store :config, accessors: %i[version], coder: YAML
+  store :config, accessors: %i[version]
+
+  # This Operator manages target_type
+  def target_type() = :services
 
   def self.add_columns(t)
     t.references :resource
-    # TODO: Dependencies are handled by PlatformRunner and Platform
-    t.string :dependencies
   end
 end

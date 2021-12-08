@@ -5,40 +5,40 @@ class String
   # For each interpolation, pass a hash to search for the interpolated string
   #
   # ==== Examples
-  # '${project.name}'.cnfs_sub(hash)
-  # '${project.environment.name}'.cnfs_sub(hash)
-  # '${project.name} and ${project.environment.name}'.cnfs_sub(hash)
+  # '${project.name}'.cnfs_sub(search: hash)
+  # '${project.environment.name}'.cnfs_sub(search: hash)
+  # '${project.name} and ${project.environment.name}'.cnfs_sub(search: hash)
   #
   # Assuming that service is a referencable object, return service.name:
-  # '${name}'.cnfs_sub(service)
+  # '${name}'.cnfs_sub(default: service.to_json, parent: another_hash)
   #
-  # reference is an Hash of one or more Hashes upon which lookups are performed
+  # references are one or more named Hashes upon which lookups are performed
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/PerceivedComplexity
   # rubocop:disable Metrics/AbcSize
-  def cnfs_sub(**reference)
-    # Return the original string if no reference were passed in
-    return self if reference.empty?
+  def cnfs_sub(**references)
+    # Return the original string if no references were passed in
+    return self if references.empty?
 
     interpolations = scan(/\${(.*?)}/).flatten
 
     # Return the original string if no interpolations are found in the string
     return self unless interpolations.any?
 
-    reference.transform_keys!(&:to_s)
+    references.transform_keys!(&:to_s)
 
-    reference.each do |key, param|
+    references.each do |key, param|
       next if param.is_a?(Hash)
 
       raise ArgumentError, "argument must by of type Hash (param #{key}, type #{param.class})"
     end
 
-    # If one of the reference keys is 'default' then remove the 'default' key and put its values at the root of the Hash
-    i_reference = if reference.key?('default')
-                    reference.except('default').merge(reference['default'])
+    # If one of the references keys is 'default' then remove the 'default' key and put its values at the root of the Hash
+    i_reference = if references.key?('default')
+                    references.except('default').merge(references['default'])
                   else
-                    reference
+                    references
                   end
 
     return_string = self
@@ -56,7 +56,7 @@ class String
 
     # If the string has changed an interpolation may have been replaced with another interpolation
     # So recursively invoke cnfs_sub on the return_string
-    return_string.cnfs_sub(**reference)
+    return_string.cnfs_sub(**references)
   end
   # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength

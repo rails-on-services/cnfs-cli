@@ -1,0 +1,54 @@
+# main.tf
+
+<%
+providers = provisioner.context_plans.map(&:provider).uniq
+-%>
+terraform {
+  required_providers {
+<%
+
+providers.each do |provider|
+  if provider.respond_to?(:as_terraform) && (as_terraform = provider.as_terraform.with_indifferent_access)
+    next unless (hash = as_terraform[:terraform][:required_providers])
+
+    hash.each do |key, values|
+-%>
+    <%= key %> = {
+      <%= with_captured_stdout { puts values.to_hcl } -%>
+    }
+<%
+    end
+  end
+end
+-%>
+  }
+}
+<%
+providers.each do |provider|
+  if provider.respond_to?(:as_terraform) && (as_terraform = provider.as_terraform.with_indifferent_access)
+    next unless (hash = as_terraform[:provider])
+
+    hash.each do |key, values|
+-%>
+
+provider "<%= key %>" {
+  <%= with_captured_stdout { puts values.to_hcl } -%>
+}
+<%
+    end
+  end
+end
+
+provisioner.context_plans.each do |plan|
+  plan.modules.each do |key, values|
+-%>
+
+module "<%= key %>" {
+<%= with_captured_stdout { puts values.slice(*pre_keys).to_hcl } -%>
+
+<%= with_captured_stdout { puts values.except(*pre_keys).to_hcl } -%>
+}
+<%
+  end
+end
+-%>
