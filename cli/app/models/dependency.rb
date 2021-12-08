@@ -6,27 +6,16 @@ class Dependency < ApplicationRecord
 
   store :config, accessors: %i[source linux mac]
 
-  # rubocop:disable Metrics/MethodLength
-  # TODO: Refactor this to just run tty-which on self which already has the name
-  # so no need to iterate over anything
-  # TODO: Make it CnfsCli.config.platform then when it moves to CnfsCore its no biggie
-  def set_capabilities
-    cmd = TTY::Command.new(printer: :null)
-    installed_tools = []
-    missing_tools = []
-    tools.each do |tool|
-      if cmd.run!("which #{tool}").success?
-        installed_tools.append(tool)
-      else
-        missing_tools.append(tool)
-      end
-    end
-    Cnfs.logger.warn "Missing dependency tools: #{missing_tools.join(', ')}" if missing_tools.any?
-    installed_tools
+  validate :available
+
+  # TODO: Search cache path instead of system directories or an option to do so
+  # TTY::Which.which("ruby", paths: ["/usr/local/bin", "/usr/bin", "/bin"])
+  def available
+    errors.add(:dependency_not_found, name) unless TTY::Which.exist?(name)
   end
 
   def do_download(version)
-    dep = with_other(operator: { 'version' =>  version }, platform: CnfsCli.platform.to_hash)
+    dep = with_other(operator: { 'version' => version }, platform: CnfsCli.platform.to_hash)
     url = Pathname.new(dep['config']['source'])
     file = cache_path.join(version, url.basename)
     return if file.exist?

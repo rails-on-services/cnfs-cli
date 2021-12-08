@@ -43,7 +43,7 @@ class Repository < ApplicationRecord
   # TODO: See about formatting messages using Logger config
   def log_f(level, *messages)
     message = messages.shift
-    m_messages = messages.map{ |message| "\n#{' ' * 10}#{message}"}
+    m_messages = messages.map { |message| "\n#{' ' * 10}#{message}" }
     Cnfs.logger.send(level, message, *m_messages)
   end
 

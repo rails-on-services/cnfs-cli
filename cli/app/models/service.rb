@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
 class Service < ApplicationRecord
   include Concerns::Asset
-
-  # attr_obj :config, :envs
-  # attr_encrypted :state
 
   # TODO: is this the right way to do it?
   attr_accessor :command_queue
@@ -180,4 +176,3 @@ class Service < ApplicationRecord
     # rubocop:enable Metrics/MethodLength
   end
 end
-# rubocop:enable Metrics/ClassLength
