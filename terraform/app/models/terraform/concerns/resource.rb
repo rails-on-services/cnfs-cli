@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module Terraform
-  module Resource
-    extend ActiveSupport::Concern
+  module Concerns
+    module Resource
+      extend ActiveSupport::Concern
 =begin
     # NOTE: used in TF templates
     def module_name
@@ -37,5 +38,6 @@ module Terraform
       end
     end
 =end
+    end
   end
 end

@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 class Service < ApplicationRecord
-  include Concerns::Asset
+  def self.operator() = Runtime
 
-  # TODO: is this the right way to do it?
-  attr_accessor :command_queue
+  include Concerns::Target
 
   belongs_to :resource, optional: true
 

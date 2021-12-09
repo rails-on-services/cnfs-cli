@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-module Blueprints
+module Plans
   class CrudController
-    include ExecHelper
-    include TtyHelper
+    include Concerns::ExecController
 
     # Creates the infrastructure using the selected blueprint
     def apply

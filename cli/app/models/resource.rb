@@ -2,8 +2,7 @@
 
 class Resource < ApplicationRecord
   include Concerns::Asset
-
-  # attr_obj :config, :envs
+  include Concerns::Extendable
 
   belongs_to :plan, optional: true
   belongs_to :provider, optional: true

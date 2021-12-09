@@ -1,7 +1,7 @@
 # main.tf
 
 <%
-providers = provisioner.context_plans.map(&:provider).uniq
+providers = provisioner.plans.map(&:provider).uniq
 -%>
 terraform {
   required_providers {
@@ -39,7 +39,7 @@ provider "<%= key %>" {
   end
 end
 
-provisioner.context_plans.each do |plan|
+provisioner.plans.each do |plan|
   plan.modules.each do |key, values|
 -%>
 

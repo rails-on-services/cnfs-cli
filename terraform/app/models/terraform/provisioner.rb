@@ -1,41 +1,32 @@
 # frozen_string_literal: true
 
 class Terraform::Provisioner < Provisioner
-  # TODO: This is not working
-  # before_execute :hello
-
-  def around_execute
-    generate
-    yield
-  end
-
   # Provisioner API
-  def create
-    around_execute do
-      if context.options.dry_run
-        binding.pry
-        RubyTerraform.plan(**default_options) #, out: 'network.tfplan')
-      else
-        binding.pry
-        # RubyTerraform.apply(**default_options)
-        # st = ''
-        # state = Dir.chdir(context.manifest.write_path) do
-        state = JSON.parse(File.read('terraform.tfstate')).with_indifferent_access
-          # {}.with_indifferent_access
-        # end
-        context_plans.each do |plan|
-          plan.tf_state = test
-          plan.create_resources #(state)
-        end
-      end
+  def deploy
+    if context.options.dry_run
+      binding.pry
+      RubyTerraform.plan(**default_options) #, out: 'network.tfplan')
+    else
+      # RubyTerraform.apply(**default_options)
+      # st = ''
+      # state = Dir.chdir(context.manifest.write_path) do
+      state = JSON.parse(File.read(state_file)).with_indifferent_access if state_file.exist?
+      # {}.with_indifferent_access
+      # end
+      # plans.each do |plan|
+      #   plan.tf_state = test
+      #   plan.create_resources #(state)
+      # end
     end
   end
 
-  def destroy
-    around_execute do
-      RubyTerraform.destroy(**default_options)
-    end
+  def state_file() = path.join('terraform.tfstate')
+
+  def undeploy
+    RubyTerraform.destroy(**default_options)
   end
+
+  private
 
   def output() = @output ||= JSON.parse(raw_output).with_indifferent_access
 
@@ -43,7 +34,7 @@ class Terraform::Provisioner < Provisioner
 
   # TODO: Merge with state
   def state_output
-    @state_output ||= with_captured_stdout { RubyTerraform.show(chdir: context.manifest.write_path, json: true) }
+    @state_output ||= with_captured_stdout { RubyTerraform.show(chdir: path, json: true) }
   end
 
   def with_captured_stdout
@@ -55,8 +46,7 @@ class Terraform::Provisioner < Provisioner
     $stdout = original_stdout  # restore $stdout to its previous value
   end
 
-  # def default_options() = { chdir: context.manifest.write_path, auto_approve: true, json: true }
-  def default_options() = { auto_approve: true, json: true }
+  def default_options() = { chdir: path, auto_approve: true, json: true }
 
 
   # def template_contents

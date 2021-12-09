@@ -2,7 +2,7 @@
 
 module Repositories
   class CreateController < Thor
-    include CommandHelper
+    include Concerns::CommandController
 
     cnfs_class_options :dry_run, :logging, :force
 
@@ -12,10 +12,10 @@ module Repositories
     # This method is available for those classes to create the Repository record and invoke the generator
     def invoke(name, url, mod, opts = {})
       @mod = mod
-      raise CnfsError, 'class not found' unless generator_class
+      raise Cnfs::Error, 'class not found' unless generator_class
 
       repo = mk_repo(name, url)
-      raise CnfsError, 'Cannot create repositor record' unless repo.persisted?
+      raise Cnfs::Error, 'Cannot create repositor record' unless repo.persisted?
 
       CnfsCli.config.paths.src.mkpath
       generator = generator_class.new([context, repo], options.merge(opts))

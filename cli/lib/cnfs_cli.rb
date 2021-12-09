@@ -137,16 +137,20 @@ module CnfsCli
     def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
 
     # The model class list for which tables will be created in the database
-    def model_names() = (asset_names + component_names + support_names).map(&:singularize).sort
+    def model_names() = (asset_names + component_names + support_names).map(&:singularize) # .sort
 
     def asset_names
       # TODO: assets blueprints environments registries
       # TODO: Fix: Raises an error if this is memoized
       # @asset_names ||= (%w[dependencies images providers resources services users] + operator_names).sort
-      (%w[dependencies blueprints images plans providers resources registries services users] + operator_names).sort
+      operator_names + target_names + other_names
     end
 
-    def operator_names() = %w[builders configurators provisioners repositories runtimes]
+    def operator_names() = %w[builders configurators provisioners runtimes]
+
+    def target_names() = %w[blueprints images plans services]
+
+    def other_names() = %w[dependencies providers resources registries repositories users]
 
     def component_names() = %w[component project]
 

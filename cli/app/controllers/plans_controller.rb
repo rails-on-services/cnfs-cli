@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class BlueprintsController < Thor
-  include CommandHelper
+class PlansController < Thor
+  include Concerns::CommandController
 
   # Activate common options
   class_before :initialize_project

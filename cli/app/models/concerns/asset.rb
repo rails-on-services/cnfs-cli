@@ -5,10 +5,6 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      include Concerns::Encryption
-      include Concerns::Interpolation
-
-      # Include Parent last as it includes plugin modules that may depend on methods in the above modules
       include Concerns::Parent
 
       has_one :parent, as: :owner, class_name: 'Node'

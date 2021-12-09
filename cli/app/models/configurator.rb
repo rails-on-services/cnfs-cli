@@ -4,6 +4,9 @@ class Configurator < ApplicationRecord
   include Concerns::Asset
   include Concerns::Operator
 
-  # This Operator manages target_type
-  def target_type() = :playbooks
+  attr_accessor :playbooks
+
+  before_execute :generate
+
+  def target() = :playbooks
 end

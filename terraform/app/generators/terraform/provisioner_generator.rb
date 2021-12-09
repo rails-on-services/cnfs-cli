@@ -9,32 +9,26 @@ class Terraform::ProvisionerGenerator < ProvisionerGenerator
   end
 
   def format_and_initialize
-    binding.pry
-    RubyTerraform.format # (chdir: path)
-    provisioner.context_plans.map(&:provider).each do |provider|
+    # binding.pry
+    RubyTerraform.format
+    provisioner.plans.map(&:provider).each do |provider|
       next unless (url = provider.config[:url])
 
-      # Dir.chdir(path) do
-        # TODO: Here we can download the url to where it needs to go
-        # See Operator
-        Cnfs.logger.info "TODO: Implement download of #{url}"
-      # end
+      # TODO: Here we can download the url to where it needs to go
+      # See Operator
+      Cnfs.logger.info "TODO: Implement download of #{url}"
     end
-    RubyTerraform.init # (chdir: path)
+    RubyTerraform.init
   end
 
-  def cleanup
-    remove_stale_files
-  end
+  def cleanup() = remove_stale_files
 
   private
 
   def internal_path() = Pathname.new(__dir__)
 
   # These values are rendered before the rest of the hash keys
-  def pre_keys
-    %w[source version]
-  end
+  def pre_keys() = %w[source version]
 
   def excluded_files
     # Dir[path.join('terraform-provider*')] + Dir[path.join('terraform.tfstate*')]

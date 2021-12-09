@@ -2,4 +2,5 @@
 
 class Registry < ApplicationRecord
   include Concerns::Asset
+  include Concerns::Extendable
 end

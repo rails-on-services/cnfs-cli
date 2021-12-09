@@ -23,15 +23,13 @@ CnfsCommandSet = Pry::CommandSet.new
 CnfsCommandSet.add_command(Console)
 Pry.config.commands.import CnfsCommandSet
 
-module CnfsCore
+module Cnfs
   class ConsoleController
     def execute
-      run_callbacks :execute do
-        Cnfs.config.is_console = true
-        Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
-        self.class.reload
-        Pry.start(self)
-      end
+      Cnfs.config.is_console = true
+      Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [__prompt])
+      self.class.reload
+      Pry.start(self)
     end
 
     class << self

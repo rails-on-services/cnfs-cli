@@ -3,6 +3,7 @@
 class Dependency < ApplicationRecord
   include Concerns::Asset
   include Concerns::Download
+  include Concerns::Extendable
 
   store :config, accessors: %i[source linux mac]
 
@@ -11,6 +12,8 @@ class Dependency < ApplicationRecord
   # TODO: Search cache path instead of system directories or an option to do so
   # TTY::Which.which("ruby", paths: ["/usr/local/bin", "/usr/bin", "/bin"])
   def available
+    return unless Node.source.eql?(:asset)
+
     errors.add(:dependency_not_found, name) unless TTY::Which.exist?(name)
   end
 
@@ -24,4 +27,21 @@ class Dependency < ApplicationRecord
   end
 
   def cache_path() = CnfsCli.config.cli_cache_home.join('dependencies', name)
+
+  # This may be about TF modules rather than binaries like tf, kubectl, etc
+  # TODO: Figure out how to manage these
+  # def dependencies
+  #   super.map(&:with_indifferent_access)
+  # end
+
+  # TODO: What is this for?
+  # def fetch_data_repo
+  #   Cnfs.logger.info "Fetching data source v#{data.config.data_version}..."
+  #   File.open('data.tar.gz', 'wb') do |fo|
+  #     fo.write open("https://github.com/#{data.config.data_repo}/archive/#{data.config.data_version}.tar.gz",
+  #                   'Authorization' => "token #{data.config.github_token}",
+  #                   'Accept' => 'application/vnd.github.v4.raw').read
+  #   end
+  #   `tar xzf "data.tar.gz"`
+  # end
 end

@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 module Projects
-  class ConsoleController < CnfsCore::ConsoleController
-    include ExecHelper
+  class ConsoleController < Cnfs::ConsoleController
+    include Concerns::ExecController
 
     before_execute :init
-    around_execute :timer
 
     class << self
       def commands
@@ -25,7 +24,7 @@ module Projects
     end
 
     def t
-      cache[:t] ||= Runtime::Infra::Terraform.new
+      cache[:t] ||= Terraform::Provisioner.new
     end
 
     def g

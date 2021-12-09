@@ -9,37 +9,37 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      extend ActiveModel::Callbacks
-
-      include Concerns::Git
-
       attr_accessor :context
 
       store :config, accessors: %i[dependencies]
 
-      # binding.pry
+      # Operators can declare methods to invoke before, after or around that will apply to all implemented commands
       define_model_callbacks :execute
-      table_mod(:operator_columns)
-    end
 
-    class_methods do
-      def operator_columns(t)
-        t.string :cache_path         # override the default cache_path for generated content
-        t.string :cache_path_suffix  # optional suffix path after appending component's namespace to cache_path
-        # t.string :dependencies       # declare array of dependencies to validate
-      end
+      table_mod(:operator_columns)
+
+      include Concerns::Extendable
     end
 
     def execute(method)
-      unless supported_commands.include?(method)
+      unless self.class.commands.include?(method)
         Cnfs.logger.fatal("#{self.class.name} does not support the #{method} command")
         return
       end
-      generate
-      send(method)
+
+      run_callbacks(:execute) do
+        run_target_callbacks(method, :before)
+        send(method)
+        run_target_callbacks(method, :after)
+      end
     end
 
-    def supported_commands() = self.class.instance_methods(false)
+    def run_target_callbacks(method, event)
+      send(target).each do |instance|
+        before_cbs = instance.class.send("_#{method}_callbacks").select { |cb| cb.kind.eql?(event) }.collect(&:filter)
+        before_cbs.each { |cb| instance.send(cb) }
+      end
+    end
 
     # Check if the manifest is valid and run the generator if
     # The manifest is invliad or the user supplied either the --generate or --clean options
@@ -48,6 +48,7 @@ module Concerns
       path.mkpath
       return if manifest.valid? unless context.options.generate
 
+      Cnfs.logger.debug("Processing manifest in #{path}")
       # Rather than set generator.destination_root which requires generators to use in_root blocks
       # just cd into path and then invoke the generator
       Dir.chdir(path) { generator.invoke_all }
@@ -69,9 +70,9 @@ module Concerns
     #
     # @return [Pathname]
     #
-    def path() = @path ||= get_cache_path
+    def path() = @path ||= current_cache_path
 
-    def get_cache_path
+    def current_cache_path
       return owner.cache_path.join(asset_type, name) unless cache_path
 
       Pathname.new(cache_path).join(*owner.attrs).join(cache_path_suffix || '.')
@@ -99,5 +100,30 @@ module Concerns
     # def destroy; end
 
     def queue() = @queue ||= CommandQueue.new
+
+    class_methods do
+      def operator_columns(t)
+        t.string :cache_path         # override the default cache_path for generated content
+        t.string :cache_path_suffix  # optional suffix path after appending component's namespace to cache_path
+        # t.string :dependencies       # declare array of dependencies to validate
+      end
+
+      # Each target class defines its operator class
+      # The target concern defines callbacks by calling operator.target_callbacks
+      #
+      # If the target callbacks should not be defined 1:1 for a specific operator/target pair
+      # the operator class should override this method
+      #
+      # @return [Array]
+      #
+      def target_callbacks() = commands
+
+      # Each operator class overrides this method to list methods which can be invoked by a Controller
+      #
+      # STI subclasses may also override this method to add/remove commands from its superclass
+      #
+      # @return [Array]
+      def commands() = %i[]
+    end
   end
 end

@@ -6,12 +6,8 @@ module Concerns
     extend ActiveSupport::Concern
 
     included do
-      # Plugins that have an appropriately named A/S Concern will be automatically included
-      #
-      # Example:
-      # The terraform plugin adds methods to the Resource model by including A/S Concern in the module
-      # Terraform::Resource declared in file CnfsCli::Terraform.gem_root/app/models/terraform/resource.rb
-      Cnfs.modules_for(mod: CnfsCli, klass: self).each { |mod| include mod }
+      include Concerns::Encryption
+      include Concerns::Interpolation
 
       store :config, coder: YAML
 

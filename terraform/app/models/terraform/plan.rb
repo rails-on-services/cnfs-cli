@@ -1,30 +1,33 @@
 # frozen_string_literal: true
 
-require 'uri'
-
 module Terraform
-  module Plan
-    extend ActiveSupport::Concern
+  class Plan < Plan
+    attr_accessor :wrapper
 
-    included do
-      attr_accessor :wrapper
-      table_mod :terraform_add_columns
+    store :modules, coder: YAML
+    store :variables, coder: YAML
+    store :outputs, coder: YAML
+    store :config, accessors: %i[creates]
 
-      store :modules, coder: YAML
-      store :variables, coder: YAML
-      store :outputs, coder: YAML
-      store :config, accessors: %i[creates]
+    # store :terraform, coder: YAML
+    # store :providers, coder: YAML
+    # serialize :tf_modules, Array
 
-      # store :terraform, coder: YAML
-      # store :providers, coder: YAML
-      # serialize :tf_modules, Array
+    # validate :tf_modules_are_urls
+    before_deploy :before
+    after_deploy :after
 
-      # validate :tf_modules_are_urls
+    def before
+      Cnfs.logger.warn 'before', name
+    end
+
+    def after
+      Cnfs.logger.warn 'after', name
     end
 
     # invoked by an instance of Terraform::Provisioner
     # NOTE: self is the specific plan which tells exactly what it's looking for
-    def create_resources
+    def x_create_resources
       # RubyTerraform.state_list(chdir: path.parent.to_s)
       # RubyTerraform.state_show(chdir: path.parent.to_s, address: item)
 
@@ -106,16 +109,6 @@ module Terraform
       download(url, '/tmp')
       # binding.pry
       # path = '.terraform/modules'
-    end
-
-    class_methods do
-      def terraform_add_columns(t)
-        # t.string :terraform
-        # t.string :providers
-        t.string :variables
-        t.string :modules
-        t.string :outputs
-      end
     end
   end
 end

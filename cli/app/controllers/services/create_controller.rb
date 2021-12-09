@@ -4,7 +4,7 @@
 # To hook into this controller gems need to implement <Namespace>::Services::NewController
 module Services
   class CreateController < Thor
-    include CommandHelper
+    include Concerns::CommandController
 
     # Activate common options
     # NOTE: No environment or namespace; All services are declared at the project scope

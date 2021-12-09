@@ -94,7 +94,7 @@ module Cnfs
       pms = plugin_modules_for(klass: klass, mod: mod)
 
       rms = modules.values.each_with_object([]) do |plugin_name, ary|
-        plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
+        plugin_module_name = "#{plugin_name}/concerns/#{klass}".underscore.classify
         next unless (plugin_module = plugin_module_name.safe_constantize)
 
         # binding.pry if klass.eql?(RepositoriesController)
@@ -111,14 +111,15 @@ module Cnfs
     # klass: Plan, mod: CnfsCli
     def plugin_modules_for(klass:, mod: self)
       mod.plugins.keys.each_with_object([]) do |plugin_name, ary|
-        # terraform/plan
-        plugin_module_name = "#{plugin_name}/#{klass}".underscore.classify
-        next unless (plugin_module = plugin_module_name.safe_constantize)
+        module_name = "#{plugin_name}/concerns/#{klass}".classify
+        # terraform/concerns/plan
+        # binding.pry if plugin_name.eql?(:terraform) && klass.eql?(Plan)
+        next unless (plugin_module = module_name.safe_constantize)
 
         # Ignore anything that is not an A/S::Concern, e.g. A/R STI classes
         next unless plugin_module.is_a?(ActiveSupport::Concern)
 
-        Cnfs.logger.info("Found plugin module #{plugin_module_name} for #{klass} in #{mod}.plugins")
+        Cnfs.logger.info("Found plugin module #{module_name} for #{klass} in #{mod}.plugins")
         ary.append(plugin_module)
       end
     end

@@ -2,7 +2,7 @@
 
 module Main
   class NewController
-    include ExecHelper
+    include Concerns::ExecController
 
     attr_reader :name
 

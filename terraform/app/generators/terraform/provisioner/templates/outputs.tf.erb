@@ -1,6 +1,6 @@
 # outputs.tf
 
-<% provisioner.context_plans.each do |plan| %>
+<% provisioner.plans.each do |plan| %>
 <% plan.outputs.each do |key, values| %>
 output "<%= key %>" {
 <%= with_captured_stdout { puts values.to_hcl } %>

@@ -2,7 +2,7 @@
 
 module Resources
   class CrudController
-    include ResourcesHelper
+    include Concerns::ExecController
 
     def add
       run_callbacks :execute do

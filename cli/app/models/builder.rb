@@ -6,6 +6,9 @@ class Builder < ApplicationRecord
 
   attr_accessor :images
 
-  # This Operator manages target_type
-  def target_type() = :images
+  before_execute :generate
+
+  def target() = :images
+
+  def self.commands() = %i[build push pull test]
 end

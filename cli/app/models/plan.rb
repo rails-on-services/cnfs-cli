@@ -2,7 +2,9 @@
 
 # A Plan defines one or more resources for a Provisioner to create on the target Provider
 class Plan < ApplicationRecord
-  include Concerns::Asset
+  def self.operator() = Provisioner
+
+  include Concerns::Target
 
   belongs_to :provider
   belongs_to :provisioner

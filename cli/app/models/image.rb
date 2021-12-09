@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class Image < ApplicationRecord
-  include Concerns::Asset
+  def self.operator() = ::Builder
+
+  include Concerns::Target
 
   belongs_to :builder
   belongs_to :registry

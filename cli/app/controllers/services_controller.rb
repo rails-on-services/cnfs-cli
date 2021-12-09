@@ -2,7 +2,8 @@
 
 # rubocop:disable Metrics/ClassLength
 class ServicesController < Thor
-  include CommandHelper
+  include Concerns::CommandController
+
   alias super_execute execute
 
   # Define common options for this controller
@@ -12,8 +13,6 @@ class ServicesController < Thor
                              aliases: '-b', type: :boolean
   add_cnfs_option :console,  desc: "Connect to service's console",
                              aliases: '-c', type: :string
-  add_cnfs_option :generate, desc: 'Force generate manifest files ',
-                             aliases: '-g', type: :string
   add_cnfs_option :profiles, desc: 'Service profiles',
                              aliases: '-p', type: :array
   add_cnfs_option :profile,  desc: 'Service profile',
@@ -22,7 +21,7 @@ class ServicesController < Thor
                              aliases: '--sh', type: :string
 
   # Activate common options
-  cnfs_class_options :dry_run, :logging, :generate, :quiet
+  cnfs_class_options :dry_run, :generate, :quiet
   cnfs_class_options CnfsCli.config.segments.keys
 
   register Services::CreateController, 'create', 'create SUBCOMMAND [options]',
@@ -40,7 +39,7 @@ class ServicesController < Thor
   # cnfs_options :repository
   map %w[rm] => :remove
   def remove(_name)
-    return unless options.force || yes?("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?")
+    validate_destroy("\n#{'WARNING!!!  ' * 5}\nThis will destroy the service.\nAre you sure?")
 
     # cs = controller_class(:service).new
     # cs.action = :revoke

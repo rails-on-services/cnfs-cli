@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Images
-  class BuildController
-    include ExecHelper
+  class ExecController
+    include Concerns::ExecController
+
+    around_execute :timer
 
     def build() = context.image_builders.each { |builder| builder.execute(:build) }
 
@@ -10,6 +12,9 @@ module Images
 
     def pull() = context.image_builders.each { |builder| builder.execute(:pull) }
 
-    def test() = context.image_builders.each { |builder| builder.execute(:test) }
+    def test
+      build if context.options.build
+      context.image_builders.each { |builder| builder.execute(:test) }
+    end
   end
 end

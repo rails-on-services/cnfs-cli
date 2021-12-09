@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-module CnfsCore
+module Cnfs
   class VersionController
+    include Cnfs::Concerns::ExecController
+
     attr_accessor :name, :options
 
     def initialize(name, options)

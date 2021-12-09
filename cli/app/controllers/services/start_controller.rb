@@ -2,9 +2,9 @@
 
 module Services
   class StartController
-    include ServicesHelper
+    include ExecHelper
 
-    before_execute :raise_if_runtimes_empty
+    # before_execute :raise_if_runtimes_empty
 
     # TODO: Modify to take tags and profiles
     # TODO: The command should return output
@@ -15,14 +15,17 @@ module Services
     # context.resource_runtime(services: context.services).map(&:start)
     def execute
       run_callbacks :execute do
+          # binding.pry
         context.resource_runtimes.each do |runtime|
-          runtime.start do |queue|
-            binding.pry
-            queue.run
-            queue.map(&:to_a).flatten.each do |msg|
-              Cnfs.logger.warn(msg)
-            end
-          end
+          runtime.execute(:start)
+          # binding.pry
+          # runtime.start do |queue|
+          #   binding.pry
+          #   queue.run
+          #   queue.map(&:to_a).flatten.each do |msg|
+          #     Cnfs.logger.warn(msg)
+          #   end
+          # end
         end
       end
     end

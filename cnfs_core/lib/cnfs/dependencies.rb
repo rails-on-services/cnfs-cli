@@ -11,6 +11,7 @@ require 'tty-command'
 require 'tty-prompt'
 require 'tty-table'
 require 'tty-tree'
+require 'tty-which'
 
 require_relative 'tty/prompt'
 require_relative 'tty/prompt/answers_collector'

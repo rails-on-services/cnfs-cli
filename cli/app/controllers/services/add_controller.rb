@@ -5,7 +5,7 @@
 # To hook into this controller repositories need to implement <Namespace>::Services::AddController
 module Services
   class AddController < Thor
-    include CommandHelper
+    include Concerns::CommandController
 
     # Activate common options
     cnfs_class_options :dry_run, :logging

@@ -10,8 +10,9 @@ class Runtime < ApplicationRecord
 
   store :config, accessors: %i[version]
 
-  # This Operator manages target_type
-  def target_type() = :services
+  before_execute :generate
+
+  def target() = :services
 
   def self.add_columns(t)
     t.references :resource

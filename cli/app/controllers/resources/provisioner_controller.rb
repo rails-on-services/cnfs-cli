@@ -2,23 +2,20 @@
 
 module Resources
   class ProvisionerController
-    include ResourcesHelper
+    include Concerns::ExecController
 
     def create
-      run_callbacks :execute do
-        context.plan_provisioners.each do |provisioner|
-          provisioner.create do |queue|
-            # binding.pry
-          end
-        end
+      context.plan_provisioners.each do |provisioner|
+        provisioner.execute(:deploy)
+        # provisioner.create do |queue|
+        # binding.pry
+        # end
       end
     end
 
     # TODO: Lookup the resource which is what returns the thing to do, e.g. ssh for an EC2
     def connect
-      run_callbacks :execute do
-        binding.pry
-      end
+      binding.pry
     end
 
     def instance_shell
@@ -32,12 +29,11 @@ module Resources
     end
 
     def destroy
-      run_callbacks :execute do
-        context.plan_provisioners.each do |provisioner|
-          provisioner.destroy do |queue|
-            # binding.pry
-          end
-        end
+      context.plan_provisioners.each do |provisioner|
+        provisioner.execute(:deploy)
+        # provisioner.destroy do |queue|
+        # binding.pry
+        # end
       end
     end
   end

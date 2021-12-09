@@ -169,7 +169,7 @@ class Context < ApplicationRecord
   def plan_provisioners(plans: filtered_plans)
     plans.where.not(provisioner: nil).group_by(&:provisioner).each_with_object([]) do |(provisioner, plans), ary|
       provisioner.context = self
-      provisioner.context_plans = plans
+      provisioner.plans = plans
       ary.append(provisioner)
     end
   end

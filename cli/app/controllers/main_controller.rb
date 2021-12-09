@@ -1,18 +1,16 @@
 # frozen_string_literal: true
 
 class MainController < Thor
-  include CommandHelper
+  include Concerns::CommandController
 
   # Activate common options
   cnfs_class_options :dry_run, :logging
 
-  # ["builders", "environments", "providers", "resources", "repositories", "runtimes", "services", "users"]
   if CnfsCli.config.project
-    # register BlueprintsController, 'blueprint', 'blueprint SUBCOMMAND [options]', 'Manage environment infrastructure blueprints (k8s clusters, storage, etc)'
-    # register EnvironmentsController, 'environment', 'environment SUBCOMMAND [options]', 'Manage environment infrastructure and services. (k8s clusters, storage, etc)'
     register ImagesController, 'image', 'image SUBCOMMAND [options]', 'Manage service images'
-    register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]',
-             'Manage namespace infrastructure and services'
+    # register NamespacesController, 'namespace', 'namespace SUBCOMMAND [options]',
+             # 'Manage namespace infrastructure and services'
+    # register PlansController, 'plan', 'plan SUBCOMMAND [options]', 'Manage environment infrastructure plans (k8s clusters, storage, etc)'
     register ProjectsController, 'project', 'project SUBCOMMAND [options]', 'Manage project'
     register RepositoriesController, 'repository', 'repository SUBCOMMAND [options]',
              'Add, create, list and remove project repositories'
@@ -60,9 +58,7 @@ class MainController < Thor
 
   # Utility
   desc 'version', 'Show cnfs version'
-  def version
-    CnfsCore::VersionController.new([], options).execute
-  end
+  def version() = Cnfs::VersionController.new([], options).execute
 
   class << self
     def exit_on_failure?

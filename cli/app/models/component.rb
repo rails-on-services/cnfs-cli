@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Component < ApplicationRecord
-  include Concerns::Encryption
-  include Concerns::Interpolation
-
-  # Include Parent last as it includes plugin modules that may depend on methods in the above modules
   include Concerns::Parent
+  include Concerns::Extendable
 
   belongs_to :owner, class_name: 'Component'
   has_one :parent, as: :owner, class_name: 'Node'

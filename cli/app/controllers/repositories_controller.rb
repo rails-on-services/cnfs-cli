@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class RepositoriesController < Thor
-  include CommandHelper
+  include Concerns::CommandController
 
   # Activate common options
   cnfs_class_options :dry_run, :logging, :init

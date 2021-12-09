@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ImagesController < Thor
-  include CommandHelper
+  include Concerns::CommandController
 
   class_option :generate, desc: 'Force generate manifest files ',
                           aliases: '-g', type: :string
@@ -11,7 +11,7 @@ class ImagesController < Thor
 
   desc 'build [IMAGES]', 'Build all or specific service images'
   def build(*services)
-    execute(services: services, controller: :build, method: :build)
+    execute(services: services, controller: :exec, method: :build)
   end
 
   desc 'list', 'Lists services configured in the project'
@@ -21,12 +21,12 @@ class ImagesController < Thor
 
   desc 'push [IMAGES]', 'Push images to designated repository'
   def push(*services)
-    execute(services: services, controller: :build, method: :push)
+    execute(services: services, controller: :exec, method: :push)
   end
 
   desc 'pull [IMAGES]', 'Pull one or more or all images'
   def pull(*services)
-    execute(services: services, controller: :build, method: :pull)
+    execute(services: services, controller: :exec, method: :pull)
   end
 
   desc 'test [IMAGES]', 'Run test commands on service image(s)'
@@ -39,6 +39,6 @@ class ImagesController < Thor
   option :push,       desc: 'Push image after successful testing',
                       aliases: '-p', type: :boolean
   def test(*services)
-    execute(services: services, controller: :build, method: :test)
+    execute(services: services, controller: :exec, method: :test)
   end
 end

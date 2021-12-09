@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CnfsCommandHelper
+module Cnfs::Concerns::CommandController
   extend ActiveSupport::Concern
 
   # rubocop:disable Metrics/BlockLength
@@ -74,6 +74,7 @@ module CnfsCommandHelper
 
   def execute(**kwargs)
     location = kwargs.delete(:location) || 2
+    # TODO: This is where to implement the execute chain
     controller_name = kwargs.delete(:controller) || controller_name_from_caller(location: location)
     method_name = kwargs.delete(:method) || :execute
     @args = Thor::CoreExt::HashWithIndifferentAccess.new(kwargs)
@@ -82,17 +83,15 @@ module CnfsCommandHelper
 
     Cnfs.logger.info("controller name: #{controller_name}")
     controller = controller_instance(controller_name: controller_name)
-    controller.new(**controller_args).send(method_name)
+    controller.new(**controller_args).base_execute(method_name)
   end
 
-  def controller_args
-    { options: options, args: args }
-  end
+  def controller_args() = { options: options, args: args }
 
   # Could be called directly by the command, e.g. 'console' with no params and will return 'console'
   def controller_name_from_caller(location: 1)
     name = caller_locations(1, location)[location - 1].label
-    Cnfs.logger.info("controller name: #{name}")
+    Cnfs.logger.debug("controller name: #{name}")
     name
   end
 
