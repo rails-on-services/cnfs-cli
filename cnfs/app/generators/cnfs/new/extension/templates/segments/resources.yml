@@ -1,0 +1,4 @@
+# # resources.yml
+---
+local:
+  config: {}

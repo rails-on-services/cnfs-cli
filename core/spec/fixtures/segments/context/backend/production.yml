@@ -1,0 +1,6 @@
+---
+config:
+  domain: production-${tld}
+segment_type: target
+default:
+  segment_name: lambda

@@ -2,8 +2,6 @@
 
 module Terraform
   class Plan < Plan
-    attr_accessor :wrapper
-
     store :modules, coder: YAML
     store :variables, coder: YAML
     store :outputs, coder: YAML
@@ -14,70 +12,80 @@ module Terraform
     # serialize :tf_modules, Array
 
     # validate :tf_modules_are_urls
-    before_deploy :before
-    after_deploy :after
+    after_deploy :create_resources
 
-    def before
-      Cnfs.logger.warn 'before', name
-    end
+    after_undeploy :destroy_resources
 
-    def after
-      Cnfs.logger.warn 'after', name
-    end
-
-    # invoked by an instance of Terraform::Provisioner
-    # NOTE: self is the specific plan which tells exactly what it's looking for
-    def x_create_resources
-      # RubyTerraform.state_list(chdir: path.parent.to_s)
-      # RubyTerraform.state_show(chdir: path.parent.to_s, address: item)
-
-      res = wrapper.resources_where(name: 'gm_dev', type: 'proxmox_vm_qemu', mode: 'managed')
-      binding.pry
-
-      # TODO: filter the tfstate based on what the plan is expecting
-      terraform_resources.each do |resource_json|
-        type = resource_json[:type].to_sym
-        unless (klass = terraform_resource_to_class(type.to_s).constantize)
-          Cnfs.logger.warn "Not found #{type}"
-          next
-        end
-
+    # TODO: This is all about reading a state file
+    # Maybe is better to put these methods into the State class
+    def destroy_resources(operator)
+      # Cnfs.logger.warn 'after undeploy', name, operator
+      iterate(operator.previous_state) do |model, attrs|
+        # TODO: do a diff on operator.state.resources
         binding.pry
+      end
+    end
 
-        resource_json[:instances].each do |json|
-          attrs = json[:attributes]
-          obj_attrs = attrs.slice(*klass.stored_attributes[:config])
-          # TODO: attrs are abstracted from tfstate based on the class
-          # One way is a method on the resource #from_tfstate that takes the attrs and returns a slice
-          # OR it directly creates the record and returns it
-          obj = klass.new(obj_attrs, name: attrs[:bucket], owner: context.component)
-          binding.pry
+    # operator is an instance of Terraform::Provisioner
+    def create_resources(operator)
+      iterate(operator.state) do |model, attrs|
+        obj = model.new(name: attrs[:tags][:Name], # , instance_id: attrs[:id],
+                        # ami: attrs[:ami], public_ip: attrs[:public_ip], arn: attrs[:arn],
+                        config: attrs,
+                        provider: Provider.first, runtime: Runtime.first,
+                        provider_name: Provider.first.name, runtime_name: Runtime.first.name,
+                       )
+        if obj.valid?
+          obj.save
+        else
+          Cnfs.logger.warn(obj.errors)
+        end
+        # binding.pry
+      end
+    end
+
+    def iterate(state)
+      # Cnfs.logger.warn 'after', name, operator
+      self.modules.keys.each do |key|
+        next unless (plan_resources = state.resources.where(module: "module.#{key}")).any?
+
+        resource_to_model_map.each do |resource_type, model_type|
+          next unless (model = model_type.safe_constantize)
+
+          next unless (resources = plan_resources.where(type: resource_type)).any?
+
+          instances = resources.map(&:instances).flatten.map(&:attributes)
+          instances.each do |attrs|
+            yield model, attrs
+          end
         end
       end
     end
 
-
-    def terraform_resources() = tfstate[:resources] || []
+    def resource_to_model_map
+      { aws_instance: 'Aws::Resource::EC2::Instance' }
+    end
 
     # 'aws_s3_bucket' => 'Aws::Resource::S3::Bucket'
-    def terraform_resource_to_class(tf_type)
+    def resource_to_model(tf_type)
       provider, *type = tf_type.split('_')
       [provider, 'resource', *type].join('/').classify
     end
 
-    def obj_vals(context)
-      # Here loop over the resources created and create yaml files for those that have runtimes, e.g. EC2 instance
-      hash = { owner: context.component } # , public_ip: output[:ec2_instance_public_ip]['value'] }
+    # def obj_vals(context)
+    #   # Here loop over the resources created and create yaml files for those that have runtimes, e.g. EC2 instance
+    #   hash = { owner: context.component } # , public_ip: output[:ec2_instance_public_ip]['value'] }
+    #
+    #   # provider =  context.root.providers.find_by(name: self.context_plans.first.provider.name)
+    #   runtime =  context.root.runtimes.find_by(name: :compose)
+    #
+    #   # hash.merge!(provider: provider, provider_name: provider.name, runtime: runtime, runtime_name: runtime.name)
+    #   hash.merge!(runtime: runtime, runtime_name: runtime.name)
+    #
+    #   ic = Aws::Resource::EC2::Instance.new(hash)
+    # end
 
-      # provider =  context.root.providers.find_by(name: self.context_plans.first.provider.name)
-      runtime =  context.root.runtimes.find_by(name: :compose)
-
-      # hash.merge!(provider: provider, provider_name: provider.name, runtime: runtime, runtime_name: runtime.name)
-      hash.merge!(runtime: runtime, runtime_name: runtime.name)
-
-      ic = Aws::Resource::EC2::Instance.new(hash)
-    end
-
+    # TODO: These next two methods should be in a concern along w/ download
     def tf_modules_are_urls
       return unless Node.source.eql?(:asset)
 

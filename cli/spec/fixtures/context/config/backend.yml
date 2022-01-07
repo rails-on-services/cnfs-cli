@@ -1,5 +1,0 @@
----
-config:
-  domain: backend.${tld}
-segment: environment
-default: production

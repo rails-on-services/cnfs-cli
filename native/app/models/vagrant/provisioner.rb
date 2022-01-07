@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-class Vagrant::Provisioner < Provisioner
+module Vagrant
+class Provisioner < Provisioner
   attr_accessor :blueprint
 
   store :config, accessors: %i[box box_url], coder: YAML
@@ -85,4 +86,5 @@ class Vagrant::Provisioner < Provisioner
     path.mkpath unless path.exist?
     path
   end
+end
 end

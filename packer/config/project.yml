@@ -1,8 +1,0 @@
----
-paths:
-  config: config
-  data: builds
-  lib: lib
-  src: src
-  tmp: tmp
-logging: warn

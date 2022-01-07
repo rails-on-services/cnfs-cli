@@ -1,4 +1,0 @@
----
-config: {}
-segment: target
-default: s3

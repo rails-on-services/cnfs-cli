@@ -1,0 +1,17 @@
+---
+iam:
+  # type: Backend::Service
+  resource_name: res1
+  config:
+    test: test
+  # environment:
+  #   - test
+  #   - this
+cognito:
+  # type: Backend::Service
+  resource_name: res1
+  config:
+    test: te
+nginx:
+  config:
+    test: hello

@@ -1,5 +1,0 @@
----
-config:
-  test: this
-segment: environment
-default:

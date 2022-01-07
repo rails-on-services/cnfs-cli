@@ -1,9 +1,0 @@
----
-compose:
-  config:
-    version: 3.2
-  dependencies: '[{"name"=>"docker-compose"}]'
-  type: Compose::Runtime
-native:
-  config: {}
-  type: Native::Runtime

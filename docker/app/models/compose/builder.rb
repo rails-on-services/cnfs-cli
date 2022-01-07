@@ -3,7 +3,8 @@
 class Compose::Builder < Builder
   def build
     Dir.chdir(path) do
-      binding.pry
+      Cnfs.logger.warn('building!', images.pluck(:name).join(', '), 'END')
+      # binding.pry
       # TODO: Use a command object to run docker-compose build
       # rv compose("build --parallel #{images.pluck(:name).join(' ')}")
     end
@@ -18,7 +19,7 @@ class Compose::Builder < Builder
   end
 
   def test
-
+      Cnfs.logger.warn('testing!', images.pluck(:name).join(', '), 'END')
   end
 
   private

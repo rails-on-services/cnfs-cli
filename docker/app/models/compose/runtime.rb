@@ -2,31 +2,7 @@
 
 # rubocop:disable Metrics/ClassLength
 class Compose::Runtime < Runtime
-  # attr_accessor :queue, :services, :context
 
-  # delegate :options, :labels, to: :context
-
-  # TODO: Is this necessary?
-  def supported_service_types
-    ['Service::Rails', nil]
-  end
-
-  # What to do about this one?
-  # def method_missing(method, *args)
-  #   Cnfs.logger.warn 'command not supported in compose runtime'
-  #   raise Cnfs::Error, 'command not supported in compose runtime'
-  # end
-
-  # def supported_commands
-  #   %w[build test push pull publish
-  #      destroy deploy redeploy
-  #      start restart stop terminate
-  #      ps status
-  #      attach command console copy credentials exec logs shell]
-  #   # list show generate
-  # end
-
-  # Namespace Operations
   # TODO: Add support for destroying volumes; https://docs.docker.com/compose/reference/down/
   def destroy
     rv compose(:down)
@@ -59,28 +35,35 @@ class Compose::Runtime < Runtime
       opts: context.options.merge(printer: :null)
     )
   end
-      # qc = Command.new(
-      #   env: { hey: :now },
-      #   exec: compose_command("up #{compose_options} #{services.pluck(:name).join(' ')}"),
-      #   opts: context.options.merge(printer: :null)
-      #   # opts: context.options,
-      # )
-      # queue.append(qc, tc)
-      # tc.run(exec: 'ls -w')
-      # binding.pry
-      # queue.append(tc)
+  # qc = Command.new(
+  #   env: { hey: :now },
+  #   exec: compose_command("up #{compose_options} #{services.pluck(:name).join(' ')}"),
+  #   opts: context.options.merge(printer: :null)
+  #   # opts: context.options,
+  # )
+  # queue.append(qc, tc)
+  # tc.run(exec: 'ls -w')
+  # binding.pry
+  # queue.append(tc)
 
   # Service Admin Operations
   def start
-    run_callbacks :execute do
-      # runtime_services.select{ |s| s.image.eql?('postgres') }
-      queue.append(compose_command(exec: :up))
-      yield queue
-    end
+      Cnfs.logger.warn('starting!', services.pluck(:name).join(', '), 'END')
+  end
 
-    # At this point the services have been queried both before and after the commands have run
-    # TODO: Is this the best way to have any services run their callbacks after a state change?
+  def x_start
+    # The before start callbacks are run on each service with an instance of this class as a parameter
+    binding.pry
+    # runtime_services.select{ |s| s.image.eql?('postgres') }
+    queue.append(compose_command(exec: :up))
+    yield queue
+    # The after start callbacks are run on each service with an instance of this class as a parameter
+  end
 
+  # At this point the services have been queried both before and after the commands have run
+  # TODO: Is this the best way to have any services run their callbacks after a state change?
+
+  def another
     running_before = []
     running_after = query.result.to_a.append('iam')
 
@@ -99,14 +82,9 @@ class Compose::Runtime < Runtime
     end
   end
 
-  before_execute :generate, :write_env, :query_services
-  # before_execute :hello
+  # before_execute :link_compose_to_env #, :query_services
 
-  def hello
-    puts 'hello'
-  end
-
-  def write_env
+  def link_compose_to_env
     FileUtils.rm_f('.env')
     FileUtils.ln_s(compose_file, '.env') if File.exist?(compose_file)
     Cnfs.logger.debug("Linked #{compose_file} to .env")
@@ -131,7 +109,7 @@ class Compose::Runtime < Runtime
     # filter = "table {{.ID}}\\t{{.Status}}\\t{{.Ports}}"
     # command.run(exec: "docker ps --format \"#{filter}\"", opts: { silent: true })
     # docker ps --format '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Names":"{{ .Names }}"}'
-   
+
     # working = %q[docker ps --format '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Names":"{{ .Names }}"}']
     # try = %w[ID Image Names].each_with_object([]) do |item, ary|
     #   ary.append("\"#{item}\":\"{{ .#{item} }}\"")
@@ -158,33 +136,31 @@ class Compose::Runtime < Runtime
     { rid: :ID, image: :Image, names: :Names, labels: :Labels, status: :Status, ports: :Ports }
   end
 
-  def query_format_map
-    { names: '{{.Names}}' }
-  end
+  def query_format_map() = { names: '{{.Names}}' }
 
 
-    # TODO:
-    # 1. Base runtime class has a query interface, i.e. a set of methods to implement by each runtime which
-    #    returns a standard set of results, e.g. the running container names
-    # 2. Compose implements these methods
-    # 3. Before calling start this controller gets the list of running containers
-    # 4. After start get a revised list and compare the two lists
-    # 5. Any service that was not running and not is running then has it's state changed
+  # TODO:
+  # 1. Base runtime class has a query interface, i.e. a set of methods to implement by each runtime which
+  #    returns a standard set of results, e.g. the running container names
+  # 2. Compose implements these methods
+  # 3. Before calling start this controller gets the list of running containers
+  # 4. After start get a revised list and compare the two lists
+  # 5. Any service that was not running and not is running then has it's state changed
 
-    # TODO: if the queue has meta data with the service command to invoke and this is in a command class
-    # Then the class could auto invoke the command which triggers any callbacks
-    # result = command.run!(*cmd_array)
-    # raise Cnfs::Error, result.err if result.failure?
+  # TODO: if the queue has meta data with the service command to invoke and this is in a command class
+  # Then the class could auto invoke the command which triggers any callbacks
+  # result = command.run!(*cmd_array)
+  # raise Cnfs::Error, result.err if result.failure?
 
-    # runtime_services.each do |service|
-    #   # Trigger the service's after_start callbacks which may add commands to the service's command_queue
-    #   service.start
-    #   service.command_queue.each do |cmd_array|
-    #     Cnfs.logger.debug cmd_array
-    #     result = command.run!(*cmd_array)
-    #     Cnfs.logger.error(result.err) if result.failure?
-    #   end
-    # end
+  # runtime_services.each do |service|
+  #   # Trigger the service's after_start callbacks which may add commands to the service's command_queue
+  #   service.start
+  #   service.command_queue.each do |cmd_array|
+  #     Cnfs.logger.debug cmd_array
+  #     result = command.run!(*cmd_array)
+  #     Cnfs.logger.error(result.err) if result.failure?
+  #   end
+  # end
 
   def stop(services)
     queue.add(rv(compose("stop #{services.pluck(:name).join(' ')}")))
@@ -208,8 +184,10 @@ class Compose::Runtime < Runtime
   end
 
   # Service Runtime
-  def attach(service)
-    rv "docker attach #{service.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'"
+  def attach
+    # binding.pry
+    Cnfs.logger.warn('attach!', services.first.name, 'END')
+    # rv "docker attach #{service.full_context_name}_#{service.name}_1 --detach-keys='ctrl-f'"
   end
 
   def copy(service, src, dest)

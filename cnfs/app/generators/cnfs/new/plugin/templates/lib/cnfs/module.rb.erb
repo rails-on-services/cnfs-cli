@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+require_relative '<%= name %>/version'
+require_relative '<%= name %>/plugin'
+
+module <%= name.camelize %>
+  module Concerns; end
+end
+
+module Cnfs
+  module <%= name.camelize %>
+    class << self
+      def gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
+    end
+  end
+end

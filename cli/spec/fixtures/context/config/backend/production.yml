@@ -1,5 +1,0 @@
----
-config:
-  domain: production-${domain}
-segment: target
-default: lambda

@@ -7,15 +7,15 @@ require 'thor'
 class GemCli < Thor
   class_option :dry_run, desc: 'Do not execute commands', aliases: '-d', type: :boolean, default: false
      
-  desc 'build', 'Build all CnfsCli gems'
+  desc 'build', 'Build all Cnfs gems'
   def build
     each_dir do |_name, gemspec|
       exec("gem build #{gemspec}")
     end
   end
 
-  desc 'install', 'Install all CnfsCli gems'
-  option :deps, desc: 'Install all CnfsCli gems dependencies, but not the CnfsCli gems themselves', type: :boolean
+  desc 'install', 'Install all Cnfs gems'
+  option :deps, desc: 'Install all Cnfs gems dependencies, but not the Cnfs gems themselves', type: :boolean
   def install
     if options.deps
       install_deps
@@ -31,7 +31,7 @@ class GemCli < Thor
     end
   end
 
-  desc 'uninstall', 'Uninstall all CnfsCli gems'
+  desc 'uninstall', 'Uninstall all Cnfs gems'
   def uninstall
     each_dir do |_name, gemspec|
       exec("gem uninstall -a -x #{gemspec.delete_suffix('.gemspec')}")
@@ -40,7 +40,7 @@ class GemCli < Thor
 
   private
 
-  # Use this to quickly install all dependencies while running the CnfsCli gems from source
+  # Use this to quickly install all dependencies while running the Cnfs gems from source
   def install_deps
     each_dir do |dir, gemspec|
       next if dir.eql?('packer')

@@ -5,6 +5,7 @@ class Compose::BuilderGenerator < BuilderGenerator
 
   private
 
+  # TODO: If image has a sublcass that needs to invoked for custom rendering
   def yaml_content() = JSON.parse(content.to_json).to_yaml
   # images.first.with_other(git: { 'branch' => 'hello', 'sha' => '1234asd' })
 

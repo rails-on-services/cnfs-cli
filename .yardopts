@@ -1,0 +1,5 @@
+--exclude app/models/runtime_service.rb
+cnfs/app/**/*.rb
+cnfs/lib/**/*.rb
+core/app/**/*.rb
+core/lib/**/*.rb
