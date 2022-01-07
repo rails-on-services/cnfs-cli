@@ -48,7 +48,7 @@ module Concerns
     def generate
       path.rmtree if context.options.clean
       path.mkpath
-      return if manifest.valid? unless context.options.generate
+      return if manifest.valid? && !context.options.generate
 
       binding.pry
       manifest.rm_targets
@@ -65,12 +65,12 @@ module Concerns
 
     def manifest() = @manifest ||= Manifest.new(source: source_files, target: target_files)
 
-    def source_files() = Proc.new{ Node.all.map(&:rootpath).uniq }
+    def source_files() = proc { Node.all.map(&:rootpath).uniq }
 
     # TODO: This needs to be able to exclude paths from the root of the target_dir not just int the target_dir
     def target_files
-      Proc.new do
-        Pathname.new(path).glob('**/*').reject{ |p| target_exclude_files.include?(p.basename.to_s) }
+      proc do
+        Pathname.new(path).glob('**/*').reject { |p| target_exclude_files.include?(p.basename.to_s) }
       end
     end
 

@@ -19,7 +19,7 @@ class Manifest
 
   def reload
     @source_files, @target_files, @newest_source, @oldest_target = nil
-    self.validate
+    validate
     self
   end
 

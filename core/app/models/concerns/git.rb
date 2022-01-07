@@ -6,7 +6,9 @@ module Concerns
 
     # Override in classes that include this module
     def git_path() = Pathname.new('.')
+
     def git_url() = ''
+
     def src_path() = nil
 
     # When included in, e.g. an Image can call Image#git.branch for inclusion in docker image tag, etc
@@ -27,7 +29,7 @@ module Concerns
 
     def git_remote
       remote = `git remote -v`
-      remote.split("\n").map{ |e| e.split("\t") }.each_with_object({}) do |ary, hash|
+      remote.split("\n").map { |e| e.split("\t") }.each_with_object({}) do |ary, hash|
         name = ary.first
         hash[name] ||= {}
         url, action = ary.last.split
@@ -89,8 +91,8 @@ module Concerns
       end
     end
 
-    def inside_git_path
-      git_path.exist? ? Dir.chdir(git_path) { yield } : OpenStruct.new
+    def inside_git_path(&block)
+      git_path.exist? ? Dir.chdir(git_path, &block) : OpenStruct.new
     end
   end
 end

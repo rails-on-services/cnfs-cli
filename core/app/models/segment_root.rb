@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class SegmentRoot < Component
-  def owner_extension_path() = Cnfs.config.paths.segments 
+  def owner_extension_path() = Cnfs.config.paths.segments
 
   # Override superclass methods as this is the root class in the hierarchy
   def key() = @key ||= super || warn_key

@@ -13,15 +13,15 @@ module Concerns
       scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
       scope :enabled, -> { where(enable: [true, nil], abstract: [false, nil]) }
 
-      scope :filter_by, ->(args) do
+      scope :filter_by, lambda { |args|
         args = args.with_indifferent_access
         conditions = args[table_name] || args[table_name.singularize]
         conditions_hash = conditions ? { name: conditions } : {}
         where(conditions_hash)
-      end
+      }
 
       # Takes an array of tags in format: ["country=us", "state=ny"]
-      scope :with_tags, ->(tags) do
+      scope :with_tags, lambda { |tags|
         return self unless tags
 
         ret_val = self
@@ -30,7 +30,7 @@ module Concerns
           ret_val = ret_val.where('tags LIKE ?', "%#{name}: #{value}%")
         end
         ret_val
-      end
+      }
 
       store :tags, coder: YAML
 
@@ -140,10 +140,6 @@ module Concerns
                 #                  "\n#{' ' * 10}Default #{attribute} #{name} not found" \
                 #                  "\n#{' ' * 10}Source: #{context.component.parent.rootpath}")
               end
-            else
-              # Cnfs.logger.warn("#{res_msg}#{asset.name}" \
-              #                  "\n#{' ' * 10}Multiple #{attribute.pluralize} aviailable, but no default has been set" \
-              #                  "\n#{' ' * 10}Available #{attribute.pluralize}: #{assn.pluck(:name).join(', ')}")
             end
           end
           asset.update(update_hash)

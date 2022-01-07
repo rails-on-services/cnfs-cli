@@ -43,7 +43,6 @@ class RuntimeGenerator < Cnfs::ApplicationGenerator
     @source_paths ||= CnfsCli.loaders.values.map { |path| path.join('generators', generator_type) }.select(&:exist?)
   end
 
-
   def template_file(service)
     [service.template, service.name, service.class.name.deconstantize, 'service'].each do |template_name|
       source_paths.each do |source_path|
@@ -52,7 +51,6 @@ class RuntimeGenerator < Cnfs::ApplicationGenerator
       end
     end
   end
-
 
   # List of services to be configured on the proxy server (nginx for compose)
   # TODO: Move this to an nginx service class in an RC

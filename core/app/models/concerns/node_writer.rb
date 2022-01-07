@@ -46,7 +46,7 @@ module Concerns
 
     def yaml_payload
       @yaml_payload ||= { 'name' => node_name }.merge(yaml)
-    rescue => e
+    rescue StandardError => e
       binding.pry
     end
 

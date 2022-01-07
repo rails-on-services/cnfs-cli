@@ -3,7 +3,6 @@
 module Cnfs
   class << self
     def data_store() = @data_store ||= DataStore.new
-    # def reset() = data_store.reload # create_database_tables
   end
 
   class DataStore
@@ -38,13 +37,6 @@ module Cnfs
     end
 
     def reset() = create_database_tables
-      # Cnfs.with_timer('database reload') do
-      #   # Remove any A/R Cached Classes (e.g. STI classes)
-      #   ActiveSupport::Dependencies::Reference.clear!
-      #   create_database_tables
-      # end
-      # true
-    # end
 
     private
 

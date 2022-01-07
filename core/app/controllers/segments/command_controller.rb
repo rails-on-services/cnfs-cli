@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Segments
-class CommandController < Thor
+  class CommandController < Thor
     include Concerns::CommandController
 
     cnfs_class_options :dry_run, :init, :clean, :clean_all

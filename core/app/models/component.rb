@@ -37,9 +37,9 @@ class Component < ApplicationRecord
       end
     end
 
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
-  #
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
+    #
     # List hierarchy of components based on CLI options, cwd, ENV and default segment_name(s)
     def list(options)
       pwd = APP_CWD.relative_path_from(Cnfs.config.paths.segments).to_s.split('/').excluding('..')
@@ -61,10 +61,10 @@ class Component < ApplicationRecord
       end
       components
     end
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
 
-    def structs(options) = list(options).each_with_object([]) { |comp, ary| ary.append(comp.struct) } 
+    def structs(options) = list(options).each_with_object([]) { |comp, ary| ary.append(comp.struct) }
   end
 
   def struct() = OpenStruct.new(segment_type: owner.segments_type, name: name, color: color)
@@ -96,7 +96,7 @@ class Component < ApplicationRecord
 
   # Return the default dir_path of the parent's path + this component's name unless segment_path is configured
   # In which case parse segment_path to search the component hierarchy for the specified repository and blueprint
-  def dir_path()
+  def dir_path
     # binding.pry
     if extension.nil?
       node_warn(node: parent, msg: "Extension '#{extension_name}' not found")
@@ -106,7 +106,7 @@ class Component < ApplicationRecord
       return extension.segment(extension_path)
     end
     parent.parent.rootpath.join(parent.node_name).to_s
-  end 
+  end
 
   def extension() = Cnfs.extensions[extension_name]
 

@@ -24,7 +24,7 @@ module Services
         service = services.last
       end
 
-      %i[attach sh console].select{ |opt| context.options.send(opt) }.each do |after_exec|
+      %i[attach sh console].select { |opt| context.options.send(opt) }.each do |after_exec|
         next unless service.respond_to?(after_exec) && (cmd = service.send(after_exec))
 
         # _service.resource.runtime.execute(cmd.to_sym, resource: resource, services: _service)
@@ -44,21 +44,21 @@ module Services
       execute(:start)
     end
 
-		def x_restart
-			state = index.zero? ? :stopped : :started
-			services.each do |service|
+    def x_restart
+      state = index.zero? ? :stopped : :started
+      services.each do |service|
         # TODO: update_state moves to the service itself as a callback
         # after_start run the database migrations or whatever is defined in the
         # services.yml
         # In fact, in services.rb there is:
         # 1. array of commands that are configured from yaml
         # 2. that same array is used to define the callbacks
-				service.update_state(state).each do |cmd_array|
-					result = command.run!(*cmd_array)
-					Cnfs.logger.error(result.err) if result.failure?
-				end
-			end
-		end
+        service.update_state(state).each do |cmd_array|
+          result = command.run!(*cmd_array)
+          Cnfs.logger.error(result.err) if result.failure?
+        end
+      end
+    end
 
     def terminate
       # stop(services)
@@ -189,7 +189,7 @@ module Services
     # context.resource_runtime(services: context.services).map(&:start)
     def x_start
       run_callbacks :execute do
-          # binding.pry
+        # binding.pry
         context.resource_runtimes.each do |runtime|
           runtime.execute(:start)
           # binding.pry

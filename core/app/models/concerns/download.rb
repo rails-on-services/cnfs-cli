@@ -36,7 +36,7 @@ module Concerns
       end
     end
 
-    def more(url, file)
+    def more(url, _file)
       if git_url?(url.to_s)
         git_clone(url.to_s).run
       else

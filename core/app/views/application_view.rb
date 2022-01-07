@@ -17,6 +17,7 @@ class ApplicationView < Cnfs::ApplicationView
   def create
     raise Cnfs::Error, 'Need to pass a model. this is a bug' unless model
     raise Cnfs::Error, 'Create can only be called on new instances' if model.persisted?
+
     @action = :create
 
     modify
@@ -36,6 +37,7 @@ class ApplicationView < Cnfs::ApplicationView
   def edit
     raise Cnfs::Error, 'Need to pass a model. this is a bug' unless model
     raise Cnfs::Error, 'Create can only be called on existing instances' unless model.persisted?
+
     @action = :edit
 
     modify
@@ -67,11 +69,11 @@ class ApplicationView < Cnfs::ApplicationView
     return unless names.size.positive?
 
     ret_val = %w[show edit destroy].each do |action|
-      if options.keys.include?(action)
-        name = names.size.eql?(1) ? names.first : enum_select_val("Select #{model_class_name}", choices: names)
-        send(action) if (@model = models.find_by(name: name))
-        break nil
-      end
+      next unless options.keys.include?(action)
+
+      name = names.size.eql?(1) ? names.first : enum_select_val("Select #{model_class_name}", choices: names)
+      send(action) if (@model = models.find_by(name: name))
+      break nil
     end
     puts names unless ret_val.nil?
   end
@@ -102,7 +104,7 @@ class ApplicationView < Cnfs::ApplicationView
 
   Cnfs::Core.asset_names.each do |asset_name|
     define_method("#{asset_name.singularize}_names".to_sym) do
-      component.send("#{asset_name.singularize}_names".to_sym) 
+      component.send("#{asset_name.singularize}_names".to_sym)
     end
   end
 end

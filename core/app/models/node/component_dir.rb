@@ -16,7 +16,7 @@ class Node::ComponentDir < Node
   end
 
   def create_assets
-    asset_paths.each do |path_name|      
+    asset_paths.each do |path_name|
       node_type = path_name.directory? ? 'Node::AssetDir' : 'Node::AssetGroup'
       nodes.create(type: node_type, path: path_name.to_s)
     end

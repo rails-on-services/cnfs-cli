@@ -68,7 +68,7 @@ class Repository < ApplicationRecord
 
   def git_url() = url
 
-  def git_path() = @git_path ||= src_path.join(path || name) 
+  def git_path() = @git_path ||= src_path.join(path || name)
 
   def src_path() = Cnfs.config.paths.src
 
