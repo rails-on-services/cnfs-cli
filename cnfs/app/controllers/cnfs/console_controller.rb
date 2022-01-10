@@ -19,8 +19,6 @@ module Cnfs
       Pry.start(self)
     end
 
-    def r() = reload!
-
     # Reload all classes, remove and cached objects and re-define the shortcuts as classes have reloaded
     def reload!
       reset_cache

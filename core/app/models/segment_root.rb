@@ -32,7 +32,16 @@ class SegmentRoot < Component
   class << self
     def load
       Node.with_asset_callbacks_disabled do
-        Node::Component.create(path: segment_file_path, owner_class: self)
+        # Node::Component.create(path: segment_file_path, owner_class: self)
+        Node.source = :p_node
+        DefinitionDirectory.create(path: Cnfs.config.paths.definitions, autoload: true).create_stuff
+
+        # Create Manually b/c it is a unique class
+        file = SegmentFile.create(path: Cnfs.config.root.join('config/segments.yml'))
+        root = create(file.content.merge(p_parent_id: file.id))
+
+        SegmentDirectory.create(path: Cnfs.config.paths.segments, autoload: true).create_stuff(owner: root)
+        # PNode::Directory.first.create_stuff(owner: root)
       end
 
       Cnfs::Core.model_names.each do |model|

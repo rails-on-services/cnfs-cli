@@ -38,7 +38,7 @@ module Cnfs
 
       def component_names() = %w[component segment_root]
 
-      def support_names() = %w[context context_component node runtime_service provisioner_resource]
+      def support_names() = %w[context definitions context_component node cnfs/node runtime_service provisioner_resource]
 
       def gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
     end

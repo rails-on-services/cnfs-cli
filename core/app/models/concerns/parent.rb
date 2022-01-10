@@ -21,11 +21,20 @@ module Concerns
     def to_context() = as_interpolated
 
     # Assets whose owner is Context are ephemeral so don't create/update a node
-    def create_node() = create_parent(type: parent_type, owner: self) # if node?
+    # def create_node() = create_parent(type: parent_type, owner: self) unless p_node?
+    def create_node
+      create_parent(type: parent_type, owner: self) unless p_node?
+    end
 
-    def update_node() = parent.update(owner: self) # if node?
+    # def update_node() = parent.update(owner: self) unless p_node?
+    def update_node
+      parent.update(owner: self) unless p_node?
+    end
 
-    def destroy_node() = parent.destroy # if node?
+    # def destroy_node() = parent.destroy unless p_node?
+    def destroy_node
+      parent.destroy unless p_node?
+    end
 
     def parent_type() = is_a?(Component) ? 'Node::Component' : 'Node::Asset'
 
@@ -35,7 +44,7 @@ module Concerns
       Cnfs.logger.warn(text)
     end
 
-    # def node?
+    def p_node?() = Node.source.eql?(:p_node)
     #   is_a?(Component) || owner.is_a?(Component)
     # end
 

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-class Aws::ProviderView < ApplicationView
+class Aws::ProviderView < ProviderView
   def modify
+    super
     mask_attr(:access_key_id)
     mask_attr(:secret_access_key)
     ask_attr(:account_id)

@@ -20,6 +20,8 @@ module Core
           include ::Concerns::CommandController
 
           cnfs_class_options :dry_run
+          # TODO: Cnfs.config not available
+          # cnfs_class_options Cnfs.config.segments.keys
 
           # CRUD Actions
           %w[create show edit destroy list].each do |action|
@@ -44,6 +46,14 @@ module Core
 
           # register Repositories::CommandController, 'repository', 'repository SUBCOMMAND [options]',
           # 'Add, create, list and remove project repositories'
+
+          desc 'tree', 'Display a tree'
+          def tree
+            # TODO: @options are not being passed in from command line
+            context = Component.context_from(@options)
+            require 'tty-tree'
+            puts '', TTY::Tree.new(context.as_tree).render
+          end
         end
       end
     end

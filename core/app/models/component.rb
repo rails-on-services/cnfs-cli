@@ -153,25 +153,13 @@ class Component < ApplicationRecord
 
   def attrs() = @attrs ||= owner.attrs.dup.append(name)
 
-  def tree_name
-    bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
-    "#{name} (#{owner.segments_type})#{bp_name}"
-  end
-
   def as_merged() = as_json
-
-  # Display components as a TreeView
-  def to_tree() = puts('', as_tree.render)
-
-  def as_tree
-    require 'tty-tree'
-    # TTY::Tree.new("#{name} (#{self.class.name.underscore})" => tree)
-    TTY::Tree.new('.' => { segments_type&.pluralize || '.' => tree })
-  end
 
   def segment_names() = @segment_names ||= components.pluck(:name)
 
   def color() = owner.segments_type ? Cnfs.config.segments[owner.segments_type].try(:[], :color) : nil
+
+  def as_tree() = { '.' => { segments_type&.pluralize || '.' => tree } }
 
   def tree
     components.each_with_object([]) do |comp, ary|
@@ -181,6 +169,11 @@ class Component < ApplicationRecord
         ary.append({ comp.name => { comp.segments_type&.pluralize => comp.tree } })
       end
     end
+  end
+
+  def tree_name
+    bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
+    "#{name} (#{owner.segments_type})#{bp_name}"
   end
 
   class << self
@@ -193,6 +186,7 @@ class Component < ApplicationRecord
         t.string :default
         t.string :config
         t.references :owner
+        t.integer :p_parent_id
       end
     end
   end

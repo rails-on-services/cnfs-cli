@@ -22,7 +22,7 @@ class Aws::Resource::EC2::Instance < Aws::Resource::EC2
 
   # TODO: See if public_ip and os_type or ssh_user can be retrieved from aws ec2 client calls
   # def connect() = system("ssh -A #{ssh_user_map[os_type]}@#{describe.public_ip_address}")
-  def connect() = system("ssh -A #{connect_host}")
+  def console() = system("ssh -A #{connect_host}")
 
   def connect_host
     config[:public_ip] || describe.public_ip_address

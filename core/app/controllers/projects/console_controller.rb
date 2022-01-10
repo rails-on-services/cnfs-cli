@@ -6,14 +6,18 @@
   Pry.config.commands[cmd] = nil
 end
 
-Pry::Commands.block_command 'cd', 'change segment' do |*args|
-  if (path = args.shift) && (try_path = APP_CWD.join(path)).exist? && try_path.relative_path_from(Cnfs.config.paths.segments).to_s.split('/').excluding('..').any?
+Pry::Commands.block_command 'cd', 'change segment' do |path|
+  if path.nil? || APP_CWD.relative_path_from(Cnfs.config.paths.segments).to_s.split('/').include?('..')
+    path = '.' if path.nil?
+    Object.send(:remove_const, :APP_CWD)
+    APP_CWD = Cnfs.config.paths.segments
+  end
+  if (try_path = APP_CWD.join(path)).exist?
     Object.send(:remove_const, :APP_CWD)
     APP_CWD = try_path
     Cnfs.config.console.instance_variable_set('@context', nil)
     Cnfs.config.console.init_class
   end
-  puts APP_CWD
 end
 
 Pry::Commands.block_command 'ls', 'list assets' do |*_args|
@@ -57,8 +61,6 @@ module Projects
       end
     end
     # rubocop:enable Metrics/MethodLength
-
-    def tree() = context.to_tree
 
     def reload!
       super

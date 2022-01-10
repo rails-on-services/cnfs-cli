@@ -18,7 +18,7 @@ class Context < ApplicationRecord
   # When context is the owner it must ask the component for the key
   # TODO: The assets need to be decrypted with reference to their actual owner not the context.component
   # This will not work for inherited values. This needs to be tested
-  delegate :attrs, :cache_path, :data_path, :key, :as_interpolated, :segments_type, :segment_names, :to_tree,
+  delegate :attrs, :cache_path, :data_path, :key, :as_interpolated, :segments_type, :segment_names, :as_tree,
            to: :component
 
   after_create :create_assets

@@ -7,7 +7,7 @@ module Concerns
     included do
       include Concerns::Parent
 
-      has_one :parent, as: :owner, class_name: 'Node'
+      has_one :parent, as: :owner, class_name: 'Node', required: false
       belongs_to :owner, polymorphic: true, required: true
 
       scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
@@ -44,7 +44,7 @@ module Concerns
     def cli_owner
       return unless Node.source.eql?(:asset) && Cnfs.config.cli.mode
 
-      self.owner ||= SegmentRoot.first.context.component
+      self.owner ||= Cnfs.config.console.context.component
     end
 
     def as_merged
@@ -176,6 +176,7 @@ module Concerns
           t.boolean :inherit
           t.string :from
           t.references :owner, polymorphic: true
+          t.integer :p_parent_id
           t.string :config
           t.string :tags
           add_columns(t) if respond_to?(:add_columns)

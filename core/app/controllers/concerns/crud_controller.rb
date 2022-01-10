@@ -27,6 +27,7 @@ module Concerns
           class_option :show, desc: "Choose a #{model_class_name} to show from the list", type: :boolean
           class_option :destroy, desc: "Choose a #{model_class_name} to destroy from the list", type: :boolean
         end
+        class_option :context, desc: 'From current context', type: :boolean
         desc "#{command_name} [#{command_hint}]", "#{action} #{command_desc}"
 
         # rubocop:disable Metrics/MethodLength
@@ -38,13 +39,15 @@ module Concerns
           if method.eql?(:create)
             model = model_class_name.constantize.new(name: name, owner: component)
           elsif method.eql?(:list)
-            models = context.component.send(asset_name.to_sym)
+            models = options.context ? context : context.component
+            models = models.send(asset_name.to_sym)
             models = models.where('name LIKE ?', "%#{name}%") if name
           else # :show, :edit, :destroy
             unless (model = context.component.send(asset_name.to_sym).find_by(name: name))
               Cnfs.logger.warn(model_class_name, name, 'not found')
               return
             end
+            model_class_name = model.type # Set it to the STI type
           end
 
           view_class_name = "#{model_class_name}View"

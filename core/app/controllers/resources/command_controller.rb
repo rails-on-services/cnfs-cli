@@ -7,7 +7,7 @@ module Resources
     cnfs_class_options :dry_run, :init, :quiet
     cnfs_class_options Cnfs.config.segments.keys
 
-    desc 'connect RESOURCE', 'Connect to a resource in the specified segment'
-    def connect(resource) = execute(resource: resource)
+    desc 'console RESOURCE', 'Connect to a resource in the specified segment'
+    def console(resource) = execute(resource: resource)
   end
 end
