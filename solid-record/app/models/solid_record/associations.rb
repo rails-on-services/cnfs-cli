@@ -1,63 +1,17 @@
 # frozen_string_literal: true
 
-module Concerns
-  module Asset
+module SolidRecord
+  module Associations
     extend ActiveSupport::Concern
 
     included do
-      include Concerns::Parent
-
-      belongs_to :node, class_name: 'AssetFile'
-      belongs_to :owner, polymorphic: true, required: true
-
-      scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
-      scope :enabled, -> { where(enable: [true, nil], abstract: [false, nil]) }
-
-      # Takes a hash. Examples: { users: [joe, bob] } or { plan: vpc }
-      # and based on key name determines if the hash is appropriate to be applied to the model association
-      # if not it provides an empty hash to .where which has no impact on the generated SQL
-      scope :filter_by, lambda { |args|
-        args = args.with_indifferent_access
-        conditions = args[table_name] || args[table_name.singularize]
-        conditions_hash = conditions ? { name: conditions } : {}
-        where(conditions_hash)
-      }
-
-      # Takes an array of tags in format: ["country=us", "state=ny"]
-      scope :with_tags, lambda { |tags|
-        return self unless tags
-
-        ret_val = self
-        tags.each do |item|
-          name, value = item.split('=')
-          ret_val = ret_val.where('tags LIKE ?', "%#{name}: #{value}%")
-        end
-        ret_val
-      }
-
-      store :tags, coder: YAML
-
-      delegate :key, to: :owner
-
-      before_validation :cli_owner
-
       validate :dynamic_association_types
     end
 
-    def cli_owner
-      return unless Node.source.eql?(:asset) && Cnfs.config.cli.mode
-
-      self.owner ||= Cnfs.config.console.context.component
-    end
-
-    def as_merged
-      return as_json unless from && (source = owner.send(self.class.table_name).find_by(name: from))
-
-      source.as_json.except('abstract').deep_merge(as_json)
-    end
-
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/AbcSize
     def dynamic_association_types
-      return unless Node.source.eql?(:asset)
+      # return unless Node.source.eql?(:asset)
 
       self.class.belongs_to_names.each do |attribute|
         # In order to validate there must be a defined association and a value or array of values to check against
@@ -75,24 +29,8 @@ module Concerns
       {}.with_indifferent_access
     end
 
-    def tree_name
-      # [name, type&.deconstantize&.underscore].compact.join(': ').gsub('/', '-')
-      [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
-    end
-
-    # TODO: Implement when option vebose is paased in
-    def tree_name_verbose
-      %w[inherit enable].each_with_object([name]) do |v, ary|
-        ary.append("(#{v})") if v.nil? || v
-      end.join(' ')
-    end
-
-    def cache_file() = @cache_file ||= owner.cache_path.join(asset_type, "#{name}.yml")
-
-    def data_file() = @data_file ||= owner.data_path.join(asset_type, "#{name}.yml")
-
-    def asset_type() = self.class.name.demodulize.underscore.pluralize
-
+    # rubocop:disable Metrics/BlockLength
+    # rubocop:disable Metrics/PerceivedComplexity
     class_methods do
       def with_node_callbacks_diabled
         node_callbacks.each { |callback| skip_callback(*callback) }
@@ -106,6 +44,7 @@ module Concerns
         with_node_callbacks_diabled { dynamic_update(context) }
       end
 
+      # rubocop:disable Metrics/MethodLength
       def dynamic_update(context)
         res_msg = "#{table_name.classify} not configured: "
 
@@ -130,8 +69,8 @@ module Concerns
               obj = assn.first
               hash[attribute] = obj
               hash["#{attribute}_name"] = obj.name
-            # TODO:
-            # This needs to reference the cnfs_sub hash rather than just the component's attribute which is not merged
+            # TODO: this
+            # needs to reference the cnfs_sub hash rather than just the component's attribute which is not merged
             # Consolidate the logging to a single method
             # For each asset track the list of files that were merged to make the one asset
             elsif (name = context.component.send("#{attribute}_name")) # Use the component default
@@ -160,31 +99,6 @@ module Concerns
 
       def reference_columns
         @reference_columns ||= column_names.select { |n| n.end_with?('_id') || n.end_with?('_name') }
-      end
-
-      def table_mod(method)
-        table_mods.append(method)
-      end
-
-      def table_mods
-        @table_mods ||= []
-      end
-
-      def create_table(schema)
-        schema.create_table table_name, force: true do |t|
-          t.string :name
-          t.string :type
-          t.boolean :abstract
-          t.boolean :enable
-          t.boolean :inherit
-          t.string :from
-          t.references :owner, polymorphic: true
-          t.references :node
-          t.string :config
-          t.string :tags
-          add_columns(t) if respond_to?(:add_columns)
-          table_mods.each { |mod| send(mod, t) }
-        end
       end
     end
   end

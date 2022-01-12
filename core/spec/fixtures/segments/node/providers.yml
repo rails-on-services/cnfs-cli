@@ -1,0 +1,15 @@
+---
+localstack:
+  config:
+    access_key_id: !binary |-
+      9rt7CXXN/Q42yYlYIt8sq+Nz5lrLNznYAaJFlO1q7gIyJGtgq97cW+wFkQCXzzrzWQ3POWSC624Q43lmwozm4FKaFg==
+    account_id: 123456789012
+    region: ap-southeast-1
+    secret_access_key: !binary |-
+      ZQwlz0Vuntt8u+D6MRGUUoFnXAH9/siAIP6pC7l3w+GK9pJMNPlA6xB9Oz6i2Zom2p3X5M0jI+7ToTTraEFpNBXXug==
+    s3:
+      endpoint: http://localstack:4572
+      force_path_style: true
+    sqs:
+      endpoint: http://localstack:4576
+  type: Aws::Provider

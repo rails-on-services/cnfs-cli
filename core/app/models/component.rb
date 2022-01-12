@@ -4,8 +4,8 @@ class Component < ApplicationRecord
   include Concerns::Parent
   include Concerns::Extendable
 
+  belongs_to :node, class_name: 'SegmentFile'
   belongs_to :owner, class_name: 'Component'
-  has_one :parent, as: :owner, class_name: 'Node'
   has_one :context
 
   has_many :components, foreign_key: 'owner_id'
@@ -186,7 +186,7 @@ class Component < ApplicationRecord
         t.string :default
         t.string :config
         t.references :owner
-        t.integer :p_parent_id
+        t.references :node
       end
     end
   end

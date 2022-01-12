@@ -7,9 +7,12 @@ class Definition < ApplicationRecord
 
   before_validation :set_defaults
 
+  # TODO: Definitions do not require an owner
+  # They do have a parent
+  # So need a new concern for this type of arrangement, the owner-less asset
   def set_defaults
     self.name = path.split('/').last
-    self.owner = SegmentRoot.create(name: :test)
+    # self.owner = SegmentRoot.create(name: :test)
   end
 
   after_create :do_it

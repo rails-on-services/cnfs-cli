@@ -8,35 +8,28 @@ module Concerns
     included do
       include Concerns::Encryption
       include Concerns::Interpolation
-
+  
       store :config, coder: YAML
 
       validates :name, presence: true
 
-      after_create :create_node
-      after_update :update_node
-      after_destroy :destroy_node
+      after_create :create_node_record
+      after_update :update_node_record
+      after_destroy :destroy_node_record
     end
 
     def to_context() = as_interpolated
 
+    def node_content() = as_json_encrypted
+
+    def create_node_record() = node_class.create_content(object: self)
+
+    def node_class() = self.class.reflect_on_association(:node).klass
+
     # Assets whose owner is Context are ephemeral so don't create/update a node
-    # def create_node() = create_parent(type: parent_type, owner: self) unless p_node?
-    def create_node
-      create_parent(type: parent_type, owner: self) unless p_node?
-    end
+    def update_node_record() = node.update_content(object: self)
 
-    # def update_node() = parent.update(owner: self) unless p_node?
-    def update_node
-      parent.update(owner: self) unless p_node?
-    end
-
-    # def destroy_node() = parent.destroy unless p_node?
-    def destroy_node
-      parent.destroy unless p_node?
-    end
-
-    def parent_type() = is_a?(Component) ? 'Node::Component' : 'Node::Asset'
+    def destroy_node_record() = node.destroy_content(object: self)
 
     # Log message at level warn appending the parent path to the message
     def node_warn(node:, msg: [])
@@ -44,7 +37,7 @@ module Concerns
       Cnfs.logger.warn(text)
     end
 
-    def p_node?() = Node.source.eql?(:p_node)
+    # def p_node?() = Node.source.eql?(:p_node)
     #   is_a?(Component) || owner.is_a?(Component)
     # end
 
@@ -67,8 +60,8 @@ module Concerns
     class_methods do
       def node_callbacks
         [
-          %i[create after create_node],
-          %i[update after update_node]
+          %i[create after create_node_record],
+          %i[update after update_node_record]
         ]
       end
     end

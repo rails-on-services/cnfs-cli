@@ -1,0 +1,123 @@
+---
+domain:
+  enable: false
+  provisioner_name: terraform
+  type: Terraform::Plan
+  provider_name: aws_east_1
+  modules:
+    zones:
+      source: 'terraform-aws-modules/route53/aws//modules/zones'
+      version: '~> 2.0'
+      zones:
+        "\"tf.com\"":
+          comment: this and that
+          tags:
+            env: production
+        "\"myapp.com\"":
+          comment: myapp.com
+      tags:
+        managedBy: terraform
+    records:
+      source: terraform-aws-modules/route53/aws//modules/records
+      version: '~> 2.0'
+      zone_name: keys(module.zones.route53_zone_zone_id)[0]
+      records:
+        - { name: apigateway1, type: A, alias: { name: 'd-10.amazonaws.xom', zone_id: 'ZLASDF' }}
+        - { name: '', type: A, ttl: 3600, records: ['10.10.10.10'] }
+      depends_on: [module.zones]
+
+rest:
+  enable: false
+  provisioner_name: terraform
+  provider_name: rest
+
+kvm_vm:
+  type: Terraform::Plan
+  enable: false
+  provisioner_name: terraform
+  provider_name: home_lab
+
+web_site:
+  # enable: false
+  type: Terraform::Plan
+  provisioner_name: terraform
+  provider_name: aws_apse_1
+  config:
+    creates: 'Aws::Resource::S3::Bucket'
+  modules:
+    bucket:
+      source: terraform-aws-modules/s3-bucket/aws
+      bucket: my-s3-bucket-${parent.config.targets.one}
+      acl: private
+      versioning:
+        enabled: true
+  outputs:
+    bucket_id:
+      description: The name of the bucket
+      value: module.bucket.s3_bucket_id
+    bucket_region:
+      description: The AWS region this bucket resides in
+      value: module.bucket.s3_bucket_region
+    bucket_regional_domain_name:
+      description: The bucket region-specific domain name
+      value: module.bucket.s3_bucket_bucket_regional_domain_name
+
+vpc:
+  enable: false
+  provisioner_name: terraform
+  provider_name: aws_apse_1
+  type: Terraform::Plan
+  modules:
+    vpc:
+      source: 'terraform-aws-modules/vpc/aws'
+      version: '~> 3.11.0'
+      name: 'testing-vpc'
+      cidr: '10.0.0.0/16'
+      azs:
+        - ap-southeast-1a
+        # - ap-southeast-1b
+        # - ap-southeast-1c
+      private_subnets:
+        - 10.0.1.0/24
+        # - 10.0.2.0/24
+        # - 10.0.3.0/24
+      public_subnets:
+        - 10.0.101.0/24
+        # - 10.0.102.0/24
+        # - 10.0.103.0/24
+      enable_nat_gateway: true
+      enable_vpn_gateway: false
+      # https://stackoverflow.com/questions/61787014/terraform-unable-to-define-security-groups-with-terraform-aws-modules-security
+      ingress_rules: ["https-443-tcp", "http-80-tcp", "ssh-tcp", "all-icmp"]
+      tags:
+        Terraform: "true"
+        Environment: dev
+
+instance:
+  enable: false
+  provisioner_name: terraform
+  provider_name: aws_apse_1
+  type: Terraform::Plan
+  modules:
+    ec2_instance:
+      source: terraform-aws-modules/ec2-instance/aws
+      version: ~> 3.0
+      name: single-instance
+
+      # ami: ami-0a2bd6411b7d7da76 # amd64
+      ami: ami-089c7bdc7cdb50a72 # arm64
+      instance_type: t4g.micro
+      key_name: rjayroach
+      vpc_security_group_ids:
+        - module.vpc.default_security_group_id
+      subnet_id: module.vpc.public_subnets[0]
+      tags:
+        Terraform: "true"
+        Environment: dev
+  outputs:
+    ec2_instance_public_dns:
+      description: "The public DNS name assigned to the instance. For EC2-VPC, this is only available if you've enabled DNS hostnames for your VPC"
+      value: module.ec2_instance.public_dns
+    ec2_instance_public_ip:
+      description: "The public IP address assigned to the instance, if applicable. NOTE: If you are using an aws_eip with your instance, you should refer to the EIP's address directly and not use `public_ip` as this field will change after the EIP is attached"
+      value: module.ec2_instance.public_ip

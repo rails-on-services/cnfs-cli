@@ -3,14 +3,12 @@
 module Cnfs
   class Node < ApplicationRecord
     self.table_name = 'cnfs/nodes'
-    belongs_to :parent, class_name: 'Cnfs::Node'
 
-    # NOTE: Do not delegate :parent to :pathname; That is the name of the self referencing association
-    delegate :exist?, :basename, :join, to: :pathname
+    belongs_to :parent, class_name: 'Cnfs::Node'
 
     store :config, coder: YAML
 
-    def name() = pathname.basename.to_s
+    def bname() = pathname.basename.to_s
 
     def pathname() = @pathname ||= Pathname.new(path)
 
@@ -25,62 +23,65 @@ module Cnfs
   end
 
   class Directory < Node
-    has_many :directories, foreign_key: 'parent_id', class_name: 'Cnfs::Directory'
-    has_many :files, foreign_key: 'parent_id', class_name: 'Cnfs::File'
+    has_many :directories, foreign_key: 'parent_id', class_name: 'Cnfs::Directory', dependent: :destroy
+    has_many :files, foreign_key: 'parent_id', class_name: 'Cnfs::File', dependent: :destroy
 
-    after_create :load_children, if: -> { autoload }
+    delegate :rmtree, to: :pathname, prefix: :pathname
 
-    delegate :children, :glob, to: :pathname
+    store :config, accessors: %i[pattern]
 
-    attr_accessor :pattern, :autoload
-
-    # TODO: Should file, directory or both provide the API for file operations?
-    def rmdir
-      # rmtree
-      # files.destroy
-      # directories.destroy
-    end
+    after_create :load_children
+    after_destroy :pathname_rmtree
 
     def mkpath(name)
-      dir = directories.create(path: join(name), pattern: pattern, autoload: autoload)
-      join(name).mkpath
-    end
-
-    # Or tell the file to create with content adn give it a directory as the parent
-    #
-    def mkfile(content)
+      dir = directories.create(path: pathname.join(name), pattern: pattern)
+      pathname.join(name).mkpath
     end
 
     def load_children
-      files_to_load.each { |childpath| files.append(File.create(path: childpath, type: file_type)) }
-      dirs_to_load.each do |childpath|
-        directories.append(self.class.create(path: childpath, pattern: pattern, autoload: autoload))
+      files_to_load.each do |childpath|
+        child = File.new(path: childpath, parent: self)
+        child.type = file_type(child)
+        child.save
       end
+
+      dirs_to_load.each do |childpath|
+        directories << self.class.create(path: childpath, pattern: pattern)
+      end
+
       true
     end
 
-    def dirs_to_load() = children.select(&:directory?)
+    def dirs_to_load() = pathname.children.select(&:directory?)
 
-    def files_to_load() = pattern ? glob(pattern) : children.select(&:file?)
+    def files_to_load() = pattern ? pathname.glob(pattern) : pathname.children.select(&:file?)
 
-    def file_type() = nil
+    def file_type(_child) = 'Cnfs::File'
 
+    # TODO: Move the TTY stuff to a controller and just return the hash
     def to_tree() = puts(TTY::Tree.new({ '.' => as_tree }).render)
 
     def as_tree
-      directories.each_with_object(files.map{ |f| f.name }) do |dir, ary|
-        value = dir.children.size.zero? ? dir.name : { dir.name => dir.as_tree }
+      directories.each_with_object(files.map{ |f| f.bname }) do |dir, ary|
+        value = dir.pathname.children.size.zero? ? dir.bname : { dir.bname => dir.as_tree }
         ary.append(value)
       end
     end
   end
 
   class File < Node
-    def content() = @content ||= read
+    delegate :delete, to: :pathname, prefix: :pathname
+
+    after_destroy :pathname_delete
+
+    def file_content() = @file_content ||= read
 
     def read() = send("#{parser}_read")
 
-    def write(content) = send("#{parser}_write", content)
+    def write(content)
+      send("#{parser}_write", content)
+      @file_content = read
+    end
 
     def parser() = parser_mapping[extension.to_sym] || :raw
 
@@ -91,14 +92,14 @@ module Cnfs
       }
     end
 
-    def shortname() = pathname.basename.to_s.delete_suffix(".#{extension}")
+    def shortname() = bname.delete_suffix(".#{extension}")
 
-    def extension() = pathname.basename.to_s.split('.').last
+    def extension() = bname.split('.').last
 
     def raw_read() = pathname.read
 
     def yaml_read() = YAML.load_file(pathname)
 
-    def yaml_write(content) = YAML.load_file(pathname)
+    def yaml_write(content) = pathname.write(content.to_yaml)
   end
 end

@@ -32,16 +32,17 @@ class SegmentRoot < Component
   class << self
     def load
       Node.with_asset_callbacks_disabled do
-        # Node::Component.create(path: segment_file_path, owner_class: self)
         Node.source = :p_node
-        DefinitionDirectory.create(path: Cnfs.config.paths.definitions, autoload: true).create_stuff
+        DefinitionDirectory.create(path: Cnfs.config.paths.definitions).create_records
+        # DefinitionDirectory.create(path: Cnfs.config.paths.definitions, autoload: true).create_records
 
         # Create Manually b/c it is a unique class
         file = SegmentFile.create(path: Cnfs.config.root.join('config/segments.yml'))
-        root = create(file.content.merge(p_parent_id: file.id))
+        root = create(file.file_content.merge(node: file))
 
-        SegmentDirectory.create(path: Cnfs.config.paths.segments, autoload: true).create_stuff(owner: root)
-        # PNode::Directory.first.create_stuff(owner: root)
+        root_dir = SegmentDirectory.create(path: Cnfs.config.paths.segments) # .load_children # , autoload: true)
+        file.update(segment: root, segment_dir: root_dir)
+        root_dir.create_records(owner: root)
       end
 
       Cnfs::Core.model_names.each do |model|
@@ -52,6 +53,26 @@ class SegmentRoot < Component
       binding.pry
       Cnfs.logger.fatal(e.message.split('.').first.to_s)
       raise Cnfs::Error, ''
+    end
+
+    def with_asset_callbacks_disabled
+      Node.source = :node
+
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.skip_callback(*callback) }
+      end
+
+      yield
+
+      assets_to_disable.each do |asset|
+        asset.node_callbacks.each { |callback| asset.set_callback(*callback) }
+      end
+
+      Node.source = :asset
+    end
+
+    def assets_to_disable
+      @assets_to_disable ||= Cnfs.config.asset_names.dup.append('component').map { |name| name.classify.constantize }
     end
 
     def segment_file_path() = Cnfs.config.root.join('config/segments.yml')
