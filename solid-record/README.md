@@ -1,4 +1,4 @@
-# Solid Record - A relational database in YAML
+# Solid Record - A relational database persisted to a File System
 
 Solid Record is a simple relational database backed by a hierarchical file system of supported files types
 powered by sqlite and ActiveRecord
@@ -10,10 +10,10 @@ configuration approach which derives sementic meaning from the name, contents an
 system relative to other files and directories
 
 Plural names are transformed into collections of records while singular names become a single record. Records are
-CAST into a specifc type based on the name of directory or file
+CAST into a specifc type based on the name of the directory or file
 
-Subdirectoreies and files contained in a directory are considered to `belong_to` the parent directory. In the same
-regard, the parent directory:
+Subdirectoreies and files contained in a parent directory are considered to `belong_to` the parent directory.
+The inverse is also true for the parent directory which:
 
 - `has_many` of each directory with a plural name and `has_many` of the contents of each file with a plural name
 - `has_one` of each directory and contents of a file with a singular name
@@ -38,12 +38,12 @@ segments
 `-- users.yml
 ```
 
-`segments.yml`:
+Contents of `segments.yml`:
 ```yaml
 singular_type: stack
 ```
 
-`segments/backend.yml`:
+Contents of `segments/backend.yml`:
 ```yaml
 singular_type: environment
 ```
@@ -87,6 +87,24 @@ SolidRecord::Directory.create(path: 'segments')
 
 ## Persistence
 
+### Primary Keys
+
+YAML keys are text rather than integers and they are unique so SolidRecord uses them as primary keys
+to setup associations between records
+
+are based on keys rather than the typical auto incrementing integer
+
+uses the not consistent over time in YAML so you cannot rely on the ID. Names need to be unique so that is the natural primary key.
+To implement where files have a belongs_to relationship between them, e.g. user has_many :profiles in profile declare
+both a t.references user and t.string user_name; By setting the user name SolidRecord will find the User record of
+ that name and insert the ID when creating the record
+
+### Sqlite
+
+Used only for in memory storage. Any changes made, e.g. calls to #save are written to the file system
+
+### A/R Callbacks
+
 NOTE: This should auto disable model callbacks
 
 TODO: Need a name for the class of models. Assets maybe, but Segment makes no sense. There needs to be a name for the Directory Asset
@@ -103,11 +121,6 @@ code
 Changes to models will be automatically persisted by calling to_yaml on the object. all attributes *except* those
  ending in `_id` will be persisted. 
 To override the content written to files implement to_node_content which should return a hash; SolidRecord will convert this to YAML
-
-ID's are not consistent over time in YAML so you cannot rely on the ID. Names need to be unique so that is the natural primary key.
-To implement where files have a belongs_to relationship between them, e.g. user has_many :profiles in profile declare
-both a t.references user and t.string user_name; By setting the user name SolidRecord will find the User record of
- that name and insert the ID when creating the record
 
 [Read more](link)
 

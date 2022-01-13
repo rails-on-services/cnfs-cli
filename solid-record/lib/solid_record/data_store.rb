@@ -1,14 +1,98 @@
 # frozen_string_literal: true
 
+# Simple Usage:
+#   SolidRecord.configure.load
+#
+# Usage:
+#   SolidRecord.configure(schema_paths: 'app/models')
+#   SolidRecord.data_paths += SolidRecord::PathMap.new(path: 'spec/dummy/data', map: { '.' => 'segments' })
+#   SolidRecord.load
+
 module SolidRecord
   class << self
-    def data_store() = @data_store ||= DataStore.new
+  def parser_map
+    {
+      yml: :yaml,
+      yaml: :yaml
+    }
+  end
+  end
+  # path: 'spec/dummay/data'
+  # layout:
+  # backend/development
+  # backend/production/cluster
+  # frontend/cluster
+  #
+  # 1. Single class at all levels of hierarchy (i.e. self referencing)
+  #    Required models: Segment
+  #    map: { '.' => 'segments' }
+  #
+  # 2. Consistent map of hierarchy paths to classes
+  #    Required models Stack, Environment, Target
+  #    map: { '.' => 'stacks', 'stacks' => 'environments', 'stacks/environments' => 'targets' }
+  #
+  # 3. Each path within the hierarchy has it's own class hierarchy
+  #    Required models Stack, Environment, Target
+  #    map: { '.' => 'stacks', 'frontend' => 'target', 'backend' => 'environments', backend/production' => 'target' })
+  #
+  # 4. Default
+  #    Required models: path.basename.to_s.classify
+  #    map: {}
+  #
+  class << self
+    attr_writer :data_paths, :glob_pattern
+
+    # array of PathMap classes
+    def data_paths() = @data_paths ||= []
+
+    def glob_pattern() = @glob_pattern ||= '**/*.yml'
+
+    def configure(**options)
+      DataStore.configure(**options)
+      @data_paths ||= [options[:data_paths]].compact.flatten
+      self
+    end
+
+    def load
+      DataStore.load
+      data_paths.append(new) if data_paths.empty?
+      data_paths.each(&:load_path)
+    end
+  end
+
+  class PathMap
+    attr_accessor :path, :map, :pattern
+
+    def initialize(**options)
+      @path = Pathname.new(options.fetch(:path, '.'))
+      @map = options.fetch(:map, {})
+      @pattern = options.fetch(:pattern, SolidRecord.glob_pattern)
+    end
+
+    def load_path
+      # TODO: Convert path.basename.to_s to a class using map
+      # TODO: Log a warning when a file is not converted; Config setting to disable warnings
+      path.glob(pattern).each do |entry|
+        next unless (klass = entry.classify.safe_constantize)
+
+        klass.load_content(entry)
+      end
+    end
   end
 
   class DataStore
     class << self
-      # This class accessor is used in #create_database_tables
-      attr_accessor :model_names
+      # schema_file: path to a file that defines an ActiveRecord::Schema
+      # schema_paths: array of paths to models which implement create_table 
+      attr_accessor :schema_file, :schema_paths
+
+      def configure(**options)
+        ActiveRecord::Migration.verbose = options.fetch(:verbose, false)
+        ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+        @schema_file = options.fetch(:schema_file, nil)
+        @schema_paths = [options[:schema_paths]].compact.flatten
+        self
+      end
 
       # Use this method to dump the latest version of the schema to a file
       # Gems can use this to create a schema that used with NullDB to emulate models without having the actual classes
@@ -19,58 +103,36 @@ module SolidRecord
 
         File.open(file_name, 'w') { |f| f.puts(schema) }
       end
-    end
 
-    attr_accessor :model_names, :model_dirs, :log_migrations, :assets_to_disable
-
-    def initialize(**options)
-      @log_migrations = options.fetch(:log_migrations, false)
-      @model_names = options.fetch(:model_names, [])
-      @model_dirs = options.fetch(:model_dirs, [])
-      [model_dirs].flatten.each do |dir|
-        path = Pathname.new(dir)
-        @model_names += path.glob('**/*.rb').map do |model|
-          model.relative_path_from(path).to_s.delete_suffix('.rb')
+      def load
+        if schema_file
+          require schema_file
+        else
+          load_schema_paths
         end
       end
-    end
 
-    def setup
-      ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-      create_database_tables
-      true
-    end
+      def reset() = load_schema_paths
 
-    def reset() = create_database_tables
+      def load_schema_paths
+        ActiveRecord::Schema.define do |schema|
+          require_relative '../ext/table_definition'
+          SolidRecord.models.each do |model|
+            next unless model.respond_to? :create_table
 
-    # TODO: Finish this
-    def with_asset_callbacks_disabled
-      Node.source = :node
-
-      assets_to_disable.each do |asset|
-        asset.node_callbacks.each { |callback| asset.skip_callback(*callback) }
+            model.create_table(schema)
+            model.reset_column_information
+          end
+        end
+        true
       end
 
-      yield
-
-      assets_to_disable.each do |asset|
-        asset.node_callbacks.each { |callback| asset.set_callback(*callback) }
-      end
-
-      Node.source = :asset
-    end
-
-
-    private
-
-    def create_database_tables
-      ActiveRecord::Migration.verbose = log_migrations
-      SolidRecord::DataStore.model_names = model_names
-      ActiveRecord::Schema.define do |schema|
-        SolidRecord::DataStore.model_names.each do |model_name|
-          model = model_name.classify.constantize
-          model.create_table(schema)
-          model.reset_column_information
+      def schema_model_names
+        schema_paths.each_with_object([]) do |schema_path, ary|
+          path = Pathname.new(schema_path)
+          path.glob('**/*.rb').map do |model|
+            ary.append model.relative_path_from(path).to_s.delete_suffix('.rb')
+          end
         end
       end
     end

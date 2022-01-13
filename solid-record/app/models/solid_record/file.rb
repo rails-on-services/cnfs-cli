@@ -1,37 +1,61 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class File < Node
-    delegate :delete, to: :pathname, prefix: :pathname
+  class << self
+    # SolidRecord.parser = :yaml
+    def parser() = nil
+  end
 
-    after_destroy :pathname_delete
+  module File
+    # Persistence
+    # TODO: Maybe this, or some part of it, goes to the parent class to share between dir and file
+    def create_owner(owner)
+      asset_content.each do |name, values|
+        asset_type = singular? ? parent.bname : shortname
+        unless (klass = asset_type.to_s.classify.safe_constantize)
+          Cnfs.logger.warn('Error on', asset_type)
+          next
+        end
 
-    def file_content() = @file_content ||= read
-
-    def read() = send("#{parser}_read")
-
-    def write(content)
-      send("#{parser}_write", content)
-      @file_content = read
+        # TODO: Log it if not valid like it is today
+        c = klass.create(values.merge(name: name, owner: owner, node: self))
+        # binding.pry unless c.persisted?
+      end
     end
 
-    def parser() = parser_mapping[extension.to_sym] || :raw
-
-    def parser_mapping
-      {
-        yml: :yaml,
-        yaml: :yaml
-      }
+    def self.create_content(object:)
+      parent_node = object.owner.node.segment_dir
+      file_name = parent_node.pathname.join("#{object.class.table_name}.yml").to_s
+      node = find_or_create_by(parent: parent_node, path: file_name)
+      current_content = file_content || {}
+      writable_content = current_content.merge(object.name => object.node_content).sort.to_h
+      node.write(writable_content)
     end
 
-    def shortname() = bname.delete_suffix(".#{extension}")
+    def update_content(object:)
+      if singular?
+        write(object.name => object.node_content)
+      else
+        write(file_content.merge(object.node_content))
+      end
+    end
 
-    def extension() = bname.split('.').last
+    def destroy_content(object:)
+      if singular? || file_content.keys.size.eql?(1)
+        destroy
+      else
+        write(file_content.except(object.name))
+      end
+    end
 
-    def raw_read() = pathname.read
+    def asset_content() = solid_path.singular? ? { send(SolidRecord.key_column) => solid_path.solid_read } : solid_path.solid_read
 
-    def yaml_read() = YAML.load_file(pathname)
+    # def singular?() = asset_names.exclude?(shortname)
 
-    def yaml_write(content) = pathname.write(content.to_yaml)
+    # If the file is empty YAML returns false so override this to return an empty hash when file is empty
+    def file_content() = super || {}
+
+    def asset_names() = Cnfs.config.asset_names
+
   end
 end

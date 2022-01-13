@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class Directory < Node
-    has_many :directories, foreign_key: 'parent_id', class_name: 'SolidRecord::Directory', dependent: :destroy
-    has_many :files, foreign_key: 'parent_id', class_name: 'SolidRecord::File', dependent: :destroy
+  module Directory
+    # has_many :directories, foreign_key: 'parent_id', class_name: 'SolidRecord::Directory', dependent: :destroy
+    # has_many :files, foreign_key: 'parent_id', class_name: 'SolidRecord::File', dependent: :destroy
 
     delegate :rmtree, to: :pathname, prefix: :pathname
 
-    store :config, accessors: %i[pattern]
+    # store :config, accessors: %i[pattern]
 
-    after_create :load_children
+    # after_create :load_children
     after_destroy :pathname_rmtree
 
     # def mkpath(name)
@@ -37,6 +37,25 @@ module SolidRecord
 
     def file_type(_child) = 'SolidRecord::File'
 
+    # Create Models
+    def create_records(owner:)
+      files.select{ |f| f.file_content }.each { |file| file.create_owner(owner) }
+
+      directories.each do |dir|
+        file = files.select{ |f| f.shortname.eql?(dir.bname) }.first
+        file&.update(segment_dir: dir)
+        # TODO: If a segment dir exists but not the file then create the File object (but not the actual file)
+        # The Segment is also created. If the user updates the segment then the file will get written
+        owner = file.segment if file
+
+        dir.create_records(owner: owner)
+      end
+    end
+
+    # Persist Models
+
+
+    # Output Display
     # TODO: Move the TTY stuff to a controller and just return the hash
     def to_tree() = puts(TTY::Tree.new({ '.' => as_tree }).render)
 
