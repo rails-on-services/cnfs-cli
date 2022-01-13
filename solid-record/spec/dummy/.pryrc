@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # .pryrc
 
 # SolidRecord.glob_pattern = '*.yml'

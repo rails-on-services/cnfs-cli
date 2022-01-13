@@ -39,10 +39,10 @@ module SolidRecord
 
     # Create Models
     def create_records(owner:)
-      files.select{ |f| f.file_content }.each { |file| file.create_owner(owner) }
+      files.select(&:file_content).each { |file| file.create_owner(owner) }
 
       directories.each do |dir|
-        file = files.select{ |f| f.shortname.eql?(dir.bname) }.first
+        file = files.select { |f| f.shortname.eql?(dir.bname) }.first
         file&.update(segment_dir: dir)
         # TODO: If a segment dir exists but not the file then create the File object (but not the actual file)
         # The Segment is also created. If the user updates the segment then the file will get written
@@ -53,7 +53,6 @@ module SolidRecord
     end
 
     # Persist Models
-
 
     # Output Display
     # TODO: Move the TTY stuff to a controller and just return the hash

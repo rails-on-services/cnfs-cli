@@ -2,7 +2,7 @@
 
 module SolidRecord
   class << self
-    MAX_ID = 2**30 - 1
+    MAX_ID = (2**30) - 1
 
     attr_writer :path_column, :key_column, :reference_suffix
 

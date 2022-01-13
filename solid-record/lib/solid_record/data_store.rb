@@ -10,12 +10,12 @@
 
 module SolidRecord
   class << self
-  def parser_map
-    {
-      yml: :yaml,
-      yaml: :yaml
-    }
-  end
+    def parser_map
+      {
+        yml: :yaml,
+        yaml: :yaml
+      }
+    end
   end
   # path: 'spec/dummay/data'
   # layout:
@@ -83,7 +83,7 @@ module SolidRecord
   class DataStore
     class << self
       # schema_file: path to a file that defines an ActiveRecord::Schema
-      # schema_paths: array of paths to models which implement create_table 
+      # schema_paths: array of paths to models which implement create_table
       attr_accessor :schema_file, :schema_paths
 
       def configure(**options)

@@ -56,6 +56,5 @@ module SolidRecord
     def file_content() = super || {}
 
     def asset_names() = Cnfs.config.asset_names
-
   end
 end

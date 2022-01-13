@@ -78,19 +78,41 @@ If there is a singular name for a file:
 
 ## Configuration
 
-After defining ... call
-
 ```ruby
-SolidRecord::DataStore.setup (maybe change to load)
-SolidRecord::Directory.create(path: 'segments')
+SolidRecord.glob_pattern = '**/*.yml'
+SolidRecord.path_column = 'path'
+SolidRecord.key_column = 'key'
+SolidRecord.reference_suffix = 'name'
+SolidRecord.parser = :yaml
 ```
 
 ## Persistence
 
 ### Primary Keys
 
-YAML keys are text rather than integers and they are unique so SolidRecord uses them as primary keys
-to setup associations between records
+YAML keys are text rather than integers and they are unique within a single file. SolidRecord supports having the
+same types at multiple layers in the hierachy and so a unique primary key is generated based on a combination
+of the file's full path and the key of each object
+
+SolidRecord uses these keys to build the has_many associations between records at the time of database load
+
+### Adding SolidRecord to an ActiveReccord Model
+
+```ruby
+class User
+  include SolidRecord::Model
+end
+```
+
+Add to the migration
+
+```ruby
+schema.create_table 'blogs', force: true do |t|
+  t.solid
+  t.references :user, solid: true
+end
+```
+
 
 are based on keys rather than the typical auto incrementing integer
 

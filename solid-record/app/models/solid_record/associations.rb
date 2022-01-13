@@ -17,6 +17,6 @@ module SolidRecord
       def assn_names() = reflect_on_all_associations(:belongs_to).map(&:name)
     end
 
-    def except_solid() = super + self.class.assn_names.map{ |name| "#{name}_id" }
+    def except_solid() = super + self.class.assn_names.map { |name| "#{name}_id" }
   end
 end
