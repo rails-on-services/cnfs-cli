@@ -7,7 +7,9 @@ module SolidRecord
     class_methods do
       def formatted_attributes(path, values)
         assn_names.each_with_object(values) do |assn_name, hash|
-          assn_id = SolidRecord.identify(parent(path), hash["#{assn_name}_name"])
+          next unless (assn_value = hash["#{assn_name}_name"])
+
+          assn_id = SolidRecord.identify(parent(path), assn_value)
           hash.merge!("#{assn_name}_id" => assn_id)
         end
       end

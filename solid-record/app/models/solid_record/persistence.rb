@@ -14,9 +14,6 @@ module SolidRecord
     def reference_suffix() = @reference_suffix ||= 'name'
 
     def identify(path, key) = Zlib.crc32("#{path.keyname}/#{key}") % MAX_ID
-
-    # Registry of models that have included the Persistence module
-    def models() = @models ||= []
   end
 
   module Persistence
@@ -27,7 +24,8 @@ module SolidRecord
         disable_callbacks do
           formatted_assets(path).each do |key, values|
             hash = formatted_attributes(path, values).merge(solid_attributes(path.realpath, key))
-            create(hash)
+            res = create(hash)
+            puts(res.errors) unless res.persisted?
           end
         end
       end
@@ -50,18 +48,12 @@ module SolidRecord
     end
 
     included do
-      SolidRecord.models << self
-
       after_create :_create_asset_
       after_update :_update_asset_
       after_destroy :_destroy_asset_
     end
 
     def _create_asset_() = nil
-
-    def _update_asset_() = pathname.write_asset(to_solid)
-
-    def _destory_asset_() = pathname.delete
 
     def to_solid() = pathname.singular? ? as_solid : { _key_ => as_solid }
 
@@ -77,5 +69,17 @@ module SolidRecord
     def _path_() = send(SolidRecord.path_column)
 
     def _key_() = send(SolidRecord.key_column)
+
+    def _update_asset_() = pathname.write_asset(content_to_write)
+
+    def content_to_write() = pathname.singular? ? to_solid : pathname.read_asset.merge(to_solid)
+
+    def _destroy_asset_
+      if pathname.singular? || pathname.read_asset.keys.size.eql?(1)
+        pathname.delete
+      else
+        pathname.write_asset(pathname.read_asset.except(_key_))
+      end
+    end
   end
 end

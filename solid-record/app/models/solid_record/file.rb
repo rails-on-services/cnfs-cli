@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class << self
-    # SolidRecord.parser = :yaml
-    def parser() = nil
-  end
-
   module File
     # Persistence
     # TODO: Maybe this, or some part of it, goes to the parent class to share between dir and file

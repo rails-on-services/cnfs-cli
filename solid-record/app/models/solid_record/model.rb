@@ -5,6 +5,7 @@ module SolidRecord
     extend ActiveSupport::Concern
 
     included do
+      include Table
       include Persistence
       include Associations
     end
