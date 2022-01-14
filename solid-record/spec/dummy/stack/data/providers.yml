@@ -1,0 +1,6 @@
+---
+aws:
+  config:
+    region: ap-southeast-1
+  tags: {}
+  type: Aws::Provider

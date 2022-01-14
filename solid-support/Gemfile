@@ -6,5 +6,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem 'pry'
-gem 'solid-support', path: '../solid-support'
 # gem "rake", "~> 13.0"

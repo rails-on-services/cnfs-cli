@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 require 'active_record'
-require 'pathname'
+# require 'pathname'
 require 'sqlite3'
 
-require_relative 'ext/pathname'
+require 'solid_support'
+
+# require_relative 'ext/pathname'
 
 require_relative 'solid_record/version'
 require_relative 'solid_record/data_store'
@@ -29,7 +31,8 @@ require_relative '../app/models/solid_record/model'
 module SolidRecord
   class << self
     def load
-      [DataStore, PathMap].each(&:load)
+      @path_map ||= PathMap
+      [DataStore, @path_map].each(&:load)
       true
     end
 

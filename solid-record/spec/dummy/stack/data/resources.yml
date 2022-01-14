@@ -1,0 +1,81 @@
+---
+my2:
+  config:
+    ami: ami-0edacf1268f9fd7be
+    arn: arn:aws:ec2:ap-southeast-1:441628503153:instance/i-0ba94770e3e591f6d
+    associate_public_ip_address: true
+    availability_zone: ap-southeast-1a
+    capacity_reservation_specification:
+    - capacity_reservation_preference: open
+      capacity_reservation_target: []
+    cpu_core_count: 2
+    cpu_threads_per_core: 1
+    credit_specification:
+    - cpu_credits:
+    disable_api_termination: false
+    ebs_block_device: []
+    ebs_optimized: false
+    enclave_options:
+    - enabled: false
+    ephemeral_block_device: []
+    get_password_data: false
+    hibernation: false
+    host_id:
+    iam_instance_profile: ''
+    id: i-0ba94770e3e591f6d
+    instance_initiated_shutdown_behavior: stop
+    instance_state: running
+    instance_type: t4g.micro
+    ipv6_address_count: 0
+    ipv6_addresses: []
+    key_name: rjayroach
+    launch_template: []
+    metadata_options:
+    - http_endpoint: enabled
+      http_put_response_hop_limit: 1
+      http_tokens: optional
+    monitoring: false
+    network_interface: []
+    outpost_arn: ''
+    password_data: ''
+    placement_group: ''
+    placement_partition_number:
+    primary_network_interface_id: eni-0d9d8a131f11ad63b
+    private_dns: ip-10-0-101-232.ap-southeast-1.compute.internal
+    private_ip: 10.0.101.232
+    public_dns: ''
+    public_ip: 46.137.235.204
+    root_block_device:
+    - delete_on_termination: true
+      device_name: "/dev/xvda"
+      encrypted: false
+      iops: 100
+      kms_key_id: ''
+      tags: {}
+      throughput: 0
+      volume_id: vol-0b43f77b2e2fc04d7
+      volume_size: 8
+      volume_type: gp2
+    secondary_private_ips: []
+    security_groups: []
+    source_dest_check: true
+    subnet_id: subnet-0b40ab55e072419aa
+    tags:
+      Name: single-instance
+    tags_all:
+      Name: single-instance
+    tenancy: default
+    timeouts:
+      create:
+      delete:
+      update:
+    user_data:
+    user_data_base64:
+    volume_tags:
+      Name: single-instance
+    vpc_security_group_ids:
+    - sg-056697b3bc2b58d1a
+  tags: {}
+  provider_name: aws
+  runtime_name: compose
+  type: Aws::Resource::EC2::Instance

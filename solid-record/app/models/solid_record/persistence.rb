@@ -23,14 +23,27 @@ module SolidRecord
       def load_content(path)
         disable_callbacks do
           formatted_assets(path).each do |key, values|
-            hash = formatted_attributes(path, values).merge(solid_attributes(path.realpath, key))
-            res = create(hash)
-            puts(res.errors) unless res.persisted?
+            sa = if path.singular?
+                   solid_attributes(path.parent.realpath, key)
+                 else
+              solid_attributes(path.realpath, key)
+                 end
+            # puts name, path.realpath, sa
+            # hash = formatted_attributes(path, values).merge(solid_attributes(path.realpath, key))
+            hash = formatted_attributes(path, values).merge(sa)
+            # puts '==='
+            begin
+              res = create(hash)
+              puts(res.errors) unless res.persisted?
+            rescue ActiveRecord::SubclassNotFound => e
+              puts "Error on #{path}"
+            end
           end
         end
       end
 
-      def formatted_assets(path) = path.singular? ? { SolidRecord.key_column => path.read_asset } : path.read_asset
+      # def formatted_assets(path) = path.singular? ? { SolidRecord.key_column => path.read_asset } : path.read_asset
+      def formatted_assets(path) = path.singular? ? { path.name => path.read_asset } : path.read_asset
 
       def formatted_attributes(_path, values) = values
 
@@ -64,7 +77,7 @@ module SolidRecord
     def pathname() = @pathname ||= Pathname.new(_path_)
 
     # TODO: rename method
-    def gid() = SolidRecord.identify(_path_, _key_)
+    def gid() = SolidRecord.identify(pathname, _key_)
 
     def _path_() = send(SolidRecord.path_column)
 

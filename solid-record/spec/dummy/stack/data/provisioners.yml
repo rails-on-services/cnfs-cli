@@ -1,0 +1,11 @@
+---
+terraform:
+  config:
+    state_file: terraform.tfstate
+  tags: {}
+  type: Terraform::Provisioner
+tf:
+  config:
+    state_file: terraform.tfstate
+  tags: {}
+  type: Terraform::Provisioner

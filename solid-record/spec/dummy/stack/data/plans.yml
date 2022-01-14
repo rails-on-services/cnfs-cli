@@ -1,0 +1,69 @@
+---
+bastion_sg:
+  provisioner_name: terraform
+  provider_name: aws
+  type: Terraform::Plan
+  modules:
+    bastion:
+      source: terraform-aws-modules/security-group/aws
+      name: bastion-service
+      description: Security group for bastion-service
+      vpc_id: module.vpc.vpc_id
+      ingress_cidr_blocks:
+      - 0.0.0.0/0
+      - module.vpc.vpc_cidr_block
+      ingress_rules:
+      - https-443-tcp
+      - http-80-tcp
+      - ssh-tcp
+      - all-icmp
+      egress_rules:
+      - all-all
+ec3:
+  abstract: false
+  enable: true
+  inherit: true
+  config: {}
+  tags: {}
+  provider_name: aws
+  provisioner_name: terraform
+  variables: {}
+  modules:
+    ec2_instance:
+      source: terraform-aws-modules/ec2-instance/aws
+      version: "~> 3.0"
+      key_name: rjayroach
+      name: single-instance
+      ami: ami-0edacf1268f9fd7be
+      instance_type: t4g.micro
+      vpc_security_group_ids:
+      - module.bastion.security_group_id
+      subnet_id: module.vpc.public_subnets[0]
+  outputs: {}
+  type: Terraform::Plan
+vpc:
+  enable: true
+  config: {}
+  tags: {}
+  provider_name: aws
+  provisioner_name: terraform
+  variables: {}
+  modules:
+    vpc:
+      source: terraform-aws-modules/vpc/aws
+      version: "~> 3.11.0"
+      name: testing-vpc
+      cidr: 10.0.0.0/16
+      azs:
+      - ap-southeast-1a
+      private_subnets:
+      - 10.0.1.0/24
+      public_subnets:
+      - 10.0.101.0/24
+      enable_nat_gateway: true
+      enable_vpn_gateway: false
+      tags:
+        Terraform: 'true'
+        Environment: dev
+  outputs: {}
+  type: Terraform::Plan
