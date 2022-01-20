@@ -2,14 +2,14 @@
 
 module SolidRecord
   class << self
-  # schema_file: path to a file that defines an ActiveRecord::Schema
-  attr_accessor :schema_file
+    # Path to a file that defines an ActiveRecord::Schema
+    attr_accessor :schema_file
   end
 
   class DataStore
     class << self
       def load
-        ActiveRecord::Migration.verbose = false # options.fetch(:verbose, false)
+        ActiveRecord::Migration.verbose = false
         ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
         SolidRecord.schema_file ? require(schema_file) : load_schema_paths
       end
@@ -29,9 +29,9 @@ module SolidRecord
 
       def reset() = load_schema_paths
 
-      # Use this method to dump the latest version of the schema to a file
-      # Gems can use this to create a schema that used with NullDB to emulate models without having the actual classes
-      # or underlying database prsent
+      # Dump the latest version of the schema to a file
+      # Example use case: Create a schema which can be used with NullDB to emulate models without having
+      # the actual classes or underlying database prsent
       def schema_dump(file_name = nil)
         schema = ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, StringIO.new).string
         return schema unless file_name

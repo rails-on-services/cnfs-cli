@@ -1,48 +1,30 @@
 # frozen_string_literal: true
 
 require 'active_record'
-# require 'pathname'
 require 'sqlite3'
 
 require 'solid_support'
 
-# require_relative 'ext/pathname'
-
 require_relative 'solid_record/version'
 require_relative 'solid_record/data_store'
-require_relative 'solid_record/path_map'
 
-require_relative '../app/models/solid_record/table'
-require_relative '../app/models/solid_record/persistence'
-require_relative '../app/models/solid_record/associations'
-require_relative '../app/models/solid_record/model'
+require_relative 'solid_record/table'
+require_relative 'solid_record/data_path'
+require_relative 'solid_record/document'
+require_relative 'solid_record/element'
 
-# require_relative '../app/models/solid_record/directory'
-# require_relative '../app/models/solid_record/file'
+require_relative 'solid_record/yaml_document'
 
-# Simple Usage:
-#   SolidRecord.configure.load
-#
+require_relative 'solid_record/persistence'
+require_relative 'solid_record/model'
+
 # Usage:
-#   SolidRecord.configure(schema_paths: 'app/models')
-#   SolidRecord.path_maps += SolidRecord::PathMap.new(path: 'spec/dummy/data', map: { '.' => 'segments' })
 #   SolidRecord.load
-
 module SolidRecord
   class << self
-    def load
-      @path_map ||= PathMap
-      [DataStore, @path_map].each(&:load)
+    def load(**options)
+      [DataStore, DataPath.create(**options)].each(&:load)
       true
-    end
-
-    def parser() = nil
-
-    def parser_map
-      {
-        yml: :yaml,
-        yaml: :yaml
-      }
     end
   end
 

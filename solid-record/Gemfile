@@ -2,9 +2,7 @@
 
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in solid-record.gemspec
 gemspec
 
 gem 'pry'
 gem 'solid-support', path: '../solid-support'
-# gem "rake", "~> 13.0"

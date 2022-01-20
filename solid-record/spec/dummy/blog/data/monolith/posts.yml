@@ -1,0 +1,5 @@
+# posts.yml
+---
+third:
+  blog_name: Another
+  content: hello, third, baby!

@@ -1,0 +1,7 @@
+# blogs.yml
+---
+Another:
+  user_name: sad
+  posts:
+    second post:
+      content: hello, second post

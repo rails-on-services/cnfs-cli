@@ -5,24 +5,29 @@
 # SolidRecord.glob_pattern = '*.yml'
 # SolidRecord.path_column = 'sr_path'
 # SolidRecord.key_column = 'sr_key'
-# SolidRecord.reference_suffix = 'baby'
-# SolidRecord.parser = :yaml
+# SolidRecord.reference_suffix = 'other'
 
-def blog
-  Pathname.new('.').glob('spec/dummy/blog/app/models/*.rb').each { |path| require_relative path }
-  SolidRecord.path_maps = [{ path: 'spec/dummy/blog/data' }]
-  SolidRecord.load
+def path_map(what)
+  {
+    blog: 'users/blogs/posts',
+    infra: '.',
+    stack: 'segments'
+  }[what]
 end
 
-def infra
-  Pathname.new('.').glob('spec/dummy/infra/app/models/*.rb').each { |path| require_relative path }
-  SolidRecord.path_maps = [{ path: 'spec/dummy/infra/data' }]
-  SolidRecord.path_map = SolidRecord::MyPathMap
-  SolidRecord.load
+%i[blog stack infra].each do |what|
+  %i[file monolith hybrid].each do |type|
+    define_method "#{what}_#{type}" do |_path_map = '.', recurse = false|
+      Pathname.new('.').glob("spec/dummy/#{what}/app/models/*.rb").each { |path| require_relative(path) }
+      # Pathname.new('.').glob('../core/app/models/*.rb').each { |path| require_relative path }
+      SolidRecord::DataStore.load
+      SolidRecord::DataPath.create(path: "spec/dummy/#{what}/data/#{type}", path_map: path_map(what), recurse: recurse)
+    end
+  end
 end
 
-def stack
-  Pathname.new('.').glob('spec/dummy/stack/app/models/*.rb').each { |path| require_relative path }
-  SolidRecord.path_maps = [{ path: 'spec/dummy/stack/data', map: './segments', recursive: true }]
-  SolidRecord.load
-end
+def srd() = SolidRecord::Document
+
+def sre() = SolidRecord::Element
+
+def srp() = SolidRecord::DataPath

@@ -1,0 +1,15 @@
+---
+sad:
+  last: smith
+  blogs:
+    My Blog:
+      posts:
+        first post:
+          content: hello, MONOLITHIC world!
+happy:
+  last: smith
+quiet:
+  last: smith
+old:
+  first: Old
+  last: smith

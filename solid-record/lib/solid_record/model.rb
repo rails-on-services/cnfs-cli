@@ -7,7 +7,7 @@ module SolidRecord
     included do
       include Table
       include Persistence
-      include Associations
+      # include Associations
     end
   end
 end
