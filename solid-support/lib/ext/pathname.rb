@@ -1,8 +1,38 @@
 # frozen_string_literal: true
 
+require 'active_support/inflector'
+
 class Pathname
-  # users/blogs.yml => users/blogs
-  def keyname() = @keyname ||= realpath.to_s.delete_suffix(".#{extension}")
+  # Argument is a string or Pathname
+  # Returns a Pathname when matched or nil
+  def matchpath(path_map)
+    return unless (str = last_element_match(path_map))
+
+    Pathname.new(str)
+  end
+
+  # returns argument's path element in position one less than the size of the path elements
+  # path_map, self.to_s, result
+  # 'stacks/environments/targets', 'foo/bar/baz', 'targets'
+  # 'stacks/environments/targets', 'foo/bar', 'environments'
+  # 'stacks/environments/targets', 'foo', 'stacks'
+  def last_element_match(path_map) = path_map.to_s.split('/')[last_element_index]
+
+  # 'foo/bar/baz' => 2, 'foo/bar' => 1, 'foo' => 0
+  def last_element_index() = to_s.split('/').size - 1
+
+  # returns true if rootname is users or users.yml
+  def plural?() = name.eql?(name.pluralize)
+
+  # returns true if rootname is user or user.yml
+  def singular?() = name.eql?(name.singularize)
+
+  # users.yml => User
+  def safe_constantize() = classify.safe_constantize
+
+  # Root name functionality
+  # users.yml => 'User'
+  def classify() = name.classify
 
   # users.yml => users
   def name() = @name ||= rootname.delete_suffix(".#{extension}")
@@ -10,31 +40,6 @@ class Pathname
   # users.yml => yml
   def extension() = @extension ||= rootname.split('.').last
 
-  # Pathname(path/users.yml) => users.yml
+  # Pathname.new('path/users.yml').rootname => 'users.yml'
   def rootname() = @rootname ||= basename.to_s
-
-  # Root name functionality
-  # users.yml => User
-  def classify() = name.classify
-
-  # true if file name is user or user.yml
-  def singular?() = name.eql?(name.singularize)
-
-  # Read
-  def read_asset() = send("read_#{parser}")
-
-  def read_raw() = read
-
-  def read_yaml() = YAML.load_file(self)
-
-  # Write a Hash to the file
-  # TODO: Is there a better way to do it?
-  def write_asset(content) = send("write_#{parser}", content)
-
-  def write_raw(content) = write(content)
-
-  def write_yaml(content) = write(content.to_yaml)
-
-  # Parser
-  def parser() = SolidRecord.parser || SolidRecord.parser_map[extension.to_sym] || :raw
 end

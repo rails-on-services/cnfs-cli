@@ -12,9 +12,9 @@ Gem::Specification.new do |spec|
   spec.description   = 'A set of Support Classes'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '>= 3.0.0'
 
-  spec.metadata['allowed_push_host'] = "TODO: Set to 'https://mygemserver.com'"
+  # spec.metadata['allowed_push_host'] = "TODO: Set to 'https://mygemserver.com'"
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/cnfs.io/solid-support'
@@ -32,10 +32,12 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Uncomment to register a new dependency of your gem
+  spec.add_dependency 'activesupport', '~> 6.1'
 
-  spec.add_development_dependency 'guard-rspec'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'guard-rspec', '~> 4.7'
+  spec.add_development_dependency 'pry-byebug', '~> 3.9'
+  spec.add_development_dependency 'rspec', '~> 3.10'
+  spec.add_development_dependency 'rubocop', '~> 1.22'
 
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
