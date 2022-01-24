@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Aws
-  class Provider < Provider
+  class Provider < OneStack::Provider
     # standard credentials for aws
     store :config, accessors: %i[account_id access_key_id secret_access_key region]
 
@@ -15,11 +15,9 @@ module Aws
     end
 
     def regions
-      begin
-        client.describe_regions[0].map { |r| r.region_name }.sort
-      rescue EC2::Errors::AuthFailure => e
-        raise Cnfs::Error, e.message
-      end
+      client.describe_regions[0].map(&:region_name).sort
+    rescue EC2::Errors::AuthFailure => e
+      raise OneStack::Error, e.message
     end
 
     def client() = @client ||= Resource::EC2::Instance.client(self)
@@ -29,7 +27,7 @@ module Aws
 
     def source() = super || 'hashicorp/aws'
 
-    def as_terraform
+    def as_terraform # rubocop:disable Metrics/MethodLength
       {
         terraform: {
           required_providers: {
@@ -48,7 +46,6 @@ module Aws
     end
 
     # Pulumi Provisioner
-    def as_pulumi
-    end
+    def as_pulumi; end
   end
 end

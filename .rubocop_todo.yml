@@ -1,0 +1,6 @@
+---
+Gemspec/RequireMFA:
+  Enabled: false
+Style/NestedTernaryOperator:
+  Exclude:
+    - '*/spec/dummy/config/application.rb'

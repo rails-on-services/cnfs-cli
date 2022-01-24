@@ -4,6 +4,6 @@ RUBYOPT='-W:no-deprecated'
 
 CNFS_CLI_PATH=`dirname "$0"`
 echo $CNFS_CLI_PATH
-PATH=$CNFS_CLI_PATH/cnfs/exe:$PATH
+PATH=$CNFS_CLI_PATH/hendrix/exe:$CNFS_CLI_PATH/onestack/exe:$PATH
 alias cli="cd $CNFS_CLI_PATH/cli"
 unset CNFS_CLI_PATH

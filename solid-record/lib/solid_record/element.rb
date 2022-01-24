@@ -36,8 +36,10 @@ module SolidRecord
     def create_model
       # binding.pry # if model_values.nil?
       self.model = klass.create(model_values)
+      # binding.pry if klass.name.eql?('OneStack::User')
+      puts "Err: #{klass}: #{model.errors.full_messages.join('. ')}" unless model.persisted?
     rescue ActiveModel::UnknownAttributeError => e
-      puts "Err: #{e.message}"
+      puts "Err: #{klass}: #{e.message}"
     end
 
     # The hash used to create the model
@@ -85,6 +87,10 @@ module SolidRecord
     # rubocop:enable Naming/PredicateName
 
     def belongs_to_assns() = klass.reflect_on_all_associations(:belongs_to)
+    # def belongs_to_assns
+    #   binding.pry # if klass.is_a? 'Module'
+    #   klass.reflect_on_all_associations(:belongs_to)
+    # end
 
     def klass() = @klass ||= klass_type.constantize
 

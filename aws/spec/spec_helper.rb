@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
-require 'pathname'
+require 'bundler/setup'
+require 'pry'
 
-SPEC_DIR = Pathname.new(__dir__)
+require 'hendrix'
+require 'solid-record'
+require 'onestack'
 
-require_relative '../../spec/spec_helper'
+require 'onestack-aws'
+
+ROOT = Pathname.new(__dir__).join('..')

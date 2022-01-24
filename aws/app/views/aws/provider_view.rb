@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::ProviderView < ProviderView
+class Aws::ProviderView < OneStack::ProviderView
   def modify
     super
     mask_attr(:access_key_id)

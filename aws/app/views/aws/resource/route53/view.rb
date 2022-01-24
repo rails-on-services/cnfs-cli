@@ -9,13 +9,13 @@ class Aws::Resource::Route53::View < ResourceView
     provider = blueprint.provider
     model.provider = provider
 
-    zones = hosted_zones.map {|zone| zone.name }
+    zones = hosted_zones.map(&:name)
     model.zone = enum_select('Zone:', zones, per_page: zones.size)
-    binding.pry
   end
 
   class Zone
-    attr_accessor :name, :id, :resource_record_sets, :client
+    attr_accessor :name, :id, :client
+    attr_writer :resource_record_sets
 
     def initialize(name:, id:, client:)
       @name = name
@@ -38,5 +38,5 @@ class Aws::Resource::Route53::View < ResourceView
     @list_hosted_zones ||= client.list_hosted_zones
   end
 
-  def client; model.client end
+  def client() = model.client
 end

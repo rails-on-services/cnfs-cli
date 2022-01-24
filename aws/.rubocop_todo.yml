@@ -1,0 +1,4 @@
+---
+Style/MissingRespondToMissing:
+  Exclude:
+    - app/models/aws/resource/ec2/instance.rb

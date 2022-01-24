@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class Aws::Resource::EC2 < Aws::Resource
-  def instance_types(family)
-    instance_type_offerings.select do |offer|
-      offer.split('.').first.eql?(family.to_s)
-    end.map { |offer| offer.split('.').last }.sort
+  def instance_types(family) = instance_types_list(family).map { |offer| offer.split('.').last }.sort
+
+  def instance_types_list(family)
+    instance_type_offerings.select { |offer| offer.split('.').first.eql?(family.to_s) }
   end
 
   def offers_by_family
@@ -12,7 +12,7 @@ class Aws::Resource::EC2 < Aws::Resource
   end
 
   def instance_type_offerings
-    @instance_type_offerings ||= client.describe_instance_type_offerings[0].map { |offer| offer.instance_type }
+    @instance_type_offerings ||= client.describe_instance_type_offerings[0].map(&:instance_type)
   end
 
   def describe_images(owners:, filters:)

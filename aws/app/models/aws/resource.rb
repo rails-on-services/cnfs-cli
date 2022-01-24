@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::Resource < Resource
-
+class Aws::Resource < OneStack::Resource
   def client() = @client ||= self.class.client(provider)
 
   def valid_types() = super.merge(provider: 'Aws::Provider')
@@ -10,12 +9,12 @@ class Aws::Resource < Resource
     def client(provider)
       require "aws-sdk-#{service_name}"
       klass = "Aws::#{service_class_name}::Client".safe_constantize
-      raise Cnfs::Error, "AWS SDK client class not found for: #{service_name}" unless klass
+      raise OneStack::Error, "AWS SDK client class not found for: #{service_name}" unless klass
 
       config = client_config(provider)
       klass.new(config)
-    rescue LoadError => e
-      raise Cnfs::Error, "AWS SDK not found for: #{service_name}"
+    rescue LoadError => _e
+      raise OneStack::Error, "AWS SDK not found for: #{service_name}"
     end
 
     def client_config(provider) = provider.client_config(service_name)

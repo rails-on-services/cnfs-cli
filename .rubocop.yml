@@ -1,6 +1,15 @@
+---
+require:
+  - rubocop-rspec
+  - rubocop-performance
+inherit_from:
+  - .rubocop_todo.yml
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.0.0
+Naming/FileName:
+  Exclude:
+    - '*/lib/onestack-*.rb'
 Layout/LineLength:
   Max: 120
 Layout/SpaceAroundMethodCallOperator:
@@ -30,8 +39,8 @@ Metrics/BlockLength:
     - '*/spec/**/*.rb'
     - '*/*.gemspec'
 Metrics/MethodLength:
-  Exclude:
-    - cli/app/helpers/*
+  # Exclude:
+    # - cli/app/helpers/*
   IgnoredMethods:
     - create_table
 Metrics/PerceivedComplexity:

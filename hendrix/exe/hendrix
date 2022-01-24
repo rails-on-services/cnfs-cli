@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+git_path = File.expand_path("../../.git", __dir__)
+
+if File.exist?(git_path)
+  ENV['HENDRIX_CLI_ENV'] ||= 'development'
+  require 'pry'
+  plugin_path = File.expand_path("../lib", __dir__)
+  $:.unshift(plugin_path)
+  plugin_path = File.expand_path("../../solid-support/lib", __dir__)
+  $:.unshift(plugin_path)
+end
+
+ENV['HENDRIX_CLI_ENV'] ||= 'production'
+
+ROOT_FILE_ID = 'config/environment.rb'
+
+require 'hendrix/boot_loader'

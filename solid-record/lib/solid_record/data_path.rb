@@ -71,10 +71,12 @@ module SolidRecord
 
     # Return a class for a given Pathname based on a set of rules
     def model_class_type(childpath)
-      klass = childpath.safe_constantize
-      klass ||= childpath.parent.safe_constantize
-      klass ||= childpath.matchpath(pathname_map)&.safe_constantize
-      klass ||= pathname_map.safe_constantize if recurse
+      klass = childpath.safe_constantize(namespace)
+      klass ||= childpath.parent.safe_constantize(namespace)
+      klass ||= childpath.matchpath(pathname_map)&.safe_constantize(namespace)
+      klass ||= pathname_map.safe_constantize(namespace) if recurse
+
+      binding.pry if namespace
       debug("#{childpath} resoloved to #{klass.name}") if klass
       raise ArgumentError, "Failed to resolve #{childpath} with path_map: #{path_map}" unless klass
 
@@ -104,6 +106,7 @@ module SolidRecord
     class << self
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
+          t.string :namespace
           t.string :path
           t.string :path_map
           t.string :glob

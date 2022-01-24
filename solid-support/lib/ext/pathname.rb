@@ -28,11 +28,11 @@ class Pathname
   def singular?() = name.eql?(name.singularize)
 
   # users.yml => User
-  def safe_constantize() = classify.safe_constantize
+  def safe_constantize(namespace = nil) = classify(namespace).safe_constantize
 
   # Root name functionality
   # users.yml => 'User'
-  def classify() = name.classify
+  def classify(namespace = nil) = [namespace, name].compact.join('/').classify
 
   # users.yml => users
   def name() = @name ||= rootname.delete_suffix(".#{extension}")
@@ -42,4 +42,10 @@ class Pathname
 
   # Pathname.new('path/users.yml').rootname => 'users.yml'
   def rootname() = @rootname ||= basename.to_s
+
+  # Simplify call to formatted output of file contents
+  def puts() = Kernel.puts(read)
+
+  # Copy to another file
+  def cp(dest) = FileUtils.cp(self, dest)
 end

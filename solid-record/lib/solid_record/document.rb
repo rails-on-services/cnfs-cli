@@ -18,7 +18,8 @@ module SolidRecord
       raise ArgumentError, "Content must be in Key/Value format #{path}" unless formatted_content.instance_of?(Hash)
 
       formatted_content.each do |key, values|
-        # binding.pry if klass_type.eql?('Blog')
+      # binding.pry if klass.eql?(OneStack)
+        binding.pry if klass_type.eql?('OneStack')
         elements.create(klass_type: klass_type, key: key, values: values, type: 'SolidRecord::RootElement')
       end
     end

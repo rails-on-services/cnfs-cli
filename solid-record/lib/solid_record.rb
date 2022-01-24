@@ -6,6 +6,7 @@ require 'sqlite3'
 require 'solid_support'
 
 require_relative 'solid_record/version'
+require_relative 'solid_record/lyric' if defined? Hendrix
 require_relative 'solid_record/data_store'
 
 require_relative 'solid_record/table'

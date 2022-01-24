@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Terraform::ProvisionerGenerator < ProvisionerGenerator
+class Terraform::ProvisionerGenerator < OneStack::ProvisionerGenerator
 
   def manifests
     # cnfs_template('variables.tf')
