@@ -6,11 +6,16 @@ require_relative 'boot'
 # you've limited to :test, :development, or :production.
 Bundler.require # (*.groups)
 
-module <%= name.camelize %>
+module Spec
   module Concerns; end
-  class Application < <%= gem_name_root.camelize %>::Application
+  # class Application < Hendrix::Application
+  class Application < OneStack::Application
     # Reference id for encryption keys and local file access
-    config.project_id = '<%= uuid %>'
+    config.project_id = '3273b2fc-ff9c-4d64-8835-34ee3328ad68'
+
+    # initializer 'based' do |app|
+      # binding.pry
+    # end
 
     # The default value is :warn
     # config.logging = :warn
@@ -22,6 +27,7 @@ module <%= name.camelize %>
 
     # Comment out to ignore segment color settings
     config.cli.colorize = true
+    config.paths.data = 'data'
 
     # Example configurations for segments
     # basic colors: blue green purple magenta cyan yellow red white black

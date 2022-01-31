@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'tune'
+require_relative 'plugin'
 require_relative 'application/configuration'
 
 module Hendrix
@@ -10,7 +10,7 @@ module Hendrix
 
     def config() = application.config
 
-    def application() = @application ||= app_class.new
+    def application() = @application ||= app_class.instance
 
     def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
 
@@ -19,7 +19,7 @@ module Hendrix
 
     def set_logger
       default_level = (config.logging || 'warn').to_sym
-      level = ::TTY::Logger::LOG_TYPES.keys.include?(default_level) ? default_level : :warn
+      level = ::TTY::Logger::LOG_TYPES.key?(default_level) ? default_level : :warn
       ::TTY::Logger.new do |config|
         Hendrix.config.logging = config.level = level
         config.level = level
@@ -27,19 +27,8 @@ module Hendrix
     end
   end
 
-  class Application < Tune
-
-    def config() = self.class.config
-
-    def name() = self.class.name.deconstantize.downcase
-
+  class Application < Plugin
     class << self
-      def config() = @config ||= Configuration.new
-      def config()
-        # binding.pry
-        @config ||= Hendrix::Application::Configuration.new
-      end
-
       # https://github.com/rails/rails/blob/main/railties/lib/rails/application.rb#L68
       def inherited(base)
         super
@@ -49,23 +38,20 @@ module Hendrix
       def gem_root() = APP_ROOT
     end
 
-    # https://github.com/rails/rails/blob/main/railties/lib/rails/application.rb#L367
-    def initialize!
-      config.after_user_config
-      self
+    def config() = @config ||= self.class.superclass::Configuration.new
+
+    def name() = self.class.name.deconstantize.downcase
+
+    # TODO: Test this wrt to the boot process and loading of config/application.rb
+    # The prefix of ENV vars specified in config/application.rb
+    config.before_initialize do |config|
+      config.env_base = 'CNFS_' if config.env_base.empty?
     end
 
-    config.after_initialize do |config|
-      binding.pry
-      # Set defaults
-      # self.dev = false
-      # self.dry_run = false
-      config.logging = :warn
-      config.quiet = false
-
-      # Default paths
-      # paths.data = 'data'
-      # paths.tmp = 'tmp'
+    # https://github.com/rails/rails/blob/main/railties/lib/rails/application.rb#L367
+    def initialize!
+      Extension.initialize! { Plugin.initialize! }
+      self
     end
   end
 end

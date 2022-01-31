@@ -7,7 +7,7 @@ module Hendrix
 
     class << self
       def has_class_options(*names) = define_options(names: names, type: :class_)
-        
+
       def has_options(*names) = define_options(names: names)
 
       def define_options(names:, type: '')
@@ -30,7 +30,6 @@ module Hendrix
     end
 
     # TODO: Refactor or Remove
-    # rubocop:disable Metrics/BlockLength
     class << self
       # Add an option and it's values to a specific command in a controller
       # Used by plugin modules to add options to an existing command
@@ -60,53 +59,50 @@ module Hendrix
         actions.each { |action| send(action[:lifecycle], action[:method_name]) }
       end
     end
-    # rubocop:enable Metrics/BlockLength
 
     private
 
-    # Invokes the appropriate method on the appropriate controller. Default is ExecController#base_execute
+    # Invokes the appropriate method on the appropriate controller
     def execute(**kwargs)
-      namespace = kwargs.delete(:namespace) || self.class.name.deconstantize
-      namespace = nil if namespace.blank?
-      controller = kwargs.delete(:controller) || :exec
-      method = kwargs.delete(:method)&.to_sym
+      namespace = kwargs.delete(:namespace)&.to_s&.classify || self.class.name.deconstantize
+      controller = kwargs.delete(:controller)&.to_s&.classify || self.class.name.demodulize.delete_suffix('Command')
+      method = kwargs.delete(:method)
 
       # The name of the method that invoked 'execute', e.g. 'console'
-      @calling_method = caller_locations(1).first.label.to_sym
+      @calling_method = caller_locations(1..1).first.label
 
       # Arguments and Options that will be passed to the controller
       @args = Thor::CoreExt::HashWithIndifferentAccess.new(kwargs)
       @options = Thor::CoreExt::HashWithIndifferentAccess.new(options)
 
       controller_klass = controller_class(namespace: namespace, controller: controller)
-      # binding.pry
       controller_obj = controller_klass.new(**controller_args)
 
       # If a method was specified then invoke that method
       # If not, then check if the controller implements a method of the same name as the calling_method
-      # Otherwise invoke the default #execute method
+      # Otherwise invoke the default method #execute
       method ||= controller_obj.respond_to?(calling_method) ? calling_method : :execute
-      controller_obj.base_execute(method)
+      controller_obj.base_execute(method.to_sym)
     end
 
     # Return the class to execute using the following priorities:
     # 1. If a controller exists in the same or specified namespace with the name of the calling method then return it
     # 2. Otherwise return the specified or default namespace and controller
-    def controller_class(namespace:, controller:) # , method:)
-      class_names = [[namespace, calling_method], [namespace, controller]].map { |e| "#{e.compact.join('/')}_controller" }
-      # binding.pry
-      class_names.each do |class_name|
-        next unless (klass = class_name.classify.safe_constantize)
+    def controller_class(namespace:, controller:)
+      class_names = [calling_method.classify, controller].map { |name| "#{name}Controller" }
+      class_names.map! { |name| "#{namespace}::#{name}" } unless namespace.blank?
+      class_names.each do |name|
+        next unless (klass = name.safe_constantize)
 
         return klass
       end
-      binding.pry
+      # binding.pry
       # Hendrix.logger.debug('controller classes not found:', class_names.join(' '))
-      raise Hendrix::Error, set_color("Class not found: #{class_names.join(' ')} (this is a bug. please let us know)", :red)
+      raise Hendrix::Error, set_color("Controller not found: #{class_names.join(' ')} (this is a bug)", :red)
     end
 
     # Override to provide custom arguments and/or options to the exec controller
-    def controller_args() = { options: options, args: args, command: calling_method }
+    def controller_args() = { options: options, args: args, command: calling_method.to_sym }
 
     # Will raise an error unless force option is provided or user confirms the action
     def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
@@ -116,11 +112,12 @@ module Hendrix
     end
 
     # Used by Hendrix::New and Hendrix::Plugin
-		def check_dir(name)
-			if Dir.exist?(name) && !validate_destroy('Directory already exists. Destroy and recreate?')
-				raise Hendrix::Error, set_color('Directory exists. exiting.', :red)
-			end
-			true
-		end
+    def check_dir(name)
+      if Dir.exist?(name) && !validate_destroy('Directory already exists. Destroy and recreate?')
+        raise Hendrix::Error, set_color('Directory exists. exiting.', :red)
+      end
+
+      true
+    end
   end
 end

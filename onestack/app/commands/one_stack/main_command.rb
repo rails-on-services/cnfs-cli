@@ -27,8 +27,6 @@ module OneStack
     # Provisioner operates on Plans
     register OneStack::PlansCommand, 'plan', 'plan SUBCOMMAND [options]', 'Manage infrastructure plans'
 
-    register OneStack::ProjectsCommand, 'project', 'project SUBCOMMAND [options]', 'Manage project'
-
     register OneStack::ResourcesCommand, 'resource', 'resource [SUBCOMMAND]', 'Manage component resources'
 
     register OneStack::SegmentsCommand, 'segment', 'segment [SUBCOMMAND]', 'Manage segments'
@@ -45,6 +43,16 @@ module OneStack
       context = Component.context_from(@options)
       require 'tty-tree'
       puts '', TTY::Tree.new(context.as_tree).render
+    end
+
+    desc 'generate', 'generate'
+    def generate(type, *attributes) = execute
+
+    desc 'console', 'Start a console (short-cut: c)'
+    def console(name = nil, *values)
+      hash = { method: :execute } # Specify the method :execute to avoid method_missing being invoked on 'console'
+      hash.merge!(name.to_sym => values) if name # filter the context asset specified in 'name' by values
+      execute(**hash)
     end
   end
 end

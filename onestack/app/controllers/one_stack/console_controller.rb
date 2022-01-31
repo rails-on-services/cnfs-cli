@@ -28,10 +28,9 @@ Pry::Commands.block_command 'ls', 'list assets' do |*_args|
   end
 end
 
-module OneStack::Projects
-  class ConsoleController < OneStack::ApplicationController
-    # include Hendrix::ConsoleController
-    # include Concerns::ExecController
+module OneStack
+  class ConsoleController < Hendrix::ConsoleController
+    include ApplicationControllerConcern
 
     before_execute :init, :init_class, :create_help
 
@@ -49,7 +48,7 @@ module OneStack::Projects
         crud_cmds = %w[create edit list show destroy]
         cmds = crud_cmds.map { |cmd| "  #{cmd} [ASSET] [options]".ljust(35) + "# #{cmd.capitalize} asset" }
 
-        controller_cmds = (Cnfs::MainController.all_commands.keys - %w[help project] - crud_cmds)
+        controller_cmds = (MainCommand.all_commands.keys - %w[help project] - crud_cmds)
         cmds += controller_cmds.map { |cmd| "  #{cmd} [SUBCOMMAND] [options]".ljust(35) + "# Manage #{cmd.pluralize}" }
 
         cmds += [
@@ -95,6 +94,7 @@ module OneStack::Projects
 
       # rubocop:disable Metrics/AbcSize
       def segmented_prompt
+        return 'hello'
         @segmented_prompt ||= Component.structs(@options).each_with_object([]) do |component, prompt|
           segment_type = Cnfs.config.cli.show_segment_type ? component.segment_type : nil
           segment_name = Cnfs.config.cli.show_segment_name ? component.name : nil
@@ -120,7 +120,7 @@ module OneStack::Projects
       def shortcuts() = model_shortcuts.merge(super)
 
       def model_shortcuts
-        { b: Builder, c: Context, co: Component, con: Configurator, d: Dependency, im: Image, n: Node,
+        { b: Builder, c: Context, co: Component, con: Configurator, d: Dependency, im: Image,
           p: Plan, pr: Provider, pro: Provisioner, r: Resource, re: Repository, reg: Registry, ru: Runtime,
           s: Service, sr: SegmentRoot, u: User }
       end

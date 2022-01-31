@@ -3,7 +3,7 @@
 module Hendrix
   class ApplicationGenerator < Thor::Group
     include Thor::Actions
-    # include Concerns::Extendable
+    # include Extendable
 
     private
 
@@ -15,12 +15,11 @@ module Hendrix
     end
 
     # Array of ERB templates in the views_path/templates directory
-    def templates() = templates_path.glob('**/*.erb')
+    def templates() = templates_path.glob('**/*.erb', File::FNM_DOTMATCH)
 
     def templates_path() = views_path.join('templates')
 
-    # TODO: Verify if this picks up hidden files
-    def files() = files_path.glob('**/*')
+    def files() = files_path.glob('**/*', File::FNM_DOTMATCH)
 
     def files_path() = views_path.join('files')
 
@@ -51,7 +50,7 @@ module Hendrix
     def stale_files() = all_files - excluded_files - generated_files
 
     # All files in the current directory
-    def all_files() = path.glob('**/*').select(&:file?).map(&:to_s)
+    def all_files() = path.glob('**/*', File::FNM_DOTMATCH).select(&:file?).map(&:to_s)
 
     # Array of file names that should not be removed
     # A subclass can override this method to define files that should not be considered as stale and removed

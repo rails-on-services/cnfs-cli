@@ -2,16 +2,15 @@
 
 # Load the classes from <gem_root>/app
 require 'logger'
-require 'hendrix/loader'
-require 'thor'
-require 'solid-support'
+require 'hendrix'
 
 load_path = Pathname.new(__dir__).join('../../app')
-Hendrix.add_loader(name: :framework, path: load_path).setup
+Hendrix.add_loader(name: :framework, path: load_path)
+
+Hendrix.loaders.values.map(&:setup)
 
 # Display the new command's help if no arguments provided
 ARGV.append('help', 'new') if ARGV.size.zero?
 
-# Start the NewController
-# Hendrix::New::CommandController.start
-Hendrix::NewCommand.start
+BOOT_MODULE = Hendrix unless defined?(BOOT_MODULE)
+BOOT_MODULE::ProjectCommand.start

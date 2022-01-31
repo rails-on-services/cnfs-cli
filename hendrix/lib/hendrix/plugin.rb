@@ -1,26 +1,36 @@
 # frozen_string_literal: true
 
-# Tunes add to Lyric with support for
+# Plugins add to Extensions with support for
 # app commands, controllers, generators, models and views
 
-require 'hendrix/lyric'
+require_relative 'extension'
 
 module Hendrix
   class << self
-    # Maintain a Hash of all tunes
-    def tunes() = @tunes ||= {}
+    # Maintain a Hash of all plugins
+    def plugins() = @plugins ||= {}
+
+    # Use Zeitwerk to load classes in each plugin's autoload_paths
+    def load_plugins
+      plugins.values.each do |plugin|
+        paths = ['app'] if plugin.config.autoload_paths.empty?
+        paths.each do |path|
+          add_loader(name: :framework, path: plugin.gem_root.join(path), notifier: plugin)
+        end
+      end
+    end
 
     # https://github.com/aws/aws-sdk-ruby/blob/version-3/gems/aws-sdk-s3/lib/aws-sdk-s3/bucket.rb#L221
     # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/S3/Bucket.html
 
-    # Search tunes for concerns to extend a class that includes Concerns::Extendable
+    # Search plugins for concerns to extend a class that includes Concerns::Extendable
     #
     # @example Request syntax with placeholder values
     #
     #   bucket.create({
     #     acl: "private", # accepts private, public-read, public-read-write, authenticated-read
     #     create_bucket_configuration: {
-    #       location_constraint: "af-south-1", # accepts af-south-1, ap-east-1, ap-northeast-1, ap-northeast-2, ap-northeast-3, ap-south-1, ap-southeast-1, ap-southeast-2, ca-central-1, cn-north-1, cn-northwest-1, EU, eu-central-1, eu-north-1, eu-south-1, eu-west-1, eu-west-2, eu-west-3, me-south-1, sa-east-1, us-east-2, us-gov-east-1, us-gov-west-1, us-west-1, us-west-2
+    #       location_constraint: "af-south-1", # accepts af-south-1, ap-east-1, etc
     #     },
     #     grant_full_control: "GrantFullControl",
     #     grant_read: "GrantRead",
@@ -38,11 +48,11 @@ module Hendrix
     # @option options [String] :grant_full_control
     #   Allows grantee the read, write, read ACP, and write ACP permissions on
     #   the bucket.
-    def modules_for(klass)
+    def modules_for(klass) # rubocop:disable Metrics/MethodLength
       base_name = "Concerns::#{klass}"
       logger.debug('Searching for', base_name)
 
-      tunes.keys.each_with_object([]) do |plugin_name, ary|
+      plugins.keys.each_with_object([]) do |plugin_name, ary|
         module_name = plugin_name.to_s.classify
         plugin_module_name = "#{module_name}::#{base_name}"
         next unless (plugin_module = plugin_module_name.safe_constantize)
@@ -58,36 +68,37 @@ module Hendrix
       end
     end
 
-    # Return an array of paths within loaded tunes that contain a file by name
+    # Return an array of paths within loaded plugins that contain a file by name
     # Used by Generators to get an array of available templates
     def app_paths(type:, klass:, suffix: nil)
       type = type.to_s.pluralize
       klass = klass.to_s.singularize
       suffix = suffix&.to_s
-      tunes.each_with_object([]) do |(name, plugin), ary|
+      plugins.each_with_object([]) do |(name, plugin), ary|
         search_path = [type, name.to_s, klass, suffix].compact
         path = plugin.app_path.join(search_path)
         ary.append(path) if path.exist?
       end
     end
-
-    # Use Zeitwerk to load classes in each tune's 'app' path
-    def load_tunes
-      tunes.values.each do |plugin|
-        add_loader(name: :framework, path: plugin.gem_root.join('app'), notifier: plugin)
-      end
-    end
   end
 
-  class Tune < Lyric
+  class Plugin < Extension
     class << self
       # https://github.com/rails/rails/blob/main/railties/lib/rails/application.rb#L68
       def inherited(base)
-        name = name_from_base(base)
-        return if base.to_s.eql?('Hendrix::Application')
+        return if Extension.abstract_extension?(base)
 
-        Hendrix.tunes[name] = base
+        Hendrix.plugins[base.to_s] = base
         super
+      end
+
+      def initialize!
+        # TODO: This is about plugins; Extensions don't ahve an app path
+        # Configure all classes in each extension's app path to be autoloaded
+        Hendrix.load_plugins
+
+        # Setup the autoloader; Requires all classes in the app dir
+        Hendrix.loaders.values.map(&:setup)
       end
     end
   end

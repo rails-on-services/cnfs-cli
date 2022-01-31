@@ -22,7 +22,9 @@ require_relative 'hendrix/errors'
 require_relative 'hendrix/loader'
 require_relative 'hendrix/timer'
 require_relative 'hendrix/version'
+# binding.pry
 
+require 'solid-record' unless defined? APP_ROOT
 
 module Hendrix
   class Error < StandardError; end

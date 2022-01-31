@@ -2,23 +2,14 @@
 
 require 'pry'
 
-# Get the commands defined on ApplicationController and create a CLI command for each
-# Hendrix::ApplicationController.all_commands.keys.excluding(%w[help]).each do |cmd|
-MainCommand.all_commands.keys.excluding(%w[help]).each do |cmd|
-  Pry::Commands.block_command cmd, "Run #{cmd}" do |*args|
-    # Hendrix::ApplicationController.new.send(cmd, *args)
-    MainCommand.new.send(cmd, *args)
-  end
-end if defined? MainCommand
-
 module Hendrix
   class ConsoleController < ApplicationController
-    # include Hendrix::Concerns::ExecController
-    def execute
+    def execute # rubocop:disable Metrics/AbcSize
+      self.class.hex
       Hendrix.config.cli.mode = true
       Hendrix.config.console = self
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [self.class.prompt])
-      self.class.define_shortcuts if defined?(ActiveRecord) && ENV['CNFS_CLI_ENV'].eql?('development')
+      self.class.define_shortcuts if defined?(ActiveRecord) && ENV['HENDRIX_CLI_ENV'].eql?('development')
       Pry.start(self)
     end
 
@@ -43,6 +34,17 @@ module Hendrix
     end
 
     class << self
+      def hex
+        # Get the MainCommand commands and create a console command for each
+        module_parent::MainCommand.all_commands.keys.excluding(%w[help]).each do |cmd|
+          main_command_class = module_parent::MainCommand
+          Pry::Commands.block_command cmd, "Run #{cmd}" do |*args|
+            # TODO: There is a bug here with passing args
+            main_command_class.new.send(cmd, *args)
+          end
+        end
+      end
+
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/MethodLength
       def define_shortcuts

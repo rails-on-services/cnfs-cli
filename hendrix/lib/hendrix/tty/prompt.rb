@@ -49,14 +49,14 @@ module Hendrix::TTY
     def modified_options(key, value, **options)
       if value.is_a?(Array)
         value = value.join(', ')
-        options.merge!(convert: :array)
+        options[:convert] = :array
       end
       value = (value || '').to_s if options.key?(:convert) && options[:convert].eql?(:boolean)
-      options.merge!(value: value) if value
-      required = model.class.validators_on(key).select do |v|
+      options[:value] = value if value
+      required = model.class.validators_on(key).count do |v|
         v.is_a?(ActiveRecord::Validations::PresenceValidator)
-      end.size.positive?
-      options.merge!(required: true) if required
+      end.positive?
+      options[:required] = true if required
       options
     end
     # rubocop:enable Metrics/CyclomaticComplexity
@@ -94,7 +94,7 @@ module Hendrix::TTY
 
       # Added code to return a model with associations
       association_names = model.class.reflect_on_all_associations(:has_many).map(&:name)
-      association_names.select { |name| ret_val.keys.include?(name) }.each do |name|
+      association_names.select { |name| ret_val.key?(name) }.each do |name|
         klass = name.to_s.classify.safe_constantize
         ret_val[name].map! { |params| klass.new(params.merge(model.class.name.underscore => model)) }
         # binding.pry

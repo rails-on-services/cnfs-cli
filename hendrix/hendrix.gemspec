@@ -29,8 +29,8 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'solid-record', '~> 0.1'
-  spec.add_dependency 'solid-support', '~> 0.1'
+  spec.add_dependency 'solid_record', '~> 0.1'
+  spec.add_dependency 'solid_support', '~> 0.1'
   # spec.add_dependency 'json_schemer'
   spec.add_dependency 'pry', '~> 0.13'
   spec.add_dependency 'thor', '~> 1.0'

@@ -1,6 +1,6 @@
 ---
 config: {}
-segment_type: target
+segments_type: target
 default:
   runtime_name: compose
   segment_name: s3

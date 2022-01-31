@@ -1,15 +1,30 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class NewGenerator < ApplicationGenerator
+  class ProjectGenerator < ApplicationGenerator
     argument :name
+    argument :gem_name_root
 
     private
 
-    def _component_files
-      %w[commands controllers generators models views].each do |type|
-        app_file(type)
+    # Used by Plugin and Application
+    def app_structure
+      to_render.each do |template|
+        destination = template.relative_path_from(templates_path).to_s.delete_suffix('.erb')
+        template(template, destination)
       end
+    end
+
+    def to_render() = (templates - manual_templates.map{ |path| templates_path.join(path) })
+
+    def manual_templates() = []
+  end
+end
+=begin
+    # def component_files() = _component_files
+      # keep('config/initializers')
+
+    def _component_files
       binding.pry
       # keep("app/controllers/#{name}/concerns")
       # keep("app/controllers/#{name}/concerns")
@@ -20,17 +35,4 @@ module Hendrix
     end
 
     # def keep(keep_path) = create_file(path.join(keep_path, '.keep'))
-
-    def app_file(app_path) = template("templates/application.rb.erb", path.join('app', app_path, "application_#{app_path.singularize}.rb"))
-
-    def gemfile_gem_string(name)
-      gem_name = name.empty? ? 'cnfs' : "cnfs-#{name}"
-      return "gem '#{gem_name}'" if ENV['CNFS_ENV'].eql?('production')
-
-      name = 'cnfs' if name.empty?
-      "gem '#{gem_name}', path: '#{gems_path.join(name)}'"
-    end
-
-    def gems_path() = internal_path.join('../../../../../')
-  end
-end
+=end

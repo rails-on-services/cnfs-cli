@@ -12,7 +12,7 @@ module Hendrix
       # Example:
       # The terraform plugin adds methods to the Resource model by including A/S Concern in the module
       # Terraform::Concerns::Resource declared in file Terraform.gem_root/app/models/terraform/concerns/resource.rb
-      Hendrix.modules_for(self).each { |mod| include mod }
+      # Hendrix.modules_for(self).each { |mod| include mod }
     end
   end
 end

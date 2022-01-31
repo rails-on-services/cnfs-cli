@@ -2,6 +2,10 @@
 
 source 'https://rubygems.org'
 
-<% %w[core aws docker gcp kubernetes native terraform].unshift('').each do |gem_name| -%>
-<%= gemfile_gem_string(gem_name) %>
-<% end -%>
+gem_path = '<%= internal_path.join('../../../../..') %>'
+
+gem 'hendrix', path: "#{gem_path}/hendrix"
+gem 'solid-record', path: "#{gem_path}/solid-record"
+gem 'solid-support', path: "#{gem_path}/solid-support"
+
+gemspec

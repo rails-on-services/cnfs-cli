@@ -3,7 +3,7 @@
 # Documentation: https://github.com/piotrmurach/tty-logger
 
 # Custom logger
-Cnfs.logger = TTY::Logger.new do |config|
+Hendrix.logger = TTY::Logger.new do |config|
   config.level = :warn
   # config.handlers = [[:stream, formatter: :json]]
   # config.output = File.open('/tmp/errors.log', 'w')

@@ -4,4 +4,4 @@
 require_relative 'application'
 
 # Initialize the application
-<%= gem_name_root.camelize %>.application.initialize!
+Hendrix.application.initialize!

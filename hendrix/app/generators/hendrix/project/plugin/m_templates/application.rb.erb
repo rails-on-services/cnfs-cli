@@ -1,2 +1,4 @@
+# frozen_string_literal: true
 
-hello <%= type ? type : 'sdfas' %>
+class Application<%= type.classify %> < <%= gem_name_root.camelize %>::Application<%= type.classify %>
+end

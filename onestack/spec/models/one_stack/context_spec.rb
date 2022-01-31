@@ -1,28 +1,40 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Context' do
-  let(:source_path) { SPEC_DIR.join('fixtures/segments') }
-  let(:root) { SegmentRoot.first }
-  let(:subject) { Context.create(root: root, options: options) }
+module OneStack
 
-  before do
-    setup_project(segment: :context)
+RSpec.describe 'Context' do
+  # let(:source_path) { SPEC_DIR.join('fixtures/segments') }
+  # let(:root) { SegmentRoot.first }
+  # let(:subject) { Context.create(root: root, options: options) }
+
+  before(:each) do
+    OneStack::SpecLoader.setup_segment(self, load_nodes: true)
   end
 
   after do
-    remove_project
+    # remove_project
   end
 
-  describe 'stack: :frontend' do
+  describe 'frontend' do
     let(:options) { { stack: :frontend } }
+    let(:sr) { SolidRecord::DataPath.create(namespace: 'OneStack', path_map: 'segment_root', 
+                                            path: APP_ROOT.join('config')) }
+    let(:segments) { SolidRecord::DataPath.create(namespace: 'OneStack', path_map: 'segments', 
+                                           path: OneStack.config.paths.segments, recurse: true )}
 
-    it 'creates the correct number of Nodes' do
-      # binding.pry
-      expect(Node.count).to eq(57)
+    it 'creates one SegmentRoot' do
+      # NOTE: This stuff will move to SolidRecord after it is working so don't get too caught up about how it looks!
+      sr.load
+      expect(SegmentRoot.count).to eq(1)
+    end
+
+    it 'does anotheer' do
+      sr.load
+      binding.pry
     end
   end
 
-  describe 'stack: :wrong' do
+  describe 'wrong' do
     let(:options) { { stack: :wrong } }
 
     it 'generates the correct number of contexts and context_components' do
@@ -65,4 +77,5 @@ RSpec.describe 'Context' do
       expect(ContextComponent.count).to eq(2)
     end
   end
+end
 end

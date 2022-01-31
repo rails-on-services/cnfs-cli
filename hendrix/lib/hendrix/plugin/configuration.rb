@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
-require 'xdg'
-require 'active_support/ordered_options'
-
-require 'hendrix/lyric/configuration'
+require_relative '../extension/configuration'
 
 module Hendrix
-  class Tune
-    # def config() = @config ||= Tune::Configuration.new
+  class Plugin
+    def config() = @config ||= Configuration.new
 
-    # class Configuration < Hendrix::Lyric::Configuration
-    # end
+    class Configuration < Hendrix::Extension::Configuration
+    end
   end
 end

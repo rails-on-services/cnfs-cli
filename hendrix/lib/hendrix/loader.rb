@@ -57,7 +57,7 @@ module Hendrix
     def notifiers() = @notifiers ||= Set.new
 
     # Zeitwerk loader methods
-    def setup
+    def setup # rubocop:disable Metrics/AbcSize
       paths.each do |path|
         loader.push_dir(path)
         next unless path.basename.to_s.eql?('generators')
@@ -67,14 +67,16 @@ module Hendrix
       end
       notify(:before_loader_setup)
       loader.enable_reloading
-      loader.setup unless loader.instance_variable_get('@setup')
+      loader.setup unless loader.instance_variable_get(:@setup)
+      # NOTE: Plugin classes may depend on classes that do not exist
+      # before a project has been created so only eager load when in an application
       loader.eager_load if defined? ::APP_ROOT
     end
 
     # Return list of autoloads for a specified plugin optionally prefixed with path
     # Example: Hendrix.loaders.first.last.select(Hendrix::Core, 'app/models')
     def select(plugin = Hendrix, path = '')
-      loader.autoloads.select{ |k, v| k.start_with?(plugin.gem_root.join(path).to_s) }
+      loader.autoloads.select { |k, _v| k.start_with?(plugin.gem_root.join(path).to_s) }
     end
 
     # TODO: Catch a reload error
@@ -83,7 +85,7 @@ module Hendrix
       loader.eager_load
       notify(:after_reload) if result
       text = result ? 'Reloaded' : 'Reload error on'
-      loader.logger.debug(text, name) if loader.logger
+      loader.logger&.debug(text, name)
       result
     end
 

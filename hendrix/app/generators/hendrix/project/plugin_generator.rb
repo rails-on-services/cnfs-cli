@@ -1,49 +1,31 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class New::PluginGenerator < NewGenerator
-    def gem
-      if options.noop
-        puts cmd
-      else
-        system(cmd)
-        FileUtils.mv(gem_name, name)
+  class Project::PluginGenerator < ProjectGenerator
+    attr_accessor :type
+
+    def app_dir_structure
+      %w[commands controllers generators records views].each do |type|
+        @type = type
+        app_file(type)
       end
     end
 
-    # All Thor methods are automatically invoked inside destination_root
-    def set_root() = self.destination_root = name
+    # Set this to spec/dummy so that app_structure templates files in this directory
+    def set_dest_root() = self.destination_root = "#{name}/spec/dummy"
 
-    def component_files() = _component_files
-
-    def libs
-      if options.config
-        remove_dir('.git')
-        remove_file('.travis.yml')
-        remove_file('.gitignore')
-      end
-      remove_file("lib/cnfs/#{name}.rb")
-      remove_file('Gemfile')
-      template('templates/Gemfile.erb', 'Gemfile')
-      template('templates/lib/cnfs/module.rb.erb', "lib/cnfs/#{name}.rb")
-      template('templates/lib/cnfs/plugin.rb.erb', "lib/cnfs/#{name}/plugin.rb")
-    end
-
-    # def gemspec
-    #   in_root do
-    #     old_file_name = "cnfs_cli-#{name}.gemspec"
-    #     file_name = "cnfs-#{name}.gemspec"
-    #     remove_file(old_file_name)
-    #     template('templates/gemspec.rb.erb', file_name)
-    #   end
-    # end
+    def app_structure() = super
 
     private
 
-    def cmd() = "bundle gem --test=rspec --ci=none --no-coc --no-rubocop --mit --changelog #{gem_name}"
+    def app_file(app_path)
+      ap = app_path.eql?('records') ? 'models' : app_path
+      template("m_templates/application.rb.erb", path.join('app', ap, "application_#{app_path.singularize}.rb"))
+    end
 
-    def gem_name() = "cnfs-#{name}"
+    def uuid() = @uuid ||= SecureRandom.uuid
 
     def internal_path() = Pathname.new(__dir__)
   end
 end
+

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class New::ProjectGenerator < NewGenerator
+  class Project::ApplicationGenerator < ProjectGenerator
     # def data_files
     #   data_path.rmtree if data_path.exist?
     #   create_file(data_path.join('keys.yml'), { name => Lockbox.generate_key }.to_yaml)
@@ -9,21 +9,22 @@ module Hendrix
 
     def project_files() = directory('files', '.')
 
-    def template_files
-      templates.each do |template|
-        destination = template.relative_path_from(templates_path).to_s.delete_suffix('.erb')
-        template(template, destination)
-      end
-    end
-
-    def component_files() = _component_files
+    def app_structure() = super
 
     private
+
+    def gemfile_gem_string(name)
+      gem_name = name.empty? ? gem_name_root : "#{gem_name_root}-#{name}"
+      return "gem '#{gem_name}'" if ENV['CNFS_ENV'].eql?('production')
+
+      name = gem_name_root if name.empty?
+      "gem '#{gem_name}', path: '#{gems_path.join(name)}'"
+    end
+
+    def gems_path() = internal_path.join('../../../../../')
 
     def internal_path() = Pathname.new(__dir__)
 
     # def data_path() = CnfsCli.config.data_home.join('projects', uuid)
-
-    def uuid() = @uuid ||= SecureRandom.uuid
   end
 end
