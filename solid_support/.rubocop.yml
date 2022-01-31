@@ -1,0 +1,7 @@
+---
+inherit_from: ../.rubocop.yml
+Lint/EmptyClass:
+  Exclude:
+    - 'spec/**/*.rb'
+RSpec/NestedGroups:
+  Max: 5

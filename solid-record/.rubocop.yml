@@ -1,8 +1,0 @@
----
-inherit_from: ../.rubocop.yml
-AllCops:
-  Exclude:
-    - 'lib/solid_record/associations.rb'
-Lint/EmptyClass:
-  Exclude:
-    - 'spec/**/*.rb'
