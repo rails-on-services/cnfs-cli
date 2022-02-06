@@ -2,7 +2,7 @@
 
 module SolidRecord
   class << self
-    # Registry of models that have included the Persistence module
+    # Registry of models that have included this module
     def tables() = @tables ||= []
   end
 

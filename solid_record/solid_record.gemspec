@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency 'activerecord', '~> 6.1'
+  spec.add_dependency 'lockbox', '~> 0.6'
   spec.add_dependency 'solid_support', '~> 0.1'
   spec.add_dependency 'sqlite3', '~> 1.4'
 

@@ -4,8 +4,7 @@ module SolidRecord
   def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
   class Extension < Hendrix::Extension
-    # This config object belongs to the Lyric
-    # Access it from the app with SolidRecord::Lyric.config
+    # Access this config from the app with SolidRecord::Extension.config
     config.active_record = ActiveSupport::OrderedOptions.new
     config.what.you_want = 'this'
 
@@ -26,15 +25,14 @@ module SolidRecord
       puts 'SolidRecord before_eager_load'
     end
 
-    # After all classes in all lyrcis and tunes have been required
+    # After all extensions have been required
     config.after_initialize do |config|
       SolidRecord::DataStore.load
       config.solid_record.data_paths.each do |data_path|
-        dp = SolidRecord::DataPath.create(**data_path)
-        Hendrix.logger.debug(dp)
-        dp.load
+        data_path = SolidRecord::DataPath.create(**data_path)
+        SolidSupport.logger.debug(data_path)
       end
-      # OneStack.assets.map{ |a| a.demodulize.underscore.pluralize }
+      SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
     end
 
     def self.gem_root() = SolidRecord.gem_root

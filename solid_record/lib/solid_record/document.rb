@@ -1,51 +1,79 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class ContentError < StandardError; end
+  class << self
+    def document_map
+      {
+        yml: :yaml,
+        yaml: :yaml
+      }
+    end
+  end
 
-  class Document < ActiveRecord::Base
-    include SolidRecord::Table
+  class Document < Association
+    include FileSystemElement
 
-    self.table_name_prefix = 'solid_record_'
+    def values() = @values ||= pathname.singular? ? { pathname.name => read } : read
 
-    belongs_to :data_path
+    def read() = send("read_#{doc_type}")
 
-    # The optional model instance that is the owner of RootElement(s) in this Document
-    belongs_to :model, polymorphic: true
-
-    has_many :elements
-
-    validates :path, :type, :klass_type, presence: true
-
-    after_create :load_document
-
-    def load_document
-      raise ContentError, "Content must be in Key/Value format #{path}" unless formatted_content.instance_of?(Hash)
-
-      formatted_content.each do |key, values|
-        # binding.pry if klass_type.eql?('OneStack')
-        elements.create(klass_type: klass_type, key: key, values: values, owner: model,
-                        type: 'SolidRecord::RootElement')
-      end
+    def update_document(root_element)
+      content = send("read_#{serializer}".to_sym, root_element)
+      # TODO: JSON.parse(content.to_json)) 
+      send("write_#{doc_type}".to_sym, content) # JSON.parse(content.to_json)) # convert to json to remove Ruby object annotations
     end
 
-    def formatted_content() = @formatted_content ||= pathname.singular? ? { pathname.name => read } : read
-
-    def pathname() = @pathname ||= Pathname.new(path)
-
-    # If the pathname is singular then return the first element name, otherwise return nil
-    def root_element() = pathname.singular? ? elements.first : nil
-
-    class << self
-      def create_table(schema)
-        schema.create_table table_name, force: true do |t|
-          t.references :data_path
-          t.string :path
-          t.string :type
-          t.string :klass_type
-          t.references :model, polymorphic: true
-        end
-      end
+    def read_array(root_element)
+      values.reject { |r| r[root_element.key_column].eql?(root_element.model_name) }.append(root_element.to_solid)
     end
+
+    # def read_hash(root_element) = values.except(root_element.model_name).merge(root_element.to_solid)
+    def read_hash(root_element) = values.merge(root_element.to_solid)
+
+    # def write_content(element)
+    #   pathname.singular? ? elements.first.to_solid : send("write_#{serializer}".to_sym, element)
+    # end
+
+    # def write_array(w_element)
+    #   binding.pry
+    #   elements.each_with_object([]) do |element, ary|
+    #     ary.append(element.model.to_solid)
+    #   end
+    # end
+
+    # def write_hash(w_element)
+    #   col = w_element.model_class.key_column
+    #   v = values.except(w_element.model.send(col))
+    #   # h = element.elements.map(&:to_solid)
+    #   # elements.where.not( id: element.id)
+    #   binding.pry
+    #   elements.each_with_object({}) do |element, hash|
+    #     hash.merge! element.model.to_solid
+    #   end
+    # end
+
+    # def write(content = nil)
+    #   send("write_#{doc_type}") if content
+    # end
+
+    # Return a type based on the file's extension, e.g. .yml or .yaml returns a :yaml
+    # based on the vlaues of the SolidRecord.document_map hash
+    def doc_type
+      unless (doc_type = document_map[pathname.extension])
+        SolidRecord.raise_or_warn(DocumentTypeError.new("Document type for #{pathname.extension} not found"))
+      end
+      doc_type
+    end
+
+    def document_map() = @document_map ||= SolidRecord.document_map.with_indifferent_access
+
+    def read_yaml() = YAML.load_file(path) || {}
+
+    def write_yaml(content) = pathname.write(content.to_yaml)
+
+    # Used by Assocation when creating ModelElements
+    def element_type() = 'SolidRecord::RootElement'
+
+    def tree_label() = pathname.name
   end
 end

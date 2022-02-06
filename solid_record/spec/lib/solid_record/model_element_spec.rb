@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  RSpec.describe Element do
+  RSpec.describe ModelElement do
     before { DataStore.reload }
 
     context 'with infra' do

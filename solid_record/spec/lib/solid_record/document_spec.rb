@@ -2,7 +2,7 @@
 
 module SolidRecord
   RSpec.describe Document do
-    before { DataStore.reset }
+    before { DataStore.reload }
 
     context 'when infra' do
       before(:context) { SpecHelper.before_context('infra') }
@@ -10,26 +10,56 @@ module SolidRecord
       after(:context) { SpecHelper.after_context }
 
       context 'with monolithic yaml' do
-        let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith/groups.yml')) }
+        let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml')) }
 
-        let(:doc) { SolidRecord.skip_solid_record_callbacks { YamlDocument.create(klass_type: 'Group', path: file) } }
+        let(:doc) do
+          SolidRecord.skip_solid_record_callbacks do
+            described_class.create(model_type: 'Group', path: file)
+          end
+        end
+
+        before { doc }
 
         it 'creates the correct number of Models' do # rubocop:disable RSpec/MultipleExpectations
-          doc
           expect(Group.count).to eq(4)
           expect(Host.count).to eq(11)
           expect(Service.count).to eq(1)
         end
 
-        it 'creates the correct model associations' do
-          expect(true).to be_truthy
-          # binding.pry
-          # expect(Group.find_by(oauth_domain: 'ASC').hosts.count).to eq(6)
+        context 'when Group has_many Hosts' do
+          it { expect(Group.find_by(name: 'asc').hosts.count).to eq(6) }
         end
 
-        it 'creates the correct number of Documents and Elements' do
-          expect(false).to be_falsey
-          # expect(Document.first.models.size).to eq(4)
+        context 'with Element count' do
+          it { expect(Element.count).to eq(22) }
+          # it { binding.pry; expect(Element.count).to eq(22) }
+
+          it {
+            Element.last.model.update(port: 42)
+            expect(true).to be_truthy
+          }
+        end
+
+        context 'with Association Element type' do
+          it { expect(Service.first.element.parent).to be_an_instance_of(Association) }
+        end
+      end
+
+      context 'with monolithic yaml array' do
+        let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith-array/groups.yml')) }
+
+        let(:doc) do
+          SolidRecord.skip_solid_record_callbacks do
+            described_class.create(model_type: 'Group', path: file)
+          end
+        end
+
+        before { doc }
+
+        it 'creates the correct number of Models' do # rubocop:disable RSpec/MultipleExpectations
+          expect(Group.count).to eq(4)
+          expect(Host.count).to eq(11)
+          expect(Service.count).to eq(1)
         end
       end
 
@@ -38,12 +68,12 @@ module SolidRecord
         let(:hosts_file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/file/groups/asc/hosts.yml')) }
 
         let(:group_doc) do
-          Group.skip_solid_record_callbacks { YamlDocument.create(klass_type: 'Group', path: group_file) }
+          Group.skip_solid_record_callbacks { described_class.create(model_type: 'Group', path: group_file) }
         end
 
         let(:hosts_doc) do
           SolidRecord.skip_solid_record_callbacks do
-            YamlDocument.create(klass_type: 'Host', path: hosts_file, model: Group.first)
+            described_class.create(model_type: 'Host', path: hosts_file, model: Group.first)
           end
         end
 

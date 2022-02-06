@@ -8,12 +8,14 @@ SPEC_ROOT = Pathname.new(__dir__).join('..')
 
 RSpec.configure do |config|
   config.before(:suite) { SolidRecord::DataStore.load } # Setup the A/R database connection
+  SolidRecord.logger.level = :debug
 end
 
 class SpecHelper
   class << self
     def before_context(type)
       Pathname.new('.').glob(SPEC_ROOT.join("spec/dummy/#{type}/app/models/*.rb")).each { |path| require_relative path }
+      # binding.pry
     end
 
     def after_context # rubocop:disable Metrics/AbcSize

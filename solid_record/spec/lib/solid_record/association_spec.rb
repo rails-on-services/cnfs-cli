@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  RSpec.describe Element do
+  RSpec.describe Association do
     before { DataStore.reload }
 
     context 'with infra' do
@@ -12,7 +12,7 @@ module SolidRecord
       context 'with monolithic yaml' do
         let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml')) }
 
-        let(:doc) { SolidRecord.skip_model_callbacks { YamlDocument.create(model_type: 'Group', path: file) } }
+        let(:doc) { SolidRecord.skip_model_callbacks { Document.create(klass_type: 'Group', path: file) } }
 
         describe 'count' do
           it 'creates the correct number of Files' do

@@ -35,7 +35,7 @@ module Test
 end
 
 module SolidRecord
-  RSpec.describe DataPath do
+  RSpec.describe Path do
     subject(:data_path) { described_class.new }
 
     describe '#valid?' do
@@ -87,8 +87,9 @@ module SolidRecord
           it { expect(data_path.model_class_type(Pathname.new('backend/production'))).to eq('Environment') }
         end
 
-        context "when childpath is 'backend/production/cluster'" do
+        context "when config.raise_on_error is true and childpath is 'backend/production/cluster'" do
           it do
+            SolidRecord.config.raise_on_error = true
             expect do
               data_path.model_class_type(Pathname.new('backend/production/cluster'))
             end .to raise_error(PathError)

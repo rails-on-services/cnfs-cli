@@ -1,24 +1,21 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
+module SolidRecord
   module Encryption
     extend ActiveSupport::Concern
 
     class_methods do
-      def attr_encrypted(*attrs)
-        encrypted_attrs.append(*attrs)
-      end
+      def attr_encrypted(*attrs) = encrypted_attrs.append(*attrs)
 
-      def encrypted_attrs
-        @encrypted_attrs ||= []
-      end
+      def encrypted_attrs() = @encrypted_attrs ||= []
     end
 
-    included do
-      before_validation :decrypt_attrs
-    end
+    included { before_validation :decrypt_attrs }
 
-    # When a Node creates a new record it passes in raw yaml which may include encrypted values
+    # Classes including this module should override this method to provide a consistent key from a known location
+    def encryption_key() = Lockbox.generate_key
+
+    # When a new record is created it passes in raw yaml which may include encrypted values
     # In the model all encrypted values are decrypted befoer saving so that:
     #
     # 1. The attribute has the decrypted value for processing, and
@@ -37,11 +34,8 @@ module OneStack::Concerns
       end
     end
 
-    # Return as_json with all encrypted_attrs fields encrypted
-    # Used for saving the object to the filesystem
-    def as_json_encrypted
-      with_encrypted_attrs { as_json }
-    end
+    # @return [Hash] with all encrypted_attrs fields encrypted
+    def as_solid() = with_encrypted_attrs { super }
 
     # Encrypt each encrypted_attr, yield to the caller then decrypt each encrypted_attr
     def with_encrypted_attrs
@@ -73,7 +67,7 @@ module OneStack::Concerns
     def decrypt(ciphertext)
       box.decrypt(ciphertext)
     rescue Lockbox::DecryptionError => e
-      Hendrix.logger.warn(e.message)
+      SolidRecord.logger.warn { e.message }
       nil
     end
 
@@ -89,8 +83,6 @@ module OneStack::Concerns
 
     private
 
-    def box
-      @box ||= Lockbox.new(key: key)
-    end
+    def box() = @box ||= Lockbox.new(key: encryption_key)
   end
 end

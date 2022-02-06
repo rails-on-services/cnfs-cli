@@ -4,27 +4,29 @@ module SolidRecord
   class << self
     # Path to a file that defines an ActiveRecord::Schema
     attr_accessor :schema_file
-
-    # Output table migrations
-    attr_accessor :verbose
   end
 
   class DataStore
     class << self
       def load
         ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-        reset
+        reload
       end
 
-      def reset() = SolidRecord.schema_file ? require(schema_file) : create_schema_from_tables
+      def load_path(path)
+        load
+        SolidRecord.skip_solid_record_callbacks do
+          SolidRecord::Path.create(path: path)
+        end
+      end
+
+      def reload() = SolidRecord.schema_file ? require(schema_file) : create_schema_from_tables
 
       def create_schema_from_tables
-        ActiveRecord::Migration.verbose = SolidRecord.verbose
+        ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
         ActiveRecord::Schema.define do |schema|
           require_relative '../ext/table_definition'
-          SolidRecord.tables.each do |table|
-            next unless table.respond_to? :create_table
-
+          SolidRecord.tables.select { |table| table.respond_to?(:create_table) }.each do |table|
             table.create_table(schema)
             table.reset_column_information
           end

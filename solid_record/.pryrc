@@ -17,19 +17,28 @@ end
 
 %i[blog stack infra].each do |what|
   %i[file monolith hybrid].each do |type| # rubocop:disable Performance/CollectionLiteralInLoop
-    define_method "#{what}_#{type}" do |_path_map = '.', recurse = false|
-      Pathname.new('.').glob("spec/dummy/#{what}/app/models/*.rb").each { |path| require_relative(path) }
-      # Pathname.new('.').glob('../core/app/models/*.rb').each { |path| require_relative path }
-      SolidRecord::DataStore.load
-      SolidRecord::DataPath.create(path: "spec/dummy/#{what}/data/#{type}", path_map: path_map(what), recurse: recurse)
+    define_method "#{what}_#{type}" do
+      base_path = "spec/dummy/#{what}"
+      Pathname.new('.').glob("#{base_path}/app/models/*.rb").each { |path| require_relative(path) }
+      SolidRecord::DataStore.load_path("#{base_path}/data/#{type}-array")
     end
   end
 end
 
-def srd() = SolidRecord::Document
+def e() = SolidRecord::Element
 
-def sre() = SolidRecord::Element
+def p() = SolidRecord::Path
 
-def srp() = SolidRecord::DataPath
+def a() = SolidRecord::Association
+
+def d() = SolidRecord::Document
+
+def me() = SolidRecord::ModelElement
+
+def re() = SolidRecord::RootElement
 
 SolidRecord.logger.formatter = SolidRecord::ColorFormatter
+SolidRecord.logger.level ||= :info
+SolidRecord.config.raise_on_error = false
+
+infra_monolith

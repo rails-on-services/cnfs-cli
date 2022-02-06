@@ -12,6 +12,9 @@ module SolidRecord
     def skip_solid_record_callbacks
       persisted_models.each { |model| model.skip_callback(*model_callbacks) }
       ret_val = yield
+    rescue StandardError => e
+      SolidRecord.raise_or_warn(e)
+    ensure
       persisted_models.each { |model| model.set_callback(*model_callbacks) }
       ret_val
     end
@@ -29,9 +32,20 @@ module SolidRecord
       def skip_solid_record_callbacks
         skip_callback(*SolidRecord.model_callbacks)
         ret_val = yield
+      rescue StandardError => e
+        SolidRecord.raise_or_warn(e)
+      ensure
         set_callback(*SolidRecord.model_callbacks)
         ret_val
       end
+
+      def except_solid
+        reflect_on_all_associations(:belongs_to).map do |a|
+          a.options[:foreign_key] || "#{a.name}_id"
+        end.prepend(primary_key)
+      end
+
+      def sti_column() = column_names.include?(inheritance_column) ? inheritance_column : nil
     end
 
     included do
@@ -47,10 +61,10 @@ module SolidRecord
       SolidRecord.persisted_models << self
     end
 
-    def to_solid() = { send(self.class.key_column) => as_solid }
+    def as_solid() = include_solid.each_with_object(attributes) { |att, h| h[att] = send(att) }.except(*exclude_solid)
 
-    def as_solid() = as_json.except(*except_solid)
+    def include_solid() = [self.class.sti_column].compact
 
-    def except_solid() = ['id', self.class.key_column]
+    def exclude_solid() = self.class.except_solid
   end
 end

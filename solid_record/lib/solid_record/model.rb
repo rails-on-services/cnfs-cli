@@ -7,6 +7,7 @@ module SolidRecord
     included do
       include Table
       include Persistence
+      include Encryption
     end
   end
 end
