@@ -27,15 +27,12 @@ module SolidRecord
       elements.create(type: element_type, model_type: model_type, key: model_key, values: model_values, owner: owner)
     end
 
-    def to_solid
-      b = nil
-      if serializer.eql?('array')
-        # b = { name => selected_elements.map(&:to_solid) }
-        b = elements.map(&:to_solid)
-      else
-        binding.pry
-      end
-      b
+    def to_solid(flag = nil) = send("to_solid_#{serializer}", flag)
+
+    def to_solid_array(flag = nil) = elements.flagged_for(flag).map(&:to_solid)
+
+    def to_solid_hash(flag = nil)
+      elements.flagged_for(flag).each_with_object({}) { |e, hash| hash.merge!(e.to_solid_hash) }
     end
 
     def element_type() = 'SolidRecord::ModelElement'

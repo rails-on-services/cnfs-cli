@@ -11,6 +11,7 @@ module SolidRecord
 
   class Path < Element
     include FileSystemElement
+
     attr_reader :unknown_document_types
 
     store :config, accessors: %i[glob namespace]
@@ -22,10 +23,16 @@ module SolidRecord
     after_create :raise_or_warn_unknown_types, if: -> { unknown_document_types.any? && owner.nil? }
     after_create :create_documents_from_unknown_types, if: -> { unknown_document_types.any? && owner }
 
+    delegate :children, :rmdir, to: :pathname
+    after_commit :rmdir, on: :destroy
+
+    def write() = elements.count.zero? ? destroy : nil
+
     def set_defaults
       @unknown_document_types ||= []
       self.glob ||= SolidRecord.glob_pattern
       self.namespace ||= SolidRecord.namespace
+      # self.model_type ||= pathname.safe_constantize
     end
 
     def create_documents_from_files
@@ -42,8 +49,14 @@ module SolidRecord
       owner.class.reflect_on_all_associations(:has_many).map(&:name).map(&:to_s).each do |assn_name|
         next unless (assnpath = pathname.join(assn_name)).exist?
 
+        # if assnpath.directory?
+        # e = elements.new(type: 'SolidRecord::Path', path: assnpath.to_s) #, owner: owner)
+        # binding.pry
+        # else
         klass = assn_name.classify
+        # binding.pry
         assnpath.glob(glob).each { |childpath| create_document(childpath, klass) }
+        # end
       end
     end
 
@@ -65,7 +78,5 @@ module SolidRecord
     end
 
     def element_type() = 'SolidRecord::Document'
-
-    def tree_label() = 'root_path'
   end
 end

@@ -7,11 +7,25 @@ require 'sqlite3'
 require 'solid_support'
 
 require_relative 'solid_record/version'
-require_relative 'solid_record/extension' if defined? Hendrix
+
+# <table>
+# <tr> | First Header  | Second Header | </tr>
+# | ------------- | ------------- |
+# | Content Cell  | Content Cell  |
+# | Content Cell  | Content Cell  |
+# <table>
 
 module SolidRecord
   class Error < StandardError; end
+
+  class << self
+    attr_writer :logger
+
+    def config() = @config ||= ActiveSupport::OrderedOptions.new
+  end
 end
+
+require_relative 'solid_record/extension' if defined? Hendrix
 
 require_relative 'solid_record/data_store'
 
@@ -51,20 +65,29 @@ module SolidRecord
   end
 
   class << self
-    attr_writer :logger
-
-    def config() = @config ||= ActiveSupport::OrderedOptions.new
-
     def logger() = @logger ||= ActiveSupport::Logger.new($stdout)
 
     def raise_or_warn(err, warn = nil)
       raise err if SolidRecord.config.raise_on_error
 
       SolidRecord.logger.warn { warn || err.message }
-      SolidRecord.logger.debug { err.backtrace.join("\n") }
+      SolidRecord.logger.debug { err.backtrace.join("\n") } if err.backtrace
       nil
     end
+
+    def flush_cache
+      ModelElement.flagged_for(:destroy).each(&:destroy)
+      Document.flagged.each(&:write)
+      # cache_destroy
+      # cache_write
+    end
+
+    def cache_destroy() = ModelElement.flagged_for(:destroy).each(&:destroy)
+
+    def cache_write() = Document.flagged.each(&:write)
   end
 
   SolidRecord.logger.formatter = SimpleFormatter
 end
+
+Kernel.at_exit { SolidRecord.flush_cache } if SolidRecord.config.flush_cache

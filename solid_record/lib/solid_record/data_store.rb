@@ -8,22 +8,19 @@ module SolidRecord
 
   class DataStore
     class << self
-      def load
+      def load(*paths)
         ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-        reload
+        reload(paths)
       end
 
-      def load_path(path)
-        load
-        SolidRecord.skip_solid_record_callbacks do
-          SolidRecord::Path.create(path: path)
-        end
+      def reload(*paths)
+        ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
+        SolidRecord.schema_file ? load(schema_file) : create_schema_from_tables
+        paths.flatten.each { |path| SolidRecord::Element.create_from_path(path) }
+        true
       end
-
-      def reload() = SolidRecord.schema_file ? require(schema_file) : create_schema_from_tables
 
       def create_schema_from_tables
-        ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
         ActiveRecord::Schema.define do |schema|
           require_relative '../ext/table_definition'
           SolidRecord.tables.select { |table| table.respond_to?(:create_table) }.each do |table|
@@ -31,7 +28,6 @@ module SolidRecord
             table.reset_column_information
           end
         end
-        true
       end
 
       # Dump the latest version of the schema to a file

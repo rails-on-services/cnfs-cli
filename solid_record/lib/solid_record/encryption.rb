@@ -12,8 +12,8 @@ module SolidRecord
 
     included { before_validation :decrypt_attrs }
 
-    # Classes including this module should override this method to provide a consistent key from a known location
-    def encryption_key() = Lockbox.generate_key
+    # Classes including this module can override this method to provide a key from an alternative location
+    def encryption_key() = SolidRecord.config.encryption_key || Lockbox.generate_key
 
     # When a new record is created it passes in raw yaml which may include encrypted values
     # In the model all encrypted values are decrypted befoer saving so that:
@@ -34,11 +34,11 @@ module SolidRecord
       end
     end
 
-    # @return [Hash] with all encrypted_attrs fields encrypted
-    def as_solid() = with_encrypted_attrs { super }
+    # @return [Hash] Persistence#as_solid with all encrypted_attrs encrypted
+    def as_solid() = with_attrs_encrypted { super }
 
-    # Encrypt each encrypted_attr, yield to the caller then decrypt each encrypted_attr
-    def with_encrypted_attrs
+    # Iterate over encrypted_attrs encrypting each attribute, yield to the caller then decrypt each attribute
+    def with_attrs_encrypted
       self.class.encrypted_attrs.each do |attr|
         next unless (value = send(attr))
 
@@ -56,19 +56,16 @@ module SolidRecord
       ret_val
     end
 
-    # Returns an encrypted string
-    #
-    # ==== Parameters
-    # plaintext<String>:: the string to be encrypted
-    def encrypt(plaintext)
-      box.encrypt(plaintext)
-    end
+    # @param plaintext [String] text to be encrypted
+    # @return [String] encrypted plaintext
+    def encrypt(plaintext) = box.encrypt(plaintext)
 
+    # @param ciphertext [String] encrypted text
+    # @return [String] decrypted plaintext
     def decrypt(ciphertext)
       box.decrypt(ciphertext)
     rescue Lockbox::DecryptionError => e
-      SolidRecord.logger.warn { e.message }
-      nil
+      SolidRecord.raise_or_warn(e)
     end
 
     # def encrypt_file(file_name, plaintext = nil)

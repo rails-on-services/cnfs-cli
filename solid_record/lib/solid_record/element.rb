@@ -5,7 +5,7 @@ module SolidRecord
     include SolidRecord::Table
     self.table_name_prefix = 'solid_record_'
 
-    # Values are passed in from Document and Assoication to ModelElements and passed on to model_class.create
+    # Values are passed in from Document and Association to ModelElements and passed on to model_class.create
     attr_accessor :values
 
     # Elements are self referencing; They belong to a parent element and have_many child elements
@@ -15,33 +15,49 @@ module SolidRecord
     # Owner of the model (optional), e.g. the model's belongs_to object
     belongs_to :owner, polymorphic: true
 
-    # Ascend the element tree until hitting a RootElement. used by ModelElement and Association
-    delegate :root, to: :parent
+    scope :flagged, -> { where.not(flags: nil) }
 
-    store :config, coder: YAML
+    scope :flagged_for, lambda { |flag = nil|
+      flag ? where('flags LIKE ?', "%#{flag}%") : where({})
+    }
+
+    serialize :flags, Set
+
+    # Ascend the element tree until hitting a Document
+    delegate :document, to: :parent, allow_nil: true
 
     # The class of the model managed (created, updated, destroyed) by an instance of Element
     def model_class() = @model_class ||= model_type.constantize
 
     # TODO: Move the TTY stuff to a controller and just return the hash
-    def to_tree() = puts(TTY::Tree.new({ tree_label => as_tree }).render)
-    # def to_tree() = TTY::Tree.new({ tree_label => as_tree }).render
-    # def to_tree() = { tree_label => as_tree }
+    def puts_tree(flagged: false) = puts(TTY::Tree.new(to_tree(flagged: flagged)).render)
 
-    def as_tree
-      elements.each_with_object([]) do |element, ary|
-        value = element.elements.size.zero? ? element.tree_label : { element.tree_label => element.as_tree }
-        ary.append(value)
+    def to_tree(flagged: false) = { tree_label => as_tree(flagged) }
+
+    def as_tree(flagged)
+      filtered_elements = flagged ? elements.flagged : elements
+      filtered_elements.each_with_object([]) do |element, ary|
+        sub_filtered_elements = flagged ? element.elements.flagged : element.elements
+        val = sub_filtered_elements.size.zero? ? element.tree_label : { element.tree_label => element.as_tree(flagged) }
+        ary.append(val)
       end
     end
 
     class << self
+      def create_from_path(path)
+        path = Pathname.new(path)
+        SolidRecord.raise_or_warn(StandardError.new("Invalid path #{path}")) unless path.exist?
+        klass = path.directory? ? SolidRecord::Path : SolidRecord::Document
+        SolidRecord.skip_solid_record_callbacks { klass.create(path: path) }
+      end
+
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
           t.string :type
           t.references :parent
           t.references :owner, polymorphic: true
           t.references :model, polymorphic: true
+          t.string :flags
           t.string :config
         end
       end

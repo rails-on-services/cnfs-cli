@@ -6,7 +6,7 @@ module SolidRecord
   class Extension < Hendrix::Extension
     # Access this config from the app with SolidRecord::Extension.config
     config.active_record = ActiveSupport::OrderedOptions.new
-    config.what.you_want = 'this'
+    config.flush_cache = true
 
     config.before_configuration do
       puts 'SolidRecord before_configuration'
