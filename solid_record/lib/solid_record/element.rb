@@ -23,8 +23,7 @@ module SolidRecord
 
     serialize :flags, Set
 
-    # Ascend the element tree until hitting a Document
-    delegate :document, to: :parent, allow_nil: true
+    delegate :document, to: :parent, allow_nil: true # Ascend the element tree until hitting a Document
 
     # The class of the model managed (created, updated, destroyed) by an instance of Element
     def model_class() = @model_class ||= model_type.constantize
@@ -47,9 +46,10 @@ module SolidRecord
       def create_from_path(path)
         path = Pathname.new(path)
         SolidRecord.raise_or_warn(StandardError.new("Invalid path #{path}")) unless path.exist?
-        klass = path.directory? ? SolidRecord::Path : SolidRecord::Document
-        SolidRecord.skip_solid_record_callbacks { klass.create(path: path) }
+        SolidRecord.skip_solid_record_callbacks { klass(path).create(path: path) }
       end
+
+      def klass(path) = path.directory? ? SolidRecord::Path : SolidRecord::Document
 
       def create_table(schema)
         schema.create_table table_name, force: true do |t|

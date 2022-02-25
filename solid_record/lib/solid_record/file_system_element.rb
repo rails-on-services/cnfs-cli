@@ -6,12 +6,11 @@ module SolidRecord
 
     included do
       store :config, accessors: %i[path]
-      delegate :exist?, to: :pathname
-      # validates :path, presence: true
+      delegate :exist?, :name, to: :pathname
       validate :path_exists
 
-      delegate :write, to: :parent, prefix: true
-      after_commit :parent_write, on: :destroy, allow_nil: true
+      delegate :write, to: :parent, prefix: true, allow_nil: true
+      after_commit :parent_write, on: :destroy, if: -> { parent&.type&.eql?('SolidRecord::Path') }
     end
 
     def path_exists
@@ -19,7 +18,5 @@ module SolidRecord
     end
 
     def pathname() = @pathname ||= Pathname.new(path || '')
-
-    def tree_label() = "#{pathname.name} (#{self.class.to_s.demodulize})"
   end
 end

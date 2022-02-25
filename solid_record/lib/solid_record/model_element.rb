@@ -12,18 +12,13 @@ module SolidRecord
     # The ID used to reference the model
     attr_accessor :key
 
-    scope :selected, -> { all }
-
     # The model instance of model_class that is created from this element
     belongs_to :model, polymorphic: true
 
-    scope :associations, -> { elements.where(type: 'SolidRecord::Association') }
+    delegate :key_column, to: :model_class
 
     before_create :create_model
-
     after_create :create_associations
-
-    delegate :key_column, to: :model_class
 
     # The created model's string key in the table's user defined 'key_column'
     def model_key() = model.send(key_column)
@@ -38,7 +33,7 @@ module SolidRecord
 
     # @return [Hash] Merge the original values with owner and any belongs_to calculated IDs
     def model_values
-      values.except(*has_many_names).merge(belongs_to_attributes).merge(owner_attribute).merge(key_column => key)
+      values.except(*assn_names).merge(belongs_to_attributes).merge(owner_attribute).merge(key_column => key)
     end
 
     def owner_attribute() = owner ? { owner.class.base_class.name.downcase => owner } : {}
@@ -49,7 +44,7 @@ module SolidRecord
       model_class.reflect_on_all_associations(:belongs_to).each_with_object({}) do |assn, _hash|
         hash_fk = "#{assn.name}_#{SolidRecord.reference_suffix}" # user_name
         # In a monolithic document the foreign key value is not part of the document hierarchy so it will be nil
-        next unless (hash_fk_value = values[hash_fk])
+        next unless (_hash_fk_value = values[hash_fk])
 
         # model_fk = assn.options[:foreign_key] || "#{assn.name}_id"
         # TODO: Maybe check and raise if not model_class.column_names.include?(model_fk)
@@ -61,7 +56,7 @@ module SolidRecord
 
     # If this element's payload includes associations then create elements for those
     def create_associations
-      has_many_names.each do |assn_name|
+      assn_names.each do |assn_name|
         next unless (assn_values = values[assn_name])
 
         elements.create(type: 'SolidRecord::Association', name: assn_name,
@@ -69,7 +64,7 @@ module SolidRecord
       end
     end
 
-    def has_many_names() = model_class.reflect_on_all_associations(:has_many).map(&:name).map(&:to_s) # rubocop:disable Naming/PredicateName
+    def assn_names() = model_class.reflect_on_all_associations(:has_many).map { |a| a.name.to_s }
 
     # The Persistence Concern adds these lifecycle methods to the model's callback chains
     # When a model's lifecycle event is triggred it invokes its element's method of the same name
@@ -84,10 +79,12 @@ module SolidRecord
 
     def to_solid_hash() = { model_key => to_solid.except(key_column) }
 
-    def to_solid() = elements.each_with_object(as_solid) { |e, hash| hash[e.name] = e.to_solid }
+    def to_solid() = solid_elements.each_with_object(as_solid) { |e, hash| hash[e.name] = e.to_solid }
 
     def as_solid() = model.as_solid.compact.sort.to_h
 
-    def tree_label() = model_class.sti_column ? "#{model_key} (#{model.send(model_class.sti_column)})" : model_key
+    def solid_elements() = elements.where.not(type: 'SolidRecord::Path')
+
+    def tree_label() = "#{model_key} (#{type.demodulize})"
   end
 end

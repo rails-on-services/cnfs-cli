@@ -8,7 +8,7 @@ SPEC_ROOT = Pathname.new(__dir__).join('..')
 
 RSpec.configure do |config|
   config.before(:suite) { SolidRecord::DataStore.load } # Setup the A/R database connection
-  SolidRecord.logger.level = :debug
+  SolidRecord.logger.level = :warn # debug
 end
 
 class SpecHelper

@@ -37,6 +37,6 @@ module SolidRecord
 
     def element_type() = 'SolidRecord::ModelElement'
 
-    def tree_label() = name
+    def tree_label() = "#{name} (#{type.demodulize} - #{serializer})"
   end
 end

@@ -13,4 +13,4 @@ RSpec/NestedGroups:
 Style/CommentedKeyword:
   Enabled: false
 RSpec/MultipleMemoizedHelpers:
-  Max: 7
+  Max: 9

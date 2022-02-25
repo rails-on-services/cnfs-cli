@@ -4,22 +4,13 @@ module SolidRecord
   RSpec.describe Element do
     before { DataStore.reload }
 
-    context 'with infra' do
-      before(:context) { SpecHelper.before_context('infra') }
+    describe 'klass' do
+      context 'when passed a directory' do
+        it { expect(described_class.klass(Pathname.new('.'))).to eq(Path) }
+      end
 
-      after(:context) { SpecHelper.after_context }
-
-      context 'with monolithic yaml' do
-        let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml')) }
-
-        let(:doc) { SolidRecord.skip_model_callbacks { YamlDocument.create(model_type: 'Group', path: file) } }
-
-        describe 'count' do
-          it 'creates the correct number of Files' do
-            expect(false).to be_falsey
-            # expect(Host.last.element.root.document).to eq(Document.first)
-          end
-        end
+      context 'when passed a file' do
+        it { expect(described_class.klass(Pathname.new('Gemfile'))).to eq(Document) }
       end
     end
   end

@@ -45,7 +45,7 @@ module SolidRecord
         end.prepend(primary_key)
       end
 
-      def sti_column() = column_names.include?(inheritance_column) ? inheritance_column : nil
+      def include_solid() = column_names.include?(inheritance_column) ? [inheritance_column] : []
     end
 
     included do
@@ -63,7 +63,7 @@ module SolidRecord
 
     def as_solid() = include_solid.each_with_object(attributes) { |att, h| h[att] = send(att) }.except(*exclude_solid)
 
-    def include_solid() = [self.class.sti_column].compact
+    def include_solid() = self.class.include_solid
 
     def exclude_solid() = self.class.except_solid
   end
