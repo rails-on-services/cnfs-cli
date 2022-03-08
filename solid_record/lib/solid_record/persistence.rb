@@ -9,17 +9,17 @@ module SolidRecord
     # Array of models that have included the SolidRecord::Persistence concern
     def persisted_models() = @persisted_models ||= []
 
-    def skip_solid_record_callbacks
-      persisted_models.each { |model| model.skip_callback(*model_callbacks) }
+    def skip_persistence_callbacks
+      persisted_models.each { |model| model.skip_callback(*persistence_callbacks) }
       ret_val = yield
     rescue StandardError => e
       SolidRecord.raise_or_warn(e)
     ensure
-      persisted_models.each { |model| model.set_callback(*model_callbacks) }
+      persisted_models.each { |model| model.set_callback(*persistence_callbacks) }
       ret_val
     end
 
-    def model_callbacks() = %i[create after __create_element]
+    def persistence_callbacks() = %i[create after __create_element]
   end
 
   module Persistence
@@ -29,30 +29,20 @@ module SolidRecord
       # The name of the table column that the yaml key is written to in the model
       def key_column() = 'key'
 
-      def skip_solid_record_callbacks
-        skip_callback(*SolidRecord.model_callbacks)
-        ret_val = yield
-      rescue StandardError => e
-        SolidRecord.raise_or_warn(e)
-      ensure
-        set_callback(*SolidRecord.model_callbacks)
-        ret_val
-      end
-
       def except_solid
-        reflect_on_all_associations(:belongs_to).map do |a|
-          a.options[:foreign_key] || "#{a.name}_id"
-        end.prepend(primary_key)
+        reflect_on_all_associations(:belongs_to).each_with_object([primary_key]) do |a, ary|
+          ary.append(a.options[:foreign_key] || "#{a.name}_id")
+        end
       end
 
-      def include_solid() = column_names.include?(inheritance_column) ? [inheritance_column] : []
+      def belongs_to_names() = reflect_on_all_associations(:belongs_to).map(&:name)
     end
 
     included do
       has_one SolidRecord.element_attribute.to_sym, class_name: 'SolidRecord::Element', as: :model
 
-      # Model lifecyle methods are delegated to RootElement
-      delegate :__create_element, :__update_element, :__destroy_element, to: SolidRecord.element_attribute.to_sym
+      delegate :__update_element, :__destroy_element, to: SolidRecord.element_attribute.to_sym
+      delegate :belongs_to_names, :except_solid, to: :class
 
       after_create :__create_element
       after_update :__update_element
@@ -61,10 +51,13 @@ module SolidRecord
       SolidRecord.persisted_models << self
     end
 
-    def as_solid() = include_solid.each_with_object(attributes) { |att, h| h[att] = send(att) }.except(*exclude_solid)
+    def __create_element
+      if belongs_to_names.size.eql?(1) # rubocop:disable Style/GuardClause
+        owner = send(belongs_to_names.first)
+        owner.element.add_model(self)
+      end
+    end
 
-    def include_solid() = self.class.include_solid
-
-    def exclude_solid() = self.class.except_solid
+    def as_solid() = attributes.except(*except_solid)
   end
 end

@@ -6,7 +6,7 @@ module SolidRecord
 
     included do
       store :config, accessors: %i[path]
-      delegate :exist?, :name, to: :pathname
+      delegate :name, to: :pathname
       validate :path_exists
 
       delegate :write, to: :parent, prefix: true, allow_nil: true
@@ -14,7 +14,7 @@ module SolidRecord
     end
 
     def path_exists
-      errors.add("invalid path #{path}") unless exist?
+      errors.add("invalid path #{path}") unless pathname.exist?
     end
 
     def pathname() = @pathname ||= Pathname.new(path || '')

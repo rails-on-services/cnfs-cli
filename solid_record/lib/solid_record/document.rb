@@ -15,7 +15,7 @@ module SolidRecord
 
     before_validation :set_defaults
     delegate :delete, to: :pathname, prefix: true
-    after_commit :pathname_delete, on: :destroy
+    after_commit :pathname_delete, on: :destroy, if: -> { pathname.exist? }
 
     def set_defaults() = self.model_type ||= pathname.safe_constantize
 

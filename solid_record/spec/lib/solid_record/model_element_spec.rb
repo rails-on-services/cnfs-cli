@@ -2,7 +2,7 @@
 
 module SolidRecord
   RSpec.describe ModelElement do
-    before { DataStore.reload }
+    before { DataStore.reset }
 
     context 'with infra' do
       before(:context) { SpecHelper.before_context('infra') }
@@ -10,16 +10,13 @@ module SolidRecord
       after(:context) { SpecHelper.after_context }
 
       context 'with monolithic yaml' do
-        let(:file) { Pathname.new(SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml')) }
+        let(:path) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml') }
+        let(:doc) { LoadPath.load(path: path) }
 
-        let(:doc) { SolidRecord.skip_model_callbacks { YamlDocument.create(model_type: 'Group', path: file) } }
+        before { doc }
 
-        describe 'count' do
-          it 'creates the correct number of Files' do
-            expect(false).to be_falsey
-            # expect(Host.last.element.root.document).to eq(Document.first)
-          end
-        end
+        it { expect(Host.last.element.document).not_to be_nil }
+        it { expect(Host.last.element.document).to eq(Document.first) }
       end
     end
   end

@@ -43,14 +43,6 @@ module SolidRecord
     end
 
     class << self
-      def create_from_path(path)
-        path = Pathname.new(path)
-        SolidRecord.raise_or_warn(StandardError.new("Invalid path #{path}")) unless path.exist?
-        SolidRecord.skip_solid_record_callbacks { klass(path).create(path: path) }
-      end
-
-      def klass(path) = path.directory? ? SolidRecord::Path : SolidRecord::Document
-
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
           t.string :type

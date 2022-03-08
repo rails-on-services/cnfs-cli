@@ -1,0 +1,6 @@
+---
+auth_domain: crc
+network: 10.10.1.0/24
+domain: internal.crack.org
+defaults:
+  host_version: 2012r2

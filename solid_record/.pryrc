@@ -13,13 +13,7 @@ if defined? SolidRecord
       define_method "#{what}_#{type}" do
         base_path = Pathname.new('spec/dummy').join(what)
         base_path.join('app/models').glob('*.rb').each { |path| require_relative(path) }
-        # SolidRecord::DataStore.load(base_path.join('data', "#{type}-array/groups.yml"))
-        file = base_path.join('data', "#{type}-array/groups.yml")
-        tempdir = Pathname.new(Dir.mktmpdir)
-        FileUtils.cp_r(file.parent, tempdir)
-        path = tempdir.join(file.parent.basename, file.basename)
-        # Element.create_from_path(path)
-        SolidRecord::DataStore.load(path)
+        SolidRecord::DataStore.load(base_path.join('data', "#{type}-array/groups.yml").to_s)
       end
     end
   end
@@ -39,6 +33,7 @@ if defined? SolidRecord
   SolidRecord.logger.formatter = SolidRecord::ColorFormatter
   SolidRecord.logger.level ||= :info
   SolidRecord.config.raise_on_error = false
+  SolidRecord.config.sandbox = true
   SolidRecord.config.encryption_key = 'c0adafa60b624f300fe976a835e78bed7dcc15261c6250d021a5c3af86469213'
 
   # infra_monolith

@@ -3,6 +3,18 @@
 module SolidRecord
   class << self
     def reference_suffix() = 'name'
+
+    def with_model_element_callbacks
+      model_element_callbacks.each { |cb| ModelElement.set_callback(*cb) }
+      ret_val = yield
+    rescue StandardError => e
+      SolidRecord.raise_or_warn(e)
+    ensure
+      model_element_callbacks.each { |cb| ModelElement.skip_callback(*cb) }
+      ret_val
+    end
+
+    def model_element_callbacks() = [%i[create before create_model], %i[create after create_associations]]
   end
 
   class ModelSaveError < Error; end
@@ -17,8 +29,10 @@ module SolidRecord
 
     delegate :key_column, to: :model_class
 
-    before_create :create_model
-    after_create :create_associations
+    # NOTE: These callbacks are enabled/disabled by DataStore.create_elements_and_models
+    # They are listed here only for reference
+    # before_create :create_model
+    # after_create :create_associations
 
     # The created model's string key in the table's user defined 'key_column'
     def model_key() = model.send(key_column)
@@ -66,10 +80,8 @@ module SolidRecord
 
     def assn_names() = model_class.reflect_on_all_associations(:has_many).map { |a| a.name.to_s }
 
-    # The Persistence Concern adds these lifecycle methods to the model's callback chains
+    # The Persistence Concern adds lifecycle methods to the model's callback chains
     # When a model's lifecycle event is triggred it invokes its element's method of the same name
-    # def __create_element() = parent.create_element(to_solid)
-
     def __update_element() = document.flag(:update)
 
     def __destroy_element
@@ -86,5 +98,12 @@ module SolidRecord
     def solid_elements() = elements.where.not(type: 'SolidRecord::Path')
 
     def tree_label() = "#{model_key} (#{type.demodulize})"
+
+    # Called from persistence#__after_create
+    def add_model(new_model)
+      assn = elements.find_by(model_type: new_model.class.name)
+      assn.elements.create(type: 'SolidRecord::ModelElement', model: new_model, owner: model)
+      document.flag(:update)
+    end
   end
 end

@@ -2,15 +2,19 @@
 
 module SolidRecord
   RSpec.describe Element do
-    before { DataStore.reload }
+    before { DataStore.reset }
 
-    describe 'klass' do
-      context 'when passed a directory' do
-        it { expect(described_class.klass(Pathname.new('.'))).to eq(Path) }
-      end
+    describe '#flagged_for' do
+      context 'when element is updated' do
+        let(:element) { described_class.create(flags: Set.new << :update) }
 
-      context 'when passed a file' do
-        it { expect(described_class.klass(Pathname.new('Gemfile'))).to eq(Document) }
+        before { element }
+
+        it { expect(described_class.flagged.count).to eq(1) }
+
+        it { expect(described_class.flagged_for(:update).count).to eq(1) }
+
+        it { expect(described_class.flagged_for(:destroy).count).to eq(0) }
       end
     end
   end

@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require 'active_record'
-require 'lockbox'
 require 'sqlite3'
+
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
+
+require 'lockbox'
 
 require 'solid_support'
 
@@ -28,6 +31,7 @@ end
 require_relative 'solid_record/extension' if defined? Hendrix
 
 require_relative 'solid_record/data_store'
+require_relative 'solid_record/load_path'
 
 require_relative 'solid_record/table'
 require_relative 'solid_record/element'
@@ -74,20 +78,9 @@ module SolidRecord
       SolidRecord.logger.debug { err.backtrace.join("\n") } if err.backtrace
       nil
     end
-
-    def flush_cache
-      ModelElement.flagged_for(:destroy).each(&:destroy)
-      Document.flagged.each(&:write)
-      # cache_destroy
-      # cache_write
-    end
-
-    def cache_destroy() = ModelElement.flagged_for(:destroy).each(&:destroy)
-
-    def cache_write() = Document.flagged.each(&:write)
   end
 
   SolidRecord.logger.formatter = SimpleFormatter
 end
 
-Kernel.at_exit { SolidRecord.flush_cache } if SolidRecord.config.flush_cache
+Kernel.at_exit { SolidRecord::DataStore.at_exit }

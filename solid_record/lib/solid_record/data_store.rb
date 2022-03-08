@@ -9,16 +9,36 @@ module SolidRecord
   class DataStore
     class << self
       def load(*paths)
-        ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
-        reload(paths)
-      end
-
-      def reload(*paths)
         ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
         SolidRecord.schema_file ? load(schema_file) : create_schema_from_tables
-        paths.flatten.each { |path| SolidRecord::Element.create_from_path(path) }
+        paths.each { |path| LoadPath.new(path: path) }
+        LoadPath.load_all
         true
       end
+
+      def reload() = self.load
+
+      def reset
+        if SolidRecord.config.sandbox
+          tmp_path.rmtree
+          tmp_path.mkpath
+        end
+        SolidRecord.load_paths = []
+        reload
+      end
+
+      def flush_cache
+        ModelElement.flagged_for(:destroy).each(&:destroy)
+        Document.flagged.each(&:write)
+        Element.update_all(flags: nil)
+      end
+
+      def at_exit
+        flush_cache if SolidRecord.config.flush_cache
+        tmp_path.rmtree if SolidRecord.config.sandbox
+      end
+
+      def tmp_path() = @tmp_path ||= Pathname.new(Dir.mktmpdir)
 
       def create_schema_from_tables
         ActiveRecord::Schema.define do |schema|

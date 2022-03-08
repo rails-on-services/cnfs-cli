@@ -2,7 +2,7 @@
 
 module SolidRecord
   RSpec.describe Association do
-    before { DataStore.reload }
+    before { DataStore.reset }
 
     context 'with infra' do
       before(:context) { SpecHelper.before_context('infra') }
@@ -11,7 +11,7 @@ module SolidRecord
 
       context 'with monolithic yaml' do
         let(:file) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml') }
-        let(:doc) { Element.create_from_path(file) }
+        let(:doc) { LoadPath.load(path: file) }
 
         let(:association) { described_class.last }
         let(:elements) { association.elements }
@@ -19,7 +19,7 @@ module SolidRecord
         let(:model_update) { model.update(port: 422) }
         let(:model_destroy) do
           model.destroy
-          SolidRecord.cache_destroy
+          ModelElement.flagged_for(:destroy).each(&:destroy)
         end
 
         before { doc }
@@ -28,13 +28,13 @@ module SolidRecord
           it { expect(doc.to_solid.count).to be(4) }
 
           context 'when model updated' do
-            # it { expect { model_update }.to change { doc.to_solid(:update).count }.from(0).to(1) }
             it { expect { model_update }.to change { doc.reload.flags.size }.from(0).to(1) }
+            it { expect { model_update }.to change { doc.reload.flags.to_a.include?(:update) }.from(false).to(true) }
           end
 
           context 'when model destroyed' do
-            it { expect { model_update }.to change { doc.reload.flags.size }.from(0).to(1) }
-            # it { expect { model_destroy }.to change { doc.to_solid(:update).count }.from(0).to(1) }
+            it { expect { model_destroy }.to change { doc.reload.flags.size }.from(0).to(1) }
+            it { expect { model_destroy }.to change { doc.reload.flags.to_a.include?(:update) }.from(false).to(true) }
             it { expect { model_destroy }.to change(Element, :count).by(-1) }
           end
         end
@@ -54,7 +54,7 @@ module SolidRecord
         end
 
         context 'when Group has_many Hosts' do
-          it { expect(Group.find_by(name: 'asc').hosts.count).to eq(6) }
+          it { expect(Group.find_by(name: 'crack').hosts.count).to eq(6) }
         end
 
         context 'with Element count' do
@@ -67,8 +67,8 @@ module SolidRecord
       end
 
       context 'with monolithic yaml array' do
-        let(:file) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-array/groups.yml') }
-        let(:doc) { Element.create_from_path(file) }
+        let(:path) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-array') }
+        let(:doc) { LoadPath.load(path: path) }
 
         before { doc }
 
@@ -80,17 +80,11 @@ module SolidRecord
       end
 
       context 'with hierarchial yaml' do
-        let(:group_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/asc.yml') }
-        let(:hosts_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/asc/hosts.yml') }
+        let(:group_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/crack.yml') }
+        let(:hosts_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/crack/hosts.yml') }
 
-        let(:group_doc) { Element.create_from_path(group_file) }
-
-        let(:hosts_doc) do
-          SolidRecord.skip_solid_record_callbacks do
-            Document.create(path: hosts_file, owner: Group.first)
-            # Document.create(model_type: 'Host', path: hosts_file, owner: Group.first)
-          end
-        end
+        let(:group_doc) { LoadPath.load(path: group_file, model_type: 'Group') }
+        let(:hosts_doc) { LoadPath.load(path: hosts_file, owner: -> { Group.first }) }
 
         context 'with Group and Host documents' do
           before do
@@ -99,6 +93,9 @@ module SolidRecord
           end
 
           describe '#model' do
+            it { expect(group_doc.model_type).to eq('Group') }
+            it { expect(hosts_doc.model_type).to eq('Host') }
+            it { expect(Group.first).not_to be_nil }
             it { expect(Service.last.host.group).to eq(Group.first) }
           end
         end
@@ -110,9 +107,7 @@ module SolidRecord
 
       after(:context) { SpecHelper.after_context }
 
-      context 'with monolithic yaml' do
-        it { expect(true).to be_truthy }
-      end
+      xit { expect(true).to be_truthy }
     end
   end
 end

@@ -1,0 +1,76 @@
+---
+- name: acme
+  domain: acme.local
+  defaults: {}
+  hosts:
+  - host: 192.168.1.1
+    kind: Vpn
+    vpn_type: openvpn
+  - host: sng-file-1
+    kind: AFile
+    version: 2012r2
+- name: hackme
+  domain: hackme.com
+  defaults: {}
+  hosts:
+  - host: fw
+    kind: Vpn
+    ip: fwv.hackme.com
+    port: 444
+- name: slackme
+  domain: slackme.local
+  hosts:
+  - host: fw2
+    kind: Vpn
+    ip: 10.100.17.234
+    port: 4443
+    vpn_type: fortivpn
+  - host: cap23
+    kind: Dc
+    ip: 192.168.9.3
+- name: crack
+  auth_domain: crc
+  defaults:
+    hosts:
+      version: 2012r2
+  domain: internal.crack.org
+  network: 10.10.1.0/24
+  hosts:
+  - host: s-file-1
+    ip: 10.1.1.72
+    kind: Dc
+    shares: []
+  - host: s-file-2
+    kind: AFile
+    shares:
+    - drive: p
+      path: ClientApps
+      purpose: apps
+    - drive: w
+      path: WPKG
+      purpose: wpkg
+    version: 2008r2
+  - host: s-hyperv-1
+    ip: 10.1.1.55
+    kind: Hv
+    shares: []
+  - host: s-hyperv-2
+    ip: 10.1.1.59
+    kind: Imm
+    shares: []
+  - host: s-file-3
+    kind: AFile
+    shares:
+    - drive: p
+      path: ClientApps
+      purpose: apps
+    - drive: w
+      path: WPKG
+      purpose: wpkg
+    version: '2016'
+  - host: s-fw-1
+    kind: Firewall
+    shares: []
+    services:
+    - name: ssh
+      port: 7430
