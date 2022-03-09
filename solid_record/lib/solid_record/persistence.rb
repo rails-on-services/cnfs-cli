@@ -29,6 +29,8 @@ module SolidRecord
       # The name of the table column that the yaml key is written to in the model
       def key_column() = 'key'
 
+      def owner_association_name() = nil
+
       def except_solid
         reflect_on_all_associations(:belongs_to).each_with_object([primary_key]) do |a, ary|
           ary.append(a.options[:foreign_key] || "#{a.name}_id")

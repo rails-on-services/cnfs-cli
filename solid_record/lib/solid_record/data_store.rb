@@ -11,7 +11,7 @@ module SolidRecord
       def load(*paths)
         ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
         SolidRecord.schema_file ? load(schema_file) : create_schema_from_tables
-        paths.each { |path| LoadPath.new(path: path) }
+        paths.each { |path| LoadPath.new(**path) }
         LoadPath.load_all
         true
       end
@@ -34,7 +34,7 @@ module SolidRecord
       end
 
       def at_exit
-        flush_cache if SolidRecord.config.flush_cache
+        flush_cache if SolidRecord.config.flush_cache_on_exit
         tmp_path.rmtree if SolidRecord.config.sandbox
       end
 

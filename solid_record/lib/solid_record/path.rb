@@ -2,8 +2,6 @@
 
 module SolidRecord
   class << self
-    attr_accessor :namespace
-
     attr_writer :glob_pattern
 
     def glob_pattern() = @glob_pattern ||= '*.yml'
@@ -31,7 +29,7 @@ module SolidRecord
     def set_defaults
       @unknown_document_types ||= []
       self.glob ||= SolidRecord.glob_pattern
-      self.namespace ||= SolidRecord.namespace
+      self.namespace ||= SolidRecord.config.namespace
     end
 
     def create_documents_from_files

@@ -42,7 +42,12 @@ module SolidRecord
       self.model = model_class.create(model_values)
       raise ModelSaveError, "Err #{model_class}: #{model.errors.full_messages.join('. ')}" unless model.persisted?
     rescue ModelSaveError, ActiveModel::UnknownAttributeError, ActiveRecord::SubclassNotFound => e
-      SolidRecord.raise_or_warn(e, "#{model_class} #{e.message}")
+      SolidRecord.raise_or_warn(e, "#{model_class} #{e.message} Check values for:\n#{config_values}")
+    end
+
+    def config_values
+      "SolidRecord.config.namespace: #{SolidRecord.config.namespace}\n" \
+        "#{model_class}.owner_association_name: #{model_class.owner_association_name}"
     end
 
     # @return [Hash] Merge the original values with owner and any belongs_to calculated IDs
@@ -50,7 +55,23 @@ module SolidRecord
       values.except(*assn_names).merge(belongs_to_attributes).merge(owner_attribute).merge(key_column => key)
     end
 
-    def owner_attribute() = owner ? { owner.class.base_class.name.downcase => owner } : {}
+    def owner_attribute
+      # def owner_attribute() = owner ? { owner.class.base_class.name.downcase => owner } : {}
+      return {} if owner.nil?
+      return { model_class.owner_association_name => owner } if model_class.owner_association_name
+      return {} unless (bt = model_class.reflect_on_all_associations(:belongs_to)).size.eql?(1)
+
+      { bt.first.name => owner }
+    end
+
+    # def owner_attribute
+    #   # abstract_class returns true if the class is abstract and nil if not
+    #   is_sti = owner.nil? ? false : owner.class.superclass.abstract_class.nil?
+    #   owner ? { 'owner' => owner } : {}
+    #   ret_val = owner ? { model_class.owner_association_name => owner } : {}
+    #   binding.pry if owner
+    #   ret_val
+    # end
 
     # For each belongs_to association on the model_class
     # @return [Hash] of model_foreign_key_column => identified foreign key value
