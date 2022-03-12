@@ -2,8 +2,6 @@
 
 module SolidRecord
   class << self
-    def reference_suffix() = 'name'
-
     def with_model_element_callbacks
       model_element_callbacks.each { |cb| ModelElement.set_callback(*cb) }
       ret_val = yield
@@ -29,7 +27,7 @@ module SolidRecord
 
     delegate :key_column, to: :model_class
 
-    # NOTE: These callbacks are enabled/disabled by DataStore.create_elements_and_models
+    # NOTE: These callbacks are enabled/disabled by SolidRecord.with_model_element_callbacks block
     # They are listed here only for reference
     # before_create :create_model
     # after_create :create_associations
@@ -47,7 +45,8 @@ module SolidRecord
 
     def config_values
       "SolidRecord.config.namespace: #{SolidRecord.config.namespace}\n" \
-        "#{model_class}.owner_association_name: #{model_class.owner_association_name}"
+        "#{model_class}.owner_association_name: #{model_class.owner_association_name}\n" \
+        "#{model_class}.key_column: #{model_class.key_column}" \
     end
 
     # @return [Hash] Merge the original values with owner and any belongs_to calculated IDs
@@ -59,9 +58,11 @@ module SolidRecord
       # def owner_attribute() = owner ? { owner.class.base_class.name.downcase => owner } : {}
       return {} if owner.nil?
       return { model_class.owner_association_name => owner } if model_class.owner_association_name
-      return {} unless (bt = model_class.reflect_on_all_associations(:belongs_to)).size.eql?(1)
-
-      { bt.first.name => owner }
+      if (bt = model_class.reflect_on_all_associations(:belongs_to)).size.eql?(1)
+        return { bt.first.name => owner }
+      end
+      SolidRecord.raise_or_warn(StandardError.new('no owner found'))
+      {}
     end
 
     # def owner_attribute
@@ -77,14 +78,15 @@ module SolidRecord
     # @return [Hash] of model_foreign_key_column => identified foreign key value
     def belongs_to_attributes
       model_class.reflect_on_all_associations(:belongs_to).each_with_object({}) do |assn, _hash|
-        hash_fk = "#{assn.name}_#{SolidRecord.reference_suffix}" # user_name
+        fk_attribute = "#{assn.name}_#{SolidRecord.config.reference_suffix}" # user_name
         # In a monolithic document the foreign key value is not part of the document hierarchy so it will be nil
-        next unless (_hash_fk_value = values[hash_fk])
+        next unless (fk_value = values[fk_attribute])
 
         # model_fk = assn.options[:foreign_key] || "#{assn.name}_id"
         # TODO: Maybe check and raise if not model_class.column_names.include?(model_fk)
-        raise 'TODO: This will be a bug'
-        # assn_id = root.identify(key: hash_fk_value, type: assn.name.to_s.pluralize)
+        # binding.pry
+        # raise 'TODO: This will be a bug'
+        # assn_id = root.identify(key: fk_value, type: assn.name.to_s.pluralize)
         # hash[model_fk] = assn_id
       end
     end
@@ -114,7 +116,10 @@ module SolidRecord
 
     def to_solid() = solid_elements.each_with_object(as_solid) { |e, hash| hash[e.name] = e.to_solid }
 
-    def as_solid() = model.as_solid.compact.sort.to_h
+    def as_solid
+      model.encrypt_attrs if model.respond_to?(:encrypt_attrs)
+      model.as_solid.compact.sort.to_h
+    end
 
     def solid_elements() = elements.where.not(type: 'SolidRecord::Path')
 

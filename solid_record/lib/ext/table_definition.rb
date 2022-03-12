@@ -7,7 +7,8 @@ class ActiveRecord::ConnectionAdapters::SQLite3::TableDefinition
   end
 
   def references(*args, **options)
-    string("#{args.first}_#{SolidRecord.reference_suffix}".to_sym, type: :string, **options) if options.delete(:solid)
+    attr_name = "#{args.first}_#{SolidRecord.config.reference_suffix}".to_sym
+    string(attr_name, type: :string, **options) if options.delete(:solid)
     super(*args, type: :integer, **options)
   end
 end

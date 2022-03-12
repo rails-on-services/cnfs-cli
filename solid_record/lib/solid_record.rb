@@ -24,7 +24,19 @@ module SolidRecord
   class << self
     attr_writer :logger
 
-    def config() = @config ||= ActiveSupport::OrderedOptions.new
+    def config() = @config ||= config_set
+
+    def config_set
+      config = ActiveSupport::OrderedOptions.new
+      config.document_map = { yml: :yaml, yaml: :yaml }
+      # config.encryption_key = Lockbox.generate_key
+      config.flush_cache_on_exit = true
+      config.raise_on_error = false
+      config.reference_suffix = :name
+      # config.sandbox = true
+      config.schema_file = nil # Path to a file that defines an ActiveRecord::Schema
+      config
+    end
   end
 end
 

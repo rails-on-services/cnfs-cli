@@ -5,6 +5,12 @@ module SolidRecord
     attr_writer :load_paths
 
     def load_paths() = @load_paths ||= []
+
+    def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
+
+    def status=(value)
+      @status = ActiveSupport::StringInquirer.new(value)
+    end
   end
 
   class LoadPath
@@ -45,10 +51,12 @@ module SolidRecord
       FileUtils.cp_r(pathname, workpath.parent)
     end
 
-    def workpath() = @workpath ||= SolidRecord.config.sandbox ? DataStore.tmp_path.join(relpath) : relpath
+    def workpath() = @workpath ||= relpath
 
-    # The relative path of the user supplied path
-    def relpath() = pathname.relative? ? pathname : pathname.to_s.delete_prefix('/')
+    def relpath
+      return pathname.realpath unless SolidRecord.config.sandbox
+      DataStore.tmp_path.join(pathname.realpath.to_s.delete_prefix('/'))
+    end
 
     # The path provided by the user
     def pathname() = @pathname ||= Pathname.new(path || '')
@@ -56,7 +64,9 @@ module SolidRecord
     class << self
       def load_all
         path_check
+        SolidRecord.status = 'loading'
         toggle_callbacks { SolidRecord.load_paths.each(&:create_element) }
+        SolidRecord.status = 'loaded'
       end
 
       def load(**attributes) = toggle_callbacks { new(**attributes).create_element }

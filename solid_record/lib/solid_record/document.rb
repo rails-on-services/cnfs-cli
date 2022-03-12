@@ -1,15 +1,6 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class << self
-    def document_map
-      {
-        yml: :yaml,
-        yaml: :yaml
-      }
-    end
-  end
-
   class Document < Association
     include FileSystemElement
 
@@ -33,7 +24,7 @@ module SolidRecord
     # Return a type based on the file's extension, e.g. .yml or .yaml returns :yaml
     def doc_type() = document_map || raise(StandardError, "Document type for #{pathname.extension} not found")
 
-    def document_map() = @document_map ||= SolidRecord.document_map.transform_keys(&:to_s)[pathname.extension]
+    def document_map() = @document_map ||= SolidRecord.config.document_map.transform_keys(&:to_s)[pathname.extension]
 
     def read_yaml() = YAML.load_file(path) || {}
 

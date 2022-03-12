@@ -4,8 +4,9 @@ module SolidRecord
   def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
   class Extension < Hendrix::Extension
+    # The config object belongs to the application so it is 'shared' with the app and other Extensions
     # config.before_configuration do
-    #   # puts 'SolidRecord before_configuration'
+    #   puts 'SolidRecord before_configuration'
     # end
 
     config.before_initialize do |config|
@@ -13,9 +14,7 @@ module SolidRecord
     end
 
     # config.before_eager_load do |config|
-    #   # This config object belongs to the application so it is 'shared' with the app and other Lyrics
-    #   # config.solid_record.message = 'from solid record initializer data'
-    #   # puts 'SolidRecord before_eager_load'
+    #   puts 'SolidRecord before_eager_load'
     # end
 
     # After all extensions have been required

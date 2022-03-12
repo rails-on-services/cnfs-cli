@@ -1,16 +1,11 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class << self
-    # Path to a file that defines an ActiveRecord::Schema
-    attr_accessor :schema_file
-  end
-
   class DataStore
     class << self
       def load(*paths)
         ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
-        SolidRecord.schema_file ? load(schema_file) : create_schema_from_tables
+        SolidRecord.config.schema_file ? load(SolidRecord.config.schema_file) : create_schema_from_tables
         paths.each { |path| LoadPath.new(**path) }
         LoadPath.load_all
         true
@@ -18,13 +13,13 @@ module SolidRecord
 
       def reload() = self.load
 
-      def reset
+      def reset(*paths)
         if SolidRecord.config.sandbox
           tmp_path.rmtree
           tmp_path.mkpath
         end
         SolidRecord.load_paths = []
-        reload
+        self.load(*paths)
       end
 
       def flush_cache
@@ -34,8 +29,8 @@ module SolidRecord
       end
 
       def at_exit
-        flush_cache if SolidRecord.config.flush_cache_on_exit
-        tmp_path.rmtree if SolidRecord.config.sandbox
+        flush_cache if SolidRecord.status.loaded? && SolidRecord.config.flush_cache_on_exit
+        tmp_path.rmtree if SolidRecord.config.sandbox && tmp_path.exist?
       end
 
       def tmp_path() = @tmp_path ||= Pathname.new(Dir.mktmpdir)
