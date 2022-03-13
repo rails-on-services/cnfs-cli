@@ -2,12 +2,9 @@
 
 module OneStack
   class Component < ApplicationRecord
-    include OneStack::Concerns::Parent
+    include Concerns::Parent
     include Hendrix::Extendable
 
-    def self.key_column() = 'name'
-
-    belongs_to :node, class_name: 'SegmentFile'
     belongs_to :owner, class_name: 'Component'
     has_one :context
 
@@ -19,12 +16,13 @@ module OneStack
     store :default, coder: YAML, accessors: :segment_name
 
     # For every asset Companent has_many and an <asset_name>_name default stored_attribute
-    Hendrix.config.asset_names.each do |asset_name|
+    OneStack.config.asset_names.each do |asset_name|
       has_many asset_name.to_sym, as: :owner
 
       store :default, accessors: "#{asset_name.singularize}_name".to_sym
 
       # Return array of names for each of the component's assets
+      # runtime_names => ['compose', 'skaffold']
       define_method("#{asset_name.singularize}_names") { send(asset_name.to_sym).pluck(:name) }
     end
 
@@ -45,7 +43,7 @@ module OneStack
       #
       # List hierarchy of components based on CLI options, cwd, ENV and default segment_name(s)
       def list(options)
-        pwd = APP_CWD.relative_path_from(Hendrix.config.paths.segments).to_s.split('/').excluding('..')
+        pwd = APP_CWD.relative_path_from(OneStack.config.paths.segments).to_s.split('/').excluding('..')
         current = SegmentRoot.first
         components = [current]
         while current.components.any?
@@ -53,9 +51,9 @@ module OneStack
           break if next_segment.name.nil? # No search values found so stop at the current component
 
           unless next_segment.component
-            Hendrix.logger.warn(current.segments_type&.capitalize, "'#{next_segment.name}' specified by",
+            OneStack.logger.warn([current.segments_type&.capitalize, "'#{next_segment.name}' specified by",
                                 "*#{next_segment.source}* not found.",
-                                "Context set to #{current.owner&.segments_type} '#{current.name}'")
+                                "Context set to #{current.owner&.segments_type} '#{current.name}'"].join(' '))
             break
           end
 
@@ -88,7 +86,7 @@ module OneStack
         # TODO: remove the lonely operator after dropping context
       elsif pwd&.any?
         [pwd.shift, 'cwd']
-      elsif (name = Hendrix.config.segments[segments_type].try(:[], :env_value))
+      elsif (name = OneStack.config.segments[segments_type].try(:[], :env_value))
         [name, 'ENV value']
       elsif segment_name # default[:segment_name] in this component's yaml file
         [segment_name, parent.node_name]
@@ -111,7 +109,7 @@ module OneStack
       parent.parent.rootpath.join(parent.node_name).to_s
     end
 
-    def extension() = Hendrix.extensions[extension_name]
+    def extension() = OneStack.extensions[extension_name]
 
     def extension_name() = segment_path ? segment_path.split('/').first.to_sym : :application
 
@@ -123,7 +121,7 @@ module OneStack
     # 1. ENV var
     # 2. Project's data_path/keys.yml
     # 3. Owner's key
-    def key() = @key ||= ENV[key_name_env] || local_file_read(path: keys_file).fetch(key_name, owner&.key)
+    def encryption_key() = @key ||= ENV[key_name_env] || local_file_read(path: keys_file).fetch(key_name, owner&.key)
 
     # 1_target/backend => 1_target_backend
     def key_name() = @key_name ||= "#{owner.key_name}_#{name}"
@@ -131,7 +129,7 @@ module OneStack
     # 1_target/backend => CNFS_KEY_BACKEND
     def key_name_env() = @key_name_env ||= "#{owner.key_name_env}_#{name.upcase}"
 
-    def keys_file() = @keys_file ||= Hendrix.config.data_home.join('keys.yml')
+    def keys_file() = @keys_file ||= OneStack.config.data_home.join('keys.yml')
 
     def generate_key
       key_file_values = local_file_read(path: keys_file).merge(new_key)
@@ -160,7 +158,7 @@ module OneStack
 
     def segment_names() = @segment_names ||= components.pluck(:name)
 
-    def color() = owner.segments_type ? Hendrix.config.segments[owner.segments_type].try(:[], :color) : nil
+    def color() = owner.segments_type ? OneStack.config.segments[owner.segments_type].try(:[], :color) : nil
 
     def as_tree() = { '.' => { segments_type&.pluralize || '.' => tree } }
 

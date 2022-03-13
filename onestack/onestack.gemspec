@@ -30,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'hendrix', '~> 0.1.0'
-  spec.add_dependency 'lockbox', '~> 0.6'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'guard-rspec', '~> 4.7.3'

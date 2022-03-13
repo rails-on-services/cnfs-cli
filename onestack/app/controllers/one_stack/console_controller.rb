@@ -7,35 +7,36 @@
 end
 
 Pry::Commands.block_command 'cd', 'change segment' do |path|
-  if path.nil? || APP_CWD.relative_path_from(Cnfs.config.paths.segments).to_s.split('/').include?('..')
+  path_from_segments = APP_CWD.relative_path_from(OneStack.config.paths.segments).to_s
+  if path.nil? || path_from_segments.split('/').include?('..')
     path = '.' if path.nil?
     Object.send(:remove_const, :APP_CWD)
-    APP_CWD = Cnfs.config.paths.segments
+    APP_CWD = OneStack.config.paths.segments
   end
   if (try_path = APP_CWD.join(path)).exist?
     Object.send(:remove_const, :APP_CWD)
     APP_CWD = try_path
-    Cnfs.config.console.instance_variable_set('@context', nil)
-    Cnfs.config.console.init_class
+    OneStack.config.console.instance_variable_set('@context', nil)
+    OneStack.config.console.init_class
   end
 end
 
 Pry::Commands.block_command 'ls', 'list assets' do |*_args|
-  Cnfs::Core.asset_names.each do |asset|
-    next unless (names = Cnfs.config.console.context.send(asset.to_sym).pluck(:name)).any?
+  OneStack.config.asset_names.each do |asset|
+    next unless (names = OneStack.config.console.context.send(asset.to_sym).pluck(:name)).any?
 
     puts names
   end
 end
 
 module OneStack
-  class ConsoleController < Hendrix::ConsoleController
-    include ApplicationControllerConcern
+  class ConsoleController < ApplicationController
+    include Hendrix::Concerns::ConsoleController
 
     before_execute :init, :init_class, :create_help
 
     if ENV['HENDRIX_CLI_ENV'].eql?('development')
-      # Cnfs::Core.asset_names.each do |asset|
+      # OneStack.config.asset_names.each do |asset|
       #   delegate asset.to_sym, to: :context
       # end
     end
@@ -94,13 +95,13 @@ module OneStack
 
       # rubocop:disable Metrics/AbcSize
       def segmented_prompt
-        return 'hello'
+        # return 'hello'
         @segmented_prompt ||= Component.structs(@options).each_with_object([]) do |component, prompt|
-          segment_type = Cnfs.config.cli.show_segment_type ? component.segment_type : nil
-          segment_name = Cnfs.config.cli.show_segment_name ? component.name : nil
+          segment_type = OneStack.config.cli.show_segment_type ? component.segment_type : nil
+          segment_name = OneStack.config.cli.show_segment_name ? component.name : nil
           next if (prompt_value = [segment_type, segment_name].compact.join(':')).empty?
 
-          prompt_value = colorize(component, prompt_value) if Cnfs.config.cli.colorize
+          prompt_value = colorize(component, prompt_value) if OneStack.config.cli.colorize
           prompt << prompt_value
         end.join('/')
       end

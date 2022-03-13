@@ -3,9 +3,9 @@ cnfs:
   name: cnfs
   config:
     url: git@github.com:rails-on-services/ros.git
-  type: Backend::Repository
+  # type: Backend::Repository
 kpop:
   name: kpop
   config:
     url: git@github.com:maxcole/kpop.git
-  type: Backend::Repository
+  # type: Backend::Repository

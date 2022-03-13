@@ -1,104 +1,26 @@
 # frozen_string_literal: true
 
 # Common Functionallity for Component and Asset
-module OneStack::Concerns
-  module ParentView
+module OneStack
+  module Concerns::ParentView
     extend ActiveSupport::Concern
 
     included do
-      attr_accessor :model, :models, :context, :component, :action
+      attr_accessor :context, :component
     end
 
-    # @model is for methods that take a single model: create, show, destroy and edit
-    # @models is for methods that take an array of models: list
     # @context is the current context
     def initialize(**options)
-      @model = options.delete(:model)
-      @models = options.delete(:models)
       @context = options.delete(:context)
-      @component = @context.component
-      super # (**{}) # (**default_options.merge(options))
+      @component = @context&.component
+      super
     end
 
-    def create
-      raise Cnfs::Error, 'Need to pass a model. this is a bug' unless model
-      raise Cnfs::Error, 'Create can only be called on new instances' if model.persisted?
+    # Override base class
+    def view_class_options() =  super.merge(context: context)
 
-      @action = :create
-
-      modify
-      self.model = model.type.safe_constantize.new(model.attributes) if model.type
-      modify_type
-      save
-    end
-
-    def modify_type
-      return unless model.type
-
-      view_klass_name = "#{model.type}View"
-      view_klass = view_klass_name.safe_constantize
-      raise Cnfs::Error, "#{view_klass_name} not found. This is a bug. Please report." unless view_klass
-
-      view_klass.new(model: model, models: models, context: context).modify
-    end
-
-
-    def show() = puts(model&.as_json)
-
-    def destroy
-      return unless ask('Are you sure?')
-
-      model&.destroy
-    end
-
-    def edit
-      raise Cnfs::Error, 'Need to pass a model. this is a bug' unless model
-      raise Cnfs::Error, 'Create can only be called on existing instances' unless model.persisted?
-
-      @action = :edit
-
-      modify
-      save
-    end
-
-    def modify() = raise(NotImplementedError, "#{self.class.name} needs to implement #modify")
-
-    def save
-      if model.valid?
-        model.save
-      else
-        puts '', 'Not saved due to errors:', model.errors.full_messages
-      end
-    end
-
-    def list
-      return unless names.size.positive?
-
-      binding.pry
-      ret_val = %w[show edit destroy].each do |action|
-        next unless options.keys.include?(action)
-
-        name = names.size.eql?(1) ? names.first : enum_select_val("Select #{model_class_name}", choices: names)
-        send(action) if (@model = models.find_by(name: name))
-        break nil
-      end
-      puts names unless ret_val.nil?
-    end
-
-    def select_type
-      return unless available_types.size.positive?
-
-      type = available_types.size.eql?(1) ? available_types.first : enum_select_val(:type, choices: available_types)
-      model.type = "#{type}::#{model.class.name}"
-    end
-
-    def available_types() = @available_types ||= model.class.subclasses.map(&:to_s).map(&:deconstantize)
-
-    def names() = models.map(&:name)
-
-    def model_class_name() = self.class.name.delete_suffix('View')
-
-    def options() = context.options
+    # Override base class
+    def options() = context&.options || {}
 
     # Cnfs::Core.asset_names.each do |asset_name|
     #   define_method("#{asset_name.singularize}_names".to_sym) do

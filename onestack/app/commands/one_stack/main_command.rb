@@ -13,7 +13,7 @@ module OneStack
 
   class MainCommand < ApplicationCommand
     has_class_options :dry_run
-    has_class_options Hendrix.config.segments.keys
+    has_class_options OneStack.config.segments.keys
 
     # CRUD Actions
     # %w[create show edit destroy list].each do |action|
@@ -51,7 +51,10 @@ module OneStack
     desc 'console', 'Start a console (short-cut: c)'
     def console(name = nil, *values)
       hash = { method: :execute } # Specify the method :execute to avoid method_missing being invoked on 'console'
+      name = name.pluralize if values.size > 1
       hash.merge!(name.to_sym => values) if name # filter the context asset specified in 'name' by values
+      hash.merge!(controller: :console, namespace: :one_stack)
+      # binding.pry
       execute(**hash)
     end
   end

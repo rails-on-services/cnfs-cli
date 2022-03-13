@@ -5,12 +5,12 @@ res1:
     size: awesome
   provider_name: localstack
   runtime_name: compose
-  envs: {}
+  # envs: {}
   tags:
-  type: Aws::Resource::EC2::Instance
+  # type: Aws::Resource::EC2::Instance
 res2:
   runtime_name: composer
-  type: Resource
+  type: OneStack::Resource
   config:
     family: ah23
     size: cool!

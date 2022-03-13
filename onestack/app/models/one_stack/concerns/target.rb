@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
-  module Target
+module OneStack
+  module Concerns::Target
     extend ActiveSupport::Concern
 
     included do
-      include OneStack::Concerns::Asset
+      include Concerns::Asset
 
       # Targets can use command_queue to execute commands on the system, e.g. docker exec ...
       # TODO: Implement in a model and test

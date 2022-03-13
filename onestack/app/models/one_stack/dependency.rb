@@ -2,17 +2,17 @@
 
 module OneStack
   class Dependency < ApplicationRecord
-    include OneStack::Concerns::Download
-    include OneStack::Concerns::Generic
+    include Hendrix::Download
+    include Concerns::Generic
 
     store :config, accessors: %i[source linux mac]
 
-    validate :available
+    validate :available, if: -> { SolidRecord.status.loaded? }
 
     # TODO: Search cache path instead of system directories or an option to do so
     # TTY::Which.which("ruby", paths: ["/usr/local/bin", "/usr/bin", "/bin"])
     def available
-      return unless Node.source.eql?(:asset)
+      # return unless SolidRecord.status.loaded?
 
       errors.add(:dependency_not_found, name) unless TTY::Which.exist?(name)
     end
@@ -26,7 +26,7 @@ module OneStack
       download(url: url, path: cache_path.join(version))
     end
 
-    def cache_path() = CnfsCli.config.cli_cache_home.join('dependencies', name)
+    def cache_path() = OneStack.config.cli_cache_home.join('dependencies', name)
 
     # This may be about TF modules rather than binaries like tf, kubectl, etc
     # TODO: Figure out how to manage these

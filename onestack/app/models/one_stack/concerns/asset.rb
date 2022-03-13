@@ -1,19 +1,12 @@
 # frozen_string_literal: true
 
 module OneStack
-  class << self
-    def assets() = @assets ||= []
-  end
-end
-module OneStack::Concerns
-  module Asset
+  module Concerns::Asset
     extend ActiveSupport::Concern
 
     included do
-      OneStack.assets << name
-      include OneStack::Concerns::Parent
+      include Concerns::Parent
 
-      # belongs_to :node, class_name: 'AssetFile'
       belongs_to :owner, polymorphic: true, required: true
 
       scope :inheritable, -> { where(inherit: [true, nil], abstract: [false, nil]).order(:id) }
@@ -43,18 +36,14 @@ module OneStack::Concerns
 
       store :tags, coder: YAML
 
-      delegate :key, to: :owner
+      delegate :encryption_key, to: :owner
 
-      before_validation :cli_owner
+      before_validation :cli_owner, if: -> { SolidRecord.status.loaded? && OneStack.config.cli.mode }
 
-      validate :dynamic_association_types
+      validate :dynamic_association_types, if: -> { SolidRecord.status.loaded? }
     end
 
-    def cli_owner
-      return # unless Node.source.eql?(:asset) && Hendrix.config.cli.mode
-
-      self.owner ||= Hendrix.config.console.context.component
-    end
+    def cli_owner() = self.owner ||= OneStack.config.console.context.component
 
     def as_merged
       return as_json unless from && (source = owner.send(self.class.table_name).find_by(name: from))
@@ -77,14 +66,9 @@ module OneStack::Concerns
       end
     end
 
-    def valid_types
-      {}.with_indifferent_access
-    end
+    def valid_types() = {}.with_indifferent_access
 
-    def tree_name
-      # [name, type&.deconstantize&.underscore].compact.join(': ').gsub('/', '-')
-      [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
-    end
+    def tree_name() = [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
 
     # TODO: Implement when option vebose is paased in
     def tree_name_verbose
@@ -97,19 +81,12 @@ module OneStack::Concerns
 
     def data_file() = @data_file ||= owner.data_path.join(asset_type, "#{name}.yml")
 
-    def asset_type() = self.class.name.demodulize.underscore.pluralize
+    # def asset_type() = self.class.name.demodulize.underscore.pluralize
+    def asset_type() = self.class.table_name
 
     class_methods do
-      def with_node_callbacks_diabled
-        node_callbacks.each { |callback| skip_callback(*callback) }
-        yield
-        node_callbacks.each { |callback| set_callback(*callback) }
-      end
-
       def update_associations(context)
-        return if belongs_to_names.size.zero?
-
-        with_node_callbacks_diabled { dynamic_update(context) }
+        SolidReocrd.skip_persistence_callbacks { dynamic_update(context) } unless belongs_to_names.size.zero?
       end
 
       def dynamic_update(context)
@@ -168,13 +145,9 @@ module OneStack::Concerns
         @reference_columns ||= column_names.select { |n| n.end_with?('_id') || n.end_with?('_name') }
       end
 
-      def table_mod(method)
-        table_mods.append(method)
-      end
+      def table_mod(method) = table_mods.append(method)
 
-      def table_mods
-        @table_mods ||= []
-      end
+      def table_mods() = @table_mods ||= []
 
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
@@ -185,7 +158,6 @@ module OneStack::Concerns
           t.boolean :inherit
           t.string :from
           t.references :owner, polymorphic: true
-          t.references :node
           t.string :config
           t.string :tags
           add_columns(t) if respond_to?(:add_columns)

@@ -1,46 +1,36 @@
 # frozen_string_literal: true
 
-# Common Functionallity for Component and Asset
-module OneStack::Concerns
-  module Parent
+# Common functionality for Component and Asset
+module OneStack
+  module Concerns::Parent
     extend ActiveSupport::Concern
+
+    class_methods do
+      # Disable storing database primary and foreign keys to yaml
+      # All references are determined dynamically when the context builds the assets
+      # Storing keys in yaml would be confusing to user and will cause problems as yaml content changes and IDs change
+      # Any nested stored_attributes should not be serialized as the root is already serialized
+      def except_solid
+        (super + %w[owner_type] + column_names.select { |n| n.end_with?('_id') } +
+         (stored_attributes.keys.map(&:to_s) - column_names)).uniq
+      end
+    end
 
     included do
       include SolidRecord::Model
-      include OneStack::Concerns::Encryption
-      include OneStack::Concerns::Interpolation
+      # TODO: Test and refactor Interpolation
+      # include OneStack::Concerns::Interpolation
+      # NOTE: This does not work when declared in class_methods block
+      def self.owner_association_name() = :owner
+      def self.key_column() = 'name'
   
       store :config, coder: YAML
 
       validates :name, presence: true
-
-      # after_create :create_node_record
-      # after_update :update_node_record
-      # after_destroy :destroy_node_record
     end
 
+    # TODO: Simplify interpolated
     def to_context() = as_interpolated
-
-    def node_content() = as_json_encrypted
-
-    # def create_node_record() = node_class.create_content(object: self)
-
-    # def node_class() = self.class.reflect_on_association(:node).klass
-
-    # Assets whose owner is Context are ephemeral so don't create/update a node
-    # def update_node_record() = node.update_content(object: self)
-
-    # def destroy_node_record() = node.destroy_content(object: self)
-
-    # Log message at level warn appending the parent path to the message
-    # def node_warn(node:, msg: [])
-      # text = [msg].flatten.append("Source: #{node.rootpath}").join("\n#{' ' * 10}")
-      # Cnfs.logger.warn(text)
-    # end
-
-    # def p_node?() = Node.source.eql?(:p_node)
-    #   is_a?(Component) || owner.is_a?(Component)
-    # end
 
     # Convenience methods for cache_* and data_* for clarity in calling code
     def cache_file_read() = local_file_read(path: cache_file)

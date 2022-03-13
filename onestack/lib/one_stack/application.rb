@@ -17,7 +17,7 @@ module OneStack
 
       config.component_names = %w[component segment_root]
 
-      config.support_names = %w[context definitions context_component node cnfs/node runtime_service provisioner_resource]
+      config.support_names = %w[context definitions context_component runtime_service provisioner_resource]
 
       config.asset_names = (config.operator_names + config.target_names + config.generic_names).freeze
 
@@ -26,8 +26,9 @@ module OneStack
     end
 
     config.after_initialize do |config|
-      config.paths.segments ||= 'segments'
-      config.paths.src ||= 'src'
+      # TODO: This should probably be in the end user application when generating a project
+      # config.paths.segments ||= 'segments'
+      # config.paths.src ||= 'src'
       config.paths.transform_values! { |path| path.is_a?(Pathname) ? path : root.join(path) }
 
       # Set values for component selection based on any user defined ENVs

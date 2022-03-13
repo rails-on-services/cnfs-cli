@@ -4,7 +4,7 @@ module OneStack
   class Repository < ApplicationRecord
     # include Concerns::Operator
     include OneStack::Concerns::Generic
-    include OneStack::Concerns::Git
+    include Hendrix::Git
 
     store :config, accessors: %i[url path]
 
@@ -29,7 +29,7 @@ module OneStack
     #     next unless component_path.join(COMPONENT_FILE).exist?
     #
     #     component_name = component_path.relative_path_from(src_path).to_s
-    #     Hendrix.logger.info("Found component #{component_name}")
+    #     OneStack.logger.info("Found component #{component_name}")
     #   end
     # end
 
@@ -51,7 +51,7 @@ module OneStack
     # def log_f(level, *messages)
     #   message = messages.shift
     #   m_messages = messages.map { |message| "\n#{' ' * 10}#{message}" }
-    #   Hendrix.logger.send(level, message, *m_messages)
+    #   OneStack.logger.send(level, message, *m_messages)
     # end
 
     # def components_path() = path.join(components_path_name)
@@ -70,7 +70,7 @@ module OneStack
 
     def git_path() = @git_path ||= src_path.join(path || name)
 
-    def src_path() = Hendrix.config.paths.src
+    def src_path() = OneStack.config.paths.src
 
     def tree_name() = name
 
@@ -82,9 +82,9 @@ module OneStack
       #     next if repo.git_path.exist?
       #
       #     msg = "Cloning repository #{repo.url} to #{repo.src_path}"
-      #     Hendrix.logger.info(msg)
+      #     OneStack.logger.info(msg)
       #
-      #     Hendrix.with_timer(msg) do
+      #     OneStack.with_timer(msg) do
       #       repo.src_path.mkpath unless repo.src_path.exist?
       #       Dir.chdir(repo.src_path) { repo.git_clone(repo.url).run }
       #     end
@@ -115,19 +115,19 @@ module OneStack
       # end
 
       # def url_from_name(name)
-      #   path = name.eql?('.') ? Hendrix.context.cwd.relative_path_from(Hendrix.project.root) : Pathname.new(name)
+      #   path = name.eql?('.') ? OneStack.context.cwd.relative_path_from(OneStack.project.root) : Pathname.new(name)
       #   Dir.chdir(path) { remote.fetch_url } if path.directory?
       # end
 
       # Returns the default repository unless the the given path is another project repository
       # in which case return the Repository object that represents the given path
       # The default path is the directory where the command was invoked
-      # def from_path(path = Hendrix.context.cwd.to_s)
-      #   src_path = Hendrix.project_root.join(Hendrix.paths.src).to_s
-      #   return Hendrix.project.repository if path.eql?(src_path) || !path.start_with?(src_path)
+      # def from_path(path = OneStack.context.cwd.to_s)
+      #   src_path = OneStack.project_root.join(OneStack.paths.src).to_s
+      #   return OneStack.project.repository if path.eql?(src_path) || !path.start_with?(src_path)
       #
       #   repo_name = path.delete_prefix(src_path).split('/')[1]
-      #   Hendrix.logger.debug("Identified repo name #{repo_name}")
+      #   OneStack.logger.debug("Identified repo name #{repo_name}")
       #   find_by(name: repo_name)
       # end
       #

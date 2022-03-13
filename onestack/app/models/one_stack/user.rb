@@ -2,12 +2,14 @@
 
 module OneStack
   class User < ApplicationRecord
-    include OneStack::Concerns::Generic
-    def self.key_column() = 'name'
+    include Concerns::Generic
+
+    attr_encrypted :test
 
     class << self
       def add_columns(t)
         t.string :role
+        t.string :test
         t.string :full_name
       end
     end

@@ -15,7 +15,7 @@ module OneStack
       end
 
       def seg_opts
-        Hendrix.config.segments.dup.transform_values! do |opt|
+        OneStack.config.segments.dup.transform_values! do |opt|
           { desc: opt[:desc], aliases: opt[:aliases], type: :string }
         end
       end

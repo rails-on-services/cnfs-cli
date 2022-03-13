@@ -6,7 +6,7 @@ module OneStack
     def self.operator() = OneStack::Builder
 
     include OneStack::Concerns::Target
-    include OneStack::Concerns::Git
+    include Hendrix::Git
 
     belongs_to :builder
     belongs_to :registry

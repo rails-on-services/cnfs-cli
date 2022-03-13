@@ -9,7 +9,7 @@ module OneStack
     has_many :context_components
     has_many :components, through: :context_components
 
-    OneStack.asset_names.each do |asset_name|
+    OneStack.config.asset_names.each do |asset_name|
       # component_<asset> = all <assets> from the component hierarchy
       has_many "component_#{asset_name}".to_sym, through: :components, source: asset_name.to_sym
       has_many asset_name.to_sym, as: :owner
@@ -28,8 +28,8 @@ module OneStack
     after_commit :update_asset_associations
 
     def create_assets
-      Node.with_asset_callbacks_disabled do
-        OneStack.asset_names.each do |asset_type|
+      SolidRecord.skip_persistence_callbacks do
+        OneStack.config.asset_names.each do |asset_type|
           component_assets = component.send(asset_type.to_sym)
           inheritable_assets = send("component_#{asset_type}".to_sym).inheritable
           context_assets = send(asset_type.to_sym)
@@ -65,7 +65,7 @@ module OneStack
     end
 
     def update_asset_associations
-      OneStack.asset_names.each { |asset_type| asset_type.classify.constantize.update_associations(self) }
+      OneStack.config.asset_names.each { |asset_type| asset_type.classify.constantize.update_associations(self) }
     end
 
     # Used by runtime generator templates so the runtime can query services by label

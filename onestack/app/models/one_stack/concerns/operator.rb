@@ -4,12 +4,12 @@
 # 1. Generate content from project configuration
 # 2. Ensure Operator dependencies are available on the system or download them if requested and available
 # 3. Provide Queue mechanism for running OS commands
-module OneStack::Concerns
-  module Operator
+module OneStack
+  module Concerns::Operator
     extend ActiveSupport::Concern
 
     included do
-      include OneStack::Concerns::Asset
+      include Concerns::Asset
 
       store :config, accessors: %i[dependencies]
 

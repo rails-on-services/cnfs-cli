@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-# Common Functionallity for Component and Asset
-module OneStack::Concerns
-  module Generic
+# Functionality for Asset models that are not Operators or Targets
+module OneStack
+  module Concerns::Generic
     extend ActiveSupport::Concern
 
     included do
       include SolidRecord::Model
-      include OneStack::Concerns::Asset
-      include OneStack::Concerns::Extendable
+      include Concerns::Asset
+      include Hendrix::Extendable
     end
   end
 end

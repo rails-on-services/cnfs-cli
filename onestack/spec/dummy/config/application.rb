@@ -8,7 +8,6 @@ Bundler.require # (*.groups)
 
 module Spec
   module Concerns; end
-  # class Application < Hendrix::Application
   class Application < OneStack::Application
     # Reference id for encryption keys and local file access
     config.project_id = '3273b2fc-ff9c-4d64-8835-34ee3328ad68'
@@ -37,7 +36,13 @@ module Spec
     config.segments.stack = { aliases: '-s', color: 'cyan' }
     config.segments.target = { aliases: '-t', color: 'magenta' }
 
-    
+    config.solid_record.sandbox = true
+    config.solid_record.namespace = :one_stack
+    # config.solid_record.load_paths = [
+      # { path: 'config/segment.yml', model_type: 'OneStack::SegmentRoot' },
+      # { path: 'segments', owner: -> { OneStack::SegmentRoot.first } }
+    # ]
+
     # Configuration for the application, plugins, and extensions goes here.
     #
     # These settings can be overridden in specific environments using the files
