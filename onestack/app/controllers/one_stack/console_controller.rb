@@ -7,18 +7,8 @@
 end
 
 Pry::Commands.block_command 'cd', 'change segment' do |path|
-  path_from_segments = APP_CWD.relative_path_from(OneStack.config.paths.segments).to_s
-  if path.nil? || path_from_segments.split('/').include?('..')
-    path = '.' if path.nil?
-    Object.send(:remove_const, :APP_CWD)
-    APP_CWD = OneStack.config.paths.segments
-  end
-  if (try_path = APP_CWD.join(path)).exist?
-    Object.send(:remove_const, :APP_CWD)
-    APP_CWD = try_path
-    OneStack.config.console.instance_variable_set('@context', nil)
-    OneStack.config.console.init_class
-  end
+  OneStack::Navigator.cd(path)
+  # puts OneStack::Navigator.navigators.keys, OneStack::Navigator.current.to_json
 end
 
 Pry::Commands.block_command 'ls', 'list assets' do |*_args|
@@ -33,7 +23,7 @@ module OneStack
   class ConsoleController < ApplicationController
     include Hendrix::Concerns::ConsoleController
 
-    before_execute :init, :init_class, :create_help
+    before_execute :init, :nav, :create_help
 
     if ENV['HENDRIX_CLI_ENV'].eql?('development')
       # OneStack.config.asset_names.each do |asset|
@@ -41,10 +31,7 @@ module OneStack
       # end
     end
 
-    def init_class() = self.class.init(options)
-
-    # rubocop:disable Metrics/MethodLength
-    def create_help
+    def create_help # rubocop:disable Metrics/MethodLength
       Pry::Commands.block_command 'help', 'Show help for commands' do
         crud_cmds = %w[create edit list show destroy]
         cmds = crud_cmds.map { |cmd| "  #{cmd} [ASSET] [options]".ljust(35) + "# #{cmd.capitalize} asset" }
@@ -61,12 +48,13 @@ module OneStack
         puts 'Commands:', cmds.sort, ''
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
     def reload!
-      super
-      @context = nil
-      Node.source = :asset
+      # super
+      Navigator.navigators = {}
+      Navigator.current = nil
+      Navigator.current = nav
+      # Node.source = :asset
       true
     end
 
@@ -79,44 +67,13 @@ module OneStack
     end
 
     class << self
-      def init(options)
-        @options = options
-        @colors = nil
-        @segmented_prompt = nil
-      end
-
       def prompt
         proc do |obj, _nest_level, _|
           klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
           label = klass.eql?('console') ? '' : " (#{obj.class.name})"
-          "#{segmented_prompt}#{label}> "
+          "#{Navigator.current.prompt}#{label}> "
         end
       end
-
-      # rubocop:disable Metrics/AbcSize
-      def segmented_prompt
-        # return 'hello'
-        @segmented_prompt ||= Component.structs(@options).each_with_object([]) do |component, prompt|
-          segment_type = OneStack.config.cli.show_segment_type ? component.segment_type : nil
-          segment_name = OneStack.config.cli.show_segment_name ? component.name : nil
-          next if (prompt_value = [segment_type, segment_name].compact.join(':')).empty?
-
-          prompt_value = colorize(component, prompt_value) if OneStack.config.cli.colorize
-          prompt << prompt_value
-        end.join('/')
-      end
-      # rubocop:enable Metrics/AbcSize
-
-      def colorize(component, title)
-        color = component.color
-        color = color.call(component.name) if color&.class.eql?(Proc)
-        colors.delete(color) if color
-        color ||= colors.shift
-        Pry::Helpers::Text.send(color, title)
-      end
-
-      # TODO: Sniff the monitor and use black if monitor b/g is white and vice versa
-      def colors() = @colors ||= %i[blue green purple magenta cyan yellow red] #  white black]
 
       def shortcuts() = model_shortcuts.merge(super)
 

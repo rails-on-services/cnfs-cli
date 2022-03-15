@@ -2,7 +2,9 @@
 
 module OneStack
   class ApplicationController < Hendrix::ApplicationController
-    def context() = @context ||= Component.context_from(options)
+    def context() = nav.context
+
+    def nav() = Navigator.current || Navigator.new(path: APP_CWD, options: options, args: args)
 
     #
     # Invokes init method on any model class that has defined it

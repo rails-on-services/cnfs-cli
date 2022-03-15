@@ -11,6 +11,7 @@ Dir.chdir(SPEC_PATH.join('dummy')) { require 'hendrix/boot_loader' }
 
 RSpec.configure do |config|
   config.after(:suite) { OneStack::SpecHelper.teardown_project }
+  SolidRecord.logger.level = :warn
 end
 
 module OneStack

@@ -40,7 +40,7 @@ module OneStack
     desc 'tree', 'Display a tree'
     def tree
       # TODO: @options are not being passed in from command line
-      context = Component.context_from(@options)
+      context = Navigator.new(options: @options, args: @args, path: APP_CWD).context
       require 'tty-tree'
       puts '', TTY::Tree.new(context.as_tree).render
     end

@@ -38,10 +38,10 @@ module Spec
 
     config.solid_record.sandbox = true
     config.solid_record.namespace = :one_stack
-    # config.solid_record.load_paths = [
-      # { path: 'config/segment.yml', model_type: 'OneStack::SegmentRoot' },
-      # { path: 'segments', owner: -> { OneStack::SegmentRoot.first } }
-    # ]
+    config.solid_record.load_paths = [
+      { path: 'config/segments/component.yml', model_type: 'OneStack::SegmentRoot' },
+      { path: 'segments/component', owner: -> { OneStack::SegmentRoot.first } }
+    ]
 
     # Configuration for the application, plugins, and extensions goes here.
     #

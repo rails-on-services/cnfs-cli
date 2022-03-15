@@ -29,47 +29,6 @@ module OneStack
     # if segments_type is not present then cannot search beyond this component
     # validates :segments_type, presence: true
 
-    class << self
-      def context_from(options)
-        c_list = list(options)
-        Context.find_or_create_by(component: c_list.last) do |context|
-          context.options = options
-          context.components << c_list.slice(0, c_list.size - 1)
-        end
-      end
-
-      # rubocop:disable Metrics/AbcSize
-      # rubocop:disable Metrics/MethodLength
-      #
-      # List hierarchy of components based on CLI options, cwd, ENV and default segment_name(s)
-      def list(options)
-        pwd = APP_CWD.relative_path_from(OneStack.config.paths.segments).to_s.split('/').excluding('..')
-        current = SegmentRoot.first
-        components = [current]
-        while current.components.any?
-          next_segment = current.next_segment(options, pwd)
-          break if next_segment.name.nil? # No search values found so stop at the current component
-
-          unless next_segment.component
-            OneStack.logger.warn([current.segments_type&.capitalize, "'#{next_segment.name}' specified by",
-                                "*#{next_segment.source}* not found.",
-                                "Context set to #{current.owner&.segments_type} '#{current.name}'"].join(' '))
-            break
-          end
-
-          current = next_segment.component
-          components << current
-        end
-        components
-      end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
-
-      def structs(options) = list(options).each_with_object([]) { |comp, ary| ary.append(comp.struct) }
-    end
-
-    def struct() = OpenStruct.new(segment_type: owner.segments_type, name: name, color: color)
-
     def next_segment(options, pwd = nil)
       next_name, next_source = next_segment_spec(options, pwd)
       OpenStruct.new(name: next_name, source: next_source, component: components.find_by(name: next_name))
@@ -83,9 +42,8 @@ module OneStack
     def next_segment_spec(options, pwd)
       if (name = options.fetch(segments_type, nil))
         [name, 'CLI option']
-        # TODO: remove the lonely operator after dropping context
-      elsif pwd&.any?
-        [pwd.shift, 'cwd']
+      elsif pwd
+        [pwd, 'cwd']
       elsif (name = OneStack.config.segments[segments_type].try(:[], :env_value))
         [name, 'ENV value']
       elsif segment_name # default[:segment_name] in this component's yaml file
@@ -97,17 +55,17 @@ module OneStack
 
     # Return the default dir_path of the parent's path + this component's name unless segment_path is configured
     # In which case parse segment_path to search the component hierarchy for the specified repository and blueprint
-    def dir_path
-      # binding.pry
-      if extension.nil?
-        node_warn(node: parent, msg: "Extension '#{extension_name}' not found")
-      elsif extension.segment(extension_path).nil?
-        node_warn(node: parent, msg: "Extension '#{extension_name}' segment '#{extension_path}' not found")
-      else
-        return extension.segment(extension_path)
-      end
-      parent.parent.rootpath.join(parent.node_name).to_s
-    end
+    # def dir_path
+    #   # binding.pry
+    #   if extension.nil?
+    #     node_warn(node: parent, msg: "Extension '#{extension_name}' not found")
+    #   elsif extension.segment(extension_path).nil?
+    #     node_warn(node: parent, msg: "Extension '#{extension_name}' segment '#{extension_path}' not found")
+    #   else
+    #     return extension.segment(extension_path)
+    #   end
+    #   parent.parent.rootpath.join(parent.node_name).to_s
+    # end
 
     def extension() = OneStack.extensions[extension_name]
 
@@ -158,6 +116,8 @@ module OneStack
 
     def segment_names() = @segment_names ||= components.pluck(:name)
 
+    def struct() = OpenStruct.new(segment_type: owner.segments_type, name: name, color: color)
+
     def color() = owner.segments_type ? OneStack.config.segments[owner.segments_type].try(:[], :color) : nil
 
     def as_tree() = { '.' => { segments_type&.pluralize || '.' => tree } }
@@ -187,7 +147,6 @@ module OneStack
           t.string :default
           t.string :config
           t.references :owner
-          t.references :node
         end
       end
     end

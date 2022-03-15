@@ -4,48 +4,40 @@
 # require "#{ENV['SPEC_DIR']}/models/concerns/interpolation_spec.rb"
 
 # rubocop:disable Metrics/BlockLength
-RSpec.describe 'Component', type: :model do
-  let(:path) { Pathname.new(ENV['SPEC_DIR']).join('fixtures/context') }
-  let(:project) { Project.first }
-  # let(:a_context) { Context.create(root: project, options: options) }
+module OneStack
+  RSpec.describe Component, type: :model do
+    let(:segments_yml) { SPEC_PATH.join('dummy/config/segments/component.yml') }
+    let(:segments_path) { SPEC_PATH.join('dummy/segments/component') }
+    let(:segment_root) { OneStack::SegmentRoot.first }
+    # let(:a_context) { Context.create(root: project, options: options) }
 
-  before(:each) do
-    # stub_project
-  end
-
-  describe 'interpolation' do
-    let(:options) { { stack: :backend, environment: :production, target: :lambda } }
-
-    describe 'does the correct interpolation for production' do
-      let(:subject) { Component.find_by(name: :production) }
-      let(:result) do
-        { 'config' => { 'domain' => 'production-backend.cnfs.io' }, 'default' => 'lambda',
-          'segment' => 'target', 'name' => 'context_spec' }
-      end
-      it_behaves_like 'interpolated'
+    before(:each) do
+      OneStack::SpecHelper.setup_segment(self)
+      SolidRecord::DataStore.reset(*[
+        { path: segments_yml.to_s, model_type: 'OneStack::SegmentRoot' },
+        { path: segments_path.to_s, owner: -> { segment_root } }
+      ])
     end
 
-    describe 'does the correct interpolation for lambda' do
-      let(:subject) { Component.find_by(name: :lambda) }
-      let(:result) do
-        { 'config' => { 'host' => 'lambda.production-backend.cnfs.io' }, 'segment' => 'target',
-          'default' => 'lambda', 'name' => 'context_spec' }
-      end
-      it_behaves_like 'interpolated'
-    end
-  end
-
-  describe 'encryption' do
-    let(:options) { { stack: :backend, environment: :production, target: :lambda } }
-
-    describe 'does the correct encryption for project' do
-      let(:subject) { Project.first }
-      it_behaves_like 'encrypted'
+    describe 'has_many associations count' do
+      context 'components' do it { expect(segment_root.components.count).to eq(3) } end
+      context 'dependencies' do it { expect(segment_root.dependencies.count).to eq(6) } end
+      context 'providers' do it { expect(segment_root.providers.count).to eq(5) } end
+      context 'resources' do it { expect(segment_root.resources.count).to eq(0) } end
+      context 'runtimes' do it { expect(segment_root.runtimes.count).to eq(1) } end
+      context 'users' do it { expect(segment_root.users.count).to eq(1) } end
     end
 
-    describe 'does the correct encryption for lambda' do
-      let(:subject) { Component.find_by(name: :lambda) }
-      it_behaves_like 'encrypted'
+    xdescribe '#encryption_key' do
+      it { expect(segment_root.encryption_key).to eq(OneStack.config.project_id) }
+    end
+
+    describe '#segments_names' do
+      it { expect(segment_root.segment_names).to eq(%w[backend doc frontend])}
+    end
+
+    describe '#struct' do
+      it { binding.pry }
     end
   end
 end

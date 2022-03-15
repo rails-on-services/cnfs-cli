@@ -73,7 +73,7 @@ module OneStack
 
     def labels_hash
       # TODO: Refactor; maybe to Component class
-      component_structs.each_with_object({ 'context' => name }) do |component, hash|
+      component.structs.each_with_object({ 'context' => name }) do |component, hash|
         hash[component.segment_type] = component.name
       end
     end

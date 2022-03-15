@@ -19,8 +19,9 @@ module OneStack
     included do
       include SolidRecord::Model
       # TODO: Test and refactor Interpolation
-      # include OneStack::Concerns::Interpolation
-      # NOTE: This does not work when declared in class_methods block
+      include SolidSupport::Interpolation
+
+      # NOTE: These methods do not work when declared in class_methods block
       def self.owner_association_name() = :owner
       def self.key_column() = 'name'
   
