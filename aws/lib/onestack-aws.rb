@@ -12,6 +12,10 @@ end
 
 module OneStack
   module Aws
-    def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
+    class << self
+      def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
+
+      def config() = @config ||= ActiveSupport::OrderedOptions.new
+    end
   end
 end

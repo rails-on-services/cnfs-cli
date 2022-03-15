@@ -1,5 +1,4 @@
 ---
-name: blog
 segments_type: stack
 # default:
   # segment_name: backend

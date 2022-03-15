@@ -2,24 +2,8 @@
 # frozen_string_literal: true
 
 require 'bundler/setup'
-require 'pry'
 
-# binding.pry
-
-# Bundler.require
-
-# require 'hendrix'
-# require 'solid-record'
-# require 'onestack'
-
+ARGV.unshift 'console'
 ENV['HENDRIX_CLI_ENV'] ||= 'development'
-ROOT_FILE_ID = 'config/environment.rb'
-
-Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) do
-  require 'hendrix/boot_loader'
-end
-
-# NOTE: All that should be necessary is:
-# require 'onestack-aws'
-
-Pry.start
+BOOT_MODULE = OneStack
+Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) { require 'hendrix/boot_loader' }

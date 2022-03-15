@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::Resource::RDS::DBInstanceView < ResourceView
+class Aws::Resource::RDS::DBInstanceView < OneStack::ResourceView
   attr_accessor :selected_family
 
   def edit # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity

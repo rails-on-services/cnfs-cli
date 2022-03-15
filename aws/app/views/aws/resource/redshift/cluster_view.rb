@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::Resource::Redshift::ClusterView < ResourceView
+class Aws::Resource::Redshift::ClusterView < OneStack::ResourceView
   attr_accessor :selected_family
 
   def edit

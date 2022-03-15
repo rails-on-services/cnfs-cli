@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::Resource::Route53::View < ResourceView
+class Aws::Resource::Route53::View < OneStack::ResourceView
   attr_accessor :model, :region
 
   def render(model)

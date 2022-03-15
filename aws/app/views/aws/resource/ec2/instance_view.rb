@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Aws::Resource::EC2::InstanceView < ResourceView
+class Aws::Resource::EC2::InstanceView < OneStack::ResourceView
   def edit # rubocop:disable Metrics/AbcSize
     model.family = view_select(:instance_family, model.offers_by_family, model.family)
     instance_types = model.instance_types(model.family)

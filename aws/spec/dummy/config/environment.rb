@@ -4,4 +4,4 @@
 require_relative 'application'
 
 # Initialize the application
-Hendrix.application.initialize!
+OneStack.application.initialize!

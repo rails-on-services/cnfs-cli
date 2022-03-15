@@ -2,7 +2,9 @@
 
 module OneStack
   module Aws
-    class Plugin < Hendrix::Tune
+    class Plugin < OneStack::Plugin
+      config.before_initialize { |config| OneStack::Aws.config.merge!(config.aws) }
+
       initializer 'add console shortcuts' do |_app|
         #   Hendrix.logger.info('[Aws] Initializing from', gem_root)
 

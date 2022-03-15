@@ -1,0 +1,28 @@
+---
+aws_east:
+  config:
+    region: test
+    access_key_id: !binary |-
+      bkXOJoVxNVALMcbpVydnCw1wWzWOd5+Od9i6xmjAYVprl2Yu+Ct+
+  inherit: true
+  tags: {}
+  type: Aws::Provider
+aws_west:
+  config:
+    region: us-west-1
+  tags: {}
+  type: Aws::Provider
+localstack:
+  config:
+    account_id: 123456789012
+    region: localstack
+    s3:
+      endpoint: http://localstack:4572
+      force_path_style: true
+    sqs:
+      endpoint: http://localstack:4576
+    access_key_id: !binary |-
+      WsiMGNGoRmJNyv0TNDteRDKT0TMn0GFRwYH+AP7SFoUUccj1HR/T4pU=
+  inherit: true
+  tags: {}
+  type: Aws::Provider
