@@ -1,4 +1,0 @@
----
-segments_type: stack
-default:
-  segment_name: frontend
