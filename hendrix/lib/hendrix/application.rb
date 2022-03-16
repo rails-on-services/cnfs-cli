@@ -19,11 +19,12 @@ module Hendrix
 
     def set_logger
       default_level = (config.logging || 'warn').to_sym
-      level = ::TTY::Logger::LOG_TYPES.key?(default_level) ? default_level : :warn
-      ::TTY::Logger.new do |config|
-        Hendrix.config.logging = config.level = level
-        config.level = level
-      end
+      ActiveSupport::Logger.new($stdout)
+      # level = ::TTY::Logger::LOG_TYPES.key?(default_level) ? default_level : :warn
+      # ::TTY::Logger.new do |config|
+      #   Hendrix.config.logging = config.level = level
+      #   config.level = level
+      # end
     end
   end
 

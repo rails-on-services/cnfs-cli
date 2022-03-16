@@ -62,7 +62,6 @@ RSpec.describe Pathname do
     end
   end
 
-
   describe '#classify' do
     context 'when stacks' do
       subject(:pathname) { described_class.new('stacks') }
@@ -108,28 +107,6 @@ RSpec.describe Pathname do
     context 'with pathname .' do
       subject(:pathname) { described_class.new('.') }
       it { expect(pathname.safe_constantize).to be_nil }
-    end
-  end
-
-  describe '#last_element_match' do
-    context "with path_map 'stacks/environments/targets'" do
-      let(:path_map) { 'stacks/environments/targets' }
-
-      context "when 'backend'" do
-        it { expect(pathname.new('backend').last_element_match(path_map)).to eq('stacks') }
-      end
-
-      context "when 'backend/production'" do
-        it { expect(pathname.new('backend/production').last_element_match(path_map)).to eq('environments') }
-      end
-
-      context "when 'backend/production/cluster'" do
-        it { expect(pathname.new('backend/production/cluster').last_element_match(path_map)).to eq('targets') }
-      end
-
-      context "when 'backend/production/cluster/default'" do
-        it { expect(pathname.new('backend/production/cluster/default').last_element_match(path_map)).to be_nil }
-      end
     end
   end
 end

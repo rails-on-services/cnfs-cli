@@ -60,12 +60,16 @@ module OneStack
         json = records.each_with_object({}) do |record, hash|
           hash.deep_merge!(record.to_context.compact)
         end
-        context_assets.create(json.merge(name: name)) # unless json['disabled']
+        context_assets.create(json.except('id').merge(name: name)) # unless json['disabled']
       end
     end
 
     def update_asset_associations
-      OneStack.config.asset_names.each { |asset_type| asset_type.classify.constantize.update_associations(self) }
+      SolidRecord.skip_persistence_callbacks do
+        OneStack.config.asset_names.each do |asset_type|
+          "one_stack/#{asset_type}".classify.constantize.update_associations(self)
+        end
+      end
     end
 
     # Used by runtime generator templates so the runtime can query services by label

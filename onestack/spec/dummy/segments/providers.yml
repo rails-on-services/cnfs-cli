@@ -2,11 +2,11 @@
 aws_apse_1:
   config:
     region: ap-southeast-1
-  type: Aws::Provider
+  # type: Aws::Provider
 aws_east_1:
   config:
     region: us-east-1
-  type: Aws::Provider
+  # type: Aws::Provider
 kubectl:
   config:
     name: terraform-provider-kubectl
@@ -24,7 +24,7 @@ localstack:
       force_path_style: true
     sqs:
       endpoint: http://localstack:4576
-  type: Aws::Provider
+  # type: Aws::Provider
 rest:
   config:
     platform: linux
@@ -34,4 +34,4 @@ rest:
     url: https://github.com/Mastercard/terraform-provider-restapi/releases/download/v${config.version}/
       terraform-provider-restapi_v${config.version}-${config.platform}-${config.arch}.zip
   tags: {}
-  type: Rest::Provider
+  # type: Rest::Provider

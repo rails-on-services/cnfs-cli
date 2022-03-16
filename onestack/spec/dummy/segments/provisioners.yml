@@ -6,7 +6,7 @@ terraform:
        version: 1.0.11
      - name: terraform-provider-kubectl
        url: https://github.com/gavinbunney/terraform-provider-kubectl/releases/download/v1.0.2/terraform-provider-kubectl-${platform}-amd64
-  type: Terraform::Provisioner
+  # type: Terraform::Provisioner
   # cache_path: tmp
   # cache_path_suffix: plans
 
@@ -18,4 +18,4 @@ vagrant:
     - name: setup
       type: repo
       url: https://github.com/rails-on-services/setup
-  type: Vagrant::Provisioner
+  # type: Vagrant::Provisioner

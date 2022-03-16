@@ -23,7 +23,9 @@ module Hendrix
       end
     end
 
-    def initialize(**kwargs) = assign_attributes(**kwargs)
+    def initialize(**kwargs)
+      assign_attributes(**kwargs) unless kwargs.empty?
+    end
 
     # This method is invoked from Hendrix::Concerns::CommandController execute method
     # and invokes the target method wrapped in any defined callbacks
@@ -35,5 +37,7 @@ module Hendrix
     def parent_name = parent.to_s.underscore
 
     def parent = self.class.module_parent
+
+    def queue() = @queue ||= CommandQueue.new # (halt_on_failure: true)
   end
 end

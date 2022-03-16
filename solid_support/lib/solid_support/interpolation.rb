@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
+module SolidSupport
   module Interpolation
     extend ActiveSupport::Concern
 
@@ -12,7 +12,7 @@ module OneStack::Concerns
       self_hash.deep_transform_values do |value|
         next value unless value.is_a? String
 
-        value.cnfs_sub(default: self_hash, parent: parent_hash)
+        value.interpolate(default: self_hash, parent: parent_hash)
       end
     end
 
@@ -20,7 +20,7 @@ module OneStack::Concerns
       as_interpolated.deep_transform_values do |value|
         next value unless value.is_a? String
 
-        value.cnfs_sub(**kwargs)
+        value.interpolate(**kwargs)
       end
     end
   end

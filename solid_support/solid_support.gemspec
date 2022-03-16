@@ -32,6 +32,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'activesupport', '~> 6.1'
+  spec.add_dependency 'tty-command', '~> 0.10'
+  spec.add_dependency 'tty-spinner', '~> 0.9'
+  spec.add_dependency 'tty-file', '~> 0.10'
+  spec.add_dependency 'tty-tree', '~> 0.4'
 
   spec.add_development_dependency 'guard-rspec', '~> 4.7'
   spec.add_development_dependency 'pry-byebug', '~> 3.9'

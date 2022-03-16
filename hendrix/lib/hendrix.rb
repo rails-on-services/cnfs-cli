@@ -7,12 +7,10 @@ require 'yaml'
 # TODO: Isn't this already required by the Application? or what about when new?
 # Test and make a note here if needed for new command
 require 'bundler/setup'
-require 'solid-support'
+require 'solid_support'
 
-# TODO: Move lockbox to core somewhere
-# require 'lockbox'
 require 'thor'
-require 'tty-logger'
+# require 'tty-logger'
 # require 'xdg'
 # require 'zeitwerk'
 
@@ -24,7 +22,7 @@ require_relative 'hendrix/timer'
 require_relative 'hendrix/version'
 # binding.pry
 
-require 'solid-record' unless defined? APP_ROOT
+require 'solid_record' unless defined? APP_ROOT
 
 module Hendrix
   class Error < StandardError; end

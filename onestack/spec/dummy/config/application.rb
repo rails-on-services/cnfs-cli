@@ -28,6 +28,8 @@ module Spec
     config.cli.colorize = true
     config.paths.data = 'data'
 
+    config.env.key_prefix = 'helo'
+
     # Example configurations for segments
     # basic colors: blue green purple magenta cyan yellow red white black
     config.segments.environment = { aliases: '-e', env: 'env', color:
@@ -39,8 +41,8 @@ module Spec
     config.solid_record.sandbox = true
     config.solid_record.namespace = :one_stack
     config.solid_record.load_paths = [
-      { path: 'config/segments/component.yml', model_type: 'OneStack::SegmentRoot' },
-      { path: 'segments/component', owner: -> { OneStack::SegmentRoot.first } }
+      { path: 'config/segment.yml', model_type: 'OneStack::SegmentRoot' },
+      { path: 'segments', owner: -> { OneStack::SegmentRoot.first } }
     ]
 
     # Configuration for the application, plugins, and extensions goes here.

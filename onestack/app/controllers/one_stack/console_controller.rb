@@ -11,9 +11,11 @@ Pry::Commands.block_command 'cd', 'change segment' do |path|
   # puts OneStack::Navigator.navigators.keys, OneStack::Navigator.current.to_json
 end
 
-Pry::Commands.block_command 'ls', 'list assets' do |*_args|
-  OneStack.config.asset_names.each do |asset|
-    next unless (names = OneStack.config.console.context.send(asset.to_sym).pluck(:name)).any?
+Pry::Commands.block_command 'ls', 'list assets' do |*args|
+  asset_names = args.any? ? OneStack.config.asset_names.select{ |a| args.include?(a) } : OneStack.config.asset_names
+  asset_names.each do |asset|
+    puts asset
+    next unless (names = OneStack::Navigator.current.context.send(asset.to_sym).pluck(:name)).any?
 
     puts names
   end
@@ -50,10 +52,8 @@ module OneStack
     end
 
     def reload!
+      Navigator.reload! && nav
       # super
-      Navigator.navigators = {}
-      Navigator.current = nil
-      Navigator.current = nav
       # Node.source = :asset
       true
     end

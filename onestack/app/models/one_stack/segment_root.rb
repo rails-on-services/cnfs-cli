@@ -9,11 +9,10 @@ module OneStack
 
     def key_name() = name
 
-    # TODO: change from CNFS to OS
-    def key_name_env() = 'CNFS_KEY'
+    def key_name_env() = OneStack.config.env.key_prefix
 
     def warn_key
-      OneStack.logger.error("No encryption key found. Run 'cnfs project generate_key'")
+      OneStack.logger.error("No encryption key found. Run 'onestack generate key'")
       nil
     end
 
@@ -27,6 +26,8 @@ module OneStack
     def struct() = OpenStruct.new(segment_type: 'root', name: name)
 
     def name() = OneStack.application.name
+
+    def tree_label() = name
 
     class << self
       def unknown_document_type() = OneStack::Component # For SolidRecord to determine the owner class type

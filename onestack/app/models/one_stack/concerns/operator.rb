@@ -18,12 +18,12 @@ module OneStack
 
       table_mod(:operator_columns)
 
-      include Hendrix::Extendable
+      include SolidSupport::Extendable
     end
 
     def execute(method, **kwargs)
       unless self.class.commands.include?(method)
-        Hendrix.logger.fatal("#{self.class.name} does not support the #{method} command")
+        OneStack.logger.fatal("#{self.class.name} does not support the #{method} command")
         return
       end
 
@@ -52,14 +52,14 @@ module OneStack
 
       binding.pry
       manifest.rm_targets
-      Hendrix.logger.debug("Processing manifest in #{path}")
+      OneStack.logger.debug("Processing manifest in #{path}")
       # Rather than set generator.destination_root which requires generators to use in_root blocks
       # just cd into path and then invoke the generator
       Dir.chdir(path) { generator.invoke_all }
       if manifest.reload.valid?
-        Hendrix.logger.info('manifest validated - OK')
+        OneStack.logger.info('manifest validated - OK')
       else
-        Hendrix.logger.warn("Invalid manifest: #{manifest.errors.full_messages}")
+        OneStack.logger.warn("Invalid manifest: #{manifest.errors.full_messages}")
       end
     end
 

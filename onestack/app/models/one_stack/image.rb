@@ -5,8 +5,8 @@ module OneStack
     # Define operator before inclding Concerns::Target
     def self.operator() = OneStack::Builder
 
-    include OneStack::Concerns::Target
-    include Hendrix::Git
+    include Concerns::Target
+    include SolidSupport::Git
 
     belongs_to :builder
     belongs_to :registry

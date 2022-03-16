@@ -2,7 +2,7 @@
 
 module OneStack
   class Dependency < ApplicationRecord
-    include Hendrix::Download
+    include SolidSupport::Download
     include Concerns::Generic
 
     store :config, accessors: %i[source linux mac]

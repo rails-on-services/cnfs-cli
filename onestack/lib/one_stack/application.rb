@@ -9,6 +9,7 @@ module OneStack
 
   class Application < Hendrix::Application
     config.before_initialize do |config|
+
       config.operator_names = %w[builders configurators provisioners runtimes]
 
       config.target_names = %w[images plans playbooks services]
@@ -26,9 +27,10 @@ module OneStack
     end
 
     config.after_initialize do |config|
-      # TODO: This should probably be in the end user application when generating a project
-      # config.paths.segments ||= 'segments'
-      # config.paths.src ||= 'src'
+      config.env.key_prefix ||= 'OS_KEY'
+      config.env.key_prefix = config.env.key_prefix.upcase
+      config.paths.segments ||= 'segments'
+      config.paths.src ||= 'src'
       config.paths.transform_values! { |path| path.is_a?(Pathname) ? path : root.join(path) }
 
       # Set values for component selection based on any user defined ENVs

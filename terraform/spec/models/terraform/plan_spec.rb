@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../spec_helper'
-
 # module Proxmox
 #   class Provider < Provider
 #     def terraform_resources_map
@@ -17,33 +15,26 @@ require_relative '../../spec_helper'
 # end
 
 
-RSpec.describe 'Plan' do
-  let(:source_path) { SPEC_DIR.join('fixtures/segments') }
-  let(:target_path) { SPEC_DIR.join('../../spec/segments') }
-  let(:root) { SegmentRoot.first }
-  let(:a_context) { Context.create(root: root, options: options) }
+module Terraform
+  RSpec.describe Plan do
+    let(:segment_root) { OneStack::SegmentRoot.first }
+    let(:context) { OneStack::Navigator.new.context }
 
-  let(:subject) { Plan.create(name: 'test', owner: Context.create, creates: 'Proxmox::Resource::Vm::Qemu') }
-  let(:provider) { Proxmox::Provider.create(name: 'proxmox') }
+    # let(:subject) { Plan.create(name: 'test', owner: Context.create, creates: 'Proxmox::Resource::Vm::Qemu') }
+    # let(:provider) { Proxmox::Provider.create(name: 'proxmox') }
 
-  before do
-    binding.pry
-    setup_project(segment: :plan)
-  end
+    before { OneStack::SpecHelper.setup_segment(self) }
 
-  # after do
-  #   target_path.rmtree if target_path.basename.to_s.eql?('segments')
-  # end
+    describe 'create_resources' do
+      it 'generates the correct number of contexts and context_components' do
+        # ab = described_class
+        binding.pry
+        # subject.create_resources
+      end
 
-  describe 'create_resources' do
-    it 'generates the correct number of contexts and context_components' do
-      binding.pry
-      # binding.pry
-      # subject.create_resources
-    end
-
-    xit 'generates the correct number of providers' do
-      expect(a_context.providers.count).to eq(3)
+      xit 'generates the correct number of providers' do
+        expect(a_context.providers.count).to eq(3)
+      end
     end
   end
 end

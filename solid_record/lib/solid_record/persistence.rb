@@ -13,7 +13,7 @@ module SolidRecord
       persisted_models.each do |model|
         persistence_callbacks.each { |cb| model.skip_callback(*cb) }
       end
-      ret_val = yield
+      ret_val = yield if block_given?
     rescue StandardError => e
       SolidRecord.raise_or_warn(e)
     ensure

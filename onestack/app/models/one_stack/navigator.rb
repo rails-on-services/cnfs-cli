@@ -9,16 +9,16 @@ module OneStack
     def initialize(**kwargs) = kwargs.each { |k, v| send("#{k}=", v) }
 
     def context
-      @context ||= Context.find_or_create_by(component: component_list.last) do |context|
+      @context ||= Context.find_or_create_by(component: components .last) do |context|
         context.options = options
-        context.components << component_list.slice(0, component_list.size - 1)
+        context.components << components .slice(0, components .size - 1)
       end
     end
 
-    def component_list() = @component_list ||= list
+    def components () = @components ||= component_list
 
     # List hierarchy of components based on CLI options, cwd, ENV and default segment_name(s)
-    def list # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def component_list # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       cwd_segments = path_segments.dup
       current = SegmentRoot.first
       components = [current]
@@ -43,7 +43,7 @@ module OneStack
 
     def seg_path() = self.class.seg_path
 
-    def structs() = component_list.each_with_object([]) { |comp, ary| ary.append(comp.struct) }
+    def structs() = components .each_with_object([]) { |comp, ary| ary.append(comp.struct) }
 
     def prompt # rubocop:disable Metrics/AbcSize
       @prompt ||= structs.each_with_object([]) do |component, prompt|
@@ -67,13 +67,15 @@ module OneStack
     end
 
     class << self
-      attr_accessor :current
-      attr_writer :navigators
+      attr_reader :current
 
       def cd(path) = new(path: path || seg_path, options: current.options, args: current.args)
 
       def new(**kwargs) # rubocop:disable Metrics/AbcSize
-        %i[path options args].each { |attr| raise ArgumentError, "#{attr} required" unless kwargs.key?(attr) }
+        kwargs[:path] ||= APP_CWD
+        kwargs[:options] ||= {}
+        kwargs[:args] ||= {}
+        # %i[path options args].each { |attr| raise ArgumentError, "#{attr} required" unless kwargs.key?(attr) }
 
         path = Pathname.new(kwargs[:path])
         path = current_path.join(path) if path.relative?
@@ -92,6 +94,8 @@ module OneStack
 
       # TODO: Sniff the monitor and use black if monitor b/g is white and vice versa #  white black]
       def colors() = @colors ||= OneStack.config.cli.colors&.dup || %i[blue green purple magenta cyan yellow red]
+
+      def reload!() = @current = @navigators = @colors = nil
     end
   end
 end

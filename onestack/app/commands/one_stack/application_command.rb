@@ -24,6 +24,6 @@ module OneStack
     # Load modules to add options, actions and sub-commands to existing command structure
     # TODO: If this is included in H:AppCommand then will it just work?
     # For that matter since it is here will it just work in a subclass of this class?
-    include Hendrix::Extendable
+    include SolidSupport::Extendable
   end
 end

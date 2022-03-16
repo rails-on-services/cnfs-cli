@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ImagesController
+  class ImagesController < ApplicationController
     # around_execute :timer
 
     def execute(cmd = command)

@@ -1,17 +1,18 @@
 # frozen_string_literal: true
-require_relative 'lib/cnfs/docker/version'
+
+require_relative 'lib/one_stack/docker/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'cnfs-docker'
-  spec.version       = Cnfs::Docker::VERSION
+  spec.name          = 'onestack-docker'
+  spec.version       = OneStack::Docker::VERSION
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
   
-  spec.summary       = 'CNFS CLI plugin for the Docker Container Runtime'
-  spec.description   = 'CNFS CLI plugin to install Docker support into CNFS projects'
+  spec.summary       = 'OneStack plugin for the Docker Container Runtime'
+  spec.description   = 'OneStack plugin to install Docker support into OneStack projects'
   spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
+  spec.required_ruby_version = Gem::Requirement.new('>= 3.0.0')
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
@@ -28,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'cnfs-core', '~> 0.1.0'
+  spec.add_dependency 'onestack', '~> 0.1.0'
   spec.add_dependency 'docker-api', '~> 2.2.0'
   spec.add_dependency 'docker-compose', '~> 0.4.1'
 
@@ -36,4 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry', '~> 0.12'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'rubocop', '~> 1.22'
+  spec.add_development_dependency 'rubocop-rspec', '~> 2.7'
+  spec.add_development_dependency 'rubocop-performance', '~> 1.13'
 end

@@ -3,7 +3,7 @@
 require 'ruby-terraform'
 
 require_relative 'one_stack/terraform/version'
-require 'one_stack/terraform/plugin'
+require_relative 'one_stack/terraform/plugin'
 
 # Core Extensions
 require_relative 'ext/hash'
@@ -14,6 +14,10 @@ end
 
 module OneStack
   module Terraform
-    def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
+    class << self
+      def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
+
+      def config() = @config ||= ActiveSupport::OrderedOptions.new
+    end
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # OS methods
-module OneStack
+module SolidSupport
   class Platform
     include ActiveModel::Validations
 

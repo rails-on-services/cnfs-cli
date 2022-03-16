@@ -43,7 +43,7 @@ module OneStack
       validate :dynamic_association_types, if: -> { SolidRecord.status.loaded? }
     end
 
-    def cli_owner() = self.owner ||= OneStack.config.console.context.component
+    def cli_owner() = self.owner ||= OneStack::Navigator.current.context.component
 
     def as_merged
       return as_json unless from && (source = owner.send(self.class.table_name).find_by(name: from))
@@ -68,7 +68,8 @@ module OneStack
 
     def valid_types() = {}.with_indifferent_access
 
-    def tree_name() = [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
+    # TODO: Include SolidSupport::TreeView and override as_tree
+    def tree_label() = [name, type&.deconstantize].compact.join(': ').gsub('::', ' ')
 
     # TODO: Implement when option vebose is paased in
     def tree_name_verbose
@@ -86,10 +87,8 @@ module OneStack
 
     class_methods do
       def update_associations(context)
-        SolidReocrd.skip_persistence_callbacks { dynamic_update(context) } unless belongs_to_names.size.zero?
-      end
+        return unless belongs_to_names.size.zero?
 
-      def dynamic_update(context)
         res_msg = "#{table_name.classify} not configured: "
 
         context.send(table_name).each do |asset|
@@ -131,7 +130,7 @@ module OneStack
           asset.update(update_hash)
           next unless asset.errors.any?
 
-          Hendrix.logger.warn(asset.errors.full_messages.unshift("#{res_msg}#{asset.name}").join("\n#{' ' * 10}"))
+          OneStack.logger.warn(asset.errors.full_messages.unshift("#{res_msg}#{asset.name}").join("\n#{' ' * 10}"))
         end
       end
 

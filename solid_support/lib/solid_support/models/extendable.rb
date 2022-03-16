@@ -2,7 +2,7 @@
 
 # Extendable should be included last as it includes plugin modules that may depend on methods
 # defined in previously loaded modules
-module Hendrix
+module SolidSupport
   module Extendable
     extend ActiveSupport::Concern
 

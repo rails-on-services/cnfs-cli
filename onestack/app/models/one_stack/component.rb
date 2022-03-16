@@ -3,7 +3,8 @@
 module OneStack
   class Component < ApplicationRecord
     include Concerns::Parent
-    include Hendrix::Extendable
+    include SolidSupport::TreeView
+    include SolidSupport::Extendable
 
     belongs_to :owner, class_name: 'Component'
     has_one :context
@@ -84,7 +85,7 @@ module OneStack
     # 1_target/backend => 1_target_backend
     def key_name() = @key_name ||= "#{owner.key_name}_#{name}"
 
-    # 1_target/backend => CNFS_KEY_BACKEND
+    # 1_target/backend => OS_KEY_BACKEND
     def key_name_env() = @key_name_env ||= "#{owner.key_name_env}_#{name.upcase}"
 
     def keys_file() = @keys_file ||= OneStack.config.data_home.join('keys.yml')
@@ -112,30 +113,17 @@ module OneStack
 
     def attrs() = @attrs ||= owner.attrs.dup.append(name)
 
-    def as_merged() = as_json
-
-    def segment_names() = @segment_names ||= components.pluck(:name)
+    # def segment_names() = @segment_names ||= components.pluck(:name)
 
     def struct() = OpenStruct.new(segment_type: owner.segments_type, name: name, color: color)
 
     def color() = owner.segments_type ? OneStack.config.segments[owner.segments_type].try(:[], :color) : nil
 
-    def as_tree() = { '.' => { segments_type&.pluralize || '.' => tree } }
+    def as_merged() = as_json
 
-    def tree
-      components.each_with_object([]) do |comp, ary|
-        if comp.components.size.zero?
-          ary.append(comp.name)
-        else
-          ary.append({ comp.name => { comp.segments_type&.pluralize => comp.tree } })
-        end
-      end
-    end
+    def tree_label() = "#{name} (#{owner.segments_type})"
 
-    def tree_name
-      bp_name = component_name.nil? ? '' : "  source: #{component_name.gsub('/', '-')}"
-      "#{name} (#{owner.segments_type})#{bp_name}"
-    end
+    def tree_assn() = :components
 
     class << self
       def create_table(schema)

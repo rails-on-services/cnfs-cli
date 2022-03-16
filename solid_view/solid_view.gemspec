@@ -31,9 +31,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'activesupport', '~> 6.1.0'
   spec.add_dependency 'tty-prompt', '~> 0.22'
   spec.add_dependency 'tty-screen', '~> 0.8'
-  spec.add_dependency 'tty-spinner', '~> 0.9'
   spec.add_dependency 'tty-table', '~> 0.12.0'
   spec.add_dependency 'tty-tree', '~> 0.4'
 
@@ -42,7 +42,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry-byebug', '~> 3.9'
   spec.add_development_dependency 'rspec', '~> 3.10'
   spec.add_development_dependency 'rubocop', '~> 1'
-
-  # For more information and examples about making a new gem, checkout our
-  # guide at: https://bundler.io/guides/creating_gem.html
 end

@@ -3,16 +3,20 @@
 require 'docker'
 require 'docker/compose'
 
-require 'cnfs/docker/version'
-require 'cnfs/docker/plugin'
+require_relative 'one_stack/docker/version'
+require_relative 'one_stack/docker/plugin'
 
 module Compose; end
 module Docker
   module Concerns; end
 end
 
-module Cnfs
+module OneStack
   module Docker
-    def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
+    class << self
+      def gem_root() = @gem_root ||= Pathname.new(__dir__).join('..')
+
+      def config() = @config ||= ActiveSupport::OrderedOptions.new
+    end
   end
 end

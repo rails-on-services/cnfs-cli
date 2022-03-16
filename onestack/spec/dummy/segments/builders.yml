@@ -1,3 +1,4 @@
 ---
 compose:
-  type: Compose::Builder
+  config: {}
+  # type: Compose::Builder

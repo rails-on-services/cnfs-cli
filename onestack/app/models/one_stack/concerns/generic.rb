@@ -8,7 +8,7 @@ module OneStack
     included do
       include SolidRecord::Model
       include Concerns::Asset
-      include Hendrix::Extendable
+      include SolidSupport::Extendable
     end
   end
 end

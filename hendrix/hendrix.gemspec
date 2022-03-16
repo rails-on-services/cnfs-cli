@@ -37,12 +37,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'tty-command', '~> 0.10'
   spec.add_dependency 'tty-file', '~> 0.10.0'
-  spec.add_dependency 'tty-logger', '~> 0.5'
-  spec.add_dependency 'tty-prompt', '~> 0.22'
-  spec.add_dependency 'tty-screen', '~> 0.8'
-  spec.add_dependency 'tty-spinner', '~> 0.9'
-  spec.add_dependency 'tty-table', '~> 0.12.0'
-  spec.add_dependency 'tty-tree', '~> 0.4'
+  # spec.add_dependency 'tty-logger', '~> 0.5'
   spec.add_dependency 'tty-which', '~> 0.5'
 
   spec.add_dependency 'xdg', '~> 5'

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
+module SolidSupport
   module Git
     extend ActiveSupport::Concern
 
@@ -45,7 +45,7 @@ module OneStack::Concerns
     end
 
     def git_clone_cmd
-      OneStack::Command.new(
+      Command.new(
         # opts: context.options,
         # env: { this: 'that' },
         exec: "git clone #{url}"

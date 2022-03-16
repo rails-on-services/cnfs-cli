@@ -1,22 +1,21 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
-  module CrudController
+module OneStack
+  module Concerns::CrudController
     extend ActiveSupport::Concern
     # include Concerns::CommandController
 
-    # rubocop:disable Metrics/BlockLength
-    included do
+    included do # rubocop:disable Metrics/BlockLength
       # extend Concerns::CommandController
 
       action = name.demodulize.delete_suffix('Controller') # create list show edit destroy
       method = action.downcase.to_sym
 
       # cnfs_class_options :dry_run, :quiet, :clean
-      cnfs_class_options Cnfs.config.segments.keys
+      # has_class_options OneStack.config.segments.keys
 
-      Cnfs::Core.asset_names.dup.append('components').each do |asset_name|
-        model_class_name = asset_name.classify # Plan Provisioner Service User
+      OneStack.config.asset_names.dup.append('components').each do |asset_name|
+        model_class_name = "one_stack/#{asset_name}".classify # Plan Provisioner Service User
 
         command_name = method.eql?(:list) ? asset_name : asset_name.singularize
         command_hint = method.eql?(:list) ? 'PATTERN' : 'NAME'
@@ -30,8 +29,7 @@ module OneStack::Concerns
         class_option :context, desc: 'From current context', type: :boolean
         desc "#{command_name} [#{command_hint}]", "#{action} #{command_desc}"
 
-        # rubocop:disable Metrics/MethodLength
-        define_method(command_name) do |name = nil|
+        define_method(command_name) do |name = nil| # rubocop:disable Metrics/MethodLength
           model = models = nil
           # component = Component.list(options).last
           context = Component.context_from(options)
@@ -56,9 +54,7 @@ module OneStack::Concerns
 
           view_class.new(model: model, models: models, context: context).send(method)
         end
-        # rubocop:enable Metrics/MethodLength
       end
     end
-    # rubocop:enable Metrics/BlockLength
   end
 end

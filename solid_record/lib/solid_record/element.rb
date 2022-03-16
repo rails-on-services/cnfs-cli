@@ -3,6 +3,7 @@
 module SolidRecord
   class Element < ActiveRecord::Base
     include SolidRecord::Table
+    include SolidSupport::TreeView
     self.table_name_prefix = 'solid_record_'
 
     # Values are passed in from Document and Association to ModelElements and passed on to model_class.create
@@ -28,19 +29,8 @@ module SolidRecord
     # The class of the model managed (created, updated, destroyed) by an instance of Element
     def model_class() = @model_class ||= model_type.constantize
 
-    # TODO: Move the TTY stuff to a controller and just return the hash
-    def puts_tree(flagged: false) = puts(TTY::Tree.new(to_tree(flagged: flagged)).render)
-
-    def to_tree(flagged: false) = { tree_label => as_tree(flagged) }
-
-    def as_tree(flagged)
-      filtered_elements = flagged ? elements.flagged : elements
-      filtered_elements.each_with_object([]) do |element, ary|
-        sub_filtered_elements = flagged ? element.elements.flagged : element.elements
-        val = sub_filtered_elements.size.zero? ? element.tree_label : { element.tree_label => element.as_tree(flagged) }
-        ary.append(val)
-      end
-    end
+    # NOTE: Implement TreeView by defining #tree_assn and tree_label
+    def tree_assn() = :elements
 
     class << self
       def create_table(schema)

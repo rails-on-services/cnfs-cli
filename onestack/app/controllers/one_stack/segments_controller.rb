@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require 'tty-table'
-
 module OneStack
-  class SegmentsController
+  class SegmentsController < ApplicationController
     # show status; lifted from namespace
     def execute(entry)
       super

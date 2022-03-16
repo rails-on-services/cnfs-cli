@@ -9,9 +9,7 @@ module SolidRecord
     #   puts 'SolidRecord before_configuration'
     # end
 
-    config.before_initialize do |config|
-      SolidRecord.config.merge!(config.solid_record)
-    end
+    config.before_initialize { |config| SolidRecord.config.merge!(config.solid_record) }
 
     # config.before_eager_load do |config|
     #   puts 'SolidRecord before_eager_load'

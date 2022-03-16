@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module OneStack::Concerns
+module SolidSupport
   module Download
     extend ActiveSupport::Concern
 
     included do
-      include OneStack::Concerns::Git
+      include Git
     end
 
     def download(url:, path:, spinner: false)

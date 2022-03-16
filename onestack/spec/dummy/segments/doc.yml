@@ -1,5 +1,5 @@
 ---
 config: {}
-segment_name: jamstack/scully
-default:
-  provider_name: aws_east
+# segment_name: jamstack/scully
+# default:
+#   provider_name: aws_east

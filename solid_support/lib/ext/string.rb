@@ -37,7 +37,7 @@ class String
     # Return the original string if no interpolations are found in the string
     return self unless interpolations.any?
 
-    references.transform_keys!(&:to_s)
+    references.deep_transform_keys!(&:to_s)
 
     references.each do |key, param|
       next if param.is_a?(Hash)
