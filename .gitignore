@@ -7,8 +7,12 @@
 **/spec/reports/
 **/tmp/
 **/src/
-**/spec/dummy/segments/
 **.env
+
+# Remove after completing refactor
+**/spec/dummy/segments/
+one_stack_rails/
+native
 
 .dir-locals.el
 

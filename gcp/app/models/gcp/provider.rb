@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-class Gcp::Provider < Provider
-  store :config, accessors: %i[service_account_key], coder: YAML
+class Gcp::Provider < OneStack::Provider
+  store :config, accessors: %i[service_account_key]
 
-  def credentials
-    { service_account_key: service_account_key }
-  end
+  def credentials() = { service_account_key: service_account_key }
 end

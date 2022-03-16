@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Kubernetes::HelmRegistry < Registry
+class Kubernetes::HelmRegistry < OneStack::Registry
   store :config, accessors: %i[url], coder: YAML
 
   def add_deploy_commands(runtime)

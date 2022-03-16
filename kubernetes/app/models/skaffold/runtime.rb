@@ -3,7 +3,7 @@
 require 'base64'
 
 # rubocop:disable all
-class Skaffold::Runtime < Runtime
+class Skaffold::Runtime < OneStack::Runtime
   # TODO: is there a detach keymap like with compose?
   # TODO: attach is actually shell (via exec)
 
