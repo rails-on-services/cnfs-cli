@@ -2,7 +2,6 @@
 
 source 'https://rubygems.org'
 
-gem 'hendrix', path: '../hendrix'
 gem 'onestack', path: '../onestack'
 gem 'solid_record', path: '../solid_record'
 gem 'solid_support', path: '../solid_support'

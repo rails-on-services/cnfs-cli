@@ -2,14 +2,14 @@
 
 require 'pry'
 
-module Hendrix
-  module Concerns::ConsoleController
+module SolidSupport
+  module ConsoleController
     extend ActiveSupport::Concern
 
     def execute # rubocop:disable Metrics/AbcSize
       self.class.hex
-      Hendrix.config.cli.mode = true
-      Hendrix.config.console = self
+      SolidSupport.config.cli.mode = true
+      SolidSupport.config.console = self
       Pry.config.prompt = Pry::Prompt.new('cnfs', 'cnfs prompt', [self.class.prompt])
       self.class.define_shortcuts if defined?(ActiveRecord) && ENV['HENDRIX_CLI_ENV'].eql?('development')
       Pry.start(self)

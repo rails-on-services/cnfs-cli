@@ -3,7 +3,7 @@
 module OneStack
   class Component < ApplicationRecord
     include Concerns::Parent
-    include SolidSupport::TreeView
+    include SolidRecord::TreeView
     include SolidSupport::Extendable
 
     belongs_to :owner, class_name: 'Component'

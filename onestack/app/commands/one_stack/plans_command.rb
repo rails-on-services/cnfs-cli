@@ -3,7 +3,7 @@
 module OneStack
   class PlansCommand < ApplicationCommand
     has_class_options :dry_run, :generate # , :logging
-    has_class_options Hendrix.config.segments.keys
+    has_class_options OneStack.config.segments.keys
 
     # TODO: If these options stay they need to move to a Terrform::Concerns::PlanController
     # option :clean, desc: 'Clean local modules cache. Force to download latest modules from TF registry',

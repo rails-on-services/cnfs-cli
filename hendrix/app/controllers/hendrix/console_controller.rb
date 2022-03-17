@@ -2,6 +2,6 @@
 
 module Hendrix
   class ConsoleController < ApplicationController
-    include Concerns::ConsoleController
+    include SolidSupport::ConsoleController
   end
 end

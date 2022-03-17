@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module OneStack
-  class Project::ExtensionGenerator < Hendrix::Project::ExtensionGenerator
+  class Project::ExtensionGenerator < SolidSupport::ApplicationGenerator
+  # class Project::ExtensionGenerator < Hendrix::Project::ExtensionGenerator
     def segments
       binding.pry
       templates.each do |template|

@@ -20,7 +20,7 @@ app_path = Pathname.new(Dir.pwd).ascend { |path| break path if path.join(ROOT_FI
 if app_path
   APP_CWD = Pathname.new(Dir.pwd)
   APP_ROOT = app_path
-  Dir.chdir(APP_ROOT) { require 'hendrix/main_loader' }
+  Dir.chdir(APP_ROOT) { require 'solid_support/main_loader' }
 else
-  require 'hendrix/project_loader'
+  require 'solid_support/project_loader'
 end

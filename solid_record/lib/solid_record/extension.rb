@@ -3,7 +3,7 @@
 module SolidRecord
   def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
-  class Extension < Hendrix::Extension
+  class Extension < SolidSupport::Extension
     # The config object belongs to the application so it is 'shared' with the app and other Extensions
     # config.before_configuration do
     #   puts 'SolidRecord before_configuration'
@@ -17,8 +17,8 @@ module SolidRecord
 
     # After all extensions have been required
     config.after_initialize do |config|
-      SolidRecord::DataStore.load(*config.solid_record.load_paths)
-      SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
+      # SolidRecord::DataStore.load(*config.solid_record.load_paths)
+      # SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
     end
 
     def self.gem_root() = SolidRecord.gem_root

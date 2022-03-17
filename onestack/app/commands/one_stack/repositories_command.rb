@@ -23,7 +23,7 @@ module OneStack
     has_options :init
     def add(p1, p2 = nil)
       repo = Repository.add(p1, p2)
-      raise Hendrix::Error, repo.errors.full_messages.join("\n") unless repo.save
+      raise Error, repo.errors.full_messages.join("\n") unless repo.save
 
       init(repo.name) if options.init
       # If this is the first source repository added to the project then make it the default
@@ -42,7 +42,7 @@ module OneStack
     has_options :force
     # before :validate_destroy
     def destroy(name)
-      raise Cnfs::Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
+      raise Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
 
       repo.remove_tree
       repo.destroy
@@ -51,9 +51,9 @@ module OneStack
     desc 'init [NAME]', 'Initialize (clone) a configured repository'
     has_options(:init)
     def init(name)
-      raise Cnfs::Error, "Repository not found: '#{name}'" unless (repo = Repository.find_by(name: name))
+      raise Error, "Repository not found: '#{name}'" unless (repo = Repository.find_by(name: name))
 
-      raise Cnfs::Error, "Directory already exists at '#{repo.full_path}'" if repo.full_path.exist?
+      raise Error, "Directory already exists at '#{repo.full_path}'" if repo.full_path.exist?
 
       return if options.dry_run
 
@@ -85,14 +85,14 @@ module OneStack
     # before :validate_destroy
     map %w[rm] => :remove
     def remove(name)
-      raise Cnfs::Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
+      raise Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
 
       repo.destroy
     end
 
     desc 'show [NAME]', 'Show repository configuration details'
     def show(name)
-      raise Cnfs::Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
+      raise Error, "Repository #{name} not found" unless (repo = Repository.find_by(name: name))
 
       puts repo.name
       puts repo.config

@@ -2,10 +2,10 @@
 
 module OneStack
   class << self
-    def extensions() = Hendrix.extensions
+    def extensions() = SolidSupport.extensions
   end
 
-  class Extension < Hendrix::Extension
+  class Extension < SolidSupport::Extension
     def self.gem_root() = Plugin.gem_root
   end
 end

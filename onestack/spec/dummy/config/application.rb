@@ -28,8 +28,6 @@ module Spec
     config.cli.colorize = true
     config.paths.data = 'data'
 
-    config.env.key_prefix = 'helo'
-
     # Example configurations for segments
     # basic colors: blue green purple magenta cyan yellow red white black
     config.segments.environment = { aliases: '-e', env: 'env', color:

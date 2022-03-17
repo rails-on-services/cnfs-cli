@@ -20,7 +20,7 @@ module SolidSupport
         file = url.basename
         if file.exist? # && !options.clean
           FileUtils.rm(file)
-          Hendrix.logger.warn("#{file} exists")
+          SolidSupport.logger.warn("#{file} exists")
           # Cnfs.logger.info "Dependency #{dependency[:name]} exists locally. To overwrite run command with --clean flag."
           # next
         end

@@ -3,7 +3,7 @@
 module OneStack
   class ImagesCommand < ApplicationCommand
     has_class_options :clean, :dry_run, :generate, :quiet
-    has_class_options Hendrix.config.segments.keys
+    has_class_options OneStack.config.segments.keys
 
     desc 'build [IMAGES]', 'Build all or specific service images'
     def build(*images) = execute(images: images)

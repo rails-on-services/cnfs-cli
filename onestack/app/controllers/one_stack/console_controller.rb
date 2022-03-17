@@ -23,7 +23,7 @@ end
 
 module OneStack
   class ConsoleController < ApplicationController
-    include Hendrix::Concerns::ConsoleController
+    include SolidSupport::ConsoleController
 
     before_execute :init, :nav, :create_help
 

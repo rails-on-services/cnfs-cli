@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'hendrix'
+# require 'hendrix'
 # module Hendrix
 #   class Extension
 #     ABSTRACT_EXTENSIONS = %w[OneStack::Extension OneStack::Plugin OneStack::Application Hendrix::Extension Hendrix::Plugin Hendrix::Application].freeze
@@ -14,5 +14,5 @@ require 'one_stack/plugin'
 require 'one_stack/extension'
 
 module OneStack
-  def self.logger() = Hendrix.logger
+  def self.logger() = SolidSupport.logger
 end

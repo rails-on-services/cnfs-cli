@@ -2,11 +2,11 @@
 
 require 'zeitwerk'
 
-module Hendrix
+module SolidSupport
   class << self
     def add_loader(name:, path:, notifier: nil, logger: nil)
       name = name.to_s
-      loaders[name] ||= Hendrix::Loader.new(name: name, logger: logger)
+      loaders[name] ||= SolidSupport::Loader.new(name: name, logger: logger)
       loaders[name].add_path(path)
       loaders[name].add_notifier(notifier)
       loaders[name]
@@ -74,8 +74,8 @@ module Hendrix
     end
 
     # Return list of autoloads for a specified plugin optionally prefixed with path
-    # Example: Hendrix.loaders.first.last.select(Hendrix::Core, 'app/models')
-    def select(plugin = Hendrix, path = '')
+    # Example: SolidSupport.loaders.first.last.select(SolidSupport::Core, 'app/models')
+    def select(plugin = SolidSupport, path = '')
       loader.autoloads.select { |k, _v| k.start_with?(plugin.gem_root.join(path).to_s) }
     end
 

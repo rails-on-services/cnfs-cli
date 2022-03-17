@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SolidSupport
+module SolidRecord
   module TreeView
     extend ActiveSupport::Concern
 

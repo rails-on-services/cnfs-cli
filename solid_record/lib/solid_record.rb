@@ -6,9 +6,10 @@ require 'sqlite3'
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 require 'lockbox'
+require 'tty-tree'
 
-require 'solid_support'
-
+require_relative 'ext/pathname'
+require_relative 'solid_record/tree_view'
 require_relative 'solid_record/version'
 
 # <table>
@@ -40,7 +41,7 @@ module SolidRecord
   end
 end
 
-require_relative 'solid_record/extension' if defined? Hendrix
+require_relative 'solid_record/extension' if defined? SolidSupport
 
 require_relative 'solid_record/data_store'
 require_relative 'solid_record/load_path'

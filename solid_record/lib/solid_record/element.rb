@@ -2,8 +2,8 @@
 
 module SolidRecord
   class Element < ActiveRecord::Base
-    include SolidRecord::Table
-    include SolidSupport::TreeView
+    include Table
+    include TreeView
     self.table_name_prefix = 'solid_record_'
 
     # Values are passed in from Document and Association to ModelElements and passed on to model_class.create

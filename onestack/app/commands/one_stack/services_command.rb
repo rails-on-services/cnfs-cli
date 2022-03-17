@@ -17,7 +17,7 @@ module OneStack
     end
 
     has_class_options :dry_run, :generate, :quiet
-    has_class_options Hendrix.config.segments.keys
+    has_class_options OneStack.config.segments.keys
 
     # Service Runtime
     desc 'attach SERVICE', 'Attach to the process of a running service (short-cut: a)'

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ApplicationCommand < Hendrix::ApplicationCommand
+  class ApplicationCommand < SolidSupport::ApplicationCommand
     class << self
       def shared_options
         super.merge(

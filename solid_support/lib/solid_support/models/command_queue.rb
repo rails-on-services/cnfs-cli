@@ -27,7 +27,7 @@ module SolidSupport
 
         msg = command.exit_error&.to_s || command.result.err
         binding.pry
-        raise Hendrix::Error, msg if on_failure.raise?
+        raise Error, msg if on_failure.raise?
 
         return false if on_failure.halt?
       end

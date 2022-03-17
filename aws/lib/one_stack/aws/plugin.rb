@@ -6,9 +6,9 @@ module OneStack
       config.before_initialize { |config| OneStack::Aws.config.merge!(config.aws) }
 
       initializer 'add console shortcuts' do |_app|
-        #   Hendrix.logger.info('[Aws] Initializing from', gem_root)
+        #   OneStack.logger.info('[Aws] Initializing from', gem_root)
 
-        Hendrix.subscribers << ActiveSupport::Notifications.subscribe('add_console_shortcuts.onestack') do |event|
+        SolidSupport.subscribers << ActiveSupport::Notifications.subscribe('add_console_shortcuts.onestack') do |event|
           add_console_shortcuts(event.payload[:shortcuts])
         end
       end
@@ -19,7 +19,7 @@ module OneStack
         end
 
         def add_inflectors(loader)
-          Hendrix.logger.info '[Aws] Configuring loader'
+          OneStack.logger.info '[Aws] Configuring loader'
 
           loader.inflector.inflect(
             'acm' => 'ACM',
@@ -32,7 +32,7 @@ module OneStack
         end
 
         def add_console_shortcuts(shortcuts)
-          Hendrix.logger.info '[Aws] Adding console shortcuts'
+          OneStack.logger.info '[Aws] Adding console shortcuts'
           shortcuts.merge!(
             acm: ::Aws::Resource::ACM::Certificate,
             ec2: ::Aws::Resource::EC2::Instance,

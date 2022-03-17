@@ -6,4 +6,4 @@ require 'bundler/setup'
 ARGV.unshift 'console'
 ENV['HENDRIX_CLI_ENV'] ||= 'development'
 BOOT_MODULE = OneStack
-Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) { require 'hendrix/boot_loader' }
+Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) { require 'solid_support/boot_loader' }

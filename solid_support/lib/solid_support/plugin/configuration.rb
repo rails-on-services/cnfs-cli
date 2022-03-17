@@ -2,11 +2,11 @@
 
 require_relative '../extension/configuration'
 
-module Hendrix
+module SolidSupport
   class Plugin
     def config() = @config ||= Configuration.new
 
-    class Configuration < Hendrix::Extension::Configuration
+    class Configuration < Extension::Configuration
     end
   end
 end

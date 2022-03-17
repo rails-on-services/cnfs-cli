@@ -5,9 +5,9 @@ require 'active_support/inflector'
 
 require_relative '../plugin/configuration'
 
-module Hendrix
+module SolidSupport
   class Application < Plugin
-    class Configuration < Hendrix::Plugin::Configuration
+    class Configuration < SolidSupport::Plugin::Configuration
       def root() = APP_ROOT
 
       # user-specific non-essential (cached) data

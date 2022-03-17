@@ -1,16 +1,16 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-git_path = File.expand_path("../../.git", __dir__)
+git_path = File.expand_path('../../.git', __dir__)
 
 if File.exist?(git_path)
-  plugin_path = File.expand_path("../../hendrix/lib", __dir__)
+  plugin_path = File.expand_path('../../solid_support/lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path("../../solid-support/lib", __dir__)
+  plugin_path = File.expand_path('../../solid_record/lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path("../../solid-record/lib", __dir__)
+  plugin_path = File.expand_path('../../solid_view/lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path("../lib", __dir__)
+  plugin_path = File.expand_path('../lib', __dir__)
   $:.unshift(plugin_path)
 end
 
@@ -18,8 +18,8 @@ require 'onestack'
 
 # This isn't necessary for main_loader, but project_loader needs it
 load_path = Pathname.new(__dir__).join('../app')
-Hendrix.add_loader(name: :framework, path: load_path)
+SolidSupport.add_loader(name: :framework, path: load_path)
 
 BOOT_MODULE = OneStack
 
-require 'hendrix/boot_loader'
+require 'solid_support/boot_loader'

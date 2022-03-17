@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Robert Roach']
   spec.email         = ['rjayroach@gmail.com']
 
-  spec.summary       = 'Support classes for Hendrix'
-  spec.description   = 'Support classes and Ruby core extensions for the Hendrix Framework'
-  spec.homepage      = 'https://hendrix.cnfs.io'
+  spec.summary       = 'Simple core application framework for building application'
+  spec.description   = 'Support classes and Ruby core extensions'
+  spec.homepage      = 'https://cnfs.io'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.0.0'
 
@@ -32,13 +32,23 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'activesupport', '~> 6.1'
-  spec.add_dependency 'tty-command', '~> 0.10'
-  spec.add_dependency 'tty-spinner', '~> 0.9'
-  spec.add_dependency 'tty-file', '~> 0.10'
-  spec.add_dependency 'tty-tree', '~> 0.4'
+  spec.add_dependency 'pry', '~> 0.13'
+  spec.add_dependency 'thor', '~> 1.0'
 
+  spec.add_dependency 'tty-command', '~> 0.10'
+  spec.add_dependency 'tty-file', '~> 0.10'
+  # spec.add_dependency 'tty-logger', '~> 0.5'
+  spec.add_dependency 'tty-spinner', '~> 0.9'
+  spec.add_dependency 'tty-tree', '~> 0.4'
+  spec.add_dependency 'tty-which', '~> 0.5'
+
+  spec.add_dependency 'xdg', '~> 5'
+  spec.add_dependency 'zeitwerk', '~> 2.4'
+
+  spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'guard-rspec', '~> 4.7'
   spec.add_development_dependency 'pry-byebug', '~> 3.9'
+  spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.10'
   spec.add_development_dependency 'rubocop', '~> 1.22'
 end

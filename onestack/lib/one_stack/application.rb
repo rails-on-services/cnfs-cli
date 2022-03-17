@@ -2,12 +2,12 @@
 
 module OneStack
   class << self
-    def application() = Hendrix.application
+    def application() = SolidSupport.application
 
-    def config() = Hendrix.config
+    def config() = SolidSupport.config
   end
 
-  class Application < Hendrix::Application
+  class Application < SolidSupport::Application
     config.before_initialize do |config|
 
       config.operator_names = %w[builders configurators provisioners runtimes]
@@ -45,7 +45,7 @@ module OneStack
       end
     end
 
-    class Configuration < Hendrix::Application::Configuration
+    class Configuration < SolidSupport::Application::Configuration
       def xb() = 'tuff'
     end
   end

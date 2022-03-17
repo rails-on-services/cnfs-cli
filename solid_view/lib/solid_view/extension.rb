@@ -3,7 +3,7 @@
 module SolidView
   def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
-  class Extension < Hendrix::Extension
+  class Extension < SolidSupport::Extension
     # The config object belongs to the application so it is 'shared' with the app and other Extensions
     # config.before_configuration do
     #   puts 'SolidView before_configuration'

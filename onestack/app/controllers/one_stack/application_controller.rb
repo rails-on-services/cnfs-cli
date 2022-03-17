@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ApplicationController < Hendrix::ApplicationController
+  class ApplicationController < SolidSupport::ApplicationController
     def context() = nav.context
 
     def nav() = Navigator.current || Navigator.new(path: APP_CWD, options: options, args: args)

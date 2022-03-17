@@ -8,14 +8,11 @@
 # dval = ARGV.index('--logging') || ARGV.index('-l')
 # ENV['HENDRIX_LOGGING'] = ARGV[dval + 1] if dval
 
-# Require the hendrix framework and external dependencies
-require 'hendrix'
+# Require the solid_support framework and external dependencies
+require 'solid_support'
 
 # Require application, extension and plugin base classes after the framework
-require 'hendrix/application'
-
-# Add this gem to the plugin hash
-require 'hendrix/hendrix_plugin'
+require 'solid_support/application'
 
 # Require the application's environment from <app_root>/config/environment.rb
 # The environment requires the application and then calls initialize! which return self
@@ -40,10 +37,10 @@ unless skip_controller_start
   begin
     # Order of precendence for the MainCommand class:
     # 1. defined in the application, 2. defined by a plugin exe or 3. the default
-    BOOT_MODULE = Hendrix unless defined?(BOOT_MODULE)
+    BOOT_MODULE = OneStack unless defined?(BOOT_MODULE)
     cmd_object = defined?(MainCommand) ? MainCommand : BOOT_MODULE::MainCommand
     cmd_object.start
-  rescue Hendrix::Error => e
+  rescue SolidSupport::Error => e
     puts e.message
     exit 1
   end

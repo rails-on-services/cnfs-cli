@@ -6,11 +6,10 @@ git_path = File.expand_path('../../.git', __dir__)
 if File.exist?(git_path)
   plugin_path = File.expand_path('../lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path('../../solid-support/lib', __dir__)
+  plugin_path = File.expand_path('../../solid_support/lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path('../../solid-record/lib', __dir__)
+  plugin_path = File.expand_path('../../solid_record/lib', __dir__)
   $:.unshift(plugin_path)
 end
 
-require 'hendrix/boot_loader'
-# require_relative '../lib/hendrix/boot_loader'
+require 'solid_support/boot_loader'

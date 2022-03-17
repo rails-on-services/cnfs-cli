@@ -4,7 +4,7 @@ module OneStack
   class << self
     def gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
-    def plugins() = Hendrix.plugins
+    def plugins() = SolidSupport.plugins
 
     # TODO: Finish refactor
     def segment(name)
@@ -17,16 +17,11 @@ module OneStack
     def segments_path() = gem_root.join('segments')
   end
 
-  class Plugin < Hendrix::Plugin
-    # initializer 'setup data_store' do |app|
-    #   SolidRecord::DataStore.load # add_models(Hendrix::Core.model_names)
-    #   Hendrix.data_store.setup # if data_store
-    # end
-
-    # initializer 'node load' do |app|
-    #   SegmentRoot.load
-    #   Hendrix.with_timer('load nodes') { SegmentRoot.load }
-    # end unless ENV['HENDRIX_CLI_ENV'].eql?('test')
+  class Plugin < SolidSupport::Plugin
+    config.after_initialize do |config|
+      SolidRecord::DataStore.load(*config.solid_record.load_paths)
+      SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
+    end
 
     class << self
       def gem_root() = OneStack.gem_root
