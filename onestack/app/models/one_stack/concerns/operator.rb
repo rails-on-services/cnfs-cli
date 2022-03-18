@@ -18,7 +18,7 @@ module OneStack
 
       table_mod(:operator_columns)
 
-      include SolidSupport::Extendable
+      include SolidApp::Extendable
     end
 
     def execute(method, **kwargs)

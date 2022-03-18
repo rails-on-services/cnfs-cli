@@ -41,7 +41,7 @@ module SolidRecord
   end
 end
 
-require_relative 'solid_record/extension' if defined? SolidSupport
+require_relative 'solid_record/extension' if defined? SolidApp
 
 require_relative 'solid_record/data_store'
 require_relative 'solid_record/load_path'

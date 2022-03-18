@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ApplicationGenerator < SolidSupport::ApplicationGenerator
+  class ApplicationGenerator < SolidApp::ApplicationGenerator
 
     # Argument order:
     # 1. Context is always received first

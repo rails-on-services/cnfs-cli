@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class ApplicationCommand < SolidSupport::ApplicationCommand
+  class ApplicationCommand < SolidApp::ApplicationCommand
   end
 end

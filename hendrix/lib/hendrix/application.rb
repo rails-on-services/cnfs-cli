@@ -2,19 +2,19 @@
 
 module Hendrix
   class << self
-    def application() = SolidSupport.application
+    def application() = SolidApp.application
 
-    def config() = SolidSupport.config
+    def config() = SolidApp.config
   end
 
-  class Application < SolidSupport::Application
+  class Application < SolidApp::Application
     config.before_initialize do |_config|
     end
 
     config.after_initialize do |_config|
     end
 
-    class Configuration < SolidSupport::Application::Configuration
+    class Configuration < SolidApp::Application::Configuration
     end
   end
 end

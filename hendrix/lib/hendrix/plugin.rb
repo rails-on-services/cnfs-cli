@@ -4,7 +4,7 @@ module Hendrix
   module New; end
   module Concerns; end
 
-  class Plugin < SolidSupport::Plugin
+  class Plugin < SolidApp::Plugin
     class << self
       def before_loader_setup(loader) = loader.ignore(loader_ignore_files)
 

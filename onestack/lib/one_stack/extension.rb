@@ -2,10 +2,10 @@
 
 module OneStack
   class << self
-    def extensions() = SolidSupport.extensions
+    def extensions() = SolidApp.extensions
   end
 
-  class Extension < SolidSupport::Extension
+  class Extension < SolidApp::Extension
     def self.gem_root() = Plugin.gem_root
   end
 end

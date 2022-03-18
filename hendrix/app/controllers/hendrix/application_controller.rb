@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class ApplicationController < SolidSupport::ApplicationController
+  class ApplicationController < SolidApp::ApplicationController
   end
 end

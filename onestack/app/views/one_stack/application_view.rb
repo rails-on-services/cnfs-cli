@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ApplicationView < SolidView::ModelView
+  class ApplicationView < SolidApp::ModelView
     include Concerns::ParentView
   end
 end

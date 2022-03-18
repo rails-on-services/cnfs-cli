@@ -27,7 +27,7 @@ end
 
 module OneStack
   class ConsoleController < ApplicationController
-    include SolidSupport::ConsoleController
+    include SolidApp::ConsoleController
 
     before_execute :init, :nav, :create_help
 

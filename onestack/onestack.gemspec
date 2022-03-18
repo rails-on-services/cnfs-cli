@@ -29,9 +29,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'solid_app', '~> 0.1.0'
   spec.add_dependency 'solid_record', '~> 0.1.0'
   spec.add_dependency 'solid_support', '~> 0.1.0'
-  spec.add_dependency 'solid_view', '~> 0.1.0'
   spec.add_dependency 'tty-which', '~> 0.5.0'
 
   spec.add_development_dependency 'bundler', '~> 2.0'

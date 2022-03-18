@@ -33,7 +33,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activesupport', '~> 6.1'
   spec.add_dependency 'pry', '~> 0.13'
-  spec.add_dependency 'thor', '~> 1.0'
 
   spec.add_dependency 'tty-command', '~> 0.10'
   spec.add_dependency 'tty-file', '~> 0.10'
@@ -41,9 +40,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'tty-spinner', '~> 0.9'
   spec.add_dependency 'tty-tree', '~> 0.4'
   spec.add_dependency 'tty-which', '~> 0.5'
-
-  spec.add_dependency 'xdg', '~> 5'
-  spec.add_dependency 'zeitwerk', '~> 2.4'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'guard-rspec', '~> 4.7'

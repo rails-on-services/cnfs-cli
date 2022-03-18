@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 module Hendrix
-  class ApplicationView < SolidView::ModelView
+  class ApplicationView < SolidApp::ModelView
   end
 end

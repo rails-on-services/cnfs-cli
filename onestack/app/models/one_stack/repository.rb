@@ -4,7 +4,7 @@ module OneStack
   class Repository < ApplicationRecord
     # include Concerns::Operator
     include OneStack::Concerns::Generic
-    include SolidSupport::Git
+    include SolidApp::Git
 
     store :config, accessors: %i[url path]
 

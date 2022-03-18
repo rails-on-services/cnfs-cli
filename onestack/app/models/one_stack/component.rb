@@ -4,7 +4,7 @@ module OneStack
   class Component < ApplicationRecord
     include Concerns::Parent
     include SolidRecord::TreeView
-    include SolidSupport::Extendable
+    include SolidApp::Extendable
 
     belongs_to :owner, class_name: 'Component'
     has_one :context
