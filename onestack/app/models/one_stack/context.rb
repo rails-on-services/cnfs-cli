@@ -60,7 +60,7 @@ module OneStack
         json = records.each_with_object({}) do |record, hash|
           hash.deep_merge!(record.to_context.compact)
         end
-        context_assets.create(json.except('id').merge(name: name)) # unless json['disabled']
+        context_assets.create(json.merge(name: name)) # unless json['disabled']
       end
     end
 

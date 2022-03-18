@@ -2,7 +2,7 @@
 
 module SolidSupport
   class ApplicationCommand < Thor
-    # include Hendrix::Concerns::Extendable if defined? APP_ROOT
+    # include Extendable if defined? APP_ROOT
     attr_accessor :calling_method
 
     class << self
@@ -97,8 +97,8 @@ module SolidSupport
         return klass
       end
       # binding.pry
-      # Hendrix.logger.debug('controller classes not found:', class_names.join(' '))
-      raise Hendrix::Error, set_color("Controller not found: #{class_names.join(' ')} (this is a bug)", :red)
+      # SolidSupport.logger.debug('controller classes not found:', class_names.join(' '))
+      raise Error, set_color("Controller not found: #{class_names.join(' ')} (this is a bug)", :red)
     end
 
     # Override to provide custom arguments and/or options to the exec controller
@@ -108,13 +108,13 @@ module SolidSupport
     def validate_destroy(msg = "\n#{'WARNING!!!  ' * 5}\nAction cannot be reversed\nAre you sure?")
       return true if options.force || yes?(msg)
 
-      raise Hendrix::Error, 'Operation cancelled'
+      raise Error, 'Operation cancelled'
     end
 
     # Used by Hendrix::New and Hendrix::Plugin
     def check_dir(name)
       if Dir.exist?(name) && !validate_destroy('Directory already exists. Destroy and recreate?')
-        raise Hendrix::Error, set_color('Directory exists. exiting.', :red)
+        raise Error, set_color('Directory exists. exiting.', :red)
       end
 
       true

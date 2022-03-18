@@ -7,18 +7,22 @@
 end
 
 Pry::Commands.block_command 'cd', 'change segment' do |path|
-  OneStack::Navigator.cd(path)
-  # puts OneStack::Navigator.navigators.keys, OneStack::Navigator.current.to_json
+  puts "cd: invalid segment: #{path}" unless OneStack::Navigator.current.cd(path)
 end
 
-Pry::Commands.block_command 'ls', 'list assets' do |*args|
-  asset_names = args.any? ? OneStack.config.asset_names.select{ |a| args.include?(a) } : OneStack.config.asset_names
-  asset_names.each do |asset|
-    puts asset
-    next unless (names = OneStack::Navigator.current.context.send(asset.to_sym).pluck(:name)).any?
+Pry::Commands.block_command 'pwd', 'print segment' do
+  OneStack::Navigator.current.path.relative_path_from(OneStack.config.paths.segments).to_s
+end
 
-    puts names
+Pry::Commands.block_command 'ls', 'list current context assets' do |*args|
+  asset_names = args.any? ? OneStack.config.asset_names.select{ |a| args.include?(a) } : OneStack.config.asset_names
+  ab = asset_names.each_with_object({}) do |asset, hash|
+    klass = "one_stack/#{asset}".classify.constantize
+    abr = OneStack::ConsoleController.model_shortcuts.invert[klass]
+    records = OneStack::Navigator.current.context.send(asset.to_sym)
+    hash["#{asset} [#{abr}]"] = records.map{ |r| "#{r.name}#{r.type? ? " (#{r.type})" : ''}" }
   end
+  puts TTY::Tree.new('.' => ab).render
 end
 
 module OneStack
@@ -51,19 +55,19 @@ module OneStack
       end
     end
 
+    def component() = context.component
+
     def reload!
-      Navigator.reload! && nav
-      # super
-      # Node.source = :asset
+      super
+      Navigator.reload!
+      nav
       true
     end
 
     # Remove all records from the data store, reload classes and load segments into the data store
     def reset!
-      Cnfs.data_store.reset
+      SolidRecord::DataStore.reset(*SolidRecord.config.load_paths)
       reload!
-      SegmentRoot.load
-      true
     end
 
     class << self
@@ -71,7 +75,7 @@ module OneStack
         proc do |obj, _nest_level, _|
           klass = obj.class.name.demodulize.delete_suffix('Controller').underscore
           label = klass.eql?('console') ? '' : " (#{obj.class.name})"
-          "#{Navigator.current.prompt}#{label}> "
+          "#{Navigator.current&.prompt}#{label}> "
         end
       end
 

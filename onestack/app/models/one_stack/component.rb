@@ -48,7 +48,7 @@ module OneStack
       elsif (name = OneStack.config.segments[segments_type].try(:[], :env_value))
         [name, 'ENV value']
       elsif segment_name # default[:segment_name] in this component's yaml file
-        [segment_name, parent.node_name]
+        [segment_name, 'parent.node_name']
       else
         []
       end

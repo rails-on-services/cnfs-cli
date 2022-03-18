@@ -19,8 +19,9 @@ module OneStack
 
     # List hierarchy of components based on CLI options, cwd, ENV and default segment_name(s)
     def component_list # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      return [] unless (current = SegmentRoot.first)
+
       cwd_segments = path_segments.dup
-      current = SegmentRoot.first
       components = [current]
       while current.components.any?
         next_segment = current.next_segment(options, cwd_segments.shift)
@@ -64,6 +65,13 @@ module OneStack
       self.class.colors.delete(color) if color
       color ||= self.class.colors.shift
       Pry::Helpers::Text.send(color, title)
+    end
+
+    def tree() = TTY::Tree.new(path => path.children).render
+
+    def cd(path)
+      self.class.cd(path)
+      self.class.current != self
     end
 
     class << self

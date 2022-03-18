@@ -18,7 +18,6 @@ module SolidSupport
     # Reload all classes, remove and cached objects and re-define the shortcuts as classes have reloaded
     def reload!
       reset_cache
-      Hendrix.reload
       self.class.define_shortcuts
       true
     end

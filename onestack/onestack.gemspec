@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'solid_record', '~> 0.1.0'
   spec.add_dependency 'solid_support', '~> 0.1.0'
   spec.add_dependency 'solid_view', '~> 0.1.0'
+  spec.add_dependency 'tty-which', '~> 0.5.0'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'guard-rspec', '~> 4.7.3'

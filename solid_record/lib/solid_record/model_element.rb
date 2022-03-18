@@ -40,6 +40,7 @@ module SolidRecord
       self.model = model_class.create(model_values)
       raise ModelSaveError, "Err #{model_class}: #{model.errors.full_messages.join('. ')}" unless model.persisted?
     rescue ModelSaveError, ActiveModel::UnknownAttributeError, ActiveRecord::SubclassNotFound => e
+      binding.pry
       SolidRecord.raise_or_warn(e, "#{model_class} #{e.message} Check values for:\n#{config_values}")
     end
 

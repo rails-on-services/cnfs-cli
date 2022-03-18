@@ -43,12 +43,12 @@ module OneStack
       validate :dynamic_association_types, if: -> { SolidRecord.status.loaded? }
     end
 
-    def cli_owner() = self.owner ||= OneStack::Navigator.current.context.component
+    def cli_owner() = self.owner ||= Navigator.current.context.component
 
     def as_merged
-      return as_json unless from && (source = owner.send(self.class.table_name).find_by(name: from))
+      return as_solid unless from && (source = owner.send(self.class.table_name).find_by(name: from))
 
-      source.as_json.except('abstract').deep_merge(as_json)
+      source.as_solid.except('abstract').deep_merge(as_json)
     end
 
     def dynamic_association_types
