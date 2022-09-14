@@ -51,12 +51,9 @@ module SolidRecord
       FileUtils.cp_r(pathname, workpath.parent)
     end
 
-    def workpath() = @workpath ||= relpath
+    def workpath() = @workpath ||= SolidRecord.config.sandbox ? DataStore.tmp_path.join(relpath) : pathname.realpath
 
-    def relpath
-      return pathname.realpath unless SolidRecord.config.sandbox
-      DataStore.tmp_path.join(pathname.realpath.to_s.delete_prefix('/'))
-    end
+    def relpath() = pathname.realpath.to_s.delete_prefix('/')
 
     # The path provided by the user
     def pathname() = @pathname ||= Pathname.new(path || '')

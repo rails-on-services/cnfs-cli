@@ -1,36 +1,30 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class << self
-    attr_writer :glob_pattern
-
-    def glob_pattern() = @glob_pattern ||= '*.yml'
-  end
-
   class Path < Element
     include FileSystemElement
 
     attr_reader :unknown_document_types
 
     store :config, accessors: %i[glob namespace]
+    delegate :children, :rmdir, to: :pathname
 
     before_validation :set_defaults
+
+    def set_defaults
+      @unknown_document_types ||= []
+      self.glob ||= SolidRecord.config.glob
+      self.namespace ||= SolidRecord.config.namespace
+    end
 
     after_create :create_documents_from_files
     after_create :create_paths_from_dirs, if: -> { owner }
     after_create :raise_or_warn_unknown_types, if: -> { unknown_document_types.any? && owner.nil? }
     after_create :create_documents_from_unknown_types, if: -> { unknown_document_types.any? && owner }
 
-    delegate :children, :rmdir, to: :pathname
     after_commit :rmdir, on: :destroy
 
     def write() = elements.count.zero? ? destroy : nil
-
-    def set_defaults
-      @unknown_document_types ||= []
-      self.glob ||= SolidRecord.glob_pattern
-      self.namespace ||= SolidRecord.config.namespace
-    end
 
     def create_documents_from_files
       pathname.glob(glob).each do |childpath|

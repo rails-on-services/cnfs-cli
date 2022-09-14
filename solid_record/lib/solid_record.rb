@@ -34,6 +34,7 @@ module SolidRecord
       config.flush_cache_on_exit = true
       config.raise_on_error = false
       config.reference_suffix = :name
+      config.glob = '*.yml'
       # config.sandbox = true
       config.schema_file = nil # Path to a file that defines an ActiveRecord::Schema
       config
