@@ -7,15 +7,15 @@
 # @example one top level key
 #
 #   hash = { project: { domain: 'example.com' } }
-#   'host.${project.domain}'.interpolate(hash) # => 'host.example.com'
+#   'host.${project.domain}'.interpolate(**hash) # => 'host.example.com'
 #
 #   hash = { project: { host: 'api', domain: 'test.com' } }
-#   '${project.host}.${project.domain}'.interpolate(hash) # => 'api.test.com'
+#   '${project.host}.${project.domain}'.interpolate(**hash) # => 'api.test.com'
 #
 # @example multiple top level keys
 #
 #   hash = { project: { name: 'test' }, admin: { tld: 'io' } }
-#   'host.${project.name}.${admin.tld}'.interpolate(hash) # => 'host.test.io'
+#   'host.${project.name}.${admin.tld}'.interpolate(**hash) # => 'host.test.io'
 #
 #
 # @example default and additional top level keys
@@ -23,7 +23,7 @@
 #   # If a top level key is named 'default' the 'default' predicate is not necessary in the interpolated string
 #
 #   hash = { default: { host: 'test', domain: 'example' }, parent: { tld: 'io' } }
-#   '${name}.${domain}.${parent.tld}'.interpolate(hash) # => 'test.example.io'
+#   '${host}.${domain}.${parent.tld}'.interpolate(**hash) # => 'test.example.io'
 class String
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/AbcSize
 
