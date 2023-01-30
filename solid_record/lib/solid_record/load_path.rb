@@ -1,21 +1,10 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class << self
-    attr_writer :load_paths
-
-    def load_paths() = @load_paths ||= []
-
-    def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
-
-    def status=(value)
-      @status = ActiveSupport::StringInquirer.new(value)
-    end
-  end
-
   class LoadPath
     include ActiveModel::AttributeAssignment
     include ActiveModel::Validations
+
     attr_accessor :path, :owner, :model_type
 
     validate :path_exists
@@ -24,7 +13,7 @@ module SolidRecord
       raise "Missing attribute 'path'" unless attributes.key?(:path)
 
       assign_attributes(**attributes)
-      SolidRecord.load_paths << self
+      self.class.load_paths << self
     end
 
     def path_exists
@@ -59,10 +48,16 @@ module SolidRecord
     def pathname() = @pathname ||= Pathname.new(path || '')
 
     class << self
+      attr_writer :load_paths
+
+      def load_paths() = @load_paths ||= []
+
       def load_all
+        @load_paths = []
+        SolidRecord.config.load_paths.each { |path| new(**path) }
         path_check
         SolidRecord.status = 'loading'
-        toggle_callbacks { SolidRecord.load_paths.each(&:create_element) }
+        toggle_callbacks { load_paths.each(&:create_element) }
         SolidRecord.status = 'loaded'
       end
 
@@ -75,9 +70,7 @@ module SolidRecord
       end
 
       def path_check
-        SolidRecord.load_paths.each_with_object([]) do |load_path, ary|
-          raise "Load Path '#{load_path}' must by of type LoadPath" unless load_path.is_a?(LoadPath)
-
+        load_paths.each_with_object([]) do |load_path, ary|
           if ary.include?(load_path.path)
             SolidRecord.raise_or_warn(StandardError.new("Duplicate LoadPath detected '#{load_path.path}'"))
           end

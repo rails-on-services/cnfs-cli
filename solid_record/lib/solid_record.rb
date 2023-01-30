@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'active_record'
+require 'active_record/fixtures'
 require 'sqlite3'
 
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
@@ -35,6 +36,7 @@ module SolidRecord
       config.raise_on_error = false
       config.reference_suffix = :name
       config.glob = '*.yml'
+      config.load_paths = []
       # config.sandbox = true
       config.schema_file = nil # Path to a file that defines an ActiveRecord::Schema
       config

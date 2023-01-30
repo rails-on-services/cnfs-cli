@@ -1,25 +1,36 @@
 # frozen_string_literal: true
 
 module SolidRecord
+  class << self
+    def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
+
+    def status=(value)
+      @status = ActiveSupport::StringInquirer.new(value)
+    end
+
+    def load() = DataStore.load()
+
+    def reload() = DataStore.load()
+
+    def reset2() = DataStore.reset()
+  end
+
   class DataStore
     class << self
-      def load(*paths)
+      def load
         ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
         SolidRecord.config.schema_file ? load(SolidRecord.config.schema_file) : create_schema_from_tables
-        paths.each { |path| LoadPath.new(**path) }
         LoadPath.load_all
         true
       end
 
-      def reload() = self.load
-
-      def reset(*paths)
+      def reset
         if SolidRecord.config.sandbox
           tmp_path.rmtree
           tmp_path.mkpath
         end
-        SolidRecord.load_paths = []
-        self.load(*paths)
+        SolidRecord.config.load_paths = []
+        self.load
       end
 
       def flush_cache
