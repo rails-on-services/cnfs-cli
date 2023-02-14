@@ -1,73 +1,82 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  class Path < Element
-    include FileSystemElement
+  class Path < Segment
+    class << self
+      # If invoked from a subclass then just wrap in toggle_callbacks block
+      # If invoked on the Path class then first figure out which subclass it should be
+      def add(**attributes)
+        element_class = name.demodulize.eql?('Path') ? klass(attributes[:source]) : self
+        SolidRecord.toggle_callbacks { element_class.create(attributes) }
+      end
 
-    attr_reader :unknown_document_types
+      def klass(source)
+        type = Pathname.new(source).directory? ? 'DirInstance' : 'FileMany'
+        "SolidRecord::#{type}".safe_constantize
+      end
+    end
 
-    store :config, accessors: %i[glob namespace]
-    delegate :children, :rmdir, to: :pathname
+    store :config, accessors: %i[source status path content_type namespace]
 
-    before_validation :set_defaults
+    delegate :realpath, :exist?, to: :source_path
+
+    before_validation :set_path, if: :source_path?
+
+    validate :source_exists, if: :source_path?, on: :create
+    validate :source_uniqueness, if: [:source_path?, :exist?], on: :create
+
+    before_create :make_sandbox, if: [:source_path?, :sandbox?]
+
+    # From FileSystemElement
+    delegate :name, to: :pathname
+
+    delegate :write, to: :parent, prefix: true, allow_nil: true
+    after_commit :parent_write, on: :destroy, if: -> { parent&.type&.eql?('SolidRecord::Dir') }
+    # END: From FileSystemElement
+
+    def set_path
+      self.path = (sandbox? ? SolidRecord.tmp_path.join(realpath.to_s.delete_prefix('/')) : realpath).to_s
+    end
+
+    def source_exists
+      errors.add(:source, 'does not exist') unless exist?
+    end
+
+    def source_uniqueness
+      self.class.all.each do |lp|
+        errors.add(:source, 'already exists') if lp.realpath.to_s.eql?(realpath.to_s)
+      end
+    end
+
+    def document?() = !dir?
+
+    def dir?() = pathname.directory?
+
+    def source_path?() = !child_path?
+
+    def child_path?() = source.nil?
+
+    def sandbox?() = SolidRecord.config.sandbox
+
+    def make_sandbox
+      pathname.parent.mkpath unless pathname.parent.exist?
+      FileUtils.cp_r(realpath, pathname.parent)
+    end
 
     def set_defaults
-      @unknown_document_types ||= []
-      self.glob ||= SolidRecord.config.glob
-      self.namespace ||= SolidRecord.config.namespace
+      # binding.pry if model_type.nil?
+      # self.model_type ||= (class_map[name.singularize] || name).classify
+      self.model_class_name ||= class_map[name.singularize] || name
     end
 
-    after_create :create_documents_from_files
-    after_create :create_paths_from_dirs, if: -> { owner }
-    after_create :raise_or_warn_unknown_types, if: -> { unknown_document_types.any? && owner.nil? }
-    after_create :create_documents_from_unknown_types, if: -> { unknown_document_types.any? && owner }
+    def class_map() = SolidRecord.config.class_map
 
-    after_commit :rmdir, on: :destroy
+    # def element_attributes
+      # { path: workpath.to_s, owner: (owner.is_a?(Proc) ? owner.call : owner) }
+    # end
 
-    def write() = elements.count.zero? ? destroy : nil
+    def pathname() = @pathname ||= Pathname.new(path || '')
 
-    def create_documents_from_files
-      pathname.glob(glob).each do |childpath|
-        if model_type
-          create_document(childpath, model_type.safe_constantize)
-        elsif (klass = childpath.safe_constantize(namespace))
-          create_document(childpath, klass)
-        else
-          unknown_document_types.append(childpath)
-        end
-      end
-    end
-
-    def create_paths_from_dirs # rubocop:disable Metrics/AbcSize
-      owner.class.reflect_on_all_associations(:has_many).map(&:name).map(&:to_s).each do |assn_name|
-        next unless (assnpath = pathname.join(assn_name)).exist?
-
-        SolidRecord.raise_or_warn(StandardError.new("#{assnpath} found but not a directory")) unless assnpath.directory?
-
-        elements.create(type: 'SolidRecord::Path', path: assnpath.to_s, glob: glob, namespace: namespace, owner: owner,
-                        model_type: assn_name.classify)
-      end
-    end
-
-    def raise_or_warn_unknown_types
-      unknown_document_types.each do |childpath|
-        SolidRecord.raise_or_warn(StandardError.new("Error resolving #{childpath} with namespace #{namespace}"))
-      end
-    end
-
-    def create_documents_from_unknown_types
-      klass = owner.class.respond_to?(:unknown_document_type) ? owner.class.unknown_document_type : owner.class
-      klass = klass.to_s.classify
-      unknown_document_types.each { |childpath| create_document(childpath, klass) }
-    end
-
-    def create_document(childpath, klass)
-      SolidRecord.logger.debug { "#{childpath} resoloved to #{klass}" }
-      elements.create(type: element_type, path: childpath.to_s, owner: owner, model_type: klass)
-    end
-
-    def element_type() = 'SolidRecord::Document'
-
-    def tree_label() = "#{name} (#{type.demodulize})"
+    def source_path() = @source_path ||= Pathname.new(source || '')
   end
 end

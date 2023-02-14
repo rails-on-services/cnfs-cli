@@ -4,14 +4,18 @@ module SolidRecord
   # An AssociationElement represents as `has_many` association on a model
   # The values attribute may contain an Array of model values or Hash of model values
   # In either case the values represent a result set and not a single instance
-  class Association < Element
-    store :config, accessors: %i[serializer name]
+  module AssociationElement
+    extend ActiveSupport::Concern
 
-    validates :model_type, presence: true
+    included do
+      store :config, accessors: %i[serializer name]
 
-    before_create :identify_serializer
+      validates :model_class_name, presence: true
 
-    after_create :create_model_elements
+      before_create :identify_serializer
+
+      after_create :create_model_elements
+    end
 
     def identify_serializer() = self.serializer ||= values.class.to_s.underscore
 
@@ -24,19 +28,24 @@ module SolidRecord
     def create_from_hash() = values.each { |model_key, model_values| create_model_element(model_key, model_values) }
 
     def create_model_element(model_key, model_values)
-      elements.create(type: element_type, model_type: model_type, key: model_key, values: model_values, owner: owner)
+      # elements.create(type: element_type, model_class_name: model_class_name, key: model_key, values: model_values, owner: owner)
+      element_type.safe_constantize&.create(parent: self, model_class_name: model_class_name, key: model_key, values: model_values, owner: owner)
     end
 
     def to_solid(flag = nil) = send("to_solid_#{serializer}", flag)
 
-    def to_solid_array(flag = nil) = elements.flagged_for(flag).map(&:to_solid)
+    def to_solid_array(flag = nil) = segments.flagged_for(flag).map(&:to_solid)
 
     def to_solid_hash(flag = nil)
-      elements.flagged_for(flag).each_with_object({}) { |e, hash| hash.merge!(e.to_solid_hash) }
+      segments.flagged_for(flag).each_with_object({}) { |e, hash| hash.merge!(e.to_solid_hash) }
     end
 
-    def element_type() = 'SolidRecord::ModelElement'
+    def element_type() = 'SolidRecord::Element'
 
     def tree_label() = "#{name} (#{type.demodulize} - #{serializer})"
+  end
+
+  class Association < Segment
+    include AssociationElement
   end
 end

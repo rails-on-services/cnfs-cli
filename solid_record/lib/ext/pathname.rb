@@ -28,7 +28,7 @@ class Pathname
   def name() = @name ||= rootname.end_with?('.') ? rootname.chop : rootname.delete_suffix(".#{extension}")
 
   # @example
-  #   Pathname.new('users.yml').name # => 'yml'
+  #   Pathname.new('users.yml').extension # => 'yml'
   # @return [String]
   def extension
     @extension ||= begin

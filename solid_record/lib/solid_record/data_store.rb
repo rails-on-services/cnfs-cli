@@ -2,50 +2,60 @@
 
 module SolidRecord
   class << self
+    def tmp_path() = @tmp_path ||= Pathname.new(::Dir.mktmpdir)
+
     def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
 
     def status=(value)
-      @status = ActiveSupport::StringInquirer.new(value)
+      @status = ActiveSupport::StringInquirer.new(value.to_s)
     end
 
-    def load() = DataStore.load()
+    def setup
+      ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : logger.level.eql?(0)
+      config.schema_file ? load(config.schema_file) : DataStore.create_schema_from_tables
+      self.status = :unloaded
+    end
 
-    def reload() = DataStore.load()
+    def load
+      clean unless status.unloaded?
+      setup
+      self.status = :loading
+      # toggle_callbacks do
+        config.load_paths.each do |path|
+          lp = Path.add(source: path)
+          raise_or_warn(StandardError.new(lp.errors.full_messages.join("\n"))) unless lp.persisted?
+        end
+      # end
+      self.status = :loaded
+      true
+    end
 
-    def reset2() = DataStore.reset()
+    def toggle_callbacks(&block)
+      with_model_element_callbacks do
+        skip_persistence_callbacks(&block)
+      end
+    end
+
+    def clean(make: config.sandbox)
+      tmp_path.rmtree if tmp_path.exist? && tmp_path.children.size.positive?
+      tmp_path.mkpath if make
+    end
+
+    def at_exit
+      # This is called even when using Kernel.exit
+      flush_cache if status.loaded? && config.flush_cache_on_exit
+      clean(make: false)
+    end
+
+    def flush_cache
+      Element.flagged_for(:destroy).each(&:destroy)
+      File.flagged.each(&:write)
+      Segment.update_all(flags: nil)
+    end
   end
 
   class DataStore
     class << self
-      def load
-        ActiveRecord::Migration.verbose = defined?(SPEC_ROOT) ? false : SolidRecord.logger.level.eql?(0)
-        SolidRecord.config.schema_file ? load(SolidRecord.config.schema_file) : create_schema_from_tables
-        LoadPath.load_all
-        true
-      end
-
-      def reset
-        if SolidRecord.config.sandbox
-          tmp_path.rmtree
-          tmp_path.mkpath
-        end
-        SolidRecord.config.load_paths = []
-        self.load
-      end
-
-      def flush_cache
-        ModelElement.flagged_for(:destroy).each(&:destroy)
-        Document.flagged.each(&:write)
-        Element.update_all(flags: nil)
-      end
-
-      def at_exit
-        flush_cache if SolidRecord.status.loaded? && SolidRecord.config.flush_cache_on_exit
-        tmp_path.rmtree if SolidRecord.config.sandbox && tmp_path.exist?
-      end
-
-      def tmp_path() = @tmp_path ||= Pathname.new(Dir.mktmpdir)
-
       def create_schema_from_tables
         ActiveRecord::Schema.define do |schema|
           require_relative '../ext/table_definition'

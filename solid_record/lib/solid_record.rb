@@ -10,7 +10,7 @@ require 'lockbox'
 require 'tty-tree'
 
 require_relative 'ext/pathname'
-require_relative 'solid_record/tree_view'
+require_relative 'solid_record/concerns/tree_view'
 require_relative 'solid_record/version'
 
 # <table>
@@ -37,6 +37,7 @@ module SolidRecord
       config.reference_suffix = :name
       config.glob = '*.yml'
       config.load_paths = []
+      config.class_map = {}
       # config.sandbox = true
       config.schema_file = nil # Path to a file that defines an ActiveRecord::Schema
       config
@@ -44,26 +45,33 @@ module SolidRecord
   end
 end
 
-require_relative 'solid_record/extension' if defined? SolidApp
+require_relative 'solid_record/concerns/extension' if defined? SolidApp
 
 require_relative 'solid_record/data_store'
-require_relative 'solid_record/load_path'
 
-require_relative 'solid_record/table'
-require_relative 'solid_record/element'
+require_relative 'solid_record/concerns/table'
+require_relative 'solid_record/segment'
 
-require_relative 'solid_record/file_system_element'
 require_relative 'solid_record/path'
 
-require_relative 'solid_record/association'
-require_relative 'solid_record/document'
+require_relative 'solid_record/dir'
+require_relative 'solid_record/dir_generic'
+require_relative 'solid_record/dir_instance'
+require_relative 'solid_record/dir_association'
+require_relative 'solid_record/dir_has_many'
 
-require_relative 'solid_record/model_element'
+require_relative 'solid_record/association'
+require_relative 'solid_record/file'
+require_relative 'solid_record/file_one'
+require_relative 'solid_record/file_many'
+
+require_relative 'solid_record/element'
 require_relative 'solid_record/root_element'
 
-require_relative 'solid_record/encryption'
-require_relative 'solid_record/persistence'
-require_relative 'solid_record/model'
+require_relative 'solid_record/concerns/encryption'
+require_relative 'solid_record/concerns/persistence'
+require_relative 'solid_record/concerns/model'
+require_relative 'solid_record/base'
 
 module SolidRecord
   class ColorFormatter < Logger::Formatter
@@ -99,4 +107,4 @@ module SolidRecord
   SolidRecord.logger.formatter = SimpleFormatter
 end
 
-Kernel.at_exit { SolidRecord::DataStore.at_exit }
+Kernel.at_exit { SolidRecord.at_exit }
