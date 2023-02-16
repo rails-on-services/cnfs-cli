@@ -4,12 +4,12 @@ module SolidRecord
   class << self
     # The name of including model's has_one reference to the SolidRecord::Element instance
     # that manges the model's persistence data
-    def element_attribute() = 'element'
+    def element_attribute = 'element'
 
     # Array of models that have included the SolidRecord::Persistence concern
-    def persisted_models() = @persisted_models ||= []
+    def persisted_models = @persisted_models ||= []
 
-    def skip_persistence_callbacks
+    def skip_persistence_callbacks # rubocop:disable Metrics/MethodLength
       persisted_models.each do |model|
         persistence_callbacks.each { |cb| model.skip_callback(*cb) }
       end
@@ -33,9 +33,9 @@ module SolidRecord
 
     class_methods do
       # The name of the table column that the yaml key is written to in the model
-      def key_column() = 'key'
+      def key_column = 'key'
 
-      def owner_association_name() = nil
+      def owner_association_name = nil
 
       def except_solid
         reflect_on_all_associations(:belongs_to).each_with_object([primary_key, key_column]) do |a, ary|
@@ -43,7 +43,7 @@ module SolidRecord
         end
       end
 
-      def belongs_to_names() = reflect_on_all_associations(:belongs_to).map(&:name)
+      def belongs_to_names = reflect_on_all_associations(:belongs_to).map(&:name)
     end
 
     included do
@@ -66,6 +66,6 @@ module SolidRecord
       end
     end
 
-    def as_solid() = attributes.except(*self.class.except_solid)
+    def as_solid = attributes.except(*self.class.except_solid)
   end
 end

@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
 require 'pry'
+require 'bundler/setup'
 require 'solid_record'
 
 SPEC_ROOT = Pathname.new(__dir__).join('..')
+DUMMY_ROOT = SPEC_ROOT.join('spec/dummy')
 
 RSpec.configure do |config|
-  config.before(:suite) { SolidRecord::DataStore.load } # Setup the A/R database connection
+  # config.before(:suite) { SolidRecord::DataStore.load } # Setup the A/R database connection
   SolidRecord.logger.level = :warn # debug
   SolidRecord.config.sandbox = true
 end
@@ -16,7 +17,8 @@ class SpecHelper
   class << self
     def before_context(type)
       # Use load rather than require_relative as the models are required per context
-      SPEC_ROOT.join('spec/dummy', type, 'app/models').glob('*.rb').each { |path| load path }
+      # NOTE: If the context needs to load multiple models then it handles that itself
+      load DUMMY_ROOT.join(type.to_s, 'models.rb') # .glob('*.rb').each { |path| load path }
     end
 
     def after_context # rubocop:disable Metrics/AbcSize

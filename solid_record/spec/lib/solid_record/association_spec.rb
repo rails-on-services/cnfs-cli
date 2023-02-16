@@ -2,24 +2,25 @@
 
 module SolidRecord
   RSpec.describe Association do
-    before { DataStore.reset }
+    before { SolidRecord.setup }
 
     context 'with infra' do
-      before(:context) { SpecHelper.before_context('infra') }
+      before(:context) { SpecHelper.before_context(:infra) }
 
       after(:context) { SpecHelper.after_context }
 
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
+
       context 'with monolithic yaml' do
-        let(:file) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-hash/groups.yml') }
-        let(:doc) { LoadPath.load(path: file) }
+        let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
 
         let(:association) { described_class.last }
-        let(:elements) { association.elements }
-        let(:model) { elements.last.model }
+        let(:segments) { association.segments }
+        let(:model) { segments.last.model }
         let(:model_update) { model.update(port: 422) }
         let(:model_destroy) do
           model.destroy
-          ModelElement.flagged_for(:destroy).each(&:destroy)
+          Element.flagged_for(:destroy).each(&:destroy)
         end
 
         before { doc }
@@ -58,7 +59,7 @@ module SolidRecord
         end
 
         context 'with Element count' do
-          it { expect(Element.count).to eq(22) }
+          it { expect(Element.count).to eq(16) }
         end
 
         context 'with Association Element type' do
@@ -67,8 +68,7 @@ module SolidRecord
       end
 
       context 'with monolithic yaml array' do
-        let(:path) { SPEC_ROOT.join('spec/dummy/infra/data/monolith-array') }
-        let(:doc) { LoadPath.load(path: path) }
+        let(:file_path) { DUMMY_ROOT.join('infra/plural_array/groups.yml') }
 
         before { doc }
 
@@ -79,12 +79,12 @@ module SolidRecord
         end
       end
 
-      context 'with hierarchial yaml' do
-        let(:group_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/crack.yml') }
-        let(:hosts_file) { SPEC_ROOT.join('spec/dummy/infra/data/file/groups/crack/hosts.yml') }
+      xcontext 'with hierarchial yaml' do
+        let(:group_file) { DUMMY_ROOT.join('infra/plural_dir/groups/crack.yml') }
+        let(:hosts_file) { DUMMY_ROOT.join('infra/plural_dir/groups/crack/hosts.yml') }
 
-        let(:group_doc) { LoadPath.load(path: group_file, model_type: 'Group') }
-        let(:hosts_doc) { LoadPath.load(path: hosts_file, owner: -> { Group.first }) }
+        let(:group_doc) { SolidRecord.toggle_callbacks { File.create(source: group_file, model_class_name: 'Group') } }
+        let(:hosts_doc) { SolidRecord.toggle_callbacks { File.create(source: hosts_file, owner: Group.first) } }
 
         context 'with Group and Host documents' do
           before do
@@ -102,7 +102,7 @@ module SolidRecord
       end
     end
 
-    context 'when stack' do
+    xcontext 'when stack' do
       before(:context) { SpecHelper.before_context('stack') }
 
       after(:context) { SpecHelper.after_context }

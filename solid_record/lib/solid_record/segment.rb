@@ -6,23 +6,22 @@ module SolidRecord
     include TreeView
     self.table_name_prefix = 'solid_record_'
 
-    # Values are passed in from Document and Association to Elements and passed on to model_class.create
-    attr_accessor :values
-
-    store :config, accessors: %i[model_class_name]
-
-    # Segments are self referencing; They belong to a parent element and have_many child elements
+    # Segments are self referencing; They belong to a parent segment and have_many child segments
     belongs_to :parent, class_name: 'SolidRecord::Segment'
+    belongs_to :root, class_name: 'SolidRecord::Segment'
     has_many :segments, foreign_key: 'parent_id'
+
+    # def create_hash = { parent: self, root: root }
+    def create_hash(**hash)
+      { parent: self,
+        root: root,
+        owner: owner }.merge(hash)
+    end
 
     # Owner of the model (optional), e.g. the model's belongs_to object
     belongs_to :owner, polymorphic: true
 
-    # def owner_assn(type = :has_many) = owner.class.reflect_on_all_associations(type).map(&:name).map(&:to_s)
-    def owner_assn(type = :has_many) = association_names(owner.class, type)
-    def model_assn(type = :has_many) = association_names(model.class, type)
-
-    def association_names(klass, type) = klass.reflect_on_all_associations(type).map(&:name).map(&:to_s)
+    store :config, accessors: %i[model_class_name]
 
     scope :flagged, -> { where.not(flags: nil) }
 
@@ -32,26 +31,25 @@ module SolidRecord
 
     serialize :flags, Set
 
-    def src() = parent.nil? ? self : parent.src
-
+    # TODO: probably move this to Element and Association as only these two would refer to a document
     delegate :document, to: :parent, allow_nil: true # Ascend the element tree until hitting a Document
 
-    # The class of the model managed (created, updated, destroyed) by an instance of Element
-    def model_class
-      @model_class ||= retc(model_class_name) || retc(src.namespace, model_class_name) ||
-         SolidRecord.raise_or_warn(StandardError.new(self.to_json))
-    end
+    # def owner_assn(type = :has_many) = owner.class.reflect_on_all_associations(type).map(&:name).map(&:to_s)
+    def owner_assn(type = :has_many) = association_names(owner.class, type)
 
-    def retc(*ary) = ary.compact.join('/').classify.safe_constantize 
+    def association_names(klass, type) = klass.reflect_on_all_associations(type).map(&:name).map(&:to_s)
+
+    # def src() = parent.nil? ? self : parent.src
 
     # NOTE: Implement TreeView by defining #tree_assn and tree_label
-    def tree_assn() = :segments
+    def tree_assn = :segments
 
     class << self
       def create_table(schema)
         schema.create_table table_name, force: true do |t|
           t.string :type
           t.references :parent
+          t.references :root
           t.references :owner, polymorphic: true
           t.references :model, polymorphic: true
           t.string :flags

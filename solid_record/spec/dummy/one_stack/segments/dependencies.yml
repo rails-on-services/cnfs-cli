@@ -1,0 +1,24 @@
+# dependencies.yml
+---
+terraform:
+  config:
+    source: https://releases.hashicorp.com/terraform/${operator.version}/terraform_${operator.version}_${platform.os}_${platform.arch}.zip
+    # TODO: Test on Mac
+    # mac: https://releases.hashicorp.com/terraform/${config.version}/terraform_${config.version}_darwin_amd64.zip
+
+kubectl:
+  config:
+    # linux: https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+    linux: https://storage.googleapis.com/kubernetes-release/release/v${operator.version}/bin/${platform.os}/${platform.arch}/kubectl
+
+docker:
+  config: {}
+
+docker-compose:
+  config: {}
+
+# skaffold:
+  # config: {}
+
+git:
+  config: {}

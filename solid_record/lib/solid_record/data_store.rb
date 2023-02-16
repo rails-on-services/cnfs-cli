@@ -2,7 +2,7 @@
 
 module SolidRecord
   class << self
-    def tmp_path() = @tmp_path ||= Pathname.new(::Dir.mktmpdir)
+    def tmp_path = @tmp_path ||= Pathname.new(::Dir.mktmpdir)
 
     def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
 
@@ -21,10 +21,10 @@ module SolidRecord
       setup
       self.status = :loading
       # toggle_callbacks do
-        config.load_paths.each do |path|
-          lp = Path.add(source: path)
-          raise_or_warn(StandardError.new(lp.errors.full_messages.join("\n"))) unless lp.persisted?
-        end
+      config.load_paths.each do |path|
+        lp = Path.add(source: path)
+        raise_or_warn(StandardError.new(lp.errors.full_messages.join("\n"))) unless lp.persisted?
+      end
       # end
       self.status = :loaded
       true

@@ -1,0 +1,7 @@
+---
+color:
+  description: Favorite color?
+car:
+  description: Favorite car?
+food:
+  description: Favorite food?

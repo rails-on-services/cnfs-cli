@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SolidRecord
-  def self.gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
+  def self.gem_root = @gem_root ||= Pathname.new(__dir__).join('../..')
 
   class Extension < SolidApp::Extension
     # The config object belongs to the application so it is 'shared' with the app and other Extensions
@@ -21,6 +21,6 @@ module SolidRecord
       # SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
     end
 
-    def self.gem_root() = SolidRecord.gem_root
+    def self.gem_root = SolidRecord.gem_root
   end
 end

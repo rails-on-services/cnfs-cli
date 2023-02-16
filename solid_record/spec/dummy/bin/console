@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler'
+Bundler.require
+
+module SolidRecord
+  logger.formatter = SolidRecord::ColorFormatter
+  logger.level ||= :info
+  config.sandbox = true
+  config.encryption_key = 'c0adafa60b624f300fe976a835e78bed7dcc15261c6250d021a5c3af86469213'
+  # config.load_paths.append('.')
+  def self.paths = @paths ||= Pathname.new(__dir__).parent.children.select(&:directory?)
+
+  def self.h
+    paths.each do |p|
+      p.children.select(&:directory?).reject{|c| %w[models config].include?(c.basename.to_s) }.each do |c|
+        puts c.to_s.split('/').last(2).join('.')
+      end
+    end
+    nil
+  end
+end
+
+SolidRecord.paths.map { |p| p.join('console.rb') }.select(&:exist?).each { |p| require p }
+SolidRecord.h
+
+SolidRecord.pry

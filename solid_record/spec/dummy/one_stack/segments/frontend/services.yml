@@ -1,0 +1,4 @@
+---
+iam:
+  config: {}
+  # type: CnfsBackend::Service

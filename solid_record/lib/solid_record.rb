@@ -26,7 +26,7 @@ module SolidRecord
   class << self
     attr_writer :logger
 
-    def config() = @config ||= config_set
+    def config = @config ||= config_set
 
     def config_set
       config = ActiveSupport::OrderedOptions.new
@@ -60,13 +60,9 @@ require_relative 'solid_record/dir_instance'
 require_relative 'solid_record/dir_association'
 require_relative 'solid_record/dir_has_many'
 
-require_relative 'solid_record/association'
 require_relative 'solid_record/file'
-require_relative 'solid_record/file_one'
-require_relative 'solid_record/file_many'
-
+require_relative 'solid_record/association'
 require_relative 'solid_record/element'
-require_relative 'solid_record/root_element'
 
 require_relative 'solid_record/concerns/encryption'
 require_relative 'solid_record/concerns/persistence'
@@ -93,7 +89,7 @@ module SolidRecord
   end
 
   class << self
-    def logger() = @logger ||= ActiveSupport::Logger.new($stdout)
+    def logger = @logger ||= ActiveSupport::Logger.new($stdout)
 
     def raise_or_warn(err, warn = nil)
       raise err if SolidRecord.config.raise_on_error

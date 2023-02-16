@@ -1,0 +1,7 @@
+---
+description: Medical Survey
+questions:
+  blood_pressure:
+    description: What is your blood pressure?
+  weight:
+    description: What is your weight in kilograms?

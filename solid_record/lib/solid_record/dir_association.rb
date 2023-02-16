@@ -12,10 +12,11 @@ module SolidRecord
       process_belongs_to_dirs
     end
 
-    def process_has_many_files # e.g. favorites/questions.yml
+    def process_has_many_files # e.g. favorites/questions.yml # rubocop:disable Metrics/AbcSize
       pathname.glob(glob).select(&:plural?).each do |path|
         if owner_assn(:has_many).include?(path.name)
-          segments << FileMany.create(parent: self, path: path.to_s, model_class_name: path.name, owner: owner)
+          segments << File.create(parent: self, root: root, path: path.to_s, model_class_name: path.name, owner: owner,
+                                  content_format: :plural)
         else
           SolidRecord.raise_or_warn(StandardError.new("#{invalid_path(path)} #{msg(:has_many)}"))
         end
@@ -29,11 +30,11 @@ module SolidRecord
       end
     end
 
-    def process_has_many_dirs
+    def process_has_many_dirs # rubocop:disable Metrics/AbcSize
       pathname.children.select(&:directory?).select(&:plural?).each do |path|
         if owner_assn(:has_many).include?(path.name)
-          segments << DirHasMany.create(parent: self, path: path.to_s, content_type: :has_many,
-                          model_class_name: path.name, owner: owner)
+          segments << DirHasMany.create(parent: self, root: root, path: path.to_s, content_type: :has_many,
+                                        model_class_name: path.name, owner: owner)
         else
           SolidRecord.raise_or_warn(StandardError.new("#{invalid_path(path)} #{msg(:has_many)}"))
         end

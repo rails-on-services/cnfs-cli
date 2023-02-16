@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem 'pry'
+gem 'pry-byebug'
+gem 'solid_record', path: '../..'
+gem 'solid_support', path: '../../../solid_support'

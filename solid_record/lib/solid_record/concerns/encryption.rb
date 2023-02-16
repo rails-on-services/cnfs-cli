@@ -7,13 +7,13 @@ module SolidRecord
     class_methods do
       def attr_encrypted(*attrs) = encrypted_attrs.append(*attrs)
 
-      def encrypted_attrs() = @encrypted_attrs ||= []
+      def encrypted_attrs = @encrypted_attrs ||= []
     end
 
     included { before_validation :decrypt_attrs }
 
     # Classes including this module can override this method to provide alternative keys
-    def encryption_key() = SolidRecord.config.encryption_key
+    def encryption_key = SolidRecord.config.encryption_key
 
     def encrypt_attrs
       self.class.encrypted_attrs.each do |attr|
@@ -67,6 +67,6 @@ module SolidRecord
 
     private
 
-    def box() = @box ||= Lockbox.new(key: encryption_key)
+    def box = @box ||= Lockbox.new(key: encryption_key)
   end
 end

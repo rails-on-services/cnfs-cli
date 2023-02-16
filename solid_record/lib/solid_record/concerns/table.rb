@@ -3,7 +3,7 @@
 module SolidRecord
   class << self
     # Registry of models that have included this module
-    def tables() = @tables ||= []
+    def tables = @tables ||= []
   end
 
   module Table

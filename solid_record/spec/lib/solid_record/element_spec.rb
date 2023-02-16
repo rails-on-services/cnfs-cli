@@ -2,19 +2,24 @@
 
 module SolidRecord
   RSpec.describe Element do
-    before { DataStore.reset }
+    before { SolidRecord.setup }
 
-    describe '#flagged_for' do
-      context 'when element is updated' do
-        let(:element) { described_class.create(flags: Set.new << :update) }
+    context 'with infra' do
+      before(:context) { SpecHelper.before_context('infra') }
 
-        before { element }
+      after(:context) { SpecHelper.after_context }
 
-        it { expect(described_class.flagged.count).to eq(1) }
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
 
-        it { expect(described_class.flagged_for(:update).count).to eq(1) }
+      context 'with monolithic yaml' do
+        let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
 
-        it { expect(described_class.flagged_for(:destroy).count).to eq(0) }
+        before { doc }
+
+        it { expect(Host.last.element.document).not_to be_nil }
+        describe '#document' do
+        it { expect(Host.last.element.document).to eq(File.first) }
+        end
       end
     end
   end

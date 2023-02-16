@@ -2,9 +2,10 @@
 
 module SolidRecord
   class DirHasMany < Dir
-    def process_contents
+    def process_contents # rubocop:disable Metrics/AbcSize
       pathname.children.select(&:file?).each do |path|
-        segments << FileOne.create(parent: self, path: path.to_s, model_class_name: model_class_name, owner: owner)
+        segments << File.create(parent: self, root: root, path: path.to_s, model_class_name: model_class_name,
+                                owner: owner, content_format: :singular)
       end
 
       pathname.children.select(&:directory?).each do |path|

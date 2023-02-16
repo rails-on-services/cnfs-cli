@@ -6,4 +6,3 @@ module SolidRecord
     include SolidRecord::Model
   end
 end
-

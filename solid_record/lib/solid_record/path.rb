@@ -16,6 +16,14 @@ module SolidRecord
       end
     end
 
+    def create_hash(**hash)
+      { parent: self,
+        root: source_path? ? self : root,
+        model_class_name: model_class_name,
+        owner: owner }.merge(hash)
+    end
+
+    # namespace provided by user when creating a Path; default to config.namespace; used by Element to create models
     store :config, accessors: %i[source status path content_type namespace]
 
     delegate :realpath, :exist?, to: :source_path
@@ -23,9 +31,9 @@ module SolidRecord
     before_validation :set_path, if: :source_path?
 
     validate :source_exists, if: :source_path?, on: :create
-    validate :source_uniqueness, if: [:source_path?, :exist?], on: :create
+    validate :source_uniqueness, if: %i[source_path? exist?], on: :create
 
-    before_create :make_sandbox, if: [:source_path?, :sandbox?]
+    before_create :make_sandbox, if: %i[source_path? sandbox?]
 
     # From FileSystemElement
     delegate :name, to: :pathname
@@ -48,15 +56,15 @@ module SolidRecord
       end
     end
 
-    def document?() = !dir?
+    def document? = !dir?
 
-    def dir?() = pathname.directory?
+    def dir? = pathname.directory?
 
-    def source_path?() = !child_path?
+    def source_path? = !child_path?
 
-    def child_path?() = source.nil?
+    def child_path? = source.nil?
 
-    def sandbox?() = SolidRecord.config.sandbox
+    def sandbox? = SolidRecord.config.sandbox
 
     def make_sandbox
       pathname.parent.mkpath unless pathname.parent.exist?
@@ -69,14 +77,14 @@ module SolidRecord
       self.model_class_name ||= class_map[name.singularize] || name
     end
 
-    def class_map() = SolidRecord.config.class_map
+    def class_map = SolidRecord.config.class_map
 
     # def element_attributes
-      # { path: workpath.to_s, owner: (owner.is_a?(Proc) ? owner.call : owner) }
+    # { path: workpath.to_s, owner: (owner.is_a?(Proc) ? owner.call : owner) }
     # end
 
-    def pathname() = @pathname ||= Pathname.new(path || '')
+    def pathname = @pathname ||= Pathname.new(path || '')
 
-    def source_path() = @source_path ||= Pathname.new(source || '')
+    def source_path = @source_path ||= Pathname.new(source || '')
   end
 end

@@ -10,21 +10,22 @@ module SolidRecord
       # process_dirs
     end
 
-    def process_documents
+    def process_documents # rubocop:disable Metrics/AbcSize
       children.select(&:file?).each do |path|
         pathname_class = [namespace, path.name].compact.join('/').classify.safe_constantize&.to_s
         # content_type = pathname_class ? :plural : :singular
         # Files that are of a recognized class, eg providers.yml -> Provider are has_many
         # Files that are not recognized are a has_one
-        file_class = pathname_class ? FileMany : FileOne
+        # file_class = pathname_class ? FileMany : FileOne
+        content_format = pathname_class ? :plural : :singular
         this_model_type = class_map[path.name] || pathname_class || model_class_name
         # TODO: Perhaps the Document.create should be separate and raise first
-        segments << file_class.create(parent: self, path: path.to_s,
-                          model_class_name: this_model_type, owner: owner, namespace: namespace)
+        segments << File.create(create_hash(path: path.to_s, content_format: content_format,
+                                            model_class_name: this_model_type, owner: owner, namespace: namespace))
       end
     end
 
-    def process_dirs
+    def process_dirs # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
       children.select(&:directory?).each do |path|
         pathname_class = [namespace, path.name].compact.join('/').classify.safe_constantize&.to_s
         content_type = pathname_class ? :plural : :singular
@@ -33,8 +34,8 @@ module SolidRecord
         # TODO: If DirInstance then check if there is a Document of the same name
         # In fact, this should have already been processed by RootElement, but that needs to be checked
         # TODO: Perhaps the Document.create should be separate and raise first
-        segments << klass.create(parent: self, path: path.to_s, content_type: content_type,
-                          model_class_name: this_model_type, owner: owner)
+        segments << klass.create(parent: self, root: root, path: path.to_s, content_type: content_type,
+                                 model_class_name: this_model_type, owner: owner)
       end
     end
   end

@@ -8,28 +8,26 @@ module SolidRecord
 
     # attr_reader :unknown_document_types
 
-    store :config, accessors: %i[glob namespace]
+    store :config, accessors: %i[glob]
     delegate :children, :rmdir, to: :pathname
     # delegate :singular?, :plural?, to: :pathname
 
-    before_validation :set_defaults
+    # before_validation :set_defaults
 
     after_create :process_contents
 
+    def glob = root&.glob || SolidRecord.config.glob
 
-    # TODO: move this to Path and do the following:
-    # set.glob ||= parent&.glob || SolidRecord.config.glob
     # this will set glob on every Path as it moves down so src doesn't need to be invoked
-    def set_defaults
-      @unknown_document_types ||= []
-      self.glob ||= SolidRecord.config.glob
-      self.namespace ||= SolidRecord.config.namespace
-      super
-    end
+    # def set_defaults
+    #   @unknown_document_types ||= []
+    #   self.glob ||= SolidRecord.config.glob
+    #   self.namespace ||= SolidRecord.config.namespace
+    #   super
+    # end
 
     # def instances?() = content_type.to_s.eql?('instances')
     # def associations?() = content_type.to_s.eql?('associations')
-
 
     # after_create :create_documents_from_files
     # after_create :create_paths_from_dirs, if: -> { owner }
@@ -38,7 +36,7 @@ module SolidRecord
 
     after_commit :rmdir, on: :destroy
 
-    def write() = segments.count.zero? ? destroy : nil
+    def write = segments.count.zero? ? destroy : nil
 
     # def create_documents_from_files
     #   pathname.glob(glob).each do |childpath|
@@ -52,11 +50,11 @@ module SolidRecord
     #   end
     # end
 
-    # def create_paths_from_dirs # rubocop:disable Metrics/AbcSize
+    # def create_paths_from_dirs
     #   owner.class.reflect_on_all_associations(:has_many).map(&:name).map(&:to_s).each do |assn_name|
     #     next unless (assnpath = pathname.join(assn_name)).exist?
 
-    #     SolidRecord.raise_or_warn(StandardError.new("#{assnpath} found but not a directory")) unless assnpath.directory?
+    #  SolidRecord.raise_or_warn(StandardError.new("#{assnpath} found but not a directory")) unless assnpath.directory?
 
     #     elements.create(type: 'SolidRecord::Dir', path: assnpath.to_s, glob: glob, namespace: namespace, owner: owner,
     #                     model_type: assn_name.classify)
@@ -82,9 +80,9 @@ module SolidRecord
 
     # def element_type() = 'SolidRecord::Document'
 
-    def tree_label() = "#{name} (#{type.demodulize} - #{content_type})"
+    def tree_label = "#{name} (#{type.demodulize} - #{content_type})"
 
-    def invalid_path(path) = path.to_s.delete_prefix("#{src.pathname.parent.to_s}/")
+    def invalid_path(path) = path.to_s.delete_prefix("#{root.pathname.parent}/")
 
     def msg(assn) = "is not a valid #{assn} association on #{owner.class.name}"
   end
