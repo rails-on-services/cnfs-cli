@@ -2,10 +2,13 @@
 
 source 'https://rubygems.org'
 
-gem_path = '/home/admin/cnfs'
+gem_path = '..'
 
 gem 'solid_app', path: "#{gem_path}/solid_app"
 gem 'solid_record', path: "#{gem_path}/solid_record"
 gem 'solid_support', path: "#{gem_path}/solid_support"
+# TODO: remove; this is for testing right now, but that testing should move to aws gem
+# which will include this gem rather than other way around
+gem 'onestack-aws', path: "#{gem_path}/aws"
 
 gemspec

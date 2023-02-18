@@ -6,7 +6,7 @@ module OneStack
     def self.operator() = OneStack::Builder
 
     include Concerns::Target
-    include SolidApp::Git
+    include SolidApp::Git if defined?(SolidApp)
 
     belongs_to :builder
     belongs_to :registry

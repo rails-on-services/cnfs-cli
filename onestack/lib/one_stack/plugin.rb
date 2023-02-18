@@ -19,7 +19,17 @@ module OneStack
 
   class Plugin < SolidApp::Plugin
     config.after_initialize do |config|
-      SolidRecord::DataStore.load(*config.solid_record.load_paths)
+      SolidRecord.setup
+      SolidRecord.toggle_callbacks do
+        # srp = Pathname.new(__dir__).join('../../../solid_record/spec/dummy/one_stack')
+        root = SolidRecord::File.create(source: 'config/segment.yml', content_format: :singular,
+                                        model_class_name: 'OneStack::SegmentRoot')
+        # root = SolidRecord::File.create(source: srp.join('config/segment.yml').to_s, content_format: :singular,
+        owner = root.segments.first.segments.first.model
+        SolidRecord::DirGeneric.create(source: 'segments', model_class_name: 'component', owner: owner,
+                                       namespace: 'one_stack')
+      # SolidRecord::DirGeneric.create(source: srp.join('segments').to_s, model_class_name: 'component', owner: owner,
+      end
       SolidRecord.tables.select { |t| t.respond_to?(:after_load) }.each(&:after_load)
     end
 
