@@ -1,41 +1,38 @@
 # frozen_string_literal: true
 
+# Map names of Files and Dirs to recognized classes in the order of priority:
+# 1. config.class_map, 2. path.name and 3. model_class_name (default)
+# Files with recognized mappings will have instances of that class created
+# For Dirs
+#
+# 1. model_class_name is the default model_type if (class_map and pathname.name).safe_constantize fail
+# 2. process the documents: providers.yml, development.yml -> Component
 module SolidRecord
   class DirGeneric < Dir
-    # 1. model_class_name is the default model_type if (class_map and pathname.name).safe_constantize fail
-    # 2. process the documents: providers.yml, development.yml -> Component
-    #
     def process_contents
-      process_documents
-      # process_dirs
-    end
-
-    def process_documents # rubocop:disable Metrics/AbcSize
-      children.select(&:file?).each do |path|
-        pathname_class = [namespace, path.name].compact.join('/').classify.safe_constantize&.to_s
-        # content_type = pathname_class ? :plural : :singular
+      process(:file?) do |class_name|
         # Files that are of a recognized class, eg providers.yml -> Provider are has_many
         # Files that are not recognized are a has_one
-        # file_class = pathname_class ? FileMany : FileOne
-        content_format = pathname_class ? :plural : :singular
-        this_model_type = class_map[path.name] || pathname_class || model_class_name
-        # TODO: Perhaps the Document.create should be separate and raise first
-        segments << File.create(create_hash(path: path.to_s, content_format: content_format,
-                                            model_class_name: this_model_type, owner: owner, namespace: namespace))
+        [File, { content_format: (class_name ? :plural : :singular) }]
+      end
+      process(:directory?) do |class_name|
+        [class_name ? DirHasMany : DirGeneric, {}]
       end
     end
 
-    def process_dirs # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
-      children.select(&:directory?).each do |path|
-        pathname_class = [namespace, path.name].compact.join('/').classify.safe_constantize&.to_s
-        content_type = pathname_class ? :plural : :singular
-        this_model_type = class_map[path.name] || pathname_class || model_class_name
-        klass = pathname_class ? DirHasMany : DirInstance
-        # TODO: If DirInstance then check if there is a Document of the same name
+    def classic(name) = [namespace, name].compact.join('/').classify.safe_constantize&.to_s
+
+    def process(filter)
+      children.select(&filter).each do |path|
+        class_name = classic(class_map[path.name] || path.name)
+
+        klass, hash = yield(class_name)
+        create_segment(klass, hash.merge(path: path.to_s, model_class_name: class_name || model_class_name))
+
+        # hash.merge!(path: path.to_s, model_class_name: class_name || model_class_name)
+        # create_segment(klass, hash)
+        # TODO: If DirInstance then check if there is a File of the same name
         # In fact, this should have already been processed by RootElement, but that needs to be checked
-        # TODO: Perhaps the Document.create should be separate and raise first
-        segments << klass.create(parent: self, root: root, path: path.to_s, content_type: content_type,
-                                 model_class_name: this_model_type, owner: owner)
       end
     end
   end

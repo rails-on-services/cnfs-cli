@@ -4,29 +4,29 @@ acme:
   defaults: {}
   hosts:
   - host: 192.168.1.1
-    kind: Vpn
+    kind: Infra::Vpn
     vpn_type: openvpn
   - host: sng-file-1
-    kind: AFile
+    kind: Infra::AFile
     version: 2012r2
 hackme:
   domain: hackme.com
   defaults: {}
   hosts:
   - host: fw
-    kind: Vpn
+    kind: Infra::Vpn
     ip: fwv.hackme.com
     port: 444
 slackme:
   domain: slackme.local
   hosts:
   - host: fw2
-    kind: Vpn
+    kind: Infra::Vpn
     ip: 10.100.17.234
     port: 4443
     vpn_type: fortivpn
   - host: cap23
-    kind: Dc
+    kind: Infra::Dc
     ip: 192.168.9.3
 crack:
   auth_domain: crc
@@ -38,10 +38,10 @@ crack:
   hosts:
   - host: s-file-1
     ip: 10.1.1.72
-    kind: Dc
+    kind: Infra::Dc
     shares: []
   - host: s-file-2
-    kind: AFile
+    kind: Infra::AFile
     shares:
     - drive: p
       path: ClientApps
@@ -52,14 +52,14 @@ crack:
     version: 2008r2
   - host: s-hyperv-1
     ip: 10.1.1.55
-    kind: Hv
+    kind: Infra::Hv
     shares: []
   - host: s-hyperv-2
     ip: 10.1.1.59
-    kind: Imm
+    kind: Infra::Imm
     shares: []
   - host: s-file-3
-    kind: AFile
+    kind: Infra::AFile
     shares:
     - drive: p
       path: ClientApps
@@ -69,7 +69,7 @@ crack:
       purpose: wpkg
     version: '2016'
   - host: s-fw-1
-    kind: Firewall
+    kind: Infra::Firewall
     shares: []
     services:
     - name: ssh

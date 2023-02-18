@@ -1,22 +1,21 @@
 # frozen_string_literal: true
 
-module Infra
+module SolidRecord
+  def self.survey = Survey
 end
 
-module SolidRecord
+class Survey
   class << self
-    def su = Survey
-
-    def survey_doc
-      require_relative 'models/surveys'
-      setup
-      SolidRecord.toggle_callbacks { File.create(source: 'plural_doc/surveys.yml') }
+    def plural_doc
+      require_relative 'models'
+      SolidRecord.setup
+      SolidRecord.toggle_callbacks { SolidRecord::File.create(source: 'survey/plural_doc/surveys.yml') }
     end
 
-    def survey_path
-      require_relative 'models/surveys'
-      setup
-      DirInstance.add(source: 'plural_path/surveys')
+    def plural_path
+      require_relative 'models'
+      SolidRecord.setup
+      SolidRecord::DirInstance.add(source: 'survey/plural_path/surveys')
     end
   end
 end

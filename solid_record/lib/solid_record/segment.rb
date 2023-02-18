@@ -2,26 +2,23 @@
 
 module SolidRecord
   class Segment < ActiveRecord::Base
+    self.table_name_prefix = 'solid_record_'
     include Table
     include TreeView
-    self.table_name_prefix = 'solid_record_'
 
     # Segments are self referencing; They belong to a parent segment and have_many child segments
     belongs_to :parent, class_name: 'SolidRecord::Segment'
-    belongs_to :root, class_name: 'SolidRecord::Segment'
     has_many :segments, foreign_key: 'parent_id'
 
-    # def create_hash = { parent: self, root: root }
-    def create_hash(**hash)
-      { parent: self,
-        root: root,
-        owner: owner }.merge(hash)
-    end
+    # root is the first element created by the user; It is at the top of the hierarchy and stores user supplied values
+    belongs_to :root, class_name: 'SolidRecord::Segment'
 
     # Owner of the model (optional), e.g. the model's belongs_to object
     belongs_to :owner, polymorphic: true
 
     store :config, accessors: %i[model_class_name]
+
+    serialize :flags, Set
 
     scope :flagged, -> { where.not(flags: nil) }
 
@@ -29,17 +26,23 @@ module SolidRecord
       flag ? where('flags LIKE ?', "%#{flag}%") : where({})
     }
 
-    serialize :flags, Set
+    # TODO: Wrap in begin/rescue
+    def create_segment(klass, hash)
+      segment = klass.create(create_hash.merge(hash))
+      if segment.valid?
+        segments << segment
+      else
+        error_msg = segment.errors.full_messages.append(segment.to_json).join("\n").to_s
+        SolidRecord.raise_or_warn(StandardError.new(error_msg))
+      end
+    end
 
-    # TODO: probably move this to Element and Association as only these two would refer to a document
-    delegate :document, to: :parent, allow_nil: true # Ascend the element tree until hitting a Document
+    # The default values assigned to a new segment
+    def create_hash = { parent: self, root: root, owner: owner }
 
-    # def owner_assn(type = :has_many) = owner.class.reflect_on_all_associations(type).map(&:name).map(&:to_s)
     def owner_assn(type = :has_many) = association_names(owner.class, type)
 
     def association_names(klass, type) = klass.reflect_on_all_associations(type).map(&:name).map(&:to_s)
-
-    # def src() = parent.nil? ? self : parent.src
 
     # NOTE: Implement TreeView by defining #tree_assn and tree_label
     def tree_assn = :segments

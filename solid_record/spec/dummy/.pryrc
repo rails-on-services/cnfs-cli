@@ -1,20 +1,18 @@
+# frozen_string_literal: true
+
 module SolidRecord
   class << self
-    def a() = Association
+    def a = Association
 
-    def di() = Dir
+    def di = Dir
 
-    def do() = Document
+    def ds = DataStore
 
-    def ds() = DataStore
+    def f = File
 
-    def me() = ModelElement
+    def p = Path
 
-    def p() = Path
-
-    def re() = RootElement
-
-    def se() = Segment
+    def se = Segment
 
     def tree(id = 1) = se.find(id).to_tree
   end

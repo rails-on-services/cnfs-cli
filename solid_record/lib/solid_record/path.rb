@@ -11,22 +11,24 @@ module SolidRecord
       end
 
       def klass(source)
-        type = Pathname.new(source).directory? ? 'DirInstance' : 'FileMany'
+        type = Pathname.new(source).directory? ? 'DirInstance' : 'File'
         "SolidRecord::#{type}".safe_constantize
       end
     end
 
-    def create_hash(**hash)
-      { parent: self,
-        root: source_path? ? self : root,
-        model_class_name: model_class_name,
-        owner: owner }.merge(hash)
-    end
+    def create_hash = super.merge(root: (source_path? ? self : root), model_class_name: model_class_name)
 
-    # namespace provided by user when creating a Path; default to config.namespace; used by Element to create models
-    store :config, accessors: %i[source status path content_type namespace]
+    # namespace and glob provided by user when creating a Path; defaults to SolidRecord.config values
+    store :config, accessors: %i[source status path namespace glob]
 
     delegate :realpath, :exist?, to: :source_path
+
+    # From FileSystemElement
+    delegate :name, to: :pathname
+
+    delegate :write, to: :parent, prefix: true, allow_nil: true
+    after_commit :parent_write, on: :destroy, if: -> { parent&.type&.eql?('SolidRecord::Dir') }
+    # END: From FileSystemElement
 
     before_validation :set_path, if: :source_path?
 
@@ -35,12 +37,12 @@ module SolidRecord
 
     before_create :make_sandbox, if: %i[source_path? sandbox?]
 
-    # From FileSystemElement
-    delegate :name, to: :pathname
+    # if this is not the root record then pass to root
+    # if it is the root record then get the value from the :config hash
+    # if that value is nil then default to config.glob
+    def namespace = root&.namespace || super || SolidRecord.config.namespace
 
-    delegate :write, to: :parent, prefix: true, allow_nil: true
-    after_commit :parent_write, on: :destroy, if: -> { parent&.type&.eql?('SolidRecord::Dir') }
-    # END: From FileSystemElement
+    def glob = root&.glob || super || SolidRecord.config.glob
 
     def set_path
       self.path = (sandbox? ? SolidRecord.tmp_path.join(realpath.to_s.delete_prefix('/')) : realpath).to_s
@@ -56,13 +58,7 @@ module SolidRecord
       end
     end
 
-    def document? = !dir?
-
-    def dir? = pathname.directory?
-
-    def source_path? = !child_path?
-
-    def child_path? = source.nil?
+    def source_path? = !source.nil?
 
     def sandbox? = SolidRecord.config.sandbox
 
@@ -72,9 +68,7 @@ module SolidRecord
     end
 
     def set_defaults
-      # binding.pry if model_type.nil?
-      # self.model_type ||= (class_map[name.singularize] || name).classify
-      self.model_class_name ||= class_map[name.singularize] || name
+      self.model_class_name ||= class_map[name.singularize] || pathname.name
     end
 
     def class_map = SolidRecord.config.class_map

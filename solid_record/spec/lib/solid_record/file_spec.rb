@@ -5,17 +5,14 @@ module SolidRecord
     before { SolidRecord.setup }
 
     context 'when infra' do
-      before(:context) { SpecHelper.before_context(:infra) }
-
-      after(:context) { SpecHelper.after_context }
-
-      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: :infra) } }
 
       let(:model) { Element.first.model }
 
       let(:association) { doc.segments.first }
 
       let(:model_destroy) do
+        # binding.pry
         model.destroy
         Element.flagged_for(:destroy).each(&:destroy)
       end
@@ -24,16 +21,6 @@ module SolidRecord
         let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
 
         before { doc }
-
-        describe '#to_solid' do
-          it { expect(doc.to_solid.keys).to eql(doc.read.keys) }
-
-          context 'when element destroyed' do
-            it { expect { model_destroy }.to change(Element, :count).by(-1) }
-            it { expect { model_destroy }.to change { association.segments.count }.by(-1) }
-            it { expect { model_destroy }.to change { doc.to_solid.keys.size }.by(-1) }
-          end
-        end
 
         describe '#flag' do
           it { expect { model_destroy }.to change { doc.reload.flags.size }.by(1) }

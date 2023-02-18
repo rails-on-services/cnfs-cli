@@ -9,13 +9,15 @@ module Blogger
     def dir_instance
       require_relative 'models'
       SolidRecord.setup
-      SolidRecord.toggle_callbacks { SolidRecord::DirInstance.create(source: 'blog/dir_instance', model_class_name: :user) }
+      SolidRecord.toggle_callbacks do
+        SolidRecord::DirInstance.create(source: 'blog/dir_instance', model_class_name: :user, namespace: :blogger)
+      end
     end
 
     def dir_generic
       require_relative 'models'
       SolidRecord.setup
-      SolidRecord.toggle_callbacks { SolidRecord::DirGeneric.create(source: 'blog/dir_generic') }
+      SolidRecord.toggle_callbacks { SolidRecord::DirGeneric.create(source: 'blog/dir_generic', namespace: :blogger) }
     end
   end
 end

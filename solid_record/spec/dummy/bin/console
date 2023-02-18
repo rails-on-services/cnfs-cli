@@ -14,12 +14,14 @@ module SolidRecord
 
   def self.h
     paths.each do |p|
-      p.children.select(&:directory?).reject{|c| %w[models config].include?(c.basename.to_s) }.each do |c|
+      p.children.select(&:directory?).reject { |c| ary.include?(c.basename.to_s) }.each do |c|
         puts c.to_s.split('/').last(2).join('.')
       end
     end
     nil
   end
+
+  def self.ary = %w[models config]
 end
 
 SolidRecord.paths.map { |p| p.join('console.rb') }.select(&:exist?).each { |p| require p }

@@ -18,32 +18,17 @@ module SolidRecord
   class ModelSaveError < Error; end
 
   class Element < Segment
-    def namespace = root&.namespace || SolidRecord.config.namespace
-
-    # The class of the model managed (created, updated, destroyed) by an instance of Element
-    def model_class
-      @model_class ||= retc(model_class_name) || retc(namespace, model_class_name) ||
-                       SolidRecord.raise_or_warn(StandardError.new(to_json))
-    end
-
-    def retc(*ary) = ary.compact.join('/').classify.safe_constantize
+    include AE
 
     # TODO: validate that model_class_name and model_type are identical
 
     # From RootElement
-    delegate :pathname, to: :parent
-
     after_create :create_elements_in_path, if: -> { model_path.exist? }
 
-    def create_elements_in_path
-      segments << DirAssociation.create(parent: self, root: root, path: model_path.to_s, owner: model)
-    end
+    def create_elements_in_path = create_segment(DirAssociation, path: model_path.to_s)
 
     def model_path = @model_path ||= pathname.parent.join(model_key) # bling/groups.yml->asc => bling/asc
     # END: From RootElement
-
-    # Values are passed in from File and Association to Elements and passed on to model_class.create
-    attr_accessor :values
 
     # TODO: Note where each of these attributes originate from
     # The ID used to reference the model
@@ -51,8 +36,6 @@ module SolidRecord
 
     # The model instance of model_class that is created from this element
     belongs_to :model, polymorphic: true
-
-    def model_assn(type = :has_many) = association_names(model.class, type)
 
     # TODO: FIX: model_class is wrong now. it needs to be model.class
     # Or in this class overrid model_class to point to model.class
@@ -84,7 +67,8 @@ module SolidRecord
 
     # @return [Hash] Merge the original values with owner and any belongs_to calculated IDs
     def model_values
-      values.except(*assn_names).merge(belongs_to_attributes).merge(owner_attribute).merge(key_column => key)
+      # binding.pry if model_class_name.eql? 'favorites'
+      values.except(*model_assn_names).merge(belongs_to_attributes).merge(owner_attribute).merge(key_column => key)
     end
 
     def owner_attribute
@@ -127,24 +111,25 @@ module SolidRecord
 
     # If this element's payload includes associations then create elements for those
     def create_associations
-      assn_names.each do |assn_name|
+      model_assn_names.each do |assn_name|
         next unless (assn_values = values[assn_name])
 
-        # segments.create(type: 'SolidRecord::Association', name: assn_name,
-        segments << Association.create(parent: self, root: root, name: assn_name,
-                                       model_class_name: assn_name.classify, values: assn_values, owner: model)
+        create_segment(Association, name: assn_name, model_class_name: assn_name.classify,
+                       values: assn_values, owner: model)
       end
     end
 
-    def assn_names = model_class.reflect_on_all_associations(:has_many).map(&:name).map(&:to_s)
+    # def assn_names = model_assn.map(&:name).map(&:to_s)
+
+    def model_assn_names(type = :has_many) = association_names(model_class, type)
 
     # The Persistence Concern adds lifecycle methods to the model's callback chains
     # When a model's lifecycle event is triggred it invokes its element's method of the same name
-    def __update_element = document.flag(:update)
+    def __update_element = root.flag(:update)
 
     def __destroy_element
       update(flags: flags << :destroy)
-      document.flag(:update)
+      root.flag(:update)
     end
 
     def to_solid_hash = { model_key => to_solid.except(key_column) }
@@ -165,8 +150,11 @@ module SolidRecord
     # Called from persistence#__after_create
     def add_model(new_model)
       assn = segments.find_by(model_class_name: new_model.class.name)
+      # TODO: This should use create_segment and be moved to association class
+      binding.pry
       assn.segments.create(type: 'SolidRecord::Element', model: new_model, owner: model)
-      document.flag(:update)
+      # create_segment(DirAssociation, path: model_path.to_s)
+      root.flag(:update)
     end
   end
 end

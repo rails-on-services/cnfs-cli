@@ -5,11 +5,7 @@ module SolidRecord
     before { SolidRecord.setup }
 
     context 'with infra' do
-      before(:context) { SpecHelper.before_context(:infra) }
-
-      after(:context) { SpecHelper.after_context }
-
-      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: :infra) } }
 
       context 'with monolithic yaml' do
         let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
@@ -49,13 +45,13 @@ module SolidRecord
         end
 
         it 'creates the correct number of Models' do # rubocop:disable RSpec/MultipleExpectations
-          expect(Group.count).to eq(4)
-          expect(Host.count).to eq(11)
-          expect(Service.count).to eq(1)
+          expect(Infra::Group.count).to eq(4)
+          expect(Infra::Host.count).to eq(11)
+          expect(Infra::Service.count).to eq(1)
         end
 
         context 'when Group has_many Hosts' do
-          it { expect(Group.find_by(name: 'crack').hosts.count).to eq(6) }
+          it { expect(Infra::Group.find_by(name: 'crack').hosts.count).to eq(6) }
         end
 
         context 'with Element count' do
@@ -63,7 +59,7 @@ module SolidRecord
         end
 
         context 'with Association Element type' do
-          it { expect(Service.first.element.parent).to be_an_instance_of(described_class) }
+          it { expect(Infra::Service.first.element.parent).to be_an_instance_of(described_class) }
         end
       end
 
@@ -73,9 +69,9 @@ module SolidRecord
         before { doc }
 
         it 'creates the correct number of Models' do # rubocop:disable RSpec/MultipleExpectations
-          expect(Group.count).to eq(4)
-          expect(Host.count).to eq(13)
-          expect(Service.count).to eq(1)
+          expect(Infra::Group.count).to eq(4)
+          expect(Infra::Host.count).to eq(11)
+          expect(Infra::Service.count).to eq(1)
         end
       end
 
@@ -83,8 +79,8 @@ module SolidRecord
         let(:group_file) { DUMMY_ROOT.join('infra/plural_dir/groups/crack.yml') }
         let(:hosts_file) { DUMMY_ROOT.join('infra/plural_dir/groups/crack/hosts.yml') }
 
-        let(:group_doc) { SolidRecord.toggle_callbacks { File.create(source: group_file, model_class_name: 'Group') } }
-        let(:hosts_doc) { SolidRecord.toggle_callbacks { File.create(source: hosts_file, owner: Group.first) } }
+        let(:group_doc) { SolidRecord.toggle_callbacks { File.create(source: group_file, model_class_name: 'Group', namespace: :infra) } }
+        let(:hosts_doc) { SolidRecord.toggle_callbacks { File.create(source: hosts_file, owner: Group.first, namespace: :infra) } }
 
         context 'with Group and Host documents' do
           before do
@@ -95,17 +91,17 @@ module SolidRecord
           describe '#model' do
             it { expect(group_doc.model_type).to eq('Group') }
             it { expect(hosts_doc.model_type).to eq('Host') }
-            it { expect(Group.first).not_to be_nil }
-            it { expect(Service.last.host.group).to eq(Group.first) }
+            it { expect(Infra::Group.first).not_to be_nil }
+            it { expect(Infra::Service.last.host.group).to eq(Infra::Group.first) }
           end
         end
       end
     end
 
     xcontext 'when stack' do
-      before(:context) { SpecHelper.before_context('stack') }
+      # before(:context) { SpecHelper.before_context('stack') }
 
-      after(:context) { SpecHelper.after_context }
+      # after(:context) { SpecHelper.after_context }
 
       xit { expect(true).to be_truthy }
     end

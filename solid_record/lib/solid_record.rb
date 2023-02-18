@@ -61,6 +61,7 @@ require_relative 'solid_record/dir_association'
 require_relative 'solid_record/dir_has_many'
 
 require_relative 'solid_record/file'
+require_relative 'solid_record/concerns/a_e'
 require_relative 'solid_record/association'
 require_relative 'solid_record/element'
 

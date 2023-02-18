@@ -3,6 +3,7 @@ inherit_from: ../.rubocop.yml
 AllCops:
   Exclude:
     - 'lib/solid_record/associations.rb'
+    - 'spec/dummy/one_stack/models/**/*.rb'
 Lint/EmptyClass:
   Exclude:
     - 'spec/**/*.rb'

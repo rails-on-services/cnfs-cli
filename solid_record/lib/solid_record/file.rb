@@ -12,31 +12,17 @@ module SolidRecord
 
     after_commit :pathname_delete, on: :destroy, if: -> { pathname.exist? }
 
-    def to_solid = segments.first.to_solid
-    def to_solid_hash = segments.first.to_solid_hash
-    def to_solid_array = segments.first.to_solid_array
-
     def set_defaults
       self.content_format ||= :plural
       self.model_class_name ||= name
     end
 
-    def create_association
-      assn = Association.create(create_hash(values: values))
-      # binding.pry
-      if assn.valid?
-        segments << assn
-      else
-        SolidRecord.raise_or_warn(StandardError.new(assn.errors.full_messages.append(assn.to_json).join("\n").to_s))
-      end
-    end
-
-    def document = self # Override Element's delegation to parent as 'the buck stops here'
+    def create_association = create_segment(Association, root: self, values: values)
 
     def flag(flag_type) = update(flags: flags << flag_type) # Called by Element
 
     # as_json strips Ruby object annotations
-    # # TODO: to_solid needs to come from segments.first
+    # NOTE: #to_solid comes from segments.first
     def write = segments.count.zero? ? destroy : send("write_#{doc_type}".to_sym, segments.first.to_solid.as_json)
 
     def values = @values ||= content_format.eql?(:singular) ? { pathname.name => read } : read

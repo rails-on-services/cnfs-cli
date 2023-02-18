@@ -1,5 +1,5 @@
 
-type: Resource::Aws::EC2::Instance
+type: Aws::Resource::EC2::Instance
 config:
   family: asdfaksjdfasjkdfasldfj
   size: fasdfjasdf

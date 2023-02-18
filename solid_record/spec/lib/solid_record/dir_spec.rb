@@ -4,6 +4,6 @@
 
 module SolidRecord
   RSpec.describe Dir do
-    before { SolidRecord.reset }
+    before { SolidRecord.setup }
   end
 end

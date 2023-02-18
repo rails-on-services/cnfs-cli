@@ -5,20 +5,16 @@ module SolidRecord
     before { SolidRecord.setup }
 
     context 'with infra' do
-      before(:context) { SpecHelper.before_context('infra') }
-
-      after(:context) { SpecHelper.after_context }
-
-      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: :infra) } }
 
       context 'with monolithic yaml' do
         let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
 
         before { doc }
 
-        it { expect(Host.last.element.document).not_to be_nil }
-        describe '#document' do
-        it { expect(Host.last.element.document).to eq(File.first) }
+        it { expect(Infra::Host.last.element.root).not_to be_nil }
+        describe '#root' do
+        it { expect(Infra::Host.last.element.root).to eq(File.first) }
         end
       end
     end

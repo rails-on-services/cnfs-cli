@@ -5,18 +5,15 @@ module SolidRecord
     before { SolidRecord.setup }
 
     context 'when infra' do
-      before(:context) { SpecHelper.before_context('infra') }
-
-      after(:context) { SpecHelper.after_context }
-
-      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path) } }
+      #a after(:context) { SpecHelper.after_context }
+      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: 'infra') } }
 
       context 'with monolithic yaml' do
         let(:file_path) { DUMMY_ROOT.join('infra/plural_hash/groups.yml') }
 
-        let(:host1) { Host.find_by(host: 's-file-1') }
-        let(:host2) { Host.find_by(host: 's-file-2') }
-        let(:group1) { Group.find_by(name: 'crack') }
+        let(:host1) { Infra::Host.find_by(host: 's-file-1') }
+        let(:host2) { Infra::Host.find_by(host: 's-file-2') }
+        let(:group1) { Infra::Group.find_by(name: 'crack') }
 
         let(:host1_update) do
           host1.update(port: 422)
@@ -36,9 +33,10 @@ module SolidRecord
         # it_behaves_like 'FileSystemElement'
 
         it 'creates the correct number of Models' do # rubocop:disable RSpec/MultipleExpectations
-          expect(Group.count).to eq(4)
-          expect(Host.count).to eq(11)
-          expect(Service.count).to eq(1)
+          binding.pry
+          expect(Infra::Group.count).to eq(4)
+          expect(Infra::Host.count).to eq(11)
+          expect(Infra::Service.count).to eq(1)
         end
 
         context 'when destroy' do

@@ -28,21 +28,21 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - cli/app/helpers/*
 Metrics/BlockLength:
-  IgnoredMethods:
-    - describe
-    - context
-    - shared_examples
-    - it
-    - xit
-    - xdescribe
+  # IgnoredMethods:
+  #   - describe
+  #   - context
+  #   - shared_examples
+  #   - it
+  #   - xit
+  #   - xdescribe
   Exclude:
     - '*/spec/**/*.rb'
     - '*/*.gemspec'
-Metrics/MethodLength:
+# Metrics/MethodLength:
   # Exclude:
     # - cli/app/helpers/*
-  IgnoredMethods:
-    - create_table
+  # IgnoredMethods:
+  #   - create_table
 Metrics/PerceivedComplexity:
   Exclude:
     - cli/app/helpers/*

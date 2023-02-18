@@ -1,79 +1,83 @@
 # frozen_string_literal: true
 
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
-end
+module Blogger
+  def self.table_name_prefix = 'blogger_'
 
-class User < ApplicationRecord
-  include SolidRecord::Model
-  def self.key_column() = 'first'
+  class ApplicationRecord < ActiveRecord::Base
+    self.abstract_class = true
+  end
 
-  has_many :blogs
-  has_many :posts, through: :blogs
-  has_many :comments
+  class User < ApplicationRecord
+    include SolidRecord::Model
+    def self.key_column = 'first'
 
-  class << self
-    def create_table(schema)
-      schema.create_table table_name, force: true do |t|
-        t.string :first
-        t.string :last
+    has_many :blogs
+    has_many :posts, through: :blogs
+    has_many :comments
+
+    class << self
+      def create_table(schema)
+        schema.create_table table_name, force: true do |t|
+          t.string :first
+          t.string :last
+        end
       end
     end
   end
-end
 
-class Blog < ApplicationRecord
-  include SolidRecord::Model
-  def self.key_column() = 'name'
+  class Blog < ApplicationRecord
+    include SolidRecord::Model
+    def self.key_column = 'name'
 
-  belongs_to :user
+    belongs_to :user
 
-  has_many :posts
-  has_many :comments, through: :posts
+    has_many :posts
+    has_many :comments, through: :posts
 
-  class << self
-    def create_table(schema)
-      schema.create_table table_name, force: true do |t|
-        t.references :user
-        t.string :name
+    class << self
+      def create_table(schema)
+        schema.create_table table_name, force: true do |t|
+          t.references :user
+          t.string :name
+        end
       end
     end
   end
-end
 
-class Post < ApplicationRecord
-  include SolidRecord::Model
-  def self.key_column() = 'title'
+  class Post < ApplicationRecord
+    include SolidRecord::Model
+    def self.key_column = 'title'
 
-  belongs_to :blog
+    belongs_to :blog
 
-  has_many :comments
+    has_many :comments
 
-  class << self
-    def create_table(schema)
-      schema.create_table table_name, force: true do |t|
-        t.references :blog
-        t.string :title
-        t.text :content
+    class << self
+      def create_table(schema)
+        schema.create_table table_name, force: true do |t|
+          t.references :blog
+          t.string :title
+          t.text :content
+        end
       end
     end
   end
-end
 
-class Comment < ApplicationRecord
-  include SolidRecord::Model
-  def self.key_column() = 'title'
+  class Comment < ApplicationRecord
+    include SolidRecord::Model
+    def self.key_column = 'title'
 
-  belongs_to :post
-  belongs_to :user
+    belongs_to :post
+    belongs_to :user
 
-  class << self
-    def create_table(schema)
-      schema.create_table table_name, force: true do |t|
-        t.references :post
-        t.references :user
-        t.string :title
-        t.text :content
+    class << self
+      def create_table(schema)
+        schema.create_table table_name, force: true do |t|
+          t.references :post
+          t.references :user
+          t.string :title
+          t.text :content
+        end
       end
     end
   end
