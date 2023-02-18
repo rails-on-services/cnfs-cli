@@ -11,18 +11,6 @@ class Pathname
   def singular? = name.eql?(name.singularize)
 
   # @example
-  #   Pathname.new('users.yml').safe_constantize # => User
-  def safe_constantize(namespace = nil) = classify(namespace)&.safe_constantize
-
-  # @example
-  #   Pathname.new('users.yml').classify # => 'User'
-  #   Pathname.new('users.yml').classify('ns') # => 'Ns::User'
-  # @return [String]
-  def classify(namespace = nil)
-    [namespace, name].compact.join('/').classify unless name.blank?
-  end
-
-  # @example
   #   Pathname.new('users.yml').name # => 'users'
   # @return [String] #rootname without the extension
   def name = @name ||= rootname.end_with?('.') ? rootname.chop : rootname.delete_suffix(".#{extension}")

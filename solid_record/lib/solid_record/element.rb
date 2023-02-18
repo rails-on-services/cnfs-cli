@@ -25,7 +25,7 @@ module SolidRecord
     # From RootElement
     after_create :create_elements_in_path, if: -> { model_path.exist? }
 
-    def create_elements_in_path = create_segment(DirAssociation, path: model_path.to_s)
+    def create_elements_in_path = create_segment(DirAssociation, path: model_path.to_s, owner: model)
 
     def model_path = @model_path ||= pathname.parent.join(model_key) # bling/groups.yml->asc => bling/asc
     # END: From RootElement

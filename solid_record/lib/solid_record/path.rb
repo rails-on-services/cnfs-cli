@@ -11,7 +11,7 @@ module SolidRecord
       end
 
       def klass(source)
-        type = Pathname.new(source).directory? ? 'DirInstance' : 'File'
+        type = Pathname.new(source.to_s).directory? ? 'DirInstance' : 'File'
         "SolidRecord::#{type}".safe_constantize
       end
     end
@@ -79,6 +79,6 @@ module SolidRecord
 
     def pathname = @pathname ||= Pathname.new(path || '')
 
-    def source_path = @source_path ||= Pathname.new(source || '')
+    def source_path = @source_path ||= Pathname.new(source&.to_s || '')
   end
 end

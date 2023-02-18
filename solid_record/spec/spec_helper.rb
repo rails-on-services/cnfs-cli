@@ -8,6 +8,10 @@ require 'solid_support'
 SPEC_ROOT = Pathname.new(__dir__).join('..')
 DUMMY_ROOT = SPEC_ROOT.join('spec/dummy')
 
+module Helpers
+  def xdoc(klass, hash) = SolidRecord.toggle_callbacks { klass.create(hash) }
+end
+
 RSpec.configure do |config|
   # config.before(:suite) { SolidRecord::DataStore.load } # Setup the A/R database connection
   SolidRecord.logger.level = :warn # debug
@@ -17,8 +21,8 @@ RSpec.configure do |config|
       require path.join('models') if path.join('models.rb').exist?
     end
   end
+  config.include Helpers
 end
-      # def doc = SolidRecord.toggle_callbacks { File.create(source: file_path) }
 
 class SpecHelper
   class << self

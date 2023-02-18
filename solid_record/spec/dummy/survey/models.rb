@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# class Survey < SolidRecord::Base
 class Survey < ActiveRecord::Base
   include SolidRecord::Model
+  def self.table_name_prefix = 'surveys_'
   def self.key_column = 'name'
 
   has_many :questions
@@ -30,6 +30,7 @@ end
 
 class Question < ActiveRecord::Base
   include SolidRecord::Model
+  def self.table_name_prefix = 'surveys_'
   def self.key_column = 'name'
 
   belongs_to :survey
@@ -49,6 +50,7 @@ end
 
 class Answer < ActiveRecord::Base
   include SolidRecord::Model
+  def self.table_name_prefix = 'surveys_'
   def self.key_column = 'name'
 
   belongs_to :survey

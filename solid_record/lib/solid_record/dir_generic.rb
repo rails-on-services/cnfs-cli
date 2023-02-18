@@ -20,8 +20,6 @@ module SolidRecord
       end
     end
 
-    def classic(name) = [namespace, name].compact.join('/').classify.safe_constantize&.to_s
-
     def process(filter)
       children.select(&filter).each do |path|
         class_name = classic(class_map[path.name] || path.name)
@@ -35,5 +33,7 @@ module SolidRecord
         # In fact, this should have already been processed by RootElement, but that needs to be checked
       end
     end
+
+    def classic(name) = [namespace, name].compact.join('/').classify.safe_constantize&.to_s
   end
 end

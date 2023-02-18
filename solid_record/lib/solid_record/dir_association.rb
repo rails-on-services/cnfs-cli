@@ -8,8 +8,10 @@ module SolidRecord
 
     def process_contents
       process_has_many_files
+      # pit(pathname.glob(glob).select(&:plural?), File, content_format: :plural)
       process_belongs_to_files
       process_has_many_dirs
+      # pit(children.select(&:directory?).select(&:plural?), DirHasMany)
       process_belongs_to_dirs
     end
 
@@ -17,6 +19,16 @@ module SolidRecord
       pathname.glob(glob).select(&:plural?).each do |path|
         if owner_assn(:has_many).include?(path.name)
           create_segment(File, path: path.to_s, model_class_name: path.name, content_format: :plural)
+        else
+          SolidRecord.raise_or_warn(StandardError.new("#{invalid_path(path)} #{msg(:has_many)}"))
+        end
+      end
+    end
+
+    def pit(entries, klass, **hash)
+      entries.each do |path|
+        if owner_assn(:has_many).include?(path.name)
+          create_segment(klass, hash.merge(path: path.to_s, model_class_name: path.name))
         else
           SolidRecord.raise_or_warn(StandardError.new("#{invalid_path(path)} #{msg(:has_many)}"))
         end

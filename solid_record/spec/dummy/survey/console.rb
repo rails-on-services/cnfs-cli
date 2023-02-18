@@ -4,7 +4,7 @@ module SolidRecord
   def self.survey = Survey
 end
 
-class Survey
+class Survey < ActiveRecord::Base
   class << self
     def plural_doc
       require_relative 'models'
@@ -15,7 +15,7 @@ class Survey
     def plural_path
       require_relative 'models'
       SolidRecord.setup
-      SolidRecord::DirInstance.add(source: 'survey/plural_path/surveys')
+      SolidRecord.toggle_callbacks { SolidRecord::DirInstance.create(source: 'survey/plural_path/surveys') }
     end
   end
 end

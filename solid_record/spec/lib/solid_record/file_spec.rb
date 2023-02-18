@@ -5,7 +5,8 @@ module SolidRecord
     before { SolidRecord.setup }
 
     context 'when infra' do
-      let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: :infra) } }
+      # let(:doc) { SolidRecord.toggle_callbacks { File.create(source: file_path, namespace: :infra) } }
+      let(:doc) { xdoc(File, source: file_path, namespace: :infra) }
 
       let(:model) { Element.first.model }
 
