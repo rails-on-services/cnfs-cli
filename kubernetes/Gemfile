@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem 'onestack', path: '../onestack'
+gem 'solid_app', path: '../solid_app'
+gem 'solid_record', path: '../solid_record'
+gem 'solid_support', path: '../solid_support'
+
+gemspec

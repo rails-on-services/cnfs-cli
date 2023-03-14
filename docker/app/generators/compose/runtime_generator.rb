@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Compose::RuntimeGenerator < RuntimeGenerator
+class Compose::RuntimeGenerator < OneStack::RuntimeGenerator
   # private
   def nginx_conf
     # binding.pry

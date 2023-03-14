@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+<% binding.pry %>
+
+<%# %w[core aws docker gcp kubernetes native terraform].unshift('').each do |gem_name| -%>
+<% gems.each do |gem_name| -%>
+<%= gemfile_gem_string(gem_name) %>
+<% end -%>

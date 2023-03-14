@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Terraform::PlanView < ApplicationView
+class Terraform::PlanView < OneStack::ApplicationView
   def modify
     # ask_attr(:modules)
 

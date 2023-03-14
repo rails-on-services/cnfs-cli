@@ -1,0 +1,26 @@
+---
+bucket:
+  config:
+    family: ah23
+    size: cool!
+  plan_name: cluster
+  provider_name: localstack
+  tags: {}
+  type: Aws::Resource::S3::Bucket
+instance:
+  type: Aws::Resource::EC2::Instance
+  runtime_name: compose
+  provider_name: aws_apse_1
+res1:
+  config:
+    family: r2
+    size: newton
+  inherit: false
+  runtime_name: compose
+  type: Aws::Resource::EC2::Instance
+bucket2:
+  config:
+    family: ah23
+    size: cool!
+  provider_name: aws_east
+  type: Aws::Resource::S3::Bucket

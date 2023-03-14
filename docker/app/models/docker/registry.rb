@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Docker::Registry < Registry
+class Docker::Registry < OneStack::Registry
   store :config, accessors: %i[server username password email], coder: YAML
 
   attr_encrypted :password

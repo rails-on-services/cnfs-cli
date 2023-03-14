@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Compose::Builder < Builder
+class Compose::Builder < OneStack::Builder
   def build
     Dir.chdir(path) do
       Cnfs.logger.warn('building!', images.pluck(:name).join(', '), 'END')

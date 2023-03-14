@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+git_path = File.expand_path('../../.git', __dir__)
+
+if File.exist?(git_path)
+  plugin_path = File.expand_path('../../solid_support/lib', __dir__)
+  $:.unshift(plugin_path)
+  plugin_path = File.expand_path('../../solid_record/lib', __dir__)
+  $:.unshift(plugin_path)
+  plugin_path = File.expand_path('../lib', __dir__)
+  $:.unshift(plugin_path)
+end
+
+require 'onestack'
+
+# This isn't necessary for main_loader, but project_loader needs it
+load_path = Pathname.new(__dir__).join('../app')
+SolidSupport.add_loader(name: :framework, path: load_path)
+
+BOOT_MODULE = OneStack
+
+require 'solid_support/boot_loader'

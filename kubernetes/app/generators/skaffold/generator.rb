@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Skaffold::Generator < RuntimeGenerator
+class Skaffold::Generator < OneStack::RuntimeGenerator
   def files
     directory('files', path)
   end

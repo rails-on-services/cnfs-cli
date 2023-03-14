@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Compose::BuilderGenerator < BuilderGenerator
+class Compose::BuilderGenerator < OneStack::BuilderGenerator
   def compose_yml() = cnfs_template('docker-compose.yml')
 
   private

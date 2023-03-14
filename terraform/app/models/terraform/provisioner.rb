@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Terraform::Provisioner < Provisioner
+class Terraform::Provisioner < OneStack::Provisioner
   store :config, accessors: %i[state_file]
 
   before_validation :set_defaults

@@ -2,7 +2,7 @@
 
 class Aws::Resource::EC2::Instance < Aws::Resource::EC2
   # store :config, accessors: %i[family size instance_count ami key_name monitoring
-                               # vpc_security_group_ids subnet_id subnet_ids]
+  # vpc_security_group_ids subnet_id subnet_ids]
   # store :config, accessors: %i[public_ip os_type arn]
   # store :envs, accessors: %i[public_ip os_type arn]
 
@@ -10,7 +10,7 @@ class Aws::Resource::EC2::Instance < Aws::Resource::EC2
 
   def instance_id() = config[:id]
 
-  def valid_types() =  super.merge(runtime: %w[Compose::Runtime Skaffold::Runtime])
+  def valid_types() = super.merge(runtime: %w[Compose::Runtime Skaffold::Runtime])
 
   def describe() = @describe ||= describe_instances(instance_id).reservations.first.instances.first
 
@@ -35,5 +35,5 @@ class Aws::Resource::EC2::Instance < Aws::Resource::EC2
     }.with_indifferent_access
   end
 
-  def method_missing(method, *args) = config[method]
+  def method_missing(method, *_args) = config[method]
 end

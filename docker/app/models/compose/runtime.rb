@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/ClassLength
-class Compose::Runtime < Runtime
+class Compose::Runtime < OneStack::Runtime
 
   # TODO: Add support for destroying volumes; https://docs.docker.com/compose/reference/down/
   def destroy

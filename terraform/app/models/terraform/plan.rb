@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Terraform
-  class Plan < Plan
+  class Plan < OneStack::Plan
     store :modules, coder: YAML
     store :variables, coder: YAML
     store :outputs, coder: YAML

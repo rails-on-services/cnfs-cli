@@ -1,0 +1,7 @@
+---
+config:
+  tld: cnfs.io
+  domain: backend.${config.tld}
+segments_type: environment
+default:
+  segment_name: production

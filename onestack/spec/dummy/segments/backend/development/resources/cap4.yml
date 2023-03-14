@@ -1,0 +1,5 @@
+
+type: Aws::Resource::EC2::Instance
+config:
+  family: asdfaksjdfasjkdfasldfj
+  size: fasdfjasdf

@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../../../lib/ext/hash'
-require 'pry'
-
 RSpec.describe 'hash' do
   describe 'to_hcl' do
     it 'repsponds to to_hcl' do

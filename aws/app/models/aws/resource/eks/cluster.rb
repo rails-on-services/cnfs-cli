@@ -8,14 +8,13 @@ class Aws::Resource::EKS::Cluster < Aws::Resource::EKS
     "arn:aws:eks:#{region}:#{account_id}:cluster/#{target.cluster_name.cnfs_sub}"
   end
 
-  # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/MethodLength
   # NOTE: This will work with a cluster on any target since the provider instance, ie credentials, is per target
   def init_cluster(target, options)
     credentials_file = "#{Dir.home}/.aws/credentials"
 
     unless File.exist?(credentials_file) || ENV['AWS_ACCESS_KEY_ID']
-      STDOUT.puts "missing #{credentials_file}"
+      $stdout.puts "missing #{credentials_file}"
       return
     end
 
@@ -31,10 +30,9 @@ class Aws::Resource::EKS::Cluster < Aws::Resource::EKS
     if options.long || target.role_name
       cmd_string = "#{cmd_string} --role-arn arn:aws:iam::#{account_id}:role/#{target.role_name}"
     end
-    binding.pry
+    # binding.pry
     cmd_string
   end
-  # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength
 
   # def client
@@ -48,14 +46,14 @@ end
 
 # class Target::Kubernetes < Target
 #   store :config, accessors: %i[role_name cluster_name], coder: YAML
-# 
+#
 #   validates :role_name, presence: true
 #   validates :cluster_name, presence: true
-# 
+#
 #   def role_name
 #     super.cnfs_sub
 #   end
-# 
+#
 #   def init(options)
 #     provider.init_cluster(self, options)
 #   end

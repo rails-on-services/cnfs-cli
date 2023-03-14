@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler'
+Bundler.require
+
+module SolidSupport
+  def self.boot(dir = Dir.pwd) = Dir.chdir(dir) { require('solid_support/boot_loader') }
+end
+
+SolidSupport.pry

@@ -1,0 +1,8 @@
+# Use to access cnfs cli in development mode
+
+RUBYOPT='-W:no-deprecated'
+
+SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+echo $SCRIPT_PATH
+export PATH=$PATH:$SCRIPT_PATH/exe
+unset SCRIPT_PATH

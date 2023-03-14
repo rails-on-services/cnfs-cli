@@ -9,6 +9,11 @@
 **/src/
 **.env
 
+# Remove after completing refactor
+**/spec/dummy/segments/
+one_stack_rails/
+native
+
 .dir-locals.el
 
 # rspec failure tracking

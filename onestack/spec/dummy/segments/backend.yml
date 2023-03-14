@@ -1,0 +1,6 @@
+---
+config:
+  domain: backend.${parent.config.domain}
+  host: host.${config.domain}
+segment_name: cnfs-components/backend
+segments_type: environment

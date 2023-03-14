@@ -1,5 +1,0 @@
----
-type: Resource::Aws::EC2::Instance
-config:
-  family: m2
-  size: micro

@@ -1,9 +1,0 @@
----
-joe:
-  config: {}
-  role: admin
-  tags: {}
-nancy:
-  config: {}
-  role: dev
-  tags: {}

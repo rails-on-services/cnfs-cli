@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem_path = '<%= internal_path.join('../../../../..') %>'
+
+gem 'hendrix', path: "#{gem_path}/hendrix"
+gem 'solid-record', path: "#{gem_path}/solid-record"
+gem 'solid-support', path: "#{gem_path}/solid-support"
+
+gemspec
