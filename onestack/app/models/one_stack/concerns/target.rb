@@ -13,7 +13,7 @@ module OneStack
 
       define_model_callbacks(*operator.target_callbacks, only: %i[before after]) if respond_to?(:operator)
 
-      include SolidApp::Extendable if defined?(SolidApp)
+      include SolidSupport::Extendable if defined?(SolidSupport)
     end
   end
 end

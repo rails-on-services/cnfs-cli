@@ -67,3 +67,15 @@ class Answer < ActiveRecord::Base
     end
   end
 end
+# frozen_string_literal: true
+
+class SurveyView < SolidRecord::ModelView
+  def modify
+    # super
+    # mask_attr(:access_key_id)
+    # mask_attr(:secret_access_key)
+    ask_attr(:name)
+    ask_attr(:description)
+    # enum_select_attr(:region, choices: model.regions)
+  end
+end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module Cnfs
+module OneStack
   module <%= name.camelize %>
-    class Extension < Cnfs::Extension
+    class Extension < OneStack::Extension
       class << self
         def root() = Pathname.new(__dir__).join('../..')
       end

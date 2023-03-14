@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+
+ARGV.unshift 'console'
+DUMMY_PATH = Pathname.new(__dir__).join('../spec/dummy')
+
+Dir.chdir(DUMMY_PATH) { require 'hendrix/boot_loader' }

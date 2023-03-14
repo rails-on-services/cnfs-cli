@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+      require 'pry'
 module SolidRecord
   class << self
     def tmp_path = @tmp_path ||= Pathname.new(::Dir.mktmpdir)
+    # def tmp_path
+      # @tmp_path ||= Pathname.new(::Dir.mktmpdir)
+    # end
 
     def status = @status || (@status = ActiveSupport::StringInquirer.new(''))
 

@@ -8,6 +8,8 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 
 require 'lockbox'
 require 'tty-tree'
+require 'tty-prompt'
+require 'tty-screen'
 
 require_relative 'ext/pathname'
 require_relative 'solid_record/concerns/tree_view'
@@ -30,22 +32,24 @@ module SolidRecord
 
     def config_set
       config = ActiveSupport::OrderedOptions.new
+      config.class_map = {}
       config.document_map = { yml: :yaml, yaml: :yaml }
       # config.encryption_key = Lockbox.generate_key
       config.flush_cache_on_exit = true
-      config.raise_on_error = false
-      config.reference_suffix = :name
       config.glob = '*.yml'
       config.load_paths = []
-      config.class_map = {}
+      config.raise_on_error = false
+      config.reference_suffix = :name
       # config.sandbox = true
       config.schema_file = nil # Path to a file that defines an ActiveRecord::Schema
+      config.view_options = ActiveSupport::OrderedOptions.new
+      config.view_options.help_color = :cyan
       config
     end
   end
 end
 
-require_relative 'solid_record/concerns/extension' if defined? SolidApp
+require_relative 'solid_record/concerns/extension' if defined? SolidSupport
 
 require_relative 'solid_record/data_store'
 
@@ -69,6 +73,8 @@ require_relative 'solid_record/concerns/encryption'
 require_relative 'solid_record/concerns/persistence'
 require_relative 'solid_record/concerns/model'
 require_relative 'solid_record/base'
+
+require_relative 'solid_record/model_view'
 
 module SolidRecord
   class ColorFormatter < Logger::Formatter

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ProjectController < SolidApp::ApplicationController # Hendrix::ProjectController
+  class ProjectController < SolidSupport::ApplicationController
     def new
       binding.pry
       super

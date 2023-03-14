@@ -8,7 +8,7 @@ module OneStack
     included do
       include SolidRecord::Model
       include Concerns::Asset
-      include SolidApp::Extendable if defined?(SolidApp)
+      include SolidSupport::Extendable if defined?(SolidSupport)
     end
   end
 end

@@ -1,9 +1,0 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
-require 'bundler/setup'
-
-ARGV.unshift 'console'
-ENV['HENDRIX_CLI_ENV'] ||= 'development'
-BOOT_MODULE = Hendrix
-Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) { require 'solid_app/boot_loader' }

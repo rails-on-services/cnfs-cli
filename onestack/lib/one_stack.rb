@@ -8,7 +8,6 @@
 # end
 require 'tty-which'
 
-require 'solid_app'
 require 'solid_support'
 require 'solid_record'
 
@@ -18,6 +17,6 @@ require 'one_stack/plugin'
 require 'one_stack/extension'
 
 module OneStack
-  def self.logger() = SolidApp.logger
+  def self.logger() = SolidSupport.logger
   # OneStack.logger.formatter = SolidRecord::SimpleFormatter
 end

@@ -4,7 +4,7 @@ module OneStack
   class << self
     def gem_root() = @gem_root ||= Pathname.new(__dir__).join('../..')
 
-    def plugins() = SolidApp.plugins
+    def plugins() = SolidSupport.plugins
 
     # TODO: Finish refactor
     def segment(name)
@@ -17,7 +17,7 @@ module OneStack
     def segments_path() = gem_root.join('segments')
   end
 
-  class Plugin < SolidApp::Plugin
+  class Plugin < SolidSupport::Plugin
     config.after_initialize do |config|
       SolidRecord.setup
       SolidRecord.toggle_callbacks do

@@ -3,4 +3,3 @@
 source 'https://rubygems.org'
 
 gemspec
-gem 'solid_support', path: '../solid_support'

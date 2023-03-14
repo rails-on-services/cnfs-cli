@@ -3,13 +3,18 @@
 module SolidRecord
   def self.gem_root = @gem_root ||= Pathname.new(__dir__).join('../..')
 
-  class Extension < SolidApp::Extension
+  class Extension < SolidSupport::Extension
     # The config object belongs to the application so it is 'shared' with the app and other Extensions
     # config.before_configuration do
+    #   binding.pry
     #   puts 'SolidRecord before_configuration'
     # end
 
-    config.before_initialize { |config| SolidRecord.config.merge!(config.solid_record) }
+    # config.before_initialize { |config| SolidRecord.config.merge!(config.solid_record || {}) }
+    config.before_initialize do |config|
+      binding.pry
+      SolidRecord.config.merge!(config.solid_record || {})
+    end
 
     # config.before_eager_load do |config|
     #   puts 'SolidRecord before_eager_load'

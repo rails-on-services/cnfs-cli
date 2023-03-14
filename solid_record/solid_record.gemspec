@@ -36,6 +36,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activerecord', '~> 6.1'
   spec.add_dependency 'lockbox', '~> 0.6'
   spec.add_dependency 'sqlite3', '~> 1.4'
+  spec.add_dependency 'tty-prompt', '~> 0.22'
+  spec.add_dependency 'tty-screen', '~> 0.8'
   spec.add_dependency 'tty-tree', '~> 0.4'
 
   spec.add_development_dependency 'bundler', '~> 2.0'

@@ -8,8 +8,6 @@ if File.exist?(git_path)
   $:.unshift(plugin_path)
   plugin_path = File.expand_path('../../solid_record/lib', __dir__)
   $:.unshift(plugin_path)
-  plugin_path = File.expand_path('../../solid_app/lib', __dir__)
-  $:.unshift(plugin_path)
   plugin_path = File.expand_path('../lib', __dir__)
   $:.unshift(plugin_path)
 end
@@ -18,8 +16,8 @@ require 'onestack'
 
 # This isn't necessary for main_loader, but project_loader needs it
 load_path = Pathname.new(__dir__).join('../app')
-SolidApp.add_loader(name: :framework, path: load_path)
+SolidSupport.add_loader(name: :framework, path: load_path)
 
 BOOT_MODULE = OneStack
 
-require 'solid_app/boot_loader'
+require 'solid_support/boot_loader'

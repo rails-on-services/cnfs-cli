@@ -2,7 +2,7 @@
 
 module OneStack
   class Dependency < ApplicationRecord
-    include SolidApp::Download if defined?(SolidApp)
+    include SolidSupport::Download if defined?(SolidSupport)
     include Concerns::Generic
 
     store :config, accessors: %i[source linux mac]

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneStack
-  class ApplicationCommand < SolidApp::ApplicationCommand
+  class ApplicationCommand < SolidSupport::ApplicationCommand
     class << self
       def shared_options
         super.merge(
@@ -24,6 +24,6 @@ module OneStack
     # Load modules to add options, actions and sub-commands to existing command structure
     # TODO: If this is included in H:AppCommand then will it just work?
     # For that matter since it is here will it just work in a subclass of this class?
-    include SolidApp::Extendable
+    include SolidSupport::Extendable
   end
 end

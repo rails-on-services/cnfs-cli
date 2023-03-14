@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+Bundler.require
+
+ARGV.unshift 'console'
+ENV['TYPEAWAY_ENV'] ||= 'development'
+BOOT_MODULE = Typeaway
+Dir.chdir(Pathname.new(__dir__).join('../spec/dummy')) { require 'solid_support/boot_loader' }

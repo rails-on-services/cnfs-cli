@@ -2,4 +2,12 @@
 
 require 'bundler/setup'
 require 'pry-byebug'
-require 'solid_support'
+
+binding.pry
+
+SPEC_ROOT = Pathname.new(__dir__).join('..')
+
+RSpec.configure do |config|
+  # SolidRecord.logger.level = :warn # debug
+  # SolidRecord.config.sandbox = true
+end

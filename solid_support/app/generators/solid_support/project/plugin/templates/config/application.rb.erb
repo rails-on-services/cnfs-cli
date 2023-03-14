@@ -1,0 +1,30 @@
+# frozen_string_literal: true
+
+require_relative 'boot'
+
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require # (*.groups)
+
+module <%= name.camelize %>
+  module Concerns; end
+  # class Application < <%= gem_name_root.camelize %>::Application
+  class Application < <%= BOOT_MODULE.to_s.camelize %>::Application
+    # Reference id for encryption keys and local file access
+    config.project_id = '<%= uuid %>'
+
+    # The default value is :warn
+    # config.logging = :warn
+
+    # Comment out to remove the segment name and/or type from the console prompt
+    # Use the pwd command to show the full path
+    # config.cli.show_segment_name = true
+    # config.cli.show_segment_type = true
+
+    # Comment out to ignore segment color settings
+    config.cli.colorize = true
+
+    # These settings can be overridden in specific environments using the files
+    # in config/environments, which are processed later.
+  end
+end

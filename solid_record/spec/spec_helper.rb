@@ -3,7 +3,7 @@
 require 'pry'
 require 'bundler/setup'
 require 'solid_record'
-require 'solid_support'
+# require 'solid_support'
 
 SPEC_ROOT = Pathname.new(__dir__).join('..')
 DUMMY_ROOT = SPEC_ROOT.join('spec/dummy')
